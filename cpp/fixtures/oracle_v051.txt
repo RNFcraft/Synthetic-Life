@@ -1,0 +1,5 @@
+# Frozen Python v0.5.1 primitive fixture
+WORLD 30 30 4 5 5 N 2 5 2 5 4
+FRAME 0 2 0 -3 0 -1
+ACTION 2 SUCCESS 5 4 5 2 5 3
+PREDICT 0 2 1 0.750000000

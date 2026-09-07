@@ -1,0 +1,50 @@
+{
+  "seed": 123,
+  "steps": 1000,
+  "checkpoints": [
+    {
+      "step": 100,
+      "wall_seconds": 1.1098536999998032,
+      "window_seconds": 1.1098536999998032,
+      "window_actions_per_second": 90.1019656915301,
+      "cognits_total": 50,
+      "cognits_live": 50,
+      "relations": 363,
+      "provisional": 315,
+      "consolidated": 48,
+      "active": 36,
+      "ffi_calls": 14544,
+      "ffi_calls_window": 14544,
+      "receive_calls": 726,
+      "field_write_calls": 1945,
+      "state_read_calls": 7980,
+      "relation_proxies": 2,
+      "relation_proxies_window": 2,
+      "graph_logical_bytes": 72510,
+      "graph_reserved_bytes": 74833,
+      "full_graph_sync_calls": 0
+    },
+    {
+      "step": 1000,
+      "wall_seconds": 28.268739899998764,
+      "window_seconds": 27.15888619999896,
+      "window_actions_per_second": 33.138325090814455,
+      "cognits_total": 128,
+      "cognits_live": 128,
+      "relations": 9835,
+      "provisional": 6454,
+      "consolidated": 3381,
+      "active": 89,
+      "ffi_calls": 207718,
+      "ffi_calls_window": 193174,
+      "receive_calls": 5805,
+      "field_write_calls": 23907,
+      "state_read_calls": 137215,
+      "relation_proxies": 224,
+      "relation_proxies_window": 222,
+      "graph_logical_bytes": 1887608,
+      "graph_reserved_bytes": 2231883,
+      "full_graph_sync_calls": 0
+    }
+  ]
+}

@@ -1,0 +1,792 @@
+{
+  "symmetric_action_distribution": {
+    "MOVE_UP": 2434,
+    "MOVE_LEFT": 2433,
+    "MOVE_DOWN": 2433,
+    "MOVE_RIGHT": 2434,
+    "IDLE": 134,
+    "INTERACT": 132
+  },
+  "runs": [
+    {
+      "seed": 0,
+      "ticks": 50000,
+      "elapsed_seconds": 449.2142837001011,
+      "ticks_per_second": 111.3054544663152,
+      "cognits": 1454,
+      "primitive_cognits": 1096,
+      "composite_cognits": 358,
+      "relations": 222,
+      "relation_density": 0.00010508069913691826,
+      "mean_active_ratio": 0.004401136351059261,
+      "p95_active_ratio": 0.013888888888888888,
+      "mean_wave_energy": 1.63122552513414,
+      "mean_known_prediction_error": 0.3475233985646789,
+      "mean_representation_coverage": 0.9922514467218473,
+      "mean_continuity_error": 0.20751480288828703,
+      "mean_brier_score": 0.10653143776026805,
+      "mean_loop_score": 0.16156792578535986,
+      "tracks_created": 7013,
+      "tracks_closed": 7013,
+      "mean_track_lifetime": 14.321688293169828,
+      "goals_generated": 1357,
+      "goals_retired": 867,
+      "unique_positions": 450,
+      "longest_physical_loop": 65,
+      "action_distribution": {
+        "MOVE_UP": 10214,
+        "MOVE_LEFT": 10046,
+        "MOVE_DOWN": 10219,
+        "MOVE_RIGHT": 10378,
+        "IDLE": 4794,
+        "INTERACT": 4349
+      },
+      "tie_count": 21459,
+      "tie_resolution_distribution": {
+        "ROTATING_CURSOR": 3,
+        "LEAST_USED": 13644,
+        "OLDEST_USED": 7812
+      },
+      "sensorimotor": {
+        "IDLE": {
+          "support": 4325,
+          "mean_dx": 0.011710799155885866,
+          "mean_dy": -0.007021378108083279,
+          "confidence": 0.9990759990759991
+        },
+        "MOVE_UP": {
+          "support": 9104,
+          "mean_dx": -0.01282294369124337,
+          "mean_dy": 0.3960205874968626,
+          "confidence": 0.9995608256477821
+        },
+        "MOVE_DOWN": {
+          "support": 9106,
+          "mean_dx": -0.00018224509219458767,
+          "mean_dy": -0.3957955508142206,
+          "confidence": 0.9995609220636663
+        },
+        "MOVE_LEFT": {
+          "support": 9145,
+          "mean_dx": 0.3968144184956645,
+          "mean_dy": -0.010146319872946421,
+          "confidence": 0.9995627937479507
+        },
+        "MOVE_RIGHT": {
+          "support": 9098,
+          "mean_dx": -0.3948475506565203,
+          "mean_dy": 0.00023491993705226647,
+          "confidence": 0.999560536145902
+        },
+        "INTERACT": {
+          "support": 4047,
+          "mean_dx": 0.017552096202948744,
+          "mean_dy": 0.0064409850918375686,
+          "confidence": 0.999012589484078
+        }
+      }
+    },
+    {
+      "seed": 1,
+      "ticks": 50000,
+      "elapsed_seconds": 191.23419109999668,
+      "ticks_per_second": 261.4595209799848,
+      "cognits": 1227,
+      "primitive_cognits": 843,
+      "composite_cognits": 384,
+      "relations": 9,
+      "relation_density": 5.982841211405688e-06,
+      "mean_active_ratio": 0.002723789907906074,
+      "p95_active_ratio": 0.010596026490066225,
+      "mean_wave_energy": 0.911608596733225,
+      "mean_known_prediction_error": 0.41891676947531087,
+      "mean_representation_coverage": 0.9925234748558489,
+      "mean_continuity_error": 0.14706944229891256,
+      "mean_brier_score": 0.23887760374893202,
+      "mean_loop_score": 0.10058235157737654,
+      "tracks_created": 4144,
+      "tracks_closed": 4143,
+      "mean_track_lifetime": 14.049722423364711,
+      "goals_generated": 1348,
+      "goals_retired": 649,
+      "unique_positions": 482,
+      "longest_physical_loop": 38,
+      "action_distribution": {
+        "MOVE_UP": 10954,
+        "MOVE_LEFT": 10946,
+        "MOVE_DOWN": 11002,
+        "MOVE_RIGHT": 10986,
+        "IDLE": 3263,
+        "INTERACT": 2849
+      },
+      "tie_count": 31552,
+      "tie_resolution_distribution": {
+        "ROTATING_CURSOR": 3,
+        "LEAST_USED": 18781,
+        "OLDEST_USED": 12768
+      },
+      "sensorimotor": {
+        "IDLE": {
+          "support": 2194,
+          "mean_dx": 0.002461257976299,
+          "mean_dy": 0.005682163476147065,
+          "confidence": 0.9981801637852593
+        },
+        "MOVE_UP": {
+          "support": 5484,
+          "mean_dx": 0.004479698516897648,
+          "mean_dy": 0.40139800632142025,
+          "confidence": 0.999271137026239
+        },
+        "MOVE_DOWN": {
+          "support": 5592,
+          "mean_dx": 0.014186933714830758,
+          "mean_dy": -0.4039818788745814,
+          "confidence": 0.9992852037169406
+        },
+        "MOVE_LEFT": {
+          "support": 5525,
+          "mean_dx": 0.3923861236802415,
+          "mean_dy": -0.009707390648567085,
+          "confidence": 0.9992765418701393
+        },
+        "MOVE_RIGHT": {
+          "support": 5541,
+          "mean_dx": -0.39768393190158235,
+          "mean_dy": 0.01653732779883292,
+          "confidence": 0.9992786293958521
+        },
+        "INTERACT": {
+          "support": 1986,
+          "mean_dx": -0.01905001678415573,
+          "mean_dy": 0.018462571332661954,
+          "confidence": 0.9979899497487437
+        }
+      }
+    },
+    {
+      "seed": 2,
+      "ticks": 50000,
+      "elapsed_seconds": 271.54805079998914,
+      "ticks_per_second": 184.1294748855623,
+      "cognits": 1382,
+      "primitive_cognits": 955,
+      "composite_cognits": 427,
+      "relations": 13,
+      "relation_density": 6.811482272855405e-06,
+      "mean_active_ratio": 0.0034941567886446565,
+      "p95_active_ratio": 0.011428571428571429,
+      "mean_wave_energy": 1.277111494097348,
+      "mean_known_prediction_error": 0.3855513785085462,
+      "mean_representation_coverage": 0.9936459115998022,
+      "mean_continuity_error": 0.19037290151974892,
+      "mean_brier_score": 0.12825293332485802,
+      "mean_loop_score": 0.1382155195889196,
+      "tracks_created": 5867,
+      "tracks_closed": 5865,
+      "mean_track_lifetime": 14.323444160272805,
+      "goals_generated": 1347,
+      "goals_retired": 805,
+      "unique_positions": 514,
+      "longest_physical_loop": 37,
+      "action_distribution": {
+        "MOVE_UP": 10593,
+        "MOVE_LEFT": 10502,
+        "MOVE_DOWN": 10513,
+        "MOVE_RIGHT": 10551,
+        "IDLE": 4147,
+        "INTERACT": 3694
+      },
+      "tie_count": 25910,
+      "tie_resolution_distribution": {
+        "ROTATING_CURSOR": 3,
+        "LEAST_USED": 15360,
+        "OLDEST_USED": 10547
+      },
+      "sensorimotor": {
+        "IDLE": {
+          "support": 3308,
+          "mean_dx": 0.007456670697299485,
+          "mean_dy": -0.009018540910923032,
+          "confidence": 0.998792270531401
+        },
+        "MOVE_UP": {
+          "support": 7904,
+          "mean_dx": -0.004379639001349539,
+          "mean_dy": 0.39777327935222767,
+          "confidence": 0.9994941831057157
+        },
+        "MOVE_DOWN": {
+          "support": 7824,
+          "mean_dx": -0.0048525903203817345,
+          "mean_dy": -0.38803680981595073,
+          "confidence": 0.9994890137966275
+        },
+        "MOVE_LEFT": {
+          "support": 7887,
+          "mean_dx": 0.3695490469549041,
+          "mean_dy": 0.009135285913528577,
+          "confidence": 0.9994930933975416
+        },
+        "MOVE_RIGHT": {
+          "support": 7826,
+          "mean_dx": -0.37962773660448035,
+          "mean_dy": 0.0006516739074878663,
+          "confidence": 0.9994891443167305
+        },
+        "INTERACT": {
+          "support": 2996,
+          "mean_dx": -0.008121940364931003,
+          "mean_dy": -0.012928348909657316,
+          "confidence": 0.9986666666666667
+        }
+      }
+    },
+    {
+      "seed": 3,
+      "ticks": 50000,
+      "elapsed_seconds": 236.80192970007192,
+      "ticks_per_second": 211.14692799728826,
+      "cognits": 1348,
+      "primitive_cognits": 1002,
+      "composite_cognits": 346,
+      "relations": 13,
+      "relation_density": 7.159552274644831e-06,
+      "mean_active_ratio": 0.014690961743983355,
+      "p95_active_ratio": 0.013127413127413128,
+      "mean_wave_energy": 1.2265000542683822,
+      "mean_known_prediction_error": 0.37744980978071246,
+      "mean_representation_coverage": 0.9920102275124378,
+      "mean_continuity_error": 0.18424304247097775,
+      "mean_brier_score": 0.2208064950784445,
+      "mean_loop_score": 0.12348998653076916,
+      "tracks_created": 6075,
+      "tracks_closed": 6074,
+      "mean_track_lifetime": 14.44978597299967,
+      "goals_generated": 1362,
+      "goals_retired": 836,
+      "unique_positions": 526,
+      "longest_physical_loop": 65,
+      "action_distribution": {
+        "MOVE_UP": 10547,
+        "MOVE_LEFT": 10491,
+        "MOVE_DOWN": 10521,
+        "MOVE_RIGHT": 10515,
+        "IDLE": 4184,
+        "INTERACT": 3742
+      },
+      "tie_count": 25566,
+      "tie_resolution_distribution": {
+        "ROTATING_CURSOR": 3,
+        "LEAST_USED": 14626,
+        "OLDEST_USED": 10937
+      },
+      "sensorimotor": {
+        "IDLE": {
+          "support": 3700,
+          "mean_dx": -0.0025000000000000217,
+          "mean_dy": -0.02821171171171172,
+          "confidence": 0.9989200863930886
+        },
+        "MOVE_UP": {
+          "support": 8066,
+          "mean_dx": 0.0016999633972111198,
+          "mean_dy": 0.3835502934126786,
+          "confidence": 0.9995043370508054
+        },
+        "MOVE_DOWN": {
+          "support": 8138,
+          "mean_dx": -0.007086098140411267,
+          "mean_dy": -0.3683194068976816,
+          "confidence": 0.9995087202161631
+        },
+        "MOVE_LEFT": {
+          "support": 8126,
+          "mean_dx": 0.38511626407885324,
+          "mean_dy": 0.011735991467716794,
+          "confidence": 0.9995079950799508
+        },
+        "MOVE_RIGHT": {
+          "support": 8149,
+          "mean_dx": -0.3802797889311565,
+          "mean_dy": 0.005661226326338637,
+          "confidence": 0.9995093830491844
+        },
+        "INTERACT": {
+          "support": 3299,
+          "mean_dx": 0.0062695766393856675,
+          "mean_dy": -0.007416388804688282,
+          "confidence": 0.9987889797154103
+        }
+      }
+    },
+    {
+      "seed": 4,
+      "ticks": 50000,
+      "elapsed_seconds": 264.4658545999555,
+      "ticks_per_second": 189.06032340406495,
+      "cognits": 1481,
+      "primitive_cognits": 997,
+      "composite_cognits": 484,
+      "relations": 8,
+      "relation_density": 3.649834844973265e-06,
+      "mean_active_ratio": 0.01406392196655244,
+      "p95_active_ratio": 0.011670313639679067,
+      "mean_wave_energy": 1.112191122266878,
+      "mean_known_prediction_error": 0.3848711921316461,
+      "mean_representation_coverage": 0.992925403163415,
+      "mean_continuity_error": 0.16706222372037727,
+      "mean_brier_score": 0.2235966329748276,
+      "mean_loop_score": 0.11793703784049923,
+      "tracks_created": 5584,
+      "tracks_closed": 5581,
+      "mean_track_lifetime": 14.371976348324672,
+      "goals_generated": 1350,
+      "goals_retired": 724,
+      "unique_positions": 477,
+      "longest_physical_loop": 65,
+      "action_distribution": {
+        "MOVE_UP": 10726,
+        "MOVE_LEFT": 10683,
+        "MOVE_DOWN": 10728,
+        "MOVE_RIGHT": 10750,
+        "IDLE": 3736,
+        "INTERACT": 3377
+      },
+      "tie_count": 28054,
+      "tie_resolution_distribution": {
+        "ROTATING_CURSOR": 3,
+        "LEAST_USED": 15181,
+        "OLDEST_USED": 12870
+      },
+      "sensorimotor": {
+        "IDLE": {
+          "support": 3269,
+          "mean_dx": 0.005659223003976759,
+          "mean_dy": 0.0179973488324666,
+          "confidence": 0.9987778796211427
+        },
+        "MOVE_UP": {
+          "support": 7488,
+          "mean_dx": -0.011765491452991477,
+          "mean_dy": 0.3657040683082347,
+          "confidence": 0.999466097170315
+        },
+        "MOVE_DOWN": {
+          "support": 7238,
+          "mean_dx": -0.013895029320561159,
+          "mean_dy": -0.39237150050219927,
+          "confidence": 0.9994476663904999
+        },
+        "MOVE_LEFT": {
+          "support": 7421,
+          "mean_dx": 0.39908079388607637,
+          "mean_dy": 0.0009448733003510075,
+          "confidence": 0.9994612794612795
+        },
+        "MOVE_RIGHT": {
+          "support": 7346,
+          "mean_dx": -0.38983660257823105,
+          "mean_dy": -0.013574604903219168,
+          "confidence": 0.9994557823129252
+        },
+        "INTERACT": {
+          "support": 2956,
+          "mean_dx": 0.02465042850699144,
+          "mean_dy": 0.019745151105096972,
+          "confidence": 0.9986486486486487
+        }
+      }
+    },
+    {
+      "seed": 5,
+      "ticks": 50000,
+      "elapsed_seconds": 330.8802075999556,
+      "ticks_per_second": 151.1120908762592,
+      "cognits": 1349,
+      "primitive_cognits": 883,
+      "composite_cognits": 466,
+      "relations": 14,
+      "relation_density": 7.69885595000583e-06,
+      "mean_active_ratio": 0.008292142331301109,
+      "p95_active_ratio": 0.012859304084720122,
+      "mean_wave_energy": 1.2094003233057686,
+      "mean_known_prediction_error": 0.3846331217964605,
+      "mean_representation_coverage": 0.99307686828047,
+      "mean_continuity_error": 0.18266873330716935,
+      "mean_brier_score": 0.1930428155966276,
+      "mean_loop_score": 0.13059465821573088,
+      "tracks_created": 5642,
+      "tracks_closed": 5639,
+      "mean_track_lifetime": 13.856712183011172,
+      "goals_generated": 1340,
+      "goals_retired": 715,
+      "unique_positions": 432,
+      "longest_physical_loop": 65,
+      "action_distribution": {
+        "MOVE_UP": 10519,
+        "MOVE_LEFT": 10577,
+        "MOVE_DOWN": 10723,
+        "MOVE_RIGHT": 10645,
+        "IDLE": 3983,
+        "INTERACT": 3553
+      },
+      "tie_count": 27101,
+      "tie_resolution_distribution": {
+        "ROTATING_CURSOR": 3,
+        "LEAST_USED": 15621,
+        "OLDEST_USED": 11477
+      },
+      "sensorimotor": {
+        "IDLE": {
+          "support": 3162,
+          "mean_dx": -0.013767657600674653,
+          "mean_dy": 0.010278304870335243,
+          "confidence": 0.9987365761212887
+        },
+        "MOVE_UP": {
+          "support": 7157,
+          "mean_dx": -0.00014804021371018987,
+          "mean_dy": 0.3804463828286648,
+          "confidence": 0.9994414187962575
+        },
+        "MOVE_DOWN": {
+          "support": 7051,
+          "mean_dx": 0.019434089051873837,
+          "mean_dy": -0.3939488488630455,
+          "confidence": 0.9994330262225372
+        },
+        "MOVE_LEFT": {
+          "support": 6949,
+          "mean_dx": 0.3763083417278271,
+          "mean_dy": -0.02185857506047464,
+          "confidence": 0.9994247087588092
+        },
+        "MOVE_RIGHT": {
+          "support": 6993,
+          "mean_dx": -0.379761223808843,
+          "mean_dy": 0.005425493520731628,
+          "confidence": 0.999428326425611
+        },
+        "INTERACT": {
+          "support": 2812,
+          "mean_dx": 0.022700331910858212,
+          "mean_dy": -0.0034969179706021754,
+          "confidence": 0.9985795454545454
+        }
+      }
+    },
+    {
+      "seed": 6,
+      "ticks": 50000,
+      "elapsed_seconds": 367.478180599981,
+      "ticks_per_second": 136.0625001418182,
+      "cognits": 1579,
+      "primitive_cognits": 1032,
+      "composite_cognits": 547,
+      "relations": 6,
+      "relation_density": 2.4080312658779563e-06,
+      "mean_active_ratio": 0.005175389264596235,
+      "p95_active_ratio": 0.013157894736842105,
+      "mean_wave_energy": 1.2336357105576887,
+      "mean_known_prediction_error": 0.36961884075749035,
+      "mean_representation_coverage": 0.993716744274485,
+      "mean_continuity_error": 0.16074552669759928,
+      "mean_brier_score": 0.12692305314813546,
+      "mean_loop_score": 0.13675546603519714,
+      "tracks_created": 5640,
+      "tracks_closed": 5638,
+      "mean_track_lifetime": 14.093827598439162,
+      "goals_generated": 1351,
+      "goals_retired": 713,
+      "unique_positions": 530,
+      "longest_physical_loop": 38,
+      "action_distribution": {
+        "MOVE_UP": 10683,
+        "MOVE_LEFT": 10640,
+        "MOVE_DOWN": 10532,
+        "MOVE_RIGHT": 10602,
+        "IDLE": 3977,
+        "INTERACT": 3566
+      },
+      "tie_count": 26704,
+      "tie_resolution_distribution": {
+        "ROTATING_CURSOR": 3,
+        "LEAST_USED": 14943,
+        "OLDEST_USED": 11758
+      },
+      "sensorimotor": {
+        "IDLE": {
+          "support": 3265,
+          "mean_dx": 0.009065849923430317,
+          "mean_dy": -0.014619703930576792,
+          "confidence": 0.9987763842153564
+        },
+        "MOVE_UP": {
+          "support": 6913,
+          "mean_dx": 0.0008283220709085065,
+          "mean_dy": 0.38030384437877585,
+          "confidence": 0.999421714616163
+        },
+        "MOVE_DOWN": {
+          "support": 7175,
+          "mean_dx": -0.013731430783695568,
+          "mean_dy": -0.3874076655052257,
+          "confidence": 0.9994428193341691
+        },
+        "MOVE_LEFT": {
+          "support": 6977,
+          "mean_dx": 0.39092016626056936,
+          "mean_dy": 0.021300941187712013,
+          "confidence": 0.9994270161867927
+        },
+        "MOVE_RIGHT": {
+          "support": 7137,
+          "mean_dx": -0.3889010099392621,
+          "mean_dy": 0.0059165182116001705,
+          "confidence": 0.9994398543621341
+        },
+        "INTERACT": {
+          "support": 2980,
+          "mean_dx": 0.02388143176733784,
+          "mean_dy": 0.019071588366890355,
+          "confidence": 0.9986595174262735
+        }
+      }
+    },
+    {
+      "seed": 7,
+      "ticks": 50000,
+      "elapsed_seconds": 321.5067827999592,
+      "ticks_per_second": 155.51771432178427,
+      "cognits": 1253,
+      "primitive_cognits": 817,
+      "composite_cognits": 436,
+      "relations": 98,
+      "relation_density": 6.246988059328538e-05,
+      "mean_active_ratio": 0.0036300136771611783,
+      "p95_active_ratio": 0.012809564474807857,
+      "mean_wave_energy": 1.3147916147677385,
+      "mean_known_prediction_error": 0.39057944604531103,
+      "mean_representation_coverage": 0.9920708496544264,
+      "mean_continuity_error": 0.20762849927764218,
+      "mean_brier_score": 0.12480489589891662,
+      "mean_loop_score": 0.16769223952598167,
+      "tracks_created": 5427,
+      "tracks_closed": 5427,
+      "mean_track_lifetime": 13.889810208218169,
+      "goals_generated": 1334,
+      "goals_retired": 797,
+      "unique_positions": 321,
+      "longest_physical_loop": 26,
+      "action_distribution": {
+        "MOVE_UP": 10534,
+        "MOVE_LEFT": 10656,
+        "MOVE_DOWN": 10522,
+        "MOVE_RIGHT": 10392,
+        "IDLE": 4231,
+        "INTERACT": 3665
+      },
+      "tie_count": 25776,
+      "tie_resolution_distribution": {
+        "ROTATING_CURSOR": 3,
+        "LEAST_USED": 15713,
+        "OLDEST_USED": 10060
+      },
+      "sensorimotor": {
+        "IDLE": {
+          "support": 2867,
+          "mean_dx": 0.016509708173468224,
+          "mean_dy": -0.019067550284850614,
+          "confidence": 0.9986067572274469
+        },
+        "MOVE_UP": {
+          "support": 6994,
+          "mean_dx": -0.003329043942426849,
+          "mean_dy": 0.3902821466018471,
+          "confidence": 0.9994284081166047
+        },
+        "MOVE_DOWN": {
+          "support": 6966,
+          "mean_dx": -0.004407120298593173,
+          "mean_dy": -0.3842425112450962,
+          "confidence": 0.9994261119081779
+        },
+        "MOVE_LEFT": {
+          "support": 6958,
+          "mean_dx": 0.4033893839225826,
+          "mean_dy": -0.009418415253425322,
+          "confidence": 0.9994254524561907
+        },
+        "MOVE_RIGHT": {
+          "support": 7287,
+          "mean_dx": -0.377025296189562,
+          "mean_dy": -0.0001509537532592439,
+          "confidence": 0.9994513784117405
+        },
+        "INTERACT": {
+          "support": 2551,
+          "mean_dx": 0.000980007840062716,
+          "mean_dy": 0.011812361165556002,
+          "confidence": 0.9984344422700587
+        }
+      }
+    },
+    {
+      "seed": 8,
+      "ticks": 50000,
+      "elapsed_seconds": 158.82586700003594,
+      "ticks_per_second": 314.8101813918553,
+      "cognits": 1040,
+      "primitive_cognits": 692,
+      "composite_cognits": 348,
+      "relations": 0,
+      "relation_density": 0.0,
+      "mean_active_ratio": 0.0017562626568905632,
+      "p95_active_ratio": 0.00893743793445879,
+      "mean_wave_energy": 0.4334444050079307,
+      "mean_known_prediction_error": 0.4898553320816141,
+      "mean_representation_coverage": 0.9928616840191247,
+      "mean_continuity_error": 0.07398607647376566,
+      "mean_brier_score": 0.4639647617741564,
+      "mean_loop_score": 0.05396963615679807,
+      "tracks_created": 2246,
+      "tracks_closed": 2246,
+      "mean_track_lifetime": 13.227515583259127,
+      "goals_generated": 1335,
+      "goals_retired": 270,
+      "unique_positions": 401,
+      "longest_physical_loop": 39,
+      "action_distribution": {
+        "MOVE_UP": 11573,
+        "MOVE_LEFT": 11601,
+        "MOVE_DOWN": 11584,
+        "MOVE_RIGHT": 11568,
+        "IDLE": 1944,
+        "INTERACT": 1730
+      },
+      "tie_count": 39166,
+      "tie_resolution_distribution": {
+        "ROTATING_CURSOR": 3,
+        "LEAST_USED": 19712,
+        "OLDEST_USED": 19451
+      },
+      "sensorimotor": {
+        "IDLE": {
+          "support": 1009,
+          "mean_dx": 0.010208126858275513,
+          "mean_dy": 0.04658077304261647,
+          "confidence": 0.9960513326752222
+        },
+        "MOVE_UP": {
+          "support": 2626,
+          "mean_dx": -0.010656257933485668,
+          "mean_dy": 0.39671871033257183,
+          "confidence": 0.9984790874524715
+        },
+        "MOVE_DOWN": {
+          "support": 2688,
+          "mean_dx": 0.010243055555555564,
+          "mean_dy": -0.3902157738095232,
+          "confidence": 0.9985141158989599
+        },
+        "MOVE_LEFT": {
+          "support": 2636,
+          "mean_dx": 0.38896054628224513,
+          "mean_dy": 0.010773899848254938,
+          "confidence": 0.9984848484848485
+        },
+        "MOVE_RIGHT": {
+          "support": 2695,
+          "mean_dx": -0.3776870748299323,
+          "mean_dy": 0.0011008039579467911,
+          "confidence": 0.9985179696183771
+        },
+        "INTERACT": {
+          "support": 920,
+          "mean_dx": -0.011630434782608678,
+          "mean_dy": 0.025000000000000033,
+          "confidence": 0.9956709956709957
+        }
+      }
+    },
+    {
+      "seed": 9,
+      "ticks": 50000,
+      "elapsed_seconds": 243.73958980001044,
+      "ticks_per_second": 205.13696622294825,
+      "cognits": 1144,
+      "primitive_cognits": 972,
+      "composite_cognits": 172,
+      "relations": 0,
+      "relation_density": 0.0,
+      "mean_active_ratio": 0.004091331702312834,
+      "p95_active_ratio": 0.014059753954305799,
+      "mean_wave_energy": 0.9963677368843289,
+      "mean_known_prediction_error": 0.39611300672355026,
+      "mean_representation_coverage": 0.9943719880010806,
+      "mean_continuity_error": 0.15171689170051306,
+      "mean_brier_score": 0.22636796598461778,
+      "mean_loop_score": 0.09126465835984424,
+      "tracks_created": 4990,
+      "tracks_closed": 4988,
+      "mean_track_lifetime": 13.768243785084202,
+      "goals_generated": 1348,
+      "goals_retired": 632,
+      "unique_positions": 502,
+      "longest_physical_loop": 37,
+      "action_distribution": {
+        "MOVE_UP": 10902,
+        "MOVE_LEFT": 10810,
+        "MOVE_DOWN": 10768,
+        "MOVE_RIGHT": 10864,
+        "IDLE": 3509,
+        "INTERACT": 3147
+      },
+      "tie_count": 29738,
+      "tie_resolution_distribution": {
+        "ROTATING_CURSOR": 3,
+        "LEAST_USED": 16758,
+        "OLDEST_USED": 12977
+      },
+      "sensorimotor": {
+        "IDLE": {
+          "support": 2844,
+          "mean_dx": -0.038045007032348865,
+          "mean_dy": -0.003861931551804962,
+          "confidence": 0.9985955056179775
+        },
+        "MOVE_UP": {
+          "support": 6154,
+          "mean_dx": -0.006764860640388757,
+          "mean_dy": 0.4162368262222005,
+          "confidence": 0.9993504384540435
+        },
+        "MOVE_DOWN": {
+          "support": 6238,
+          "mean_dx": 0.009057771874379804,
+          "mean_dy": -0.39922454286833764,
+          "confidence": 0.9993591797500802
+        },
+        "MOVE_LEFT": {
+          "support": 6052,
+          "mean_dx": 0.38824001510716577,
+          "mean_dy": -0.006315110313788444,
+          "confidence": 0.9993394980184941
+        },
+        "MOVE_RIGHT": {
+          "support": 6256,
+          "mean_dx": -0.3693224028741936,
+          "mean_dy": 0.0036682245361912775,
+          "confidence": 0.9993610223642172
+        },
+        "INTERACT": {
+          "support": 2563,
+          "mean_dx": -0.03286513200676293,
+          "mean_dy": 0.019755494862790993,
+          "confidence": 0.9984417608102844
+        }
+      }
+    }
+  ]
+}

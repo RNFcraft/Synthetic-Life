@@ -1,0 +1,104 @@
+{
+  "seed": 1051,
+  "pair": {
+    "target": "pair",
+    "success": false,
+    "actions": 500,
+    "initial_mismatch": 1.0,
+    "minimum_mismatch": 0.9,
+    "final_mismatch": 1.0,
+    "mismatch_samples": [
+      {
+        "tick": 1,
+        "mismatch": 0.9
+      },
+      {
+        "tick": 25,
+        "mismatch": 0.9
+      },
+      {
+        "tick": 100,
+        "mismatch": 0.9
+      },
+      {
+        "tick": 250,
+        "mismatch": 1.0
+      },
+      {
+        "tick": 500,
+        "mismatch": 1.0
+      }
+    ],
+    "world_modification": 0.0,
+    "action_counts": {
+      "push_attempts": 2,
+      "successful_pushes": 2,
+      "grab_attempts": 56,
+      "successful_grabs": 1,
+      "release_attempts": 11,
+      "successful_releases": 1,
+      "interaction_attempts": 264,
+      "successful_interactions": 0,
+      "blind_grabs": 54,
+      "blind_interactions": 264
+    },
+    "plans": 1,
+    "subgoals_created": 29,
+    "subgoals_completed": 29,
+    "memory_retrievals": 5280,
+    "unique_action_context_trials": 40,
+    "mean_epistemic": 0.26100918675617185
+  },
+  "line3": {
+    "target": "line3",
+    "success": false,
+    "actions": 500,
+    "initial_mismatch": 1.0,
+    "minimum_mismatch": 0.9333333333333333,
+    "final_mismatch": 0.9333333333333333,
+    "mismatch_samples": [
+      {
+        "tick": 1,
+        "mismatch": 1.0
+      },
+      {
+        "tick": 25,
+        "mismatch": 0.9333333333333333
+      },
+      {
+        "tick": 100,
+        "mismatch": 1.0
+      },
+      {
+        "tick": 250,
+        "mismatch": 1.0
+      },
+      {
+        "tick": 500,
+        "mismatch": 0.9333333333333333
+      }
+    ],
+    "world_modification": 41.0,
+    "action_counts": {
+      "push_attempts": 12,
+      "successful_pushes": 12,
+      "grab_attempts": 105,
+      "successful_grabs": 1,
+      "release_attempts": 26,
+      "successful_releases": 1,
+      "interaction_attempts": 114,
+      "successful_interactions": 0,
+      "blind_grabs": 71,
+      "blind_interactions": 114
+    },
+    "plans": 1,
+    "subgoals_created": 247,
+    "subgoals_completed": 246,
+    "memory_retrievals": 11683,
+    "unique_action_context_trials": 65,
+    "mean_epistemic": 0.1045273610637427
+  },
+  "elapsed_seconds": 149.3084510001354,
+  "physical_actions_per_second": 6.697544534830739,
+  "cognitive_cycles_per_second": 31.81333654044601
+}

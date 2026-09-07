@@ -1,0 +1,269 @@
+{
+  "runs": [
+    {
+      "seed": 123,
+      "ticks": 50000,
+      "mode": "agency",
+      "relation_prediction": true,
+      "elapsed_seconds": 529.3777281001676,
+      "ticks_per_second": 94.45051679722181,
+      "objects_spawned": 10,
+      "unique_positions": 681,
+      "longest_physical_loop": 26,
+      "world_configurations": 764,
+      "world_modification": 107.0,
+      "push_attempts": 412,
+      "successful_pushes": 360,
+      "grab_attempts": 8942,
+      "successful_grabs": 200,
+      "release_attempts": 2547,
+      "successful_releases": 200,
+      "interaction_attempts": 9498,
+      "successful_interactions": 226,
+      "action_distribution": {
+        "MOVE_UP": 6489,
+        "MOVE_LEFT": 6491,
+        "MOVE_DOWN": 6488,
+        "MOVE_RIGHT": 6856,
+        "IDLE": 2689,
+        "RELEASE": 2547,
+        "GRAB_RIGHT": 2257,
+        "GRAB_DOWN": 2230,
+        "GRAB_LEFT": 2235,
+        "GRAB_UP": 2220,
+        "INTERACT_DOWN": 1903,
+        "INTERACT": 1901,
+        "INTERACT_RIGHT": 1936,
+        "INTERACT_LEFT": 1886,
+        "INTERACT_UP": 1872
+      },
+      "cognits": 1259,
+      "primitive_cognits": 1049,
+      "composite_cognits": 210,
+      "relations": 16383,
+      "provisional_relations": 15128,
+      "consolidated_relations": 1255,
+      "self_action_relations": 5425,
+      "relation_density": 0.010343965420356581,
+      "relation_candidates": 6866576,
+      "materialization_rate": 0.0032697519112873724,
+      "mean_active_ratio": 0.003177124702144559,
+      "mean_prediction_error": 0.288138865466328,
+      "mean_coverage": 0.9982391441633768,
+      "mean_selectivity": 0.6375384298906042,
+      "mean_representation_quality": 0.6366040401051625,
+      "mean_brier": 0.06646390393347669,
+      "mean_agency": 0.01825118466840687,
+      "final_agency": 0.035794417792599606,
+      "mean_controllability": 0.019694146866960933,
+      "goals_generated": 1201,
+      "mean_goal_lifetime": 37.1325,
+      "intervals": [
+        {
+          "tick": 10000,
+          "agency": 0.019274603662518645,
+          "controllability": 0.012805808487223198,
+          "prediction_error": 0.3932448759173866,
+          "self_action_relations": 1977,
+          "world_modification": 46.0,
+          "actions": {
+            "MOVE_UP": 1377,
+            "MOVE_LEFT": 1383,
+            "MOVE_DOWN": 1370,
+            "MOVE_RIGHT": 1446,
+            "IDLE": 539,
+            "RELEASE": 491,
+            "GRAB_RIGHT": 422,
+            "GRAB_DOWN": 413,
+            "GRAB_LEFT": 438,
+            "GRAB_UP": 403,
+            "INTERACT_DOWN": 336,
+            "INTERACT": 345,
+            "INTERACT_RIGHT": 352,
+            "INTERACT_LEFT": 343,
+            "INTERACT_UP": 342
+          }
+        },
+        {
+          "tick": 25000,
+          "agency": 0.015221251571602527,
+          "controllability": 0.019394355347740706,
+          "prediction_error": 0.2749469967849925,
+          "self_action_relations": 3335,
+          "world_modification": 88.0,
+          "actions": {
+            "MOVE_UP": 3332,
+            "MOVE_LEFT": 3357,
+            "MOVE_DOWN": 3346,
+            "MOVE_RIGHT": 3414,
+            "IDLE": 1366,
+            "RELEASE": 1248,
+            "GRAB_RIGHT": 1091,
+            "GRAB_DOWN": 1095,
+            "GRAB_LEFT": 1107,
+            "GRAB_UP": 1066,
+            "INTERACT_DOWN": 909,
+            "INTERACT": 918,
+            "INTERACT_RIGHT": 923,
+            "INTERACT_LEFT": 908,
+            "INTERACT_UP": 920
+          }
+        },
+        {
+          "tick": 50000,
+          "agency": 0.018574963149921138,
+          "controllability": 0.023931083298151357,
+          "prediction_error": 0.22754598602847995,
+          "self_action_relations": 5425,
+          "world_modification": 107.0,
+          "actions": {
+            "MOVE_UP": 6489,
+            "MOVE_LEFT": 6491,
+            "MOVE_DOWN": 6488,
+            "MOVE_RIGHT": 6856,
+            "IDLE": 2689,
+            "RELEASE": 2547,
+            "GRAB_RIGHT": 2257,
+            "GRAB_DOWN": 2230,
+            "GRAB_LEFT": 2235,
+            "GRAB_UP": 2220,
+            "INTERACT_DOWN": 1903,
+            "INTERACT": 1901,
+            "INTERACT_RIGHT": 1936,
+            "INTERACT_LEFT": 1886,
+            "INTERACT_UP": 1872
+          }
+        }
+      ],
+      "spawn_records": [
+        {
+          "object_id": 1,
+          "spawn_tick": 387,
+          "spawn_position": [
+            29,
+            2
+          ],
+          "first_observed_tick": 1379,
+          "first_contact_tick": 1381,
+          "first_displaced_tick": 1566,
+          "first_interacted_tick": 1384
+        },
+        {
+          "object_id": 2,
+          "spawn_tick": 1030,
+          "spawn_position": [
+            29,
+            13
+          ],
+          "first_observed_tick": 5824,
+          "first_contact_tick": 29830,
+          "first_displaced_tick": 29831,
+          "first_interacted_tick": 29684
+        },
+        {
+          "object_id": 3,
+          "spawn_tick": 1416,
+          "spawn_position": [
+            22,
+            3
+          ],
+          "first_observed_tick": 1416,
+          "first_contact_tick": 1428,
+          "first_displaced_tick": 1428,
+          "first_interacted_tick": 3158
+        },
+        {
+          "object_id": 4,
+          "spawn_tick": 2095,
+          "spawn_position": [
+            29,
+            29
+          ],
+          "first_observed_tick": null,
+          "first_contact_tick": null,
+          "first_displaced_tick": null,
+          "first_interacted_tick": null
+        },
+        {
+          "object_id": 5,
+          "spawn_tick": 2364,
+          "spawn_position": [
+            1,
+            13
+          ],
+          "first_observed_tick": 14097,
+          "first_contact_tick": 16420,
+          "first_displaced_tick": 16420,
+          "first_interacted_tick": 16350
+        },
+        {
+          "object_id": 6,
+          "spawn_tick": 2888,
+          "spawn_position": [
+            10,
+            19
+          ],
+          "first_observed_tick": 12451,
+          "first_contact_tick": 17853,
+          "first_displaced_tick": 17853,
+          "first_interacted_tick": 19386
+        },
+        {
+          "object_id": 7,
+          "spawn_tick": 3308,
+          "spawn_position": [
+            21,
+            11
+          ],
+          "first_observed_tick": 4339,
+          "first_contact_tick": 5842,
+          "first_displaced_tick": 5860,
+          "first_interacted_tick": 5894
+        },
+        {
+          "object_id": 8,
+          "spawn_tick": 3994,
+          "spawn_position": [
+            24,
+            1
+          ],
+          "first_observed_tick": 3994,
+          "first_contact_tick": 4005,
+          "first_displaced_tick": 4012,
+          "first_interacted_tick": 4030
+        },
+        {
+          "object_id": 9,
+          "spawn_tick": 4325,
+          "spawn_position": [
+            19,
+            4
+          ],
+          "first_observed_tick": 4325,
+          "first_contact_tick": 4391,
+          "first_displaced_tick": 4549,
+          "first_interacted_tick": 4326
+        },
+        {
+          "object_id": 10,
+          "spawn_tick": 4747,
+          "spawn_position": [
+            13,
+            19
+          ],
+          "first_observed_tick": 12451,
+          "first_contact_tick": 18123,
+          "first_displaced_tick": 18123,
+          "first_interacted_tick": 18278
+        }
+      ],
+      "structures": {
+        "adjacent_pairs": 1,
+        "lines_2": 1,
+        "lines_3_plus": 0,
+        "clusters": 9,
+        "largest_cluster": 2
+      }
+    }
+  ]
+}

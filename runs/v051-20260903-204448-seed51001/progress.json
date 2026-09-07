@@ -1,0 +1,25 @@
+{
+  "version": "v0.5.1",
+  "seed": 51001,
+  "target_ticks": 50000,
+  "status": "interrupted",
+  "started": "2026-09-03T20:44:48.091789",
+  "checkpoints": [
+    {
+      "tick": 10000,
+      "file": "checkpoint-010000.seworld"
+    }
+  ],
+  "stop_reason": "stopped_by_user_after_checkpoint",
+  "result": "partial-result-010000.json",
+  "latest": {
+    "tick": 10000,
+    "elapsed_seconds": 822.4363522001076,
+    "cognits": 109,
+    "relations": 4306,
+    "places": 21,
+    "object_memories": 4,
+    "plans_created": 19,
+    "world_modification": 11.0
+  }
+}

@@ -1,0 +1,57 @@
+{
+  "prediction_batch_latency_us": {
+    "1": 318.7499940395355,
+    "4": 1137.7399787306786,
+    "17": 4504.24998998642
+  },
+  "compact_result": {
+    "ids_dtype": "uint32",
+    "values_dtype": "float32",
+    "count": 4000
+  },
+  "evidence_update": {
+    "8": {
+      "insertion_us": 12.9002146422863,
+      "eviction_plus_insertion_us": 6.800051778554916,
+      "support_query_us": 0.7759989239275455,
+      "source_events": 16,
+      "target_events": 16,
+      "candidate_pairs_represented": 128,
+      "evidence_bytes": 2072
+    },
+    "100": {
+      "insertion_us": 60.999998822808266,
+      "eviction_plus_insertion_us": 67.500164732337,
+      "support_query_us": 0.841999426484108,
+      "source_events": 200,
+      "target_events": 200,
+      "candidate_pairs_represented": 20000,
+      "evidence_bytes": 25256
+    },
+    "1000": {
+      "insertion_us": 1469.6000143885612,
+      "eviction_plus_insertion_us": 1297.5998688489199,
+      "support_query_us": 1.1719996109604836,
+      "source_events": 2000,
+      "target_events": 2000,
+      "candidate_pairs_represented": 2000000,
+      "evidence_bytes": 252056
+    },
+    "5000": {
+      "insertion_us": 12737.900018692017,
+      "eviction_plus_insertion_us": 10496.699949726462,
+      "support_query_us": 1.1509982869029045,
+      "source_events": 10000,
+      "target_events": 10000,
+      "candidate_pairs_represented": 50000000,
+      "evidence_bytes": 1260056
+    }
+  },
+  "graph": {
+    "cognits": 100000,
+    "relations": 400000,
+    "logical_bytes": 39107168,
+    "reserved_bytes": 45246697
+  },
+  "note": "Native substrate/FFI benchmark, not full Entity throughput."
+}

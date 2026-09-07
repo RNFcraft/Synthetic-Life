@@ -1,0 +1,8 @@
+{
+  "configuration": "Release MSVC 19.50, 10000 cognits, 9999 sparse relations, bounded 8-step wave",
+  "cpp_waves_per_second": {"100": 510465, "1000": 596552, "5000": 672948, "10000": 685298},
+  "python_waves_per_second": {"100": 44063, "1000": 44856, "5000": 44895, "10000": 44961},
+  "speedup_at_10000": 15.24,
+  "cpp_storage_bytes_estimate": 709960,
+  "notes": "Subsystem microbenchmark, not complete Simulation throughput. No cognitive truncation or Top-K."
+}

@@ -1,0 +1,9 @@
+{
+  "retained_memories": 10000,
+  "queries": 200,
+  "legacy_seconds": 2.3070710000010877,
+  "indexed_seconds": 0.9479933000002347,
+  "speedup": 2.4336363980636957,
+  "mean_candidates": 3223.36,
+  "max_candidates": 5437
+}

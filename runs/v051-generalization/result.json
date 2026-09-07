@@ -1,0 +1,382 @@
+{
+  "version": "v0.5.1",
+  "seed": 512,
+  "budget_per_case": 30,
+  "cases": [
+    {
+      "case": "translated_vertical",
+      "represented_transfer_expected": true,
+      "success": true,
+      "initial_distance": 2,
+      "minimum_distance": 1,
+      "first_useful_action": 0,
+      "actions": 1,
+      "trajectory": [
+        {
+          "tick": 0,
+          "action": "MOVE_UP",
+          "distance": 1
+        }
+      ]
+    },
+    {
+      "case": "horizontal_mirror",
+      "represented_transfer_expected": false,
+      "success": false,
+      "initial_distance": 2,
+      "minimum_distance": 2,
+      "first_useful_action": null,
+      "actions": 30,
+      "trajectory": [
+        {
+          "tick": 0,
+          "action": "MOVE_UP",
+          "distance": 2
+        },
+        {
+          "tick": 1,
+          "action": "MOVE_UP",
+          "distance": 2
+        },
+        {
+          "tick": 2,
+          "action": "MOVE_UP",
+          "distance": 2
+        },
+        {
+          "tick": 3,
+          "action": "MOVE_UP",
+          "distance": 2
+        },
+        {
+          "tick": 4,
+          "action": "MOVE_UP",
+          "distance": 2
+        },
+        {
+          "tick": 5,
+          "action": "MOVE_UP",
+          "distance": 2
+        },
+        {
+          "tick": 6,
+          "action": "MOVE_UP",
+          "distance": 2
+        },
+        {
+          "tick": 7,
+          "action": "MOVE_UP",
+          "distance": 2
+        },
+        {
+          "tick": 8,
+          "action": "MOVE_UP",
+          "distance": 2
+        },
+        {
+          "tick": 9,
+          "action": "MOVE_UP",
+          "distance": 2
+        },
+        {
+          "tick": 10,
+          "action": "MOVE_UP",
+          "distance": 2
+        },
+        {
+          "tick": 11,
+          "action": "MOVE_UP",
+          "distance": 2
+        },
+        {
+          "tick": 12,
+          "action": "MOVE_UP",
+          "distance": 2
+        },
+        {
+          "tick": 13,
+          "action": "MOVE_UP",
+          "distance": 2
+        },
+        {
+          "tick": 14,
+          "action": "MOVE_UP",
+          "distance": 2
+        },
+        {
+          "tick": 15,
+          "action": "MOVE_UP",
+          "distance": 2
+        },
+        {
+          "tick": 16,
+          "action": "MOVE_UP",
+          "distance": 2
+        },
+        {
+          "tick": 17,
+          "action": "MOVE_UP",
+          "distance": 2
+        },
+        {
+          "tick": 18,
+          "action": "MOVE_UP",
+          "distance": 2
+        },
+        {
+          "tick": 19,
+          "action": "MOVE_UP",
+          "distance": 2
+        },
+        {
+          "tick": 20,
+          "action": "MOVE_UP",
+          "distance": 2
+        },
+        {
+          "tick": 21,
+          "action": "MOVE_UP",
+          "distance": 2
+        },
+        {
+          "tick": 22,
+          "action": "MOVE_UP",
+          "distance": 2
+        },
+        {
+          "tick": 23,
+          "action": "MOVE_UP",
+          "distance": 2
+        },
+        {
+          "tick": 24,
+          "action": "MOVE_UP",
+          "distance": 2
+        },
+        {
+          "tick": 25,
+          "action": "MOVE_UP",
+          "distance": 2
+        },
+        {
+          "tick": 26,
+          "action": "MOVE_UP",
+          "distance": 2
+        },
+        {
+          "tick": 27,
+          "action": "MOVE_UP",
+          "distance": 2
+        },
+        {
+          "tick": 28,
+          "action": "MOVE_UP",
+          "distance": 2
+        },
+        {
+          "tick": 29,
+          "action": "MOVE_UP",
+          "distance": 2
+        }
+      ]
+    },
+    {
+      "case": "approach_from_south_orientation",
+      "represented_transfer_expected": false,
+      "success": false,
+      "initial_distance": 2,
+      "minimum_distance": 2,
+      "first_useful_action": null,
+      "actions": 30,
+      "trajectory": [
+        {
+          "tick": 0,
+          "action": "MOVE_UP",
+          "distance": 2
+        },
+        {
+          "tick": 1,
+          "action": "MOVE_UP",
+          "distance": 2
+        },
+        {
+          "tick": 2,
+          "action": "MOVE_UP",
+          "distance": 2
+        },
+        {
+          "tick": 3,
+          "action": "MOVE_UP",
+          "distance": 2
+        },
+        {
+          "tick": 4,
+          "action": "MOVE_UP",
+          "distance": 2
+        },
+        {
+          "tick": 5,
+          "action": "MOVE_UP",
+          "distance": 2
+        },
+        {
+          "tick": 6,
+          "action": "MOVE_UP",
+          "distance": 2
+        },
+        {
+          "tick": 7,
+          "action": "MOVE_UP",
+          "distance": 2
+        },
+        {
+          "tick": 8,
+          "action": "MOVE_UP",
+          "distance": 2
+        },
+        {
+          "tick": 9,
+          "action": "MOVE_UP",
+          "distance": 2
+        },
+        {
+          "tick": 10,
+          "action": "MOVE_UP",
+          "distance": 2
+        },
+        {
+          "tick": 11,
+          "action": "MOVE_UP",
+          "distance": 2
+        },
+        {
+          "tick": 12,
+          "action": "MOVE_UP",
+          "distance": 2
+        },
+        {
+          "tick": 13,
+          "action": "MOVE_UP",
+          "distance": 2
+        },
+        {
+          "tick": 14,
+          "action": "MOVE_UP",
+          "distance": 2
+        },
+        {
+          "tick": 15,
+          "action": "MOVE_UP",
+          "distance": 2
+        },
+        {
+          "tick": 16,
+          "action": "MOVE_UP",
+          "distance": 2
+        },
+        {
+          "tick": 17,
+          "action": "MOVE_UP",
+          "distance": 2
+        },
+        {
+          "tick": 18,
+          "action": "MOVE_UP",
+          "distance": 2
+        },
+        {
+          "tick": 19,
+          "action": "MOVE_UP",
+          "distance": 2
+        },
+        {
+          "tick": 20,
+          "action": "MOVE_UP",
+          "distance": 2
+        },
+        {
+          "tick": 21,
+          "action": "MOVE_UP",
+          "distance": 2
+        },
+        {
+          "tick": 22,
+          "action": "MOVE_UP",
+          "distance": 2
+        },
+        {
+          "tick": 23,
+          "action": "MOVE_UP",
+          "distance": 2
+        },
+        {
+          "tick": 24,
+          "action": "MOVE_UP",
+          "distance": 2
+        },
+        {
+          "tick": 25,
+          "action": "MOVE_UP",
+          "distance": 2
+        },
+        {
+          "tick": 26,
+          "action": "MOVE_UP",
+          "distance": 2
+        },
+        {
+          "tick": 27,
+          "action": "MOVE_UP",
+          "distance": 2
+        },
+        {
+          "tick": 28,
+          "action": "MOVE_UP",
+          "distance": 2
+        },
+        {
+          "tick": 29,
+          "action": "MOVE_UP",
+          "distance": 2
+        }
+      ]
+    },
+    {
+      "case": "irrelevant_distractor",
+      "represented_transfer_expected": true,
+      "success": true,
+      "initial_distance": 2,
+      "minimum_distance": 1,
+      "first_useful_action": 0,
+      "actions": 1,
+      "trajectory": [
+        {
+          "tick": 0,
+          "action": "MOVE_UP",
+          "distance": 1
+        }
+      ]
+    },
+    {
+      "case": "distance_three_two_interventions",
+      "represented_transfer_expected": false,
+      "success": true,
+      "initial_distance": 3,
+      "minimum_distance": 1,
+      "first_useful_action": 0,
+      "actions": 2,
+      "trajectory": [
+        {
+          "tick": 0,
+          "action": "MOVE_UP",
+          "distance": 2
+        },
+        {
+          "tick": 1,
+          "action": "MOVE_UP",
+          "distance": 1
+        }
+      ]
+    }
+  ]
+}

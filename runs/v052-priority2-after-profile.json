@@ -1,0 +1,810 @@
+{
+  "seed": 123,
+  "steps": 100,
+  "wall_seconds": 2.940254000001005,
+  "cognits": 50,
+  "relations": 363,
+  "full_graph_sync_calls": 0,
+  "top": [
+    {
+      "file": "D:\\projects\\aiagent\\synth_life\\simulation\\simulation.py",
+      "line": 64,
+      "function": "run",
+      "calls": 1,
+      "primitive_calls": 1,
+      "own_seconds": 0.000264,
+      "cumulative_seconds": 2.9402236000000004,
+      "seconds_per_call": 2.9402236000000004
+    },
+    {
+      "file": "D:\\projects\\aiagent\\synth_life\\simulation\\simulation.py",
+      "line": 28,
+      "function": "step",
+      "calls": 100,
+      "primitive_calls": 100,
+      "own_seconds": 0.007005300000000001,
+      "cumulative_seconds": 2.9399596000000003,
+      "seconds_per_call": 0.029399596000000004
+    },
+    {
+      "file": "D:\\projects\\aiagent\\synth_life\\consciousness\\core.py",
+      "line": 126,
+      "function": "deliberate",
+      "calls": 100,
+      "primitive_calls": 100,
+      "own_seconds": 0.0016883,
+      "cumulative_seconds": 2.2122615000000003,
+      "seconds_per_call": 0.022122615
+    },
+    {
+      "file": "D:\\projects\\aiagent\\synth_life\\consciousness\\planning.py",
+      "line": 15,
+      "function": "deliberate",
+      "calls": 100,
+      "primitive_calls": 100,
+      "own_seconds": 0.0260699,
+      "cumulative_seconds": 2.2073233,
+      "seconds_per_call": 0.022073233
+    },
+    {
+      "file": "D:\\projects\\aiagent\\synth_life\\consciousness\\planning.py",
+      "line": 79,
+      "function": "_search",
+      "calls": 467,
+      "primitive_calls": 467,
+      "own_seconds": 0.9513304,
+      "cumulative_seconds": 1.6584446000000002,
+      "seconds_per_call": 0.003551273233404711
+    },
+    {
+      "file": "D:\\projects\\aiagent\\synth_life\\consciousness\\core.py",
+      "line": 66,
+      "function": "step",
+      "calls": 100,
+      "primitive_calls": 100,
+      "own_seconds": 0.0127568,
+      "cumulative_seconds": 0.6407809,
+      "seconds_per_call": 0.0064078089999999996
+    },
+    {
+      "file": "D:\\projects\\aiagent\\synth_life\\consciousness\\core.py",
+      "line": 277,
+      "function": "_imagine",
+      "calls": 567,
+      "primitive_calls": 567,
+      "own_seconds": 0.0982345,
+      "cumulative_seconds": 0.5927396,
+      "seconds_per_call": 0.0010453961199294534
+    },
+    {
+      "file": "~",
+      "line": 0,
+      "function": "<built-in method builtins.sum>",
+      "calls": 110741,
+      "primitive_calls": 110741,
+      "own_seconds": 0.0965121,
+      "cumulative_seconds": 0.32838510000000004,
+      "seconds_per_call": 2.9653434590621362e-06
+    },
+    {
+      "file": "C:\\Users\\rnfcr\\AppData\\Local\\Programs\\Python\\Python311\\Lib\\enum.py",
+      "line": 1232,
+      "function": "__hash__",
+      "calls": 1388228,
+      "primitive_calls": 1388228,
+      "own_seconds": 0.22569640000000002,
+      "cumulative_seconds": 0.3090331,
+      "seconds_per_call": 2.2260975862754532e-07
+    },
+    {
+      "file": "~",
+      "line": 0,
+      "function": "<built-in method builtins.max>",
+      "calls": 433408,
+      "primitive_calls": 398842,
+      "own_seconds": 0.0603483,
+      "cumulative_seconds": 0.16407770000000002,
+      "seconds_per_call": 3.785756146633196e-07
+    },
+    {
+      "file": "D:\\projects\\aiagent\\synth_life\\consciousness\\core.py",
+      "line": 161,
+      "function": "_prediction_error",
+      "calls": 100,
+      "primitive_calls": 100,
+      "own_seconds": 0.0052775,
+      "cumulative_seconds": 0.1222892,
+      "seconds_per_call": 0.001222892
+    },
+    {
+      "file": "D:\\projects\\aiagent\\synth_life\\consciousness\\memory.py",
+      "line": 62,
+      "function": "observe",
+      "calls": 100,
+      "primitive_calls": 100,
+      "own_seconds": 0.0019342,
+      "cumulative_seconds": 0.11403840000000001,
+      "seconds_per_call": 0.0011403840000000001
+    },
+    {
+      "file": "D:\\projects\\aiagent\\synth_life\\consciousness\\state.py",
+      "line": 41,
+      "function": "loop_score",
+      "calls": 10207,
+      "primitive_calls": 10207,
+      "own_seconds": 0.016197800000000002,
+      "cumulative_seconds": 0.0934978,
+      "seconds_per_call": 9.160164592926423e-06
+    },
+    {
+      "file": "C:\\Users\\rnfcr\\AppData\\Local\\Programs\\Python\\Python311\\Lib\\enum.py",
+      "line": 193,
+      "function": "__get__",
+      "calls": 263656,
+      "primitive_calls": 263656,
+      "own_seconds": 0.06674680000000001,
+      "cumulative_seconds": 0.0906208,
+      "seconds_per_call": 3.437084686106138e-07
+    },
+    {
+      "file": "D:\\projects\\aiagent\\synth_life\\consciousness\\backends.py",
+      "line": 76,
+      "function": "planner_transition_batch",
+      "calls": 498,
+      "primitive_calls": 498,
+      "own_seconds": 0.003955800000000001,
+      "cumulative_seconds": 0.0850356,
+      "seconds_per_call": 0.00017075421686746988
+    },
+    {
+      "file": "~",
+      "line": 0,
+      "function": "<built-in method builtins.hash>",
+      "calls": 1388228,
+      "primitive_calls": 1388228,
+      "own_seconds": 0.0833367,
+      "cumulative_seconds": 0.0833367,
+      "seconds_per_call": 6.003098914587517e-08
+    },
+    {
+      "file": "C:\\Users\\rnfcr\\AppData\\Local\\Programs\\Python\\Python311\\Lib\\heapq.py",
+      "line": 463,
+      "function": "nsmallest",
+      "calls": 1868,
+      "primitive_calls": 1868,
+      "own_seconds": 0.040020900000000005,
+      "cumulative_seconds": 0.07393630000000001,
+      "seconds_per_call": 3.958046038543898e-05
+    },
+    {
+      "file": "D:\\projects\\aiagent\\synth_life\\consciousness\\core.py",
+      "line": 329,
+      "function": "_control_from_predictions",
+      "calls": 15246,
+      "primitive_calls": 15246,
+      "own_seconds": 0.0124598,
+      "cumulative_seconds": 0.0720784,
+      "seconds_per_call": 4.727692509510692e-06
+    },
+    {
+      "file": "D:\\projects\\aiagent\\synth_life\\consciousness\\planning.py",
+      "line": 118,
+      "function": "<genexpr>",
+      "calls": 512235,
+      "primitive_calls": 512235,
+      "own_seconds": 0.0715706,
+      "cumulative_seconds": 0.0715706,
+      "seconds_per_call": 1.3972219781936026e-07
+    },
+    {
+      "file": "D:\\projects\\aiagent\\synth_life\\consciousness\\calibration.py",
+      "line": 10,
+      "function": "ece",
+      "calls": 99,
+      "primitive_calls": 99,
+      "own_seconds": 0.0020829,
+      "cumulative_seconds": 0.0705562,
+      "seconds_per_call": 0.0007126888888888889
+    },
+    {
+      "file": "D:\\projects\\aiagent\\synth_life\\consciousness\\state.py",
+      "line": 34,
+      "function": "similarity",
+      "calls": 7994,
+      "primitive_calls": 7994,
+      "own_seconds": 0.0377021,
+      "cumulative_seconds": 0.0688253,
+      "seconds_per_call": 8.60961971478609e-06
+    },
+    {
+      "file": "D:\\projects\\aiagent\\synth_life\\consciousness\\core.py",
+      "line": 282,
+      "function": "<dictcomp>",
+      "calls": 567,
+      "primitive_calls": 567,
+      "own_seconds": 0.0045354,
+      "cumulative_seconds": 0.067182,
+      "seconds_per_call": 0.0001184867724867725
+    },
+    {
+      "file": "D:\\projects\\aiagent\\synth_life\\consciousness\\affordance.py",
+      "line": 25,
+      "function": "epistemic",
+      "calls": 16099,
+      "primitive_calls": 16099,
+      "own_seconds": 0.0242332,
+      "cumulative_seconds": 0.0664998,
+      "seconds_per_call": 4.13067892415678e-06
+    },
+    {
+      "file": "D:\\projects\\aiagent\\synth_life\\consciousness\\core.py",
+      "line": 288,
+      "function": "<genexpr>",
+      "calls": 220570,
+      "primitive_calls": 220570,
+      "own_seconds": 0.053160400000000003,
+      "cumulative_seconds": 0.06551910000000001,
+      "seconds_per_call": 2.97044475676656e-07
+    },
+    {
+      "file": "D:\\projects\\aiagent\\synth_life\\consciousness\\core.py",
+      "line": 303,
+      "function": "_graph_predictions_for_actions",
+      "calls": 867,
+      "primitive_calls": 867,
+      "own_seconds": 0.0039719,
+      "cumulative_seconds": 0.0650647,
+      "seconds_per_call": 7.504579008073818e-05
+    },
+    {
+      "file": "D:\\projects\\aiagent\\synth_life\\consciousness\\memory.py",
+      "line": 51,
+      "function": "_match_place",
+      "calls": 100,
+      "primitive_calls": 100,
+      "own_seconds": 0.0012162000000000002,
+      "cumulative_seconds": 0.0624272,
+      "seconds_per_call": 0.000624272
+    },
+    {
+      "file": "D:\\projects\\aiagent\\synth_life\\consciousness\\memory.py",
+      "line": 54,
+      "function": "<genexpr>",
+      "calls": 1334,
+      "primitive_calls": 1334,
+      "own_seconds": 0.0023833,
+      "cumulative_seconds": 0.06028820000000001,
+      "seconds_per_call": 4.519355322338831e-05
+    },
+    {
+      "file": "D:\\projects\\aiagent\\synth_life\\consciousness\\backends.py",
+      "line": 69,
+      "function": "predict_graph_batch",
+      "calls": 867,
+      "primitive_calls": 867,
+      "own_seconds": 0.0038150000000000002,
+      "cumulative_seconds": 0.060133700000000005,
+      "seconds_per_call": 6.935836216839678e-05
+    },
+    {
+      "file": "D:\\projects\\aiagent\\synth_life\\consciousness\\core.py",
+      "line": 286,
+      "function": "<genexpr>",
+      "calls": 220570,
+      "primitive_calls": 220570,
+      "own_seconds": 0.05808990000000001,
+      "cumulative_seconds": 0.05808990000000001,
+      "seconds_per_call": 2.6336265131250855e-07
+    },
+    {
+      "file": "D:\\projects\\aiagent\\synth_life\\consciousness\\memory.py",
+      "line": 15,
+      "function": "_similarity",
+      "calls": 2656,
+      "primitive_calls": 2656,
+      "own_seconds": 0.0101282,
+      "cumulative_seconds": 0.053865300000000005,
+      "seconds_per_call": 2.0280609939759038e-05
+    },
+    {
+      "file": "~",
+      "line": 0,
+      "function": "<method 'get' of 'dict' objects>",
+      "calls": 703791,
+      "primitive_calls": 703791,
+      "own_seconds": 0.0522388,
+      "cumulative_seconds": 0.0529704,
+      "seconds_per_call": 7.526438957019911e-08
+    },
+    {
+      "file": "D:\\projects\\aiagent\\synth_life\\consciousness\\calibration.py",
+      "line": 16,
+      "function": "<listcomp>",
+      "calls": 990,
+      "primitive_calls": 990,
+      "own_seconds": 0.052836600000000004,
+      "cumulative_seconds": 0.052836600000000004,
+      "seconds_per_call": 5.337030303030303e-05
+    },
+    {
+      "file": "D:\\projects\\aiagent\\synth_life\\consciousness\\core.py",
+      "line": 331,
+      "function": "<listcomp>",
+      "calls": 15246,
+      "primitive_calls": 15246,
+      "own_seconds": 0.035572200000000005,
+      "cumulative_seconds": 0.050916800000000005,
+      "seconds_per_call": 3.33968253968254e-06
+    },
+    {
+      "file": "D:\\projects\\aiagent\\synth_life\\consciousness\\sensory.py",
+      "line": 42,
+      "function": "observe",
+      "calls": 100,
+      "primitive_calls": 100,
+      "own_seconds": 0.0188643,
+      "cumulative_seconds": 0.047707900000000004,
+      "seconds_per_call": 0.00047707900000000004
+    },
+    {
+      "file": "D:\\projects\\aiagent\\synth_life\\consciousness\\native_graph.py",
+      "line": 11,
+      "function": "_state",
+      "calls": 36428,
+      "primitive_calls": 36428,
+      "own_seconds": 0.0095735,
+      "cumulative_seconds": 0.0423798,
+      "seconds_per_call": 1.1633853080048315e-06
+    },
+    {
+      "file": "D:\\projects\\aiagent\\synth_life\\consciousness\\core.py",
+      "line": 230,
+      "function": "_update_intrinsic_state",
+      "calls": 100,
+      "primitive_calls": 100,
+      "own_seconds": 0.0187936,
+      "cumulative_seconds": 0.0402109,
+      "seconds_per_call": 0.000402109
+    },
+    {
+      "file": "D:\\projects\\aiagent\\synth_life\\consciousness\\core.py",
+      "line": 133,
+      "function": "_match_and_birth",
+      "calls": 100,
+      "primitive_calls": 100,
+      "own_seconds": 0.0091739,
+      "cumulative_seconds": 0.0355826,
+      "seconds_per_call": 0.000355826
+    },
+    {
+      "file": "D:\\projects\\aiagent\\synth_life\\consciousness\\backends.py",
+      "line": 52,
+      "function": "cognit_state_one",
+      "calls": 41365,
+      "primitive_calls": 41365,
+      "own_seconds": 0.0207745,
+      "cumulative_seconds": 0.0348991,
+      "seconds_per_call": 8.436866916475282e-07
+    },
+    {
+      "file": "D:\\projects\\aiagent\\synth_life\\consciousness\\backends.py",
+      "line": 71,
+      "function": "<dictcomp>",
+      "calls": 867,
+      "primitive_calls": 867,
+      "own_seconds": 0.006292300000000001,
+      "cumulative_seconds": 0.0344188,
+      "seconds_per_call": 3.969873125720876e-05
+    },
+    {
+      "file": "D:\\projects\\aiagent\\synth_life\\consciousness\\affordance.py",
+      "line": 12,
+      "function": "_entry",
+      "calls": 16197,
+      "primitive_calls": 16197,
+      "own_seconds": 0.027156800000000002,
+      "cumulative_seconds": 0.033798100000000005,
+      "seconds_per_call": 2.0866888930048778e-06
+    },
+    {
+      "file": "~",
+      "line": 0,
+      "function": "<built-in method builtins.all>",
+      "calls": 3735,
+      "primitive_calls": 3735,
+      "own_seconds": 0.0014808,
+      "cumulative_seconds": 0.0337387,
+      "seconds_per_call": 9.033119143239626e-06
+    },
+    {
+      "file": "D:\\projects\\aiagent\\synth_life\\consciousness\\backends.py",
+      "line": 81,
+      "function": "<dictcomp>",
+      "calls": 14314,
+      "primitive_calls": 14314,
+      "own_seconds": 0.031732,
+      "cumulative_seconds": 0.031732,
+      "seconds_per_call": 2.2168506357412327e-06
+    },
+    {
+      "file": "D:\\projects\\aiagent\\synth_life\\consciousness\\memory.py",
+      "line": 70,
+      "function": "<genexpr>",
+      "calls": 960,
+      "primitive_calls": 960,
+      "own_seconds": 0.001154,
+      "cumulative_seconds": 0.03073,
+      "seconds_per_call": 3.2010416666666664e-05
+    },
+    {
+      "file": "D:\\projects\\aiagent\\synth_life\\consciousness\\core.py",
+      "line": 289,
+      "function": "<genexpr>",
+      "calls": 213334,
+      "primitive_calls": 213334,
+      "own_seconds": 0.0297876,
+      "cumulative_seconds": 0.0297876,
+      "seconds_per_call": 1.396289386595667e-07
+    },
+    {
+      "file": "D:\\projects\\aiagent\\synth_life\\consciousness\\backends.py",
+      "line": 20,
+      "function": "wrapped",
+      "calls": 10355,
+      "primitive_calls": 10355,
+      "own_seconds": 0.014297500000000001,
+      "cumulative_seconds": 0.029358400000000003,
+      "seconds_per_call": 2.8351907291163693e-06
+    },
+    {
+      "file": "D:\\projects\\aiagent\\synth_life\\consciousness\\backends.py",
+      "line": 55,
+      "function": "set_cognit_field",
+      "calls": 4937,
+      "primitive_calls": 4937,
+      "own_seconds": 0.008299500000000001,
+      "cumulative_seconds": 0.0287039,
+      "seconds_per_call": 5.814036864492607e-06
+    },
+    {
+      "file": "D:\\projects\\aiagent\\synth_life\\consciousness\\core.py",
+      "line": 366,
+      "function": "_prune",
+      "calls": 100,
+      "primitive_calls": 100,
+      "own_seconds": 0.0024605,
+      "cumulative_seconds": 0.028685400000000003,
+      "seconds_per_call": 0.000286854
+    },
+    {
+      "file": "D:\\projects\\aiagent\\synth_life\\consciousness\\memory.py",
+      "line": 17,
+      "function": "<genexpr>",
+      "calls": 101428,
+      "primitive_calls": 101428,
+      "own_seconds": 0.019918500000000002,
+      "cumulative_seconds": 0.0275109,
+      "seconds_per_call": 2.712357534408645e-07
+    },
+    {
+      "file": "D:\\projects\\aiagent\\synth_life\\consciousness\\native_graph.py",
+      "line": 12,
+      "function": "_set",
+      "calls": 4337,
+      "primitive_calls": 4337,
+      "own_seconds": 0.0016855000000000001,
+      "cumulative_seconds": 0.025991100000000003,
+      "seconds_per_call": 5.992875259395896e-06
+    },
+    {
+      "file": "D:\\projects\\aiagent\\synth_life\\consciousness\\native_graph.py",
+      "line": 27,
+      "function": "receive",
+      "calls": 4613,
+      "primitive_calls": 4613,
+      "own_seconds": 0.0019715,
+      "cumulative_seconds": 0.025349800000000002,
+      "seconds_per_call": 5.495295902883157e-06
+    },
+    {
+      "file": "D:\\projects\\aiagent\\synth_life\\world\\world.py",
+      "line": 59,
+      "function": "perceive",
+      "calls": 100,
+      "primitive_calls": 100,
+      "own_seconds": 0.0075852,
+      "cumulative_seconds": 0.023635600000000003,
+      "seconds_per_call": 0.00023635600000000004
+    },
+    {
+      "file": "D:\\projects\\aiagent\\synth_life\\consciousness\\backends.py",
+      "line": 62,
+      "function": "receive",
+      "calls": 4613,
+      "primitive_calls": 4613,
+      "own_seconds": 0.006942500000000001,
+      "cumulative_seconds": 0.0233783,
+      "seconds_per_call": 5.067916756991112e-06
+    },
+    {
+      "file": "D:\\projects\\aiagent\\synth_life\\consciousness\\memory.py",
+      "line": 8,
+      "function": "_rotate",
+      "calls": 2656,
+      "primitive_calls": 2656,
+      "own_seconds": 0.0186886,
+      "cumulative_seconds": 0.0232877,
+      "seconds_per_call": 8.767959337349398e-06
+    },
+    {
+      "file": "D:\\projects\\aiagent\\synth_life\\consciousness\\planning.py",
+      "line": 130,
+      "function": "<lambda>",
+      "calls": 198475,
+      "primitive_calls": 198475,
+      "own_seconds": 0.0226649,
+      "cumulative_seconds": 0.0226649,
+      "seconds_per_call": 1.1419523869504976e-07
+    },
+    {
+      "file": "D:\\projects\\aiagent\\synth_life\\consciousness\\state.py",
+      "line": 24,
+      "function": "signature",
+      "calls": 31976,
+      "primitive_calls": 31976,
+      "own_seconds": 0.021732,
+      "cumulative_seconds": 0.0225727,
+      "seconds_per_call": 7.059263197398049e-07
+    },
+    {
+      "file": "~",
+      "line": 0,
+      "function": "<built-in method builtins.len>",
+      "calls": 329510,
+      "primitive_calls": 329410,
+      "own_seconds": 0.022009400000000002,
+      "cumulative_seconds": 0.0220528,
+      "seconds_per_call": 6.692604169827926e-08
+    },
+    {
+      "file": "C:\\Users\\rnfcr\\AppData\\Local\\Programs\\Python\\Python311\\Lib\\enum.py",
+      "line": 1257,
+      "function": "value",
+      "calls": 242549,
+      "primitive_calls": 242549,
+      "own_seconds": 0.0216708,
+      "cumulative_seconds": 0.0216708,
+      "seconds_per_call": 8.934607027858289e-08
+    },
+    {
+      "file": "D:\\projects\\aiagent\\synth_life\\consciousness\\memory.py",
+      "line": 48,
+      "function": "_weights",
+      "calls": 1144,
+      "primitive_calls": 1144,
+      "own_seconds": 0.0005879,
+      "cumulative_seconds": 0.020697800000000002,
+      "seconds_per_call": 1.8092482517482518e-05
+    },
+    {
+      "file": "~",
+      "line": 0,
+      "function": "<built-in method builtins.sorted>",
+      "calls": 5724,
+      "primitive_calls": 5724,
+      "own_seconds": 0.008886900000000001,
+      "cumulative_seconds": 0.0205513,
+      "seconds_per_call": 3.5903738644304685e-06
+    },
+    {
+      "file": "~",
+      "line": 0,
+      "function": "<method 'append' of 'list' objects>",
+      "calls": 268142,
+      "primitive_calls": 268142,
+      "own_seconds": 0.0201314,
+      "cumulative_seconds": 0.0201314,
+      "seconds_per_call": 7.507738437096763e-08
+    },
+    {
+      "file": "D:\\projects\\aiagent\\synth_life\\consciousness\\memory.py",
+      "line": 49,
+      "function": "<dictcomp>",
+      "calls": 1144,
+      "primitive_calls": 1144,
+      "own_seconds": 0.0166963,
+      "cumulative_seconds": 0.0201099,
+      "seconds_per_call": 1.7578583916083915e-05
+    },
+    {
+      "file": "D:\\projects\\aiagent\\synth_life\\consciousness\\backends.py",
+      "line": 51,
+      "function": "materialize",
+      "calls": 99,
+      "primitive_calls": 99,
+      "own_seconds": 0.0002993,
+      "cumulative_seconds": 0.0200724,
+      "seconds_per_call": 0.00020275151515151515
+    },
+    {
+      "file": "~",
+      "line": 0,
+      "function": "<built-in method consciousness._native_brain.planner_transition_batch>",
+      "calls": 498,
+      "primitive_calls": 498,
+      "own_seconds": 0.019802800000000002,
+      "cumulative_seconds": 0.019802800000000002,
+      "seconds_per_call": 3.976465863453816e-05
+    },
+    {
+      "file": "~",
+      "line": 0,
+      "function": "<built-in method consciousness._native_brain.materialize_current>",
+      "calls": 99,
+      "primitive_calls": 99,
+      "own_seconds": 0.0196832,
+      "cumulative_seconds": 0.0196832,
+      "seconds_per_call": 0.00019882020202020202
+    },
+    {
+      "file": "D:\\projects\\aiagent\\synth_life\\consciousness\\backends.py",
+      "line": 15,
+      "function": "__getattr__",
+      "calls": 26822,
+      "primitive_calls": 26822,
+      "own_seconds": 0.013707500000000001,
+      "cumulative_seconds": 0.0192269,
+      "seconds_per_call": 7.168331966296324e-07
+    },
+    {
+      "file": "D:\\projects\\aiagent\\synth_life\\consciousness\\native_graph.py",
+      "line": 25,
+      "function": "effective_threshold",
+      "calls": 4354,
+      "primitive_calls": 4354,
+      "own_seconds": 0.0025215000000000003,
+      "cumulative_seconds": 0.018967900000000003,
+      "seconds_per_call": 4.3564308681672035e-06
+    },
+    {
+      "file": "D:\\projects\\aiagent\\synth_life\\consciousness\\native_graph.py",
+      "line": 23,
+      "function": "<lambda>",
+      "calls": 2802,
+      "primitive_calls": 2802,
+      "own_seconds": 0.0008469,
+      "cumulative_seconds": 0.0172658,
+      "seconds_per_call": 6.161955745895789e-06
+    },
+    {
+      "file": "D:\\projects\\aiagent\\synth_life\\consciousness\\core.py",
+      "line": 51,
+      "function": "_propagate",
+      "calls": 655,
+      "primitive_calls": 655,
+      "own_seconds": 0.0006168,
+      "cumulative_seconds": 0.016975300000000002,
+      "seconds_per_call": 2.5916488549618323e-05
+    },
+    {
+      "file": "D:\\projects\\aiagent\\synth_life\\consciousness\\backends.py",
+      "line": 64,
+      "function": "propagate_graph",
+      "calls": 655,
+      "primitive_calls": 655,
+      "own_seconds": 0.0066968,
+      "cumulative_seconds": 0.0163585,
+      "seconds_per_call": 2.4974809160305347e-05
+    },
+    {
+      "file": "D:\\projects\\aiagent\\synth_life\\consciousness\\calibration.py",
+      "line": 8,
+      "function": "brier_score",
+      "calls": 99,
+      "primitive_calls": 99,
+      "own_seconds": 0.00015560000000000001,
+      "cumulative_seconds": 0.015373000000000001,
+      "seconds_per_call": 0.0001552828282828283
+    },
+    {
+      "file": "D:\\projects\\aiagent\\synth_life\\consciousness\\backends.py",
+      "line": 41,
+      "function": "_native_mutated",
+      "calls": 10355,
+      "primitive_calls": 10355,
+      "own_seconds": 0.0073118,
+      "cumulative_seconds": 0.0150609,
+      "seconds_per_call": 1.4544567841622404e-06
+    },
+    {
+      "file": "D:\\projects\\aiagent\\synth_life\\consciousness\\backends.py",
+      "line": 72,
+      "function": "action_trials",
+      "calls": 567,
+      "primitive_calls": 567,
+      "own_seconds": 0.0037333,
+      "cumulative_seconds": 0.014438200000000002,
+      "seconds_per_call": 2.54641975308642e-05
+    },
+    {
+      "file": "D:\\projects\\aiagent\\synth_life\\consciousness\\memory.py",
+      "line": 118,
+      "function": "recall",
+      "calls": 665,
+      "primitive_calls": 665,
+      "own_seconds": 0.004525,
+      "cumulative_seconds": 0.014155500000000001,
+      "seconds_per_call": 2.1286466165413534e-05
+    },
+    {
+      "file": "D:\\projects\\aiagent\\synth_life\\consciousness\\core.py",
+      "line": 355,
+      "function": "_choose_action",
+      "calls": 100,
+      "primitive_calls": 100,
+      "own_seconds": 0.0007954,
+      "cumulative_seconds": 0.013646100000000001,
+      "seconds_per_call": 0.00013646100000000002
+    },
+    {
+      "file": "~",
+      "line": 0,
+      "function": "<built-in method consciousness._native_brain.predict_actions_batch_at>",
+      "calls": 867,
+      "primitive_calls": 867,
+      "own_seconds": 0.0135659,
+      "cumulative_seconds": 0.0135659,
+      "seconds_per_call": 1.5646943483275663e-05
+    },
+    {
+      "file": "D:\\projects\\aiagent\\synth_life\\consciousness\\native_graph.py",
+      "line": 14,
+      "function": "<lambda>",
+      "calls": 4354,
+      "primitive_calls": 4354,
+      "own_seconds": 0.0011710000000000002,
+      "cumulative_seconds": 0.0129391,
+      "seconds_per_call": 2.971773082223243e-06
+    },
+    {
+      "file": "D:\\projects\\aiagent\\synth_life\\consciousness\\calibration.py",
+      "line": 9,
+      "function": "<genexpr>",
+      "calls": 42583,
+      "primitive_calls": 42583,
+      "own_seconds": 0.0120163,
+      "cumulative_seconds": 0.0120163,
+      "seconds_per_call": 2.821853791419111e-07
+    },
+    {
+      "file": "D:\\projects\\aiagent\\synth_life\\consciousness\\memory.py",
+      "line": 99,
+      "function": "_reconcile",
+      "calls": 98,
+      "primitive_calls": 98,
+      "own_seconds": 0.00033200000000000005,
+      "cumulative_seconds": 0.0118667,
+      "seconds_per_call": 0.00012108877551020409
+    },
+    {
+      "file": "D:\\projects\\aiagent\\synth_life\\consciousness\\choice.py",
+      "line": 20,
+      "function": "resolve",
+      "calls": 100,
+      "primitive_calls": 100,
+      "own_seconds": 0.0023089,
+      "cumulative_seconds": 0.0114823,
+      "seconds_per_call": 0.00011482300000000001
+    },
+    {
+      "file": "D:\\projects\\aiagent\\synth_life\\consciousness\\memory.py",
+      "line": 102,
+      "function": "<genexpr>",
+      "calls": 837,
+      "primitive_calls": 837,
+      "own_seconds": 0.000768,
+      "cumulative_seconds": 0.011137900000000001,
+      "seconds_per_call": 1.3306929510155317e-05
+    }
+  ]
+}

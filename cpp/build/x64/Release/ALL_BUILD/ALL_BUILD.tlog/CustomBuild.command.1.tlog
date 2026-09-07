@@ -1,0 +1,10 @@
+^D:\PROJECTS\AIAGENT\SYNTH_LIFE\CPP\CMAKELISTS.TXT
+setlocal
+"C:\Program Files\CMake\bin\cmake.exe" -SD:/projects/aiagent/synth_life/cpp -BD:/projects/aiagent/synth_life/cpp/build --check-stamp-file D:/projects/aiagent/synth_life/cpp/build/CMakeFiles/generate.stamp
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal & call :cmErrorLevel %errorlevel% & goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd

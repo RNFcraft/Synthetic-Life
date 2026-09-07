@@ -1,0 +1,35 @@
+{
+  "seed": 123,
+  "steps": 100,
+  "checkpoints": [
+    {
+      "step": 100,
+      "wall_seconds": 1.1329568999935873,
+      "window_seconds": 1.1329568999935873,
+      "window_actions_per_second": 88.26461094907143,
+      "cognits_total": 50,
+      "cognits_live": 50,
+      "relations": 363,
+      "provisional": 315,
+      "consolidated": 48,
+      "active": 36,
+      "ffi_calls": 14544,
+      "ffi_calls_window": 14544,
+      "ffi_calls_per_action": 145.44,
+      "ffi_calls_per_action_window": 145.44,
+      "receive_calls": 726,
+      "field_write_calls": 1945,
+      "state_read_calls": 7980,
+      "relation_proxies": 2,
+      "relation_proxies_window": 2,
+      "relation_proxies_per_action": 0.02,
+      "relation_proxies_per_action_window": 0.02,
+      "memory_count": 1,
+      "retrieval_candidate_count": 1,
+      "retrieval_total_count": 1,
+      "graph_logical_bytes": 72510,
+      "graph_reserved_bytes": 74833,
+      "full_graph_sync_calls": 0
+    }
+  ]
+}

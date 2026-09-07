@@ -1,0 +1,458 @@
+{
+  "version": "v0.5.2-native",
+  "backend": "native",
+  "python_transition_updates_in_native_mode": 0,
+  "seed": 511,
+  "scope": "native authority causal regression",
+  "training": {
+    "episodes": 5,
+    "forced_physical_calibrations_per_episode": 4
+  },
+  "evaluation_budget": 30,
+  "causal_trace": {
+    "world_tick": 900,
+    "action": "MOVE_UP",
+    "internal_binding_before": {
+      "role_to_participant": [
+        4,
+        5
+      ],
+      "score": 0.0,
+      "unresolved_roles": 0,
+      "satisfied": 0,
+      "violated": 1,
+      "unknown": 0
+    },
+    "structural_mismatch_before": 1.0,
+    "uncertainty_before": 0.007932872786529765,
+    "predicted_graph_effects": {
+      "2": 0.6167644141536233,
+      "3": 0.5568945706049937,
+      "4": 0.6167644141536233,
+      "5": 0.6607586175395973,
+      "8": 0.6167644141536233,
+      "9": 0.6167644141536233,
+      "11": 0.11360599975279573,
+      "12": 0.11360599975279573,
+      "19": 0.06279942212219514,
+      "22": 0.5568945706049937,
+      "23": 0.06038405973287997,
+      "26": 0.4938166623586887,
+      "28": 0.46116646524238736
+    },
+    "predicted_progress": 1.0,
+    "learned_effect": {
+      "source": 6,
+      "target": 9,
+      "support": 19
+    },
+    "action_outcome": "SUCCESS",
+    "internal_binding_after": {
+      "role_to_participant": [
+        4,
+        5
+      ],
+      "score": 1.0,
+      "unresolved_roles": 0,
+      "satisfied": 1,
+      "violated": 0,
+      "unknown": 0
+    },
+    "structural_mismatch_after": 0.0,
+    "uncertainty_after": 0.007477437588120139,
+    "external_positions_before": [
+      [
+        5,
+        2
+      ],
+      [
+        5,
+        4
+      ]
+    ],
+    "external_positions_after": [
+      [
+        5,
+        2
+      ],
+      [
+        5,
+        3
+      ]
+    ],
+    "external_pair_distance_before": 2,
+    "external_pair_distance_after": 1,
+    "external_pair_distance_change": -1,
+    "subgoal": {
+      "id": 2,
+      "target_cognit_ids": [
+        29
+      ],
+      "activation_direction": 1.0,
+      "intensity": 0.7892351943025585,
+      "confidence": 1.0,
+      "age": 2,
+      "persistence": 1.0,
+      "origin_tension": 1.0,
+      "target_last_seen": 2,
+      "unavailable_ticks": 0,
+      "status": "ACTIVE",
+      "parent_id": null,
+      "depth": 0,
+      "origin": "TARGET",
+      "target_signature": [
+        [
+          -1,
+          0,
+          "spatial_relation",
+          1,
+          0
+        ]
+      ]
+    }
+  },
+  "groups": {
+    "experienced": [
+      {
+        "episode": 0,
+        "success": true,
+        "initial_pair_distance": 2,
+        "minimum_pair_distance": 1,
+        "final_pair_distance": 1,
+        "target_relevant_displacements": 1,
+        "useful_modifications": 1,
+        "first_useful_action": 0,
+        "unnecessary_manipulation": 0,
+        "actions": 1,
+        "action_counts": {
+          "MOVE_UP": 1
+        }
+      },
+      {
+        "episode": 1,
+        "success": true,
+        "initial_pair_distance": 2,
+        "minimum_pair_distance": 1,
+        "final_pair_distance": 1,
+        "target_relevant_displacements": 1,
+        "useful_modifications": 1,
+        "first_useful_action": 0,
+        "unnecessary_manipulation": 0,
+        "actions": 1,
+        "action_counts": {
+          "MOVE_UP": 1
+        }
+      },
+      {
+        "episode": 2,
+        "success": true,
+        "initial_pair_distance": 2,
+        "minimum_pair_distance": 1,
+        "final_pair_distance": 1,
+        "target_relevant_displacements": 1,
+        "useful_modifications": 1,
+        "first_useful_action": 0,
+        "unnecessary_manipulation": 0,
+        "actions": 1,
+        "action_counts": {
+          "MOVE_UP": 1
+        }
+      },
+      {
+        "episode": 3,
+        "success": true,
+        "initial_pair_distance": 2,
+        "minimum_pair_distance": 1,
+        "final_pair_distance": 1,
+        "target_relevant_displacements": 1,
+        "useful_modifications": 1,
+        "first_useful_action": 0,
+        "unnecessary_manipulation": 0,
+        "actions": 1,
+        "action_counts": {
+          "MOVE_UP": 1
+        }
+      },
+      {
+        "episode": 4,
+        "success": true,
+        "initial_pair_distance": 2,
+        "minimum_pair_distance": 1,
+        "final_pair_distance": 1,
+        "target_relevant_displacements": 1,
+        "useful_modifications": 1,
+        "first_useful_action": 0,
+        "unnecessary_manipulation": 0,
+        "actions": 1,
+        "action_counts": {
+          "MOVE_UP": 1
+        }
+      }
+    ],
+    "fresh": [
+      {
+        "episode": 0,
+        "success": true,
+        "initial_pair_distance": 2,
+        "minimum_pair_distance": 1,
+        "final_pair_distance": 1,
+        "target_relevant_displacements": 1,
+        "useful_modifications": 1,
+        "first_useful_action": 2,
+        "unnecessary_manipulation": 0,
+        "actions": 3,
+        "action_counts": {
+          "IDLE": 2,
+          "MOVE_UP": 1
+        }
+      },
+      {
+        "episode": 1,
+        "success": true,
+        "initial_pair_distance": 2,
+        "minimum_pair_distance": 1,
+        "final_pair_distance": 1,
+        "target_relevant_displacements": 1,
+        "useful_modifications": 1,
+        "first_useful_action": 2,
+        "unnecessary_manipulation": 0,
+        "actions": 3,
+        "action_counts": {
+          "IDLE": 2,
+          "MOVE_UP": 1
+        }
+      },
+      {
+        "episode": 2,
+        "success": true,
+        "initial_pair_distance": 2,
+        "minimum_pair_distance": 1,
+        "final_pair_distance": 1,
+        "target_relevant_displacements": 1,
+        "useful_modifications": 1,
+        "first_useful_action": 2,
+        "unnecessary_manipulation": 0,
+        "actions": 3,
+        "action_counts": {
+          "IDLE": 2,
+          "MOVE_UP": 1
+        }
+      },
+      {
+        "episode": 3,
+        "success": true,
+        "initial_pair_distance": 2,
+        "minimum_pair_distance": 1,
+        "final_pair_distance": 1,
+        "target_relevant_displacements": 1,
+        "useful_modifications": 1,
+        "first_useful_action": 2,
+        "unnecessary_manipulation": 0,
+        "actions": 3,
+        "action_counts": {
+          "IDLE": 2,
+          "MOVE_UP": 1
+        }
+      },
+      {
+        "episode": 4,
+        "success": true,
+        "initial_pair_distance": 2,
+        "minimum_pair_distance": 1,
+        "final_pair_distance": 1,
+        "target_relevant_displacements": 1,
+        "useful_modifications": 1,
+        "first_useful_action": 2,
+        "unnecessary_manipulation": 0,
+        "actions": 3,
+        "action_counts": {
+          "IDLE": 2,
+          "MOVE_UP": 1
+        }
+      }
+    ],
+    "causal_rho_ablated": [
+      {
+        "episode": 0,
+        "success": false,
+        "initial_pair_distance": 2,
+        "minimum_pair_distance": 2,
+        "final_pair_distance": 2,
+        "target_relevant_displacements": 0,
+        "useful_modifications": 0,
+        "first_useful_action": null,
+        "unnecessary_manipulation": 1,
+        "actions": 30,
+        "action_counts": {
+          "IDLE": 3,
+          "MOVE_DOWN": 2,
+          "MOVE_LEFT": 2,
+          "MOVE_RIGHT": 2,
+          "GRAB_UP": 2,
+          "GRAB_DOWN": 2,
+          "GRAB_LEFT": 2,
+          "GRAB_RIGHT": 2,
+          "RELEASE": 1,
+          "INTERACT_UP": 2,
+          "INTERACT_DOWN": 2,
+          "INTERACT_LEFT": 1,
+          "INTERACT_RIGHT": 1,
+          "TURN_LEFT": 2,
+          "TURN_RIGHT": 2,
+          "INTERACT": 1,
+          "MOVE_UP": 1
+        }
+      },
+      {
+        "episode": 1,
+        "success": false,
+        "initial_pair_distance": 2,
+        "minimum_pair_distance": 2,
+        "final_pair_distance": 2,
+        "target_relevant_displacements": 0,
+        "useful_modifications": 0,
+        "first_useful_action": null,
+        "unnecessary_manipulation": 1,
+        "actions": 30,
+        "action_counts": {
+          "IDLE": 3,
+          "MOVE_DOWN": 2,
+          "MOVE_LEFT": 2,
+          "MOVE_RIGHT": 2,
+          "GRAB_UP": 2,
+          "GRAB_DOWN": 2,
+          "GRAB_LEFT": 2,
+          "GRAB_RIGHT": 2,
+          "RELEASE": 1,
+          "INTERACT_UP": 2,
+          "INTERACT_DOWN": 2,
+          "INTERACT_LEFT": 1,
+          "INTERACT_RIGHT": 1,
+          "TURN_LEFT": 2,
+          "TURN_RIGHT": 2,
+          "INTERACT": 1,
+          "MOVE_UP": 1
+        }
+      },
+      {
+        "episode": 2,
+        "success": false,
+        "initial_pair_distance": 2,
+        "minimum_pair_distance": 2,
+        "final_pair_distance": 2,
+        "target_relevant_displacements": 0,
+        "useful_modifications": 0,
+        "first_useful_action": null,
+        "unnecessary_manipulation": 1,
+        "actions": 30,
+        "action_counts": {
+          "IDLE": 3,
+          "MOVE_DOWN": 2,
+          "MOVE_LEFT": 2,
+          "MOVE_RIGHT": 2,
+          "GRAB_UP": 2,
+          "GRAB_DOWN": 2,
+          "GRAB_LEFT": 2,
+          "GRAB_RIGHT": 2,
+          "RELEASE": 1,
+          "INTERACT_UP": 2,
+          "INTERACT_DOWN": 2,
+          "INTERACT_LEFT": 1,
+          "INTERACT_RIGHT": 1,
+          "TURN_LEFT": 2,
+          "TURN_RIGHT": 2,
+          "INTERACT": 1,
+          "MOVE_UP": 1
+        }
+      },
+      {
+        "episode": 3,
+        "success": false,
+        "initial_pair_distance": 2,
+        "minimum_pair_distance": 2,
+        "final_pair_distance": 2,
+        "target_relevant_displacements": 0,
+        "useful_modifications": 0,
+        "first_useful_action": null,
+        "unnecessary_manipulation": 1,
+        "actions": 30,
+        "action_counts": {
+          "IDLE": 3,
+          "MOVE_DOWN": 2,
+          "MOVE_LEFT": 2,
+          "MOVE_RIGHT": 2,
+          "GRAB_UP": 2,
+          "GRAB_DOWN": 2,
+          "GRAB_LEFT": 2,
+          "GRAB_RIGHT": 2,
+          "RELEASE": 1,
+          "INTERACT_UP": 2,
+          "INTERACT_DOWN": 2,
+          "INTERACT_LEFT": 1,
+          "INTERACT_RIGHT": 1,
+          "TURN_LEFT": 2,
+          "TURN_RIGHT": 2,
+          "INTERACT": 1,
+          "MOVE_UP": 1
+        }
+      },
+      {
+        "episode": 4,
+        "success": false,
+        "initial_pair_distance": 2,
+        "minimum_pair_distance": 2,
+        "final_pair_distance": 2,
+        "target_relevant_displacements": 0,
+        "useful_modifications": 0,
+        "first_useful_action": null,
+        "unnecessary_manipulation": 1,
+        "actions": 30,
+        "action_counts": {
+          "IDLE": 3,
+          "MOVE_DOWN": 2,
+          "MOVE_LEFT": 2,
+          "MOVE_RIGHT": 2,
+          "GRAB_UP": 2,
+          "GRAB_DOWN": 2,
+          "GRAB_LEFT": 2,
+          "GRAB_RIGHT": 2,
+          "RELEASE": 1,
+          "INTERACT_UP": 2,
+          "INTERACT_DOWN": 2,
+          "INTERACT_LEFT": 1,
+          "INTERACT_RIGHT": 1,
+          "TURN_LEFT": 2,
+          "TURN_RIGHT": 2,
+          "INTERACT": 1,
+          "MOVE_UP": 1
+        }
+      }
+    ]
+  },
+  "summary": {
+    "experienced": {
+      "successes": 5,
+      "mean_min_pair_distance": 1.0,
+      "useful_modifications": 5,
+      "mean_first_useful_action": 0.0,
+      "mean_actions": 1.0,
+      "unnecessary_manipulation": 0
+    },
+    "fresh": {
+      "successes": 5,
+      "mean_min_pair_distance": 1.0,
+      "useful_modifications": 5,
+      "mean_first_useful_action": 2.0,
+      "mean_actions": 3.0,
+      "unnecessary_manipulation": 0
+    },
+    "causal_rho_ablated": {
+      "successes": 0,
+      "mean_min_pair_distance": 2.0,
+      "useful_modifications": 0,
+      "mean_first_useful_action": 0.0,
+      "mean_actions": 30.0,
+      "unnecessary_manipulation": 5
+    }
+  }
+}

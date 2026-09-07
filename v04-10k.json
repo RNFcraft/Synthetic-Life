@@ -1,0 +1,629 @@
+{
+  "runs": [
+    {
+      "seed": 0,
+      "ticks": 10000,
+      "mode": "agency",
+      "relation_prediction": true,
+      "elapsed_seconds": 39.808159600012004,
+      "ticks_per_second": 251.2047806399215,
+      "objects_spawned": 10,
+      "unique_positions": 303,
+      "longest_physical_loop": 21,
+      "world_configurations": 150,
+      "world_modification": 45.0,
+      "push_attempts": 71,
+      "successful_pushes": 61,
+      "grab_attempts": 1747,
+      "successful_grabs": 33,
+      "release_attempts": 520,
+      "successful_releases": 33,
+      "interaction_attempts": 1800,
+      "successful_interactions": 38,
+      "action_distribution": {
+        "MOVE_UP": 1342,
+        "MOVE_LEFT": 1351,
+        "MOVE_DOWN": 1343,
+        "MOVE_RIGHT": 1353,
+        "IDLE": 544,
+        "RELEASE": 520,
+        "GRAB_RIGHT": 430,
+        "GRAB_DOWN": 426,
+        "GRAB_LEFT": 460,
+        "GRAB_UP": 431,
+        "INTERACT_DOWN": 355,
+        "INTERACT": 358,
+        "INTERACT_RIGHT": 364,
+        "INTERACT_LEFT": 347,
+        "INTERACT_UP": 376
+      },
+      "cognits": 890,
+      "primitive_cognits": 712,
+      "composite_cognits": 178,
+      "relations": 4712,
+      "provisional_relations": 4056,
+      "consolidated_relations": 656,
+      "self_action_relations": 1521,
+      "relation_density": 0.005955435345862666,
+      "relation_candidates": 725212,
+      "materialization_rate": 0.006773191839076022,
+      "mean_active_ratio": 0.0056179775280898875,
+      "mean_prediction_error": 0.42154842706155443,
+      "mean_coverage": 0.9919001433043468,
+      "mean_selectivity": 0.6477572518707396,
+      "mean_representation_quality": 0.6434195947323282,
+      "mean_brier": 0.1532605912319862,
+      "mean_agency": 0.013335474987814669,
+      "final_agency": 0.0,
+      "mean_controllability": 0.008760727515261706,
+      "goals_generated": 225,
+      "mean_goal_lifetime": 42.21875,
+      "intervals": [
+        {
+          "tick": 10000,
+          "agency": 0.013335474987814669,
+          "controllability": 0.008760727515261706,
+          "prediction_error": 0.42154842706155443,
+          "self_action_relations": 1521,
+          "world_modification": 45.0,
+          "actions": {
+            "MOVE_UP": 1342,
+            "MOVE_LEFT": 1351,
+            "MOVE_DOWN": 1343,
+            "MOVE_RIGHT": 1353,
+            "IDLE": 544,
+            "RELEASE": 520,
+            "GRAB_RIGHT": 430,
+            "GRAB_DOWN": 426,
+            "GRAB_LEFT": 460,
+            "GRAB_UP": 431,
+            "INTERACT_DOWN": 355,
+            "INTERACT": 358,
+            "INTERACT_RIGHT": 364,
+            "INTERACT_LEFT": 347,
+            "INTERACT_UP": 376
+          }
+        }
+      ],
+      "spawn_records": [
+        {
+          "object_id": 1,
+          "spawn_tick": 447,
+          "spawn_position": [
+            26,
+            25
+          ],
+          "first_observed_tick": 449,
+          "first_contact_tick": 884,
+          "first_displaced_tick": 884,
+          "first_interacted_tick": 1174
+        },
+        {
+          "object_id": 2,
+          "spawn_tick": 1152,
+          "spawn_position": [
+            10,
+            14
+          ],
+          "first_observed_tick": 8261,
+          "first_contact_tick": 8693,
+          "first_displaced_tick": 8693,
+          "first_interacted_tick": 8503
+        },
+        {
+          "object_id": 3,
+          "spawn_tick": 1422,
+          "spawn_position": [
+            25,
+            8
+          ],
+          "first_observed_tick": null,
+          "first_contact_tick": null,
+          "first_displaced_tick": null,
+          "first_interacted_tick": null
+        },
+        {
+          "object_id": 4,
+          "spawn_tick": 2166,
+          "spawn_position": [
+            15,
+            17
+          ],
+          "first_observed_tick": 7899,
+          "first_contact_tick": 8118,
+          "first_displaced_tick": 8137,
+          "first_interacted_tick": null
+        },
+        {
+          "object_id": 5,
+          "spawn_tick": 2664,
+          "spawn_position": [
+            25,
+            13
+          ],
+          "first_observed_tick": 7603,
+          "first_contact_tick": 7622,
+          "first_displaced_tick": 7622,
+          "first_interacted_tick": null
+        },
+        {
+          "object_id": 6,
+          "spawn_tick": 3384,
+          "spawn_position": [
+            28,
+            26
+          ],
+          "first_observed_tick": 3397,
+          "first_contact_tick": 3472,
+          "first_displaced_tick": 3482,
+          "first_interacted_tick": 3492
+        },
+        {
+          "object_id": 7,
+          "spawn_tick": 4058,
+          "spawn_position": [
+            11,
+            10
+          ],
+          "first_observed_tick": 9084,
+          "first_contact_tick": 9983,
+          "first_displaced_tick": 9983,
+          "first_interacted_tick": 9328
+        },
+        {
+          "object_id": 8,
+          "spawn_tick": 4803,
+          "spawn_position": [
+            12,
+            16
+          ],
+          "first_observed_tick": 8055,
+          "first_contact_tick": 8269,
+          "first_displaced_tick": 8269,
+          "first_interacted_tick": 8271
+        },
+        {
+          "object_id": 9,
+          "spawn_tick": 5236,
+          "spawn_position": [
+            3,
+            20
+          ],
+          "first_observed_tick": 8761,
+          "first_contact_tick": null,
+          "first_displaced_tick": null,
+          "first_interacted_tick": null
+        },
+        {
+          "object_id": 10,
+          "spawn_tick": 5942,
+          "spawn_position": [
+            13,
+            7
+          ],
+          "first_observed_tick": 9337,
+          "first_contact_tick": null,
+          "first_displaced_tick": null,
+          "first_interacted_tick": null
+        }
+      ],
+      "structures": {
+        "adjacent_pairs": 1,
+        "lines_2": 1,
+        "lines_3_plus": 0,
+        "clusters": 9,
+        "largest_cluster": 2
+      }
+    }
+  ],
+  "passive_control": {
+    "seed": 123,
+    "ticks": 10000,
+    "mode": "passive",
+    "relation_prediction": true,
+    "elapsed_seconds": 30.523723300080746,
+    "ticks_per_second": 327.6140299690617,
+    "objects_spawned": 10,
+    "unique_positions": 304,
+    "longest_physical_loop": 21,
+    "world_configurations": 17,
+    "world_modification": 5.0,
+    "push_attempts": 15,
+    "successful_pushes": 7,
+    "grab_attempts": 0,
+    "successful_grabs": 0,
+    "release_attempts": 0,
+    "successful_releases": 0,
+    "interaction_attempts": 0,
+    "successful_interactions": 0,
+    "action_distribution": {
+      "MOVE_UP": 2290,
+      "MOVE_LEFT": 2369,
+      "MOVE_DOWN": 2272,
+      "MOVE_RIGHT": 2293,
+      "IDLE": 776
+    },
+    "cognits": 495,
+    "primitive_cognits": 187,
+    "composite_cognits": 308,
+    "relations": 6598,
+    "provisional_relations": 5963,
+    "consolidated_relations": 635,
+    "self_action_relations": 4183,
+    "relation_density": 0.026982374350795403,
+    "relation_candidates": 429760,
+    "materialization_rate": 0.015578462397617275,
+    "mean_active_ratio": 0.0,
+    "mean_prediction_error": 0.2838330767630863,
+    "mean_coverage": 0.9922976474616391,
+    "mean_selectivity": 0.5880755637561524,
+    "mean_representation_quality": 0.58393266064488,
+    "mean_brier": 0.13196770024767424,
+    "mean_agency": 0.020507599067912698,
+    "final_agency": 0.0,
+    "mean_controllability": 0.023041657263524907,
+    "goals_generated": 242,
+    "mean_goal_lifetime": 37.489626556016596,
+    "intervals": [
+      {
+        "tick": 10000,
+        "agency": 0.020507599067912698,
+        "controllability": 0.023041657263524907,
+        "prediction_error": 0.2838330767630863,
+        "self_action_relations": 4183,
+        "world_modification": 5.0,
+        "actions": {
+          "MOVE_UP": 2290,
+          "MOVE_LEFT": 2369,
+          "MOVE_DOWN": 2272,
+          "MOVE_RIGHT": 2293,
+          "IDLE": 776
+        }
+      }
+    ],
+    "spawn_records": [
+      {
+        "object_id": 1,
+        "spawn_tick": 387,
+        "spawn_position": [
+          0,
+          3
+        ],
+        "first_observed_tick": 4662,
+        "first_contact_tick": 4664,
+        "first_displaced_tick": 6272,
+        "first_interacted_tick": null
+      },
+      {
+        "object_id": 2,
+        "spawn_tick": 1030,
+        "spawn_position": [
+          29,
+          13
+        ],
+        "first_observed_tick": null,
+        "first_contact_tick": null,
+        "first_displaced_tick": null,
+        "first_interacted_tick": null
+      },
+      {
+        "object_id": 3,
+        "spawn_tick": 1416,
+        "spawn_position": [
+          21,
+          3
+        ],
+        "first_observed_tick": 1416,
+        "first_contact_tick": 2037,
+        "first_displaced_tick": 2037,
+        "first_interacted_tick": null
+      },
+      {
+        "object_id": 4,
+        "spawn_tick": 2095,
+        "spawn_position": [
+          29,
+          29
+        ],
+        "first_observed_tick": null,
+        "first_contact_tick": null,
+        "first_displaced_tick": null,
+        "first_interacted_tick": null
+      },
+      {
+        "object_id": 5,
+        "spawn_tick": 2364,
+        "spawn_position": [
+          1,
+          13
+        ],
+        "first_observed_tick": 6161,
+        "first_contact_tick": null,
+        "first_displaced_tick": null,
+        "first_interacted_tick": null
+      },
+      {
+        "object_id": 6,
+        "spawn_tick": 2888,
+        "spawn_position": [
+          10,
+          19
+        ],
+        "first_observed_tick": null,
+        "first_contact_tick": null,
+        "first_displaced_tick": null,
+        "first_interacted_tick": null
+      },
+      {
+        "object_id": 7,
+        "spawn_tick": 3308,
+        "spawn_position": [
+          21,
+          11
+        ],
+        "first_observed_tick": 3351,
+        "first_contact_tick": null,
+        "first_displaced_tick": null,
+        "first_interacted_tick": null
+      },
+      {
+        "object_id": 8,
+        "spawn_tick": 3994,
+        "spawn_position": [
+          24,
+          1
+        ],
+        "first_observed_tick": null,
+        "first_contact_tick": null,
+        "first_displaced_tick": null,
+        "first_interacted_tick": null
+      },
+      {
+        "object_id": 9,
+        "spawn_tick": 4325,
+        "spawn_position": [
+          21,
+          4
+        ],
+        "first_observed_tick": null,
+        "first_contact_tick": null,
+        "first_displaced_tick": null,
+        "first_interacted_tick": null
+      },
+      {
+        "object_id": 10,
+        "spawn_tick": 4747,
+        "spawn_position": [
+          13,
+          19
+        ],
+        "first_observed_tick": null,
+        "first_contact_tick": null,
+        "first_displaced_tick": null,
+        "first_interacted_tick": null
+      }
+    ],
+    "structures": {
+      "adjacent_pairs": 0,
+      "lines_2": 0,
+      "lines_3_plus": 0,
+      "clusters": 10,
+      "largest_cluster": 1
+    }
+  },
+  "relation_ablation": {
+    "seed": 123,
+    "ticks": 10000,
+    "mode": "agency",
+    "relation_prediction": false,
+    "elapsed_seconds": 29.536975600058213,
+    "ticks_per_second": 338.558697931832,
+    "objects_spawned": 10,
+    "unique_positions": 183,
+    "longest_physical_loop": 22,
+    "world_configurations": 110,
+    "world_modification": 28.0,
+    "push_attempts": 60,
+    "successful_pushes": 51,
+    "grab_attempts": 1749,
+    "successful_grabs": 23,
+    "release_attempts": 489,
+    "successful_releases": 23,
+    "interaction_attempts": 1847,
+    "successful_interactions": 34,
+    "action_distribution": {
+      "MOVE_UP": 1363,
+      "MOVE_LEFT": 1350,
+      "MOVE_DOWN": 1320,
+      "MOVE_RIGHT": 1342,
+      "IDLE": 540,
+      "RELEASE": 489,
+      "GRAB_RIGHT": 436,
+      "GRAB_DOWN": 429,
+      "GRAB_LEFT": 445,
+      "GRAB_UP": 439,
+      "INTERACT_DOWN": 370,
+      "INTERACT": 364,
+      "INTERACT_RIGHT": 374,
+      "INTERACT_LEFT": 360,
+      "INTERACT_UP": 379
+    },
+    "cognits": 909,
+    "primitive_cognits": 681,
+    "composite_cognits": 228,
+    "relations": 4338,
+    "provisional_relations": 3415,
+    "consolidated_relations": 923,
+    "self_action_relations": 166,
+    "relation_density": 0.005255811924804815,
+    "relation_candidates": 1178140,
+    "materialization_rate": 0.0037703498735294615,
+    "mean_active_ratio": 0.0165016501650165,
+    "mean_prediction_error": 0.7991,
+    "mean_coverage": 0.9936355699481509,
+    "mean_selectivity": 0.6424899423108966,
+    "mean_representation_quality": 0.6391338397205837,
+    "mean_brier": 0.9997,
+    "mean_agency": 0.0,
+    "final_agency": 0.0,
+    "mean_controllability": 0.0,
+    "goals_generated": 126,
+    "mean_goal_lifetime": 78.688,
+    "intervals": [
+      {
+        "tick": 10000,
+        "agency": 0.0,
+        "controllability": 0.0,
+        "prediction_error": 0.7991,
+        "self_action_relations": 166,
+        "world_modification": 28.0,
+        "actions": {
+          "MOVE_UP": 1363,
+          "MOVE_LEFT": 1350,
+          "MOVE_DOWN": 1320,
+          "MOVE_RIGHT": 1342,
+          "IDLE": 540,
+          "RELEASE": 489,
+          "GRAB_RIGHT": 436,
+          "GRAB_DOWN": 429,
+          "GRAB_LEFT": 445,
+          "GRAB_UP": 439,
+          "INTERACT_DOWN": 370,
+          "INTERACT": 364,
+          "INTERACT_RIGHT": 374,
+          "INTERACT_LEFT": 360,
+          "INTERACT_UP": 379
+        }
+      }
+    ],
+    "spawn_records": [
+      {
+        "object_id": 1,
+        "spawn_tick": 387,
+        "spawn_position": [
+          29,
+          2
+        ],
+        "first_observed_tick": 650,
+        "first_contact_tick": 1166,
+        "first_displaced_tick": 2236,
+        "first_interacted_tick": 2290
+      },
+      {
+        "object_id": 2,
+        "spawn_tick": 1030,
+        "spawn_position": [
+          29,
+          13
+        ],
+        "first_observed_tick": null,
+        "first_contact_tick": null,
+        "first_displaced_tick": null,
+        "first_interacted_tick": null
+      },
+      {
+        "object_id": 3,
+        "spawn_tick": 1416,
+        "spawn_position": [
+          22,
+          3
+        ],
+        "first_observed_tick": 1416,
+        "first_contact_tick": 1437,
+        "first_displaced_tick": 1437,
+        "first_interacted_tick": 2126
+      },
+      {
+        "object_id": 4,
+        "spawn_tick": 2095,
+        "spawn_position": [
+          29,
+          29
+        ],
+        "first_observed_tick": null,
+        "first_contact_tick": null,
+        "first_displaced_tick": null,
+        "first_interacted_tick": null
+      },
+      {
+        "object_id": 5,
+        "spawn_tick": 2364,
+        "spawn_position": [
+          1,
+          13
+        ],
+        "first_observed_tick": null,
+        "first_contact_tick": null,
+        "first_displaced_tick": null,
+        "first_interacted_tick": null
+      },
+      {
+        "object_id": 6,
+        "spawn_tick": 2888,
+        "spawn_position": [
+          10,
+          19
+        ],
+        "first_observed_tick": null,
+        "first_contact_tick": null,
+        "first_displaced_tick": null,
+        "first_interacted_tick": null
+      },
+      {
+        "object_id": 7,
+        "spawn_tick": 3308,
+        "spawn_position": [
+          21,
+          11
+        ],
+        "first_observed_tick": 4380,
+        "first_contact_tick": null,
+        "first_displaced_tick": null,
+        "first_interacted_tick": null
+      },
+      {
+        "object_id": 8,
+        "spawn_tick": 3994,
+        "spawn_position": [
+          24,
+          1
+        ],
+        "first_observed_tick": 3994,
+        "first_contact_tick": 4089,
+        "first_displaced_tick": 4089,
+        "first_interacted_tick": 4005
+      },
+      {
+        "object_id": 9,
+        "spawn_tick": 4325,
+        "spawn_position": [
+          21,
+          4
+        ],
+        "first_observed_tick": 4325,
+        "first_contact_tick": 4394,
+        "first_displaced_tick": 4394,
+        "first_interacted_tick": 4573
+      },
+      {
+        "object_id": 10,
+        "spawn_tick": 4747,
+        "spawn_position": [
+          12,
+          19
+        ],
+        "first_observed_tick": null,
+        "first_contact_tick": null,
+        "first_displaced_tick": null,
+        "first_interacted_tick": null
+      }
+    ],
+    "structures": {
+      "adjacent_pairs": 1,
+      "lines_2": 1,
+      "lines_3_plus": 0,
+      "clusters": 9,
+      "largest_cluster": 2
+    }
+  }
+}

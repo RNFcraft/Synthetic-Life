@@ -1,0 +1,56 @@
+[
+  {
+    "seed": 0,
+    "ticks": 100,
+    "elapsed_seconds": 0.06321499997284263,
+    "ticks_per_second": 1581.9030300238917,
+    "unique_positions": 25,
+    "longest_position_loop": 18,
+    "cognit_count": 27,
+    "relation_count": 0,
+    "relation_density": 0.0,
+    "mean_active_ratio": 0.1555319341985246,
+    "p95_active_ratio": 0.9230769230769231,
+    "prediction_error_early": 0.8915205541098178,
+    "prediction_error_late": 0.7038214904693507,
+    "mean_wave_energy": 0.6723113901919322,
+    "mean_internal_loop_score": 0.18245833333333333,
+    "goals_generated": 1,
+    "average_goal_lifetime": 96.0,
+    "action_distribution": {
+      "MOVE_UP": 60,
+      "MOVE_DOWN": 11,
+      "MOVE_LEFT": 10,
+      "MOVE_RIGHT": 9,
+      "IDLE": 5,
+      "INTERACT": 5
+    }
+  },
+  {
+    "seed": 1,
+    "ticks": 100,
+    "elapsed_seconds": 0.06580620002932847,
+    "ticks_per_second": 1519.6136527474928,
+    "unique_positions": 14,
+    "longest_position_loop": 22,
+    "cognit_count": 26,
+    "relation_count": 0,
+    "relation_density": 0.0,
+    "mean_active_ratio": 0.15886282051282052,
+    "p95_active_ratio": 0.875,
+    "prediction_error_early": 0.7220951675882863,
+    "prediction_error_late": 0.5958714460399631,
+    "mean_wave_energy": 0.7365344825500552,
+    "mean_internal_loop_score": 0.19010714285714286,
+    "goals_generated": 1,
+    "average_goal_lifetime": 96.0,
+    "action_distribution": {
+      "MOVE_UP": 58,
+      "MOVE_DOWN": 10,
+      "MOVE_LEFT": 10,
+      "MOVE_RIGHT": 8,
+      "IDLE": 5,
+      "INTERACT": 9
+    }
+  }
+]

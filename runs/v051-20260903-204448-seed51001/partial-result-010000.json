@@ -1,0 +1,23 @@
+{
+  "version": "v0.5.1-prototype",
+  "status": "interrupted_at_checkpoint",
+  "seed": 51001,
+  "completed_ticks": 10000,
+  "target_ticks": 50000,
+  "elapsed_seconds": 822.4363522001076,
+  "physical_actions_per_second": 12.159000850524358,
+  "cognits": 109,
+  "relations": 4306,
+  "places": 21,
+  "object_memories": 4,
+  "plans_created": 19,
+  "world_modification": 11.0,
+  "grab_attempts": 0,
+  "successful_grabs": 0,
+  "interaction_attempts": 0,
+  "successful_interactions": 0,
+  "push_attempts": 1000,
+  "successful_pushes": 11,
+  "checkpoint": "checkpoint-010000.seworld",
+  "note": "The user requested immediate termination. This is a partial result, not a completed 50K run."
+}

@@ -1,0 +1,115 @@
+{
+  "memory": [
+    {
+      "memory_enabled": true,
+      "memory_created": 1,
+      "memory_reactivated": 104,
+      "memory_confirmed": 8,
+      "memory_contradicted": 1,
+      "return_attempted": false,
+      "return_success": true,
+      "reacquisition_tick": 15,
+      "physical_actions": 15
+    },
+    {
+      "memory_enabled": false,
+      "memory_created": 1,
+      "memory_reactivated": 0,
+      "memory_confirmed": 2,
+      "memory_contradicted": 0,
+      "return_attempted": false,
+      "return_success": false,
+      "reacquisition_tick": null,
+      "physical_actions": 120
+    }
+  ],
+  "curriculum": {
+    "persistent_brain": [
+      {
+        "target": "pair",
+        "initially_satisfied": false,
+        "success": false,
+        "completion_tick": null,
+        "object_movements": 0.0,
+        "blind_grabs": 0,
+        "blind_interactions": 0,
+        "plans": 1,
+        "subgoals_created": 0,
+        "subgoals_completed": 0,
+        "subgoals_failed": 0,
+        "memory_retrievals": 0
+      },
+      {
+        "target": "line3",
+        "initially_satisfied": false,
+        "success": false,
+        "completion_tick": null,
+        "object_movements": 0.0,
+        "blind_grabs": 0,
+        "blind_interactions": 0,
+        "plans": 1,
+        "subgoals_created": 0,
+        "subgoals_completed": 0,
+        "subgoals_failed": 0,
+        "memory_retrievals": 0
+      }
+    ],
+    "fresh_brain_control": {
+      "target": "pair",
+      "initially_satisfied": false,
+      "success": false,
+      "completion_tick": null,
+      "object_movements": 0.0,
+      "blind_grabs": 0,
+      "blind_interactions": 0,
+      "plans": 1,
+      "subgoals_created": 0,
+      "subgoals_completed": 0,
+      "subgoals_failed": 0,
+      "memory_retrievals": 0
+    }
+  },
+  "deliberation": [
+    {
+      "mode": "MINIMAL",
+      "ticks": 120,
+      "elapsed_seconds": 1.4438051001634449,
+      "physical_actions_per_sec": 83.11371111406622,
+      "cognitive_cycles": 120,
+      "cognitive_cycles_per_sec": 83.11371111406622,
+      "plan_revisions": 23,
+      "blind_actions": 0,
+      "world_modification": 0.0,
+      "place_fragmentation_mean": 1.0,
+      "place_aliasing_mean": 1.0
+    },
+    {
+      "mode": "FULL_ADAPTIVE",
+      "ticks": 120,
+      "elapsed_seconds": 6.619312899885699,
+      "physical_actions_per_sec": 18.128769830788954,
+      "cognitive_cycles": 366,
+      "cognitive_cycles_per_sec": 55.29274798390631,
+      "plan_revisions": 44,
+      "blind_actions": 0,
+      "world_modification": 0.0,
+      "place_fragmentation_mean": 1.0,
+      "place_aliasing_mean": 1.0
+    }
+  ],
+  "multi_entity": {
+    "ticks": 120,
+    "mutual_visibility_events": 240,
+    "other_structure_reactivations": [
+      843,
+      719
+    ],
+    "conflicts": 0,
+    "fairness_winners": {
+      "0": 0,
+      "1": 0
+    },
+    "joint_object_interactions": 0
+  },
+  "elapsed_seconds": 42.587420699885115
+}

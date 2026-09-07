@@ -1,0 +1,25 @@
+{
+  "seed": 123,
+  "steps": 100,
+  "checkpoints": [
+    {
+      "step": 100,
+      "wall_seconds": 1.1721231999999873,
+      "window_seconds": 1.1721231999999873,
+      "window_actions_per_second": 85.31526378797133,
+      "cognits_total": 50,
+      "cognits_live": 50,
+      "relations": 363,
+      "provisional": 315,
+      "consolidated": 48,
+      "active": 36,
+      "ffi_calls": 26560,
+      "ffi_calls_window": 26560,
+      "relation_proxies": 2,
+      "relation_proxies_window": 2,
+      "graph_logical_bytes": 72510,
+      "graph_reserved_bytes": 74833,
+      "full_graph_sync_calls": 0
+    }
+  ]
+}
