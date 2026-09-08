@@ -36,7 +36,7 @@ class SpatialMemory:
         self.feature_seen=Counter();self.feature_change=Counter();self.next_place_id=1;self.next_memory_id=1;self.current_place_id=None
         self.reactivation_count=0;self.confirmation_count=0;self.contradiction_count=0;self.alias_reconciliations=0;self.last_place_scores={};self.last_recalled={}
         self._by_place={};self._by_cognit={};self._by_feature={};self._by_state={};self._index_order={};self._indexed_ids=set();self._nonzero_recall_ids=set()
-        self._place_structures={};self._places_by_relation={};self._places_by_count={};self._dirty_structure_places=set()
+        self._place_structures={};self._places_by_relation={};self._places_by_count={};self._places_by_count_confidence={};self._place_confidence_bucket={};self._dirty_structure_places=set()
         self.last_retrieval_candidates=0;self.last_retrieval_total=0
         self.last_target_candidate_places=0
         self.last_target_structural_scores={}
@@ -64,7 +64,7 @@ class SpatialMemory:
         self._by_place={};self._by_cognit={};self._by_feature={};self._by_state={};self._index_order={}
         for order,m in enumerate(self.structures.values()):self._index_order[m.id]=order;self._index_memory(m)
         self._indexed_ids=set(self.structures)
-        self._place_structures={};self._places_by_relation={};self._places_by_count={};self._dirty_structure_places=set(self._by_place);self._refresh_dirty_place_structures()
+        self._place_structures={};self._places_by_relation={};self._places_by_count={};self._places_by_count_confidence={};self._place_confidence_bucket={};self._dirty_structure_places=set(self._by_place);self._refresh_dirty_place_structures()
 
     def _refresh_place_structure(self,place_id)->None:
         from .relational import RelationalStructure
@@ -72,12 +72,16 @@ class SpatialMemory:
         if previous:
             for token in set(previous.relations):self._places_by_relation.get(token,set()).discard(place_id)
             self._places_by_count.get(previous.participant_count,set()).discard(place_id)
+            old_bucket=self._place_confidence_bucket.get(place_id);self._places_by_count_confidence.get((previous.participant_count,old_bucket),set()).discard(place_id)
         ids=sorted(self._by_place.get(place_id,()),key=self._index_order.__getitem__)
-        if not ids:self._place_structures.pop(place_id,None);return
+        if not ids:self._place_structures.pop(place_id,None);self._place_confidence_bucket.pop(place_id,None);return
         summary=RelationalStructure.from_points((self.structures[i].relative_context for i in ids))
+        max_confidence=max(self.structures[i].confidence for i in ids);bucket=min(999,max(0,int(max_confidence*1000)))
         self._place_structures[place_id]=summary
+        self._place_confidence_bucket[place_id]=bucket
         for token in set(summary.relations):self._places_by_relation.setdefault(token,set()).add(place_id)
         self._places_by_count.setdefault(summary.participant_count,set()).add(place_id)
+        self._places_by_count_confidence.setdefault((summary.participant_count,bucket),set()).add(place_id)
 
     def _refresh_dirty_place_structures(self)->None:
         for place_id in sorted(self._dirty_structure_places):self._refresh_place_structure(place_id)
@@ -163,15 +167,14 @@ class SpatialMemory:
             if not any(ch in {"occupied","state","appearance"} for ch,_ in track.primitive_signature):continue
             features=tuple(sorted(track.primitive_signature));candidate=self._match_structure(features,track.state_signature,place.cognit_id if place else 0,tick,set(visible))
             if candidate:
-                self._materialize(candidate);old_state=candidate.remembered_state;old_context=candidate.relative_context;candidate.confidence=min(1.,candidate.confidence+.12*(1-candidate.confidence));candidate.last_confirmed_tick=tick;candidate.last_confirmed_time_seconds=self.world_time_seconds;candidate.last_touch_time_seconds=self.world_time_seconds;candidate.relative_context=track.centroid;candidate.remembered_state=track.state_signature;self._reindex_state(candidate,old_state);candidate.reactivations+=1;candidate.status=self._status(candidate);self.reactivation_count+=1;self.confirmation_count+=1;active.add(candidate.cognit_id);visible.append(candidate.id)
-                if old_context!=candidate.relative_context:self._dirty_structure_places.add(candidate.place_cognit_id)
+                self._materialize(candidate);old_state=candidate.remembered_state;old_context=candidate.relative_context;candidate.confidence=min(1.,candidate.confidence+.12*(1-candidate.confidence));candidate.last_confirmed_tick=tick;candidate.last_confirmed_time_seconds=self.world_time_seconds;candidate.last_touch_time_seconds=self.world_time_seconds;candidate.relative_context=track.centroid;candidate.remembered_state=track.state_signature;self._reindex_state(candidate,old_state);candidate.reactivations+=1;candidate.status=self._status(candidate);self.reactivation_count+=1;self.confirmation_count+=1;active.add(candidate.cognit_id);visible.append(candidate.id);self._dirty_structure_places.add(candidate.place_cognit_id)
             elif place:
                 node=graph.add_cognit(Cognit(graph.next_id,kind="MEMORY",confidence=.5));m=PersistentStructureMemory(self.next_memory_id,node.id,features,place.cognit_id,track.centroid,track.state_signature,.5,tick,last_confirmed_time_seconds=self.world_time_seconds,last_touch_time_seconds=self.world_time_seconds);self.structures[m.id]=m;self._index_order[m.id]=len(self._index_order);self._index_memory(m);self._indexed_ids.add(m.id);self.next_memory_id+=1;active.add(node.id);visible.append(m.id)
         if place:
             self._ensure_indexes()
             for memory_id in self._by_place.get(place.cognit_id,()):
                 m=self.structures[memory_id]
-                if m.place_cognit_id==place.cognit_id and m.id not in visible and tick-m.last_confirmed_tick>1:self._materialize(m);m.confidence*=1-self.settings.memory_contradiction_rate;m.contradictions+=1;m.status=self._status(m);self.contradiction_count+=1
+                if m.place_cognit_id==place.cognit_id and m.id not in visible and tick-m.last_confirmed_tick>1:self._materialize(m);m.confidence*=1-self.settings.memory_contradiction_rate;m.contradictions+=1;m.status=self._status(m);self.contradiction_count+=1;self._dirty_structure_places.add(m.place_cognit_id)
         if self.world_time_seconds is None:
             for m in self.structures.values():m.confidence*=self.settings.memory_confidence_decay;m.status=self._status(m)
         return active
@@ -223,6 +226,12 @@ class SpatialMemory:
             self._refresh_dirty_place_structures();candidate_places=set()
             for token in set(target_structure.relations):candidate_places.update(self._places_by_relation.get(token,()))
             if not target_structure.relations:candidate_places.update(self._places_by_count.get(target_structure.participant_count,()))
+            target_count=max(1,target_structure.participant_count)
+            for (participant_count,bucket),places in self._places_by_count_confidence.items():
+                confidence_upper=min(1.,(bucket+1)/1000);roles=min(participant_count,target_count)/max(participant_count,target_count);role_support=min(1.,participant_count/target_count)
+                structural_upper=.2*roles*min(confidence_upper,target_structure.confidence)
+                relevance_upper=.1+.65*structural_upper+.25*role_support
+                if relevance_upper*confidence_upper>=.12:candidate_places.update(places)
             for cognit_id in associated:
                 candidate_places.update(m.place_cognit_id for m in (self.structures[i] for i in self._by_cognit.get(cognit_id,())))
                 if cognit_id in self._by_place:candidate_places.add(cognit_id)

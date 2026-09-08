@@ -17,19 +17,33 @@ Blocker 1 — homeostatic clamp and save invariance:
 - No-save, save-without-load, and save/load branches converge to identical behavior-affecting Cognit and latent state.
 - Continuous .seworld capture now snapshots semantic state before capturing the matching native/frontier payload.
 
-Blocker 2 — indexed target-structure recall:
+## BLOCKER 2 — TARGET MEMORY
 
-- Removed target recall candidate_ids = all structures.
-- Added incremental place-level structural summaries indexed by canonical relation token and participant count.
-- Target recall discovers candidate places first, then expands only their indexed member memories.
-- A full-scan target oracle remains test-only.
-- Differential result: recalled Cognit/Place IDs, candidate memory strengths, and structural scores match the oracle.
-- Scaling result:
+**PASS**
+
+- Candidate discovery is conservative: exact relation-token hits and directly associated places are always admitted.
+- Zero-token-overlap candidates use participant-count plus 0.001-wide maximum-confidence buckets.
+- For participant counts n/m and bucket upper confidence c, the admissible bound is:
+  - roles = min(n,m) / max(n,m)
+  - role_support = min(1,n/m)
+  - structural_upper = 0.2 * roles * min(c,target_confidence)
+  - strength_upper = (0.1 + 0.65 * structural_upper + 0.25 * role_support) * c
+- Recency is bounded by 1. Group mean confidence and every member confidence cannot exceed the bucket upper bound, so a place whose exact zero-overlap score can reach 0.12 cannot be excluded.
+- Exact relation-token matches bypass the zero-overlap bound; direct associations bypass all structural pruning.
+- Existing memory_structure.match, relevance, recency, and final threshold scoring remain authoritative after admission.
+- Adversarial high-confidence/no-token-overlap recall: **PASS**.
+- Low-confidence final rejection: **PASS**.
+- Participant-count, stale/fresh, and direct-association cases: **PASS**.
+- Deterministic randomized differential: **80 worlds passed; 0 false negatives**.
+- Full-scan oracle is test-only and is not called by runtime.
+- Strengthened scaling result:
   - total memories: **10,000**
   - total places: **5,000**
-  - candidate places: **2**
-  - candidate memories: **4**
-  - memories materialized: **4**
+  - exact-token matching places: **2**
+  - zero-token/high-confidence recallable places: **2**
+  - candidate places: **4**
+  - candidate memories: **8**
+  - memories materialized: **8**
 
 Blocker 3 — causal Goal persistence:
 
@@ -68,7 +82,7 @@ Event/count state retained:
 - Materialized before touch: **0**
 - Materialized after touching {7, 19}: **2**
 - Target memories: **10,000**
-- Target candidate/materialized memories: **4 / 4**
+- Target candidate/materialized memories: **8 / 8**
 - No time-advance graph scan and no target full-memory scan remain in the continuous path.
 
 ## PERSISTENCE
@@ -82,12 +96,12 @@ Event/count state retained:
 
 ## TESTS
 
-- Corrective elapsed, target-memory, and continuous acceptance set: **46 passed**
+- Corrective elapsed, target-memory, and continuous acceptance set: **51 passed**
 - Elapsed-time focused module: **32 passed**
-- Target-memory differential/scaling module: **1 passed**
+- Target-memory adversarial/randomized/scaling module: **6 passed**
 - Continuous runtime module: **13 passed**
 - v0.5.2 native/causal compatibility subset: **43 passed**
-- Full pytest: **178 passed**
+- Full pytest: **183 passed**
 - CTest: **1/1 passed**
 - Release native rebuild: **PASS**
 - full_graph_sync_calls == 0: **PASS**
@@ -107,14 +121,7 @@ That gate has not been started.
 
 ## MODIFIED FILES
 
-- cpp/include/se/native_brain_engine.hpp
-- cpp/src/native_brain_engine.cpp
-- cpp/src/bindings.cpp
-- consciousness/core.py
-- consciousness/elapsed_time.py
 - consciousness/memory.py
-- simulation/continuous.py
-- tests/test_v053_elapsed_time.py
 - tests/test_v053_elapsed_corrections.py
 - V0_5_3_CONTINUOUS_RUNTIME_PLAN.md
 - CURRENT_STATUS.md
