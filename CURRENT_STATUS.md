@@ -2,7 +2,7 @@
 
 ## CONTINUOUS WORLD COMPLETION
 
-CONTINUOUS WORLD COMPLETION: FAIL (verification pending)
+CONTINUOUS WORLD COMPLETION: PASS
 
 The implementation branch schedules `WORLD_SPAWN` and `MAINTENANCE` at
 absolute `WorldTime`, and normal `ContinuousRuntime` no longer dispatches
@@ -11,14 +11,12 @@ absolute `WorldTime`, and normal `ContinuousRuntime` no longer dispatches
 World mutations allocate their own `Simulation.event_sequence` at execution.
 Maintenance passes its absolute deadline through the established continuous
 time entry point before bounded lifecycle work.
-The native environment is configured with CMake 4.4.3, Ninja 1.13.2, pytest
-9.1.1, and MSVC. A clean Release native build, focused continuous-world tests
-(18 passed), including physical EventSequence save/load, a real v3-to-v4
-migration fixture, and a six-boundary save/no-save/save-load persistence
-matrix; focused continuous runtime/frontier/elapsed tests (75 passed),
-full pytest (207 passed), and CTest equivalence (1/1 passed) now run. A small
-`PYTHONHASHSEED=1/77` continuous trajectory digest is identical. The gate
-remains FAIL until its wider explicit acceptance/persistence matrix is added.
+Final verification: continuous-world focused tests 28 passed; focused
+runtime/frontier/elapsed selection 97 passed; full pytest 229 passed; clean
+Release native build PASS; CTest 1/1 PASS. `PYTHONHASHSEED=1/77` digest:
+`e334137aab48aac629c9ac0d4dbc77ea8ec7f51203acda0c970a9bb647c3d731`.
+Normal continuous `world_tick` calls, native Python physical World calls, and
+`full_graph_sync_calls` are all zero.
 
 ## TRUE EVENT-DRIVEN COGNITION FRONTIER
 

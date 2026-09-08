@@ -1,12 +1,13 @@
 from dataclasses import replace
 from pathlib import Path
+from random import Random
 
 import pytest
 
 from config import Settings
-from consciousness.native_engine import EventScheduler, RuntimeEventType
+from consciousness.native_engine import EventScheduler, RuntimeEvent, RuntimeEventType
 from simulation import ContinuousRuntime
-from world import ActionType
+from world import Action, ActionType
 from world.native_world import NativeWorld
 from persistence import load_container, save_container
 
@@ -161,3 +162,86 @@ def test_continuous_world_persistence_matrix(tmp_path,boundary):
     saved.save_world(Path(tmp_path)/f"save-{boundary}.seworld");loaded=_roundtrip(loaded,tmp_path,f"load-{boundary}")
     for runtime in (direct,saved,loaded):runtime.run_until(3.0)
     assert _behavior_state(direct)==_behavior_state(saved)==_behavior_state(loaded)
+
+def _spawn_at(runtime, monkeypatch, position, now=.5):
+    runtime.scheduler=EventScheduler();runtime.scheduler.restore(0.,10,[]);runtime.scheduler.schedule(now,RuntimeEventType.WORLD_SPAWN)
+    monkeypatch.setattr(runtime.simulation.world,"continuous_spawn_position",lambda:position)
+    event=runtime.scheduler.pop_ready(now)[0];runtime._process(event)
+
+def test_visible_spawn_schedules_one_sensory_change(monkeypatch):
+    runtime=ContinuousRuntime(712,replace(Settings(),world_width=4,world_height=4,object_count=0,max_objects=2));world=runtime.simulation.world
+    world.native.set_body_state(0,1,1,"N");world._refresh();before=runtime._sensory_signature();ordinal,generation=runtime.observation_ordinal,runtime.cognition_generation
+    _spawn_at(runtime,monkeypatch,(1,0));assert runtime._sensory_signature()!=before
+    sensory=[e for e in runtime.scheduler.snapshot() if e.type==RuntimeEventType.SENSORY_CHANGE];assert len(sensory)==1
+    runtime._process(runtime.scheduler.pop_ready(.5)[0]);assert runtime.observation_ordinal==ordinal+1 and runtime.cognition_generation==generation+1
+
+def test_invisible_spawn_does_not_wake_cognition(monkeypatch):
+    runtime=ContinuousRuntime(713,replace(Settings(),world_width=8,world_height=8,object_count=0,max_objects=2));world=runtime.simulation.world
+    world.native.set_body_state(0,1,1,"N");world._refresh();before=runtime._sensory_signature();ordinal,generation=runtime.observation_ordinal,runtime.cognition_generation
+    _spawn_at(runtime,monkeypatch,(7,7));assert runtime._sensory_signature()==before
+    assert runtime.observation_ordinal==ordinal and runtime.cognition_generation==generation
+    assert not [e for e in runtime.scheduler.snapshot() if e.type==RuntimeEventType.SENSORY_CHANGE]
+
+def test_held_object_counts_toward_spawn_capacity():
+    runtime=ContinuousRuntime(714,replace(Settings(),world_width=4,world_height=4,object_count=1,max_objects=1));world=runtime.simulation.world
+    before=(runtime.simulation.rng.getstate(),runtime.simulation.event_sequence.value,world.to_dict())
+    runtime.scheduler=EventScheduler();runtime.scheduler.restore(0.,10,[]);runtime.scheduler.schedule(.5,RuntimeEventType.WORLD_SPAWN);runtime._process(runtime.scheduler.pop_ready(.5)[0])
+    assert (runtime.simulation.rng.getstate(),runtime.simulation.event_sequence.value,world.to_dict())==before and not _spawn_events(runtime)
+
+def test_visible_spawn_invalidates_old_cognition_generation(monkeypatch):
+    runtime=ContinuousRuntime(715,replace(Settings(),world_width=4,world_height=4,object_count=0,max_objects=2));world=runtime.simulation.world
+    world.native.set_body_state(0,1,1,"N");world._refresh()
+    for event in runtime.scheduler.pop_ready(0.):runtime._process(event)
+    wake=next(e for e in runtime.scheduler.snapshot() if e.type==RuntimeEventType.COGNITION_WAKE);runtime._process(wake)
+    old=runtime.cognition_generation;assert any(e.type==RuntimeEventType.COGNITION_CONTINUE for e in runtime.scheduler.snapshot())
+    monkeypatch.setattr(world,"continuous_spawn_position",lambda:(1,0));runtime._process(RuntimeEvent(0.,999,RuntimeEventType.WORLD_SPAWN,0))
+    sensory=next(e for e in runtime.scheduler.snapshot() if e.type==RuntimeEventType.SENSORY_CHANGE);runtime._process(sensory)
+    frontier=runtime.simulation.core.continuous_frontier;state=(frontier.generation,frontier.phase,list(frontier.session.pending_work) if frontier.session else None);seq=runtime.simulation.event_sequence.value
+    runtime._process(RuntimeEvent(0.,1000,RuntimeEventType.COGNITION_CONTINUE,old))
+    f=runtime.simulation.core.continuous_frontier;assert runtime.cognition_generation==old+1 and (f.generation,f.phase,list(f.session.pending_work) if f.session else None)==state and runtime.simulation.event_sequence.value==seq
+
+def test_visible_spawn_during_action_in_flight_does_not_overlap(monkeypatch):
+    runtime=ContinuousRuntime(716,replace(Settings(),world_width=4,world_height=4,object_count=0,max_objects=2));world=runtime.simulation.world
+    world.native.set_body_state(0,1,1,"N");world._refresh();runtime.run_to_quiescence();pending=[e for e in runtime.scheduler.snapshot() if e.type==RuntimeEventType.WORLD_ACTION_COMPLETE];assert len(pending)==1
+    monkeypatch.setattr(world,"continuous_spawn_position",lambda:(1,0));runtime._process(RuntimeEvent(0.,999,RuntimeEventType.WORLD_SPAWN,0));assert len([e for e in runtime.scheduler.snapshot() if e.type==RuntimeEventType.WORLD_ACTION_COMPLETE])==1
+    runtime._process(pending[0]);assert runtime.actions_completed==1
+
+def test_real_held_object_counts_toward_capacity():
+    runtime=ContinuousRuntime(717,replace(Settings(),world_width=4,world_height=4,object_count=1,max_objects=1));world=runtime.simulation.world
+    world.native.set_body_state(0,1,1,"N");world._refresh();world.native.initialize_multi([(0,1,1,"N",1)],[(1,1,0,0)]);world._refresh();assert world.apply_action(Action(ActionType.GRAB_UP)).name=="SUCCESS"
+    assert len(world.objects)<1 and len(world.objects)+len(world.held_objects)==1
+    before=(runtime.simulation.rng.getstate(),runtime.simulation.event_sequence.value,world.to_dict());runtime._process(RuntimeEvent(.5,999,RuntimeEventType.WORLD_SPAWN,0))
+    assert (runtime.simulation.rng.getstate(),runtime.simulation.event_sequence.value,world.to_dict())==before
+
+def test_spawn_rng_matches_row_major_oracle():
+    settings=replace(Settings(),world_width=4,world_height=4,object_count=0,max_objects=3,spawn_interval_min=1,spawn_interval_max=3);runtime=ContinuousRuntime(718,settings);world=runtime.simulation.world;oracle=Random();oracle.setstate(runtime.simulation.rng.getstate());now=0.
+    for _ in range(3):
+        free=[(x,y) for y in range(world.grid.height) for x in range(world.grid.width) if (x,y) not in {o.position for o in world.objects}|{b.position for b in world.bodies.values()}];expected=oracle.choice(free);before={o.id for o in world.objects};events_before=set(_spawn_events(runtime));runtime._process(RuntimeEvent(now,999,RuntimeEventType.WORLD_SPAWN,0));new=next(o for o in world.objects if o.id not in before);assert new.position==expected
+        if world.can_spawn_more():interval=oracle.randint(settings.spawn_interval_min,settings.spawn_interval_max);next_time=next(time for time,_ in _spawn_events(runtime) if (time,_) not in events_before);assert next_time==now+interval
+        assert runtime.simulation.rng.getstate()==oracle.getstate();now+=1
+
+def test_maintenance_defers_at_same_time_during_cognition(monkeypatch):
+    runtime=ContinuousRuntime(719);runtime.scheduler=EventScheduler();runtime.scheduler.restore(0.,10,[]);runtime.scheduler.schedule(0.,RuntimeEventType.SENSORY_CHANGE)
+    runtime._process(runtime.scheduler.pop_ready(0.)[0]);frontier=runtime.simulation.core.continuous_frontier;assert frontier.phase=="OBSERVED";calls=[];original=runtime.simulation.core.continuous_maintenance
+    monkeypatch.setattr(runtime.simulation.core,"continuous_maintenance",lambda *a:(calls.append(a),original(*a))[1]);runtime.scheduler.schedule(0.,RuntimeEventType.MAINTENANCE);ready=runtime.scheduler.pop_ready(0.);runtime._process(next(e for e in ready if e.type==RuntimeEventType.COGNITION_WAKE));event=next(e for e in ready if e.type==RuntimeEventType.MAINTENANCE);runtime._process(event)
+    deferred=next(e for e in runtime.scheduler.snapshot() if e.type==RuntimeEventType.MAINTENANCE);assert calls==[] and deferred.time==0. and deferred.id>event.id
+    runtime.run_to_quiescence();assert len(calls)==1 and runtime.maintenance_ordinal==1
+
+def test_renderer_host_work_and_partition_are_observational():
+    settings=replace(Settings(),object_count=0,max_objects=3,spawn_interval_min=1,spawn_interval_max=2);plain=ContinuousRuntime(720,settings);sampled=ContinuousRuntime(720,settings)
+    plain.run_until(3.); 
+    for point in (.4,1.,1.7,3.):
+        for _ in range(20):sampled.render_snapshot()
+        sum(i*i for i in range(1000));sampled.run_until(point)
+    assert _behavior_state(sampled)==_behavior_state(plain)
+
+def test_maintenance_cadence_depends_only_on_world_time(monkeypatch):
+    settings=replace(Settings(),continuous_maintenance_interval_seconds=.5)
+    def run(seed,sample):
+        runtime=ContinuousRuntime(seed,settings);times=[];original=runtime.simulation.core.continuous_maintenance
+        monkeypatch.setattr(runtime.simulation.core,"continuous_maintenance",lambda now,ordinal:(times.append(now),original(now,ordinal))[1])
+        for point in (.4,1.,1.6,2.):
+            for _ in range(sample):runtime.render_snapshot()
+            runtime.run_until(point)
+        return times
+    assert run(721,0)==run(721,20)==[.5,1.,1.5,2.]
