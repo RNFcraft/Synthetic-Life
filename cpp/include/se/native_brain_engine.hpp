@@ -47,8 +47,8 @@ public:
   void homeostatic_step(std::span<const std::uint32_t>active,double trace_decay,double learning_rate,double threshold_min,double threshold_max,double activity_decay,double utility_decay);
   void begin_continuous_time(double now,double trace_decay,double learning_rate,double threshold_min,double threshold_max,double activity_decay,double utility_decay,double relation_decay);
   void materialize_cognits_at(std::span<const std::uint32_t> ids,double now);
-  std::tuple<bool,double,double,std::vector<double>,std::vector<double>,std::uint64_t> continuous_time_state()const{return{continuous_time_enabled_,continuous_epoch_,continuous_now_,cognit_last_touch_time_,cognit_last_active_time_,continuous_materialization_work_};}
-  void restore_continuous_time_state(bool enabled,double epoch,double now,const std::vector<double>&last_touch,const std::vector<double>&last_active,std::uint64_t work=0);
+  std::tuple<bool,double,double,std::vector<double>,std::vector<double>,std::vector<double>,std::uint64_t> continuous_time_state()const;
+  void restore_continuous_time_state(bool enabled,double epoch,double now,const std::vector<double>&last_touch,const std::vector<double>&last_active,const std::vector<double>&latent_threshold,std::uint64_t work=0);
   std::vector<double> cognit_elapsed_times(std::span<const std::uint32_t>ids)const;
   std::tuple<std::vector<std::array<double,6>>,std::uint64_t> continuous_relation_time_state()const;
   void restore_continuous_relation_time_state(const std::vector<std::array<double,6>>&,std::uint64_t work=0);
@@ -80,6 +80,7 @@ private:
   mutable std::vector<std::uint64_t>homeostasis_applied_;
   mutable std::vector<double>cognit_last_touch_time_;
   std::vector<double>cognit_last_active_time_;
+  mutable std::vector<double>cognit_latent_threshold_;
   bool continuous_time_enabled_{};
   double continuous_epoch_{};
   double continuous_now_{};

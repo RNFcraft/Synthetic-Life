@@ -61,7 +61,7 @@ PYBIND11_MODULE(_native_brain,m){
     .def("materialize_cognits_at",[](NativeBrainEngine&e,const std::vector<std::uint32_t>&ids,double now){py::gil_scoped_release release;e.materialize_cognits_at(ids,now);})
     .def("cognit_elapsed_times",[](NativeBrainEngine&e,const std::vector<std::uint32_t>&ids){return e.cognit_elapsed_times(ids);})
     .def("continuous_time_state",&NativeBrainEngine::continuous_time_state)
-    .def("restore_continuous_time_state",&NativeBrainEngine::restore_continuous_time_state,py::arg("enabled"),py::arg("epoch"),py::arg("now"),py::arg("last_touch"),py::arg("last_active"),py::arg("work")=0)
+    .def("restore_continuous_time_state",&NativeBrainEngine::restore_continuous_time_state,py::arg("enabled"),py::arg("epoch"),py::arg("now"),py::arg("last_touch"),py::arg("last_active"),py::arg("latent_threshold"),py::arg("work")=0)
     .def("continuous_relation_time_state",&NativeBrainEngine::continuous_relation_time_state)
     .def("restore_continuous_relation_time_state",&NativeBrainEngine::restore_continuous_relation_time_state,py::arg("rows"),py::arg("work")=0)
     .def("update_transition_evidence",[](NativeBrainEngine&e,const std::vector<std::uint32_t>&before,int action,const std::vector<std::uint32_t>&after){py::gil_scoped_release release;e.update_transition_evidence(before,(std::uint8_t)action,after);})

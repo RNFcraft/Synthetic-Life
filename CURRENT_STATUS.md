@@ -2,85 +2,102 @@
 
 ## ELAPSED-TIME LAZY COGNITION
 
-**PASS**
-
 ELAPSED-TIME LAZY COGNITION: PASS
 
-## DONE
+## CORRECTIVE PASS
 
-- ContinuousRuntime passes the exact simulated event timestamp explicitly through SyntheticEntityCore.step(frame, world_time=now).
-- The frozen step(frame) API retains v0.5.2 discrete semantics.
-- Native Cognits have authoritative float64 continuous epoch, last-touch, and last-active frontiers.
-- Dormant Cognit activity, utility, activity trace, homeostatic threshold, and retention recency materialize analytically on touch.
-- Native Relations have independent passive-confidence and last-evidence elapsed frontiers.
-- Prediction, action effects, planner transitions, waves, outcome updates, and lifecycle use one native Relation confidence rule in continuous mode.
-- Relation persistence uses stable (source,target,type,action) identity and is independent of compacted native handles.
-- Continuous SpatialMemory removes the global passive-decay scan and materializes only indexed candidates and explicitly touched memories.
-- Goal persistence, creation time, unavailable duration, and cooldown representation have distinct elapsed-time fields.
-- Planner subgoal cooldown remains a deliberation-attempt counter after source-level classification.
-- All elapsed frontiers survive continuous .seworld save/load.
-- No wall-clock or renderer timing is used for cognition.
+Blocker 1 — homeostatic clamp and save invariance:
 
-## FIRST FAILURE
+- Continuous Cognits preserve an unclamped float64 latent homeostatic threshold.
+- The behavior-visible threshold remains clamped to the configured minimum/maximum.
+- Intermediate reads no longer discard latent motion beyond either clamp boundary.
+- Split versus one-shot evolution passes for 0.1+0.2, 0.25+0.75, 1+9, and 1000 seconds at both clamps.
+- Reading every 0.01 seconds matches one touch after 10 seconds.
+- Continuous save_graph no longer performs its legacy all-Cognit catch-up.
+- No-save, save-without-load, and save/load branches converge to identical behavior-affecting Cognit and latent state.
+- Continuous .seworld capture now snapshots semantic state before capturing the matching native/frontier payload.
 
-None.
+Blocker 2 — indexed target-structure recall:
+
+- Removed target recall candidate_ids = all structures.
+- Added incremental place-level structural summaries indexed by canonical relation token and participant count.
+- Target recall discovers candidate places first, then expands only their indexed member memories.
+- A full-scan target oracle remains test-only.
+- Differential result: recalled Cognit/Place IDs, candidate memory strengths, and structural scores match the oracle.
+- Scaling result:
+  - total memories: **10,000**
+  - total places: **5,000**
+  - candidate places: **2**
+  - candidate memories: **4**
+  - memories materialized: **4**
+
+Blocker 3 — causal Goal persistence:
+
+- Passive waiting applies only goal_decay raised to elapsed simulated seconds.
+- Understanding is applied exactly once at the cognitive event that produced it.
+- A new observation never changes decay over the preceding silent interval.
+- Low-before/high-after and high-before/low-after causal-order scenarios pass.
+- Ten observations at exact one-second cadence match the frozen per-observation multiplicative formula.
+- Goal age remains a causal/event count.
+- Continuous save/load preserves Goal time anchors and exact continuation.
 
 ## TIME SEMANTICS
 
-Elapsed-time fields:
+Elapsed-time state:
 
-- Cognit passive activity, utility, inactive activity trace, homeostatic adaptation, last touch, and last active time
-- Relation passive confidence, last confidence touch, last evidence time, and lifecycle idle duration
-- memory confidence, last touch, last confirmation, recency, and idle duration
-- Goal creation, persistence waiting duration, unavailable duration, and cooldown timestamp
+- Cognit activity, utility, inactive trace, latent/visible homeostatic threshold, last touch, and last activation time
+- Relation passive confidence and separate confidence/evidence time frontiers
+- memory confidence, confirmation time, recency, and idle duration
+- Goal passive persistence, creation time, unavailable duration, and cooldown timestamp
 
-Event/count fields deliberately retained:
+Event/count state retained:
 
-- EventSequence, event IDs, and cognitive_tick
-- last_activated_cognitive_tick compatibility ordinal
-- evidence windows, support, confirmations, contradictions, and evidence membership
+- EventSequence, event IDs, cognitive_tick, and last_activated_cognitive_tick
+- evidence windows, support, confirmations, contradictions, and prototype evidence
 - prototype occurrences and explained_sum
 - percept observation age and missing_ticks
-- wave and refractory steps
+- wave/refractory steps
 - Cognit age and low_retention_ticks
-- planner depth, expansions, internal tick, tie cursors, and subgoal attempt cooldown
+- planner depth, expansions, tie cursors, and subgoal attempt cooldown
 - Goal age, attempts, interventions, completions, and causal observations
 
 ## COMPLEXITY
 
 - Native dormant Cognits: **100,000**
-- Simulated elapsed jump: **1,000 seconds**
-- Cognits materialized before access: **0**
-- Cognits materialized after touching {7, 19}: **2**
-- Retained memories: **10,000**
-- Simulated elapsed jump: **1,000 seconds**
-- Relevant retrieval candidates/materialized memories: **1 / 1**
-
-Clock advancement itself performs no graph or memory scan.
+- Elapsed jump: **1,000 seconds**
+- Materialized before touch: **0**
+- Materialized after touching {7, 19}: **2**
+- Target memories: **10,000**
+- Target candidate/materialized memories: **4 / 4**
+- No time-advance graph scan and no target full-memory scan remain in the continuous path.
 
 ## PERSISTENCE
 
-- Exact continuous continuation: **PASS**
-- Save boundaries: **12.001, 12.149, 12.437, 12.999 seconds**
-- Cognit touch/activation frontiers: **PASS**
-- Relation confidence/evidence frontiers: **PASS**
+- Clamp-crossing latent frontier: **PASS**
+- Save is behaviorally observational: **PASS**
+- No-save == save == save/load: **PASS**
+- Exact .seworld continuation at 12.001, 12.149, 12.437, and 12.999 seconds: **PASS**
+- Relation semantic-identity frontier restore: **PASS**
 - Memory and Goal elapsed anchors: **PASS**
-- Relation handle-compaction regression: **PASS**
-
-The frozen native NBRN graph payload remains version 3. Continuous elapsed frontiers are stored explicitly in the .seworld CONT section; old integer tick fields are not reinterpreted.
 
 ## TESTS
 
-- Elapsed-time focused module: **17 passed**
-- Elapsed-time plus continuous runtime modules: **30 passed**
+- Corrective elapsed, target-memory, and continuous acceptance set: **46 passed**
+- Elapsed-time focused module: **32 passed**
+- Target-memory differential/scaling module: **1 passed**
 - Continuous runtime module: **13 passed**
 - v0.5.2 native/causal compatibility subset: **43 passed**
-- Full pytest: **162 passed**
+- Full pytest: **178 passed**
 - CTest: **1/1 passed**
 - Release native rebuild: **PASS**
 - full_graph_sync_calls == 0: **PASS**
 - Normal native Python physical World calls: **0 / PASS**
-- Long 5K/10K benchmarks: not run, as required.
+- Render sampling invariance: **PASS**
+- Long 5K/10K benchmarks were not run.
+
+## FIRST FAILURE
+
+None.
 
 ## NEXT GATE
 
@@ -93,13 +110,11 @@ That gate has not been started.
 - cpp/include/se/native_brain_engine.hpp
 - cpp/src/native_brain_engine.cpp
 - cpp/src/bindings.cpp
-- consciousness/backends.py
 - consciousness/core.py
 - consciousness/elapsed_time.py
 - consciousness/memory.py
-- consciousness/native_graph.py
-- consciousness/state.py
 - simulation/continuous.py
 - tests/test_v053_elapsed_time.py
+- tests/test_v053_elapsed_corrections.py
 - V0_5_3_CONTINUOUS_RUNTIME_PLAN.md
 - CURRENT_STATUS.md

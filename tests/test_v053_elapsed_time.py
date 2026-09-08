@@ -52,10 +52,10 @@ def test_native_cognit_touch_frequency_invariance():
 
 def test_native_quiescent_advance_materializes_only_touched_cognits():
     engine=NativeBrainEngine();engine.add_cognits(100_000,.8,.25,.5);engine.begin_continuous_time(1000.,*POLICY,.9995)
-    enabled,epoch,now,frontiers,last_active,work=engine.continuous_time_state()
+    enabled,epoch,now,frontiers,last_active,latent,work=engine.continuous_time_state()
     assert enabled and now==1000. and work==0 and len(frontiers)==100_000
     engine.materialize_cognits_at([7,19],2000.)
-    assert engine.continuous_time_state()[5]==2
+    assert engine.continuous_time_state()[6]==2
 
 
 def test_native_elapsed_frontier_round_trip():
@@ -90,8 +90,7 @@ def test_actual_goal_keeps_age_as_count_and_uses_elapsed_persistence():
     settings=Settings();core=SyntheticEntityCore(settings);core.world_time_seconds=20.
     goal=Goal(1,(1,),1.,.5,.5,created_time_seconds=10.,last_touch_time_seconds=10.);core.state.goal=goal;core.state.novelty=0.;core.state.prediction_error=0.
     core._update_goal(set())
-    factor=settings.goal_decay*(1-settings.goal_understanding_decay)
-    assert goal.age==1 and goal.persistence==pytest.approx(.85*factor**10,rel=1e-13)
+    assert goal.age==1 and goal.persistence==pytest.approx(.85*settings.goal_decay**10*(1-settings.goal_understanding_decay),rel=1e-13)
 
 
 def test_continuous_runtime_passes_exact_event_timestamp_to_native_cognition():
@@ -100,3 +99,59 @@ def test_continuous_runtime_passes_exact_event_timestamp_to_native_cognition():
     enabled,epoch,now,*_=runtime.simulation.core.backend.engine.continuous_time_state()
     assert enabled and epoch==0. and now==pytest.approx(.3)
     assert runtime.world_time==pytest.approx(.437)
+
+
+@pytest.mark.parametrize("trace,target,initial",((.95,0.,.89),(0.,.95,.13)))
+@pytest.mark.parametrize("parts",((.1,.2),(.25,.75),(1.,9.),(1000.,0.)))
+def test_native_clamp_crossing_preserves_latent_semigroup(trace,target,initial,parts):
+    policy=(.95,.5,.12,.9,1.,1.,1.)
+    def make():
+        e=NativeBrainEngine();e.add_cognit(0.,.25,.5);e.set_cognit_fields([0,0,0],[7,6,8],[trace,initial,target]);e.begin_continuous_time(10.,*policy);return e
+    once,split=make(),make();end=10.+sum(parts);once.materialize_cognits_at([0],end);split.materialize_cognits_at([0],10.+parts[0]);split.materialize_cognits_at([0],end)
+    assert once.cognit_state_full([0])[6]==pytest.approx(split.cognit_state_full([0])[6],rel=1e-13,abs=1e-13)
+    assert once.continuous_time_state()[5][0]==pytest.approx(split.continuous_time_state()[5][0],rel=1e-13,abs=1e-13)
+
+
+@pytest.mark.parametrize("trace,target,initial",((.95,0.,.89),(0.,.95,.13)))
+def test_clamp_crossing_is_invariant_to_frequent_reads(trace,target,initial):
+    policy=(.95,.5,.12,.9,1.,1.,1.)
+    def make():
+        e=NativeBrainEngine();e.add_cognit(0.,.25,.5);e.set_cognit_fields([0,0,0],[7,6,8],[trace,initial,target]);e.begin_continuous_time(0.,*policy);return e
+    once,many=make(),make();once.materialize_cognits_at([0],10.)
+    for step in range(1,1001):many.materialize_cognits_at([0],step/100)
+    assert many.cognit_state_full([0])[6]==pytest.approx(once.cognit_state_full([0])[6],rel=1e-12,abs=1e-12)
+    assert many.continuous_time_state()[5][0]==pytest.approx(once.continuous_time_state()[5][0],rel=1e-12,abs=1e-12)
+
+
+def test_native_continuous_save_is_observational_and_save_load_matches(tmp_path):
+    policy=(.95,.5,.12,.9,1.,1.,1.)
+    def make():
+        e=NativeBrainEngine();e.add_cognit(0.,.25,.5);e.set_cognit_fields([0,0,0],[7,6,8],[.95,.89,0.]);e.begin_continuous_time(10.,*policy);return e
+    no_save,saved=make(),make();saved_state=saved.continuous_time_state();path=tmp_path/"continuous.sebrain";saved.save_graph(str(path));assert saved.continuous_time_state()==saved_state
+    loaded=NativeBrainEngine();loaded.load_graph(str(path));loaded.restore_continuous_time_state(*saved_state)
+    for engine in (no_save,saved,loaded):engine.begin_continuous_time(20.,*policy);engine.materialize_cognits_at([0],20.)
+    for engine in (saved,loaded):
+        assert engine.cognit_state_full([0])==pytest.approx(no_save.cognit_state_full([0]),rel=1e-13,abs=1e-13)
+        assert engine.continuous_time_state()[5]==pytest.approx(no_save.continuous_time_state()[5],rel=1e-13,abs=1e-13)
+
+
+def test_goal_understanding_is_event_causal_not_retroactive():
+    settings=Settings();core=SyntheticEntityCore(settings);goal=Goal(1,(1,),1.,.5,.5,created_time_seconds=0.,last_touch_time_seconds=0.);core.state.goal=goal;core.world_time_seconds=10.;core.state.novelty=0.;core.state.prediction_error=0.;core._update_goal(set())
+    assert goal.persistence==pytest.approx(.85*settings.goal_decay**10*(1-settings.goal_understanding_decay),rel=1e-13)
+
+
+@pytest.mark.parametrize("before,after",((.1,.9),(.9,.1)))
+def test_goal_understanding_before_and_after_sleep_are_separate_events(before,after):
+    settings=Settings();core=SyntheticEntityCore(settings);goal=Goal(1,(1,),1.,.5,.5,created_time_seconds=0.,last_touch_time_seconds=0.);core.state.goal=goal
+    core.world_time_seconds=0.;core.state.novelty=1-before;core.state.prediction_error=0.;core._update_goal(set())
+    at_sleep_start=goal.persistence
+    core.world_time_seconds=10.;core.state.novelty=1-after;core._update_goal(set())
+    expected=at_sleep_start*settings.goal_decay**10*(1-settings.goal_understanding_decay*after)
+    assert goal.persistence==pytest.approx(expected,rel=1e-13)
+
+
+def test_goal_integer_cadence_matches_frozen_factorization():
+    settings=Settings();core=SyntheticEntityCore(settings);goal=Goal(1,(1,),1.,.5,.5,created_time_seconds=0.,last_touch_time_seconds=0.);core.state.goal=goal;core.state.novelty=.4;core.state.prediction_error=.25
+    understanding=(1-.4)*(1-.25);frozen=settings.goal_decay*(1-settings.goal_understanding_decay*understanding)
+    for second in range(1,11):core.world_time_seconds=float(second);core._update_goal(set())
+    assert goal.persistence==pytest.approx(.85*frozen**10,rel=1e-13)

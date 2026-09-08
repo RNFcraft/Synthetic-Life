@@ -36,7 +36,10 @@ class SpatialMemory:
         self.feature_seen=Counter();self.feature_change=Counter();self.next_place_id=1;self.next_memory_id=1;self.current_place_id=None
         self.reactivation_count=0;self.confirmation_count=0;self.contradiction_count=0;self.alias_reconciliations=0;self.last_place_scores={};self.last_recalled={}
         self._by_place={};self._by_cognit={};self._by_feature={};self._by_state={};self._index_order={};self._indexed_ids=set();self._nonzero_recall_ids=set()
+        self._place_structures={};self._places_by_relation={};self._places_by_count={};self._dirty_structure_places=set()
         self.last_retrieval_candidates=0;self.last_retrieval_total=0
+        self.last_target_candidate_places=0
+        self.last_target_structural_scores={}
         self.world_time_seconds:float|None=None;self.materialization_work=0
         self.enabled=True
 
@@ -61,6 +64,24 @@ class SpatialMemory:
         self._by_place={};self._by_cognit={};self._by_feature={};self._by_state={};self._index_order={}
         for order,m in enumerate(self.structures.values()):self._index_order[m.id]=order;self._index_memory(m)
         self._indexed_ids=set(self.structures)
+        self._place_structures={};self._places_by_relation={};self._places_by_count={};self._dirty_structure_places=set(self._by_place);self._refresh_dirty_place_structures()
+
+    def _refresh_place_structure(self,place_id)->None:
+        from .relational import RelationalStructure
+        previous=self._place_structures.get(place_id)
+        if previous:
+            for token in set(previous.relations):self._places_by_relation.get(token,set()).discard(place_id)
+            self._places_by_count.get(previous.participant_count,set()).discard(place_id)
+        ids=sorted(self._by_place.get(place_id,()),key=self._index_order.__getitem__)
+        if not ids:self._place_structures.pop(place_id,None);return
+        summary=RelationalStructure.from_points((self.structures[i].relative_context for i in ids))
+        self._place_structures[place_id]=summary
+        for token in set(summary.relations):self._places_by_relation.setdefault(token,set()).add(place_id)
+        self._places_by_count.setdefault(summary.participant_count,set()).add(place_id)
+
+    def _refresh_dirty_place_structures(self)->None:
+        for place_id in sorted(self._dirty_structure_places):self._refresh_place_structure(place_id)
+        self._dirty_structure_places.clear()
 
     @staticmethod
     def _add_index(index,key,memory_id)->None:index.setdefault(key,set()).add(memory_id)
@@ -69,6 +90,7 @@ class SpatialMemory:
         self._add_index(self._by_place,m.place_cognit_id,m.id);self._add_index(self._by_cognit,m.cognit_id,m.id)
         for feature in set(m.feature_signature):self._add_index(self._by_feature,feature,m.id)
         for position,value in enumerate(m.remembered_state):self._add_index(self._by_state,(position,value),m.id)
+        self._dirty_structure_places.add(m.place_cognit_id)
 
     def _ensure_indexes(self)->None:
         # Normal mutation paths maintain indexes incrementally.  The length
@@ -85,6 +107,7 @@ class SpatialMemory:
         for position,value in enumerate(m.remembered_state):
             ids=self._by_state.get((position,value));ids.discard(memory_id) if ids else None
         self._indexed_ids.discard(memory_id);self._index_order.pop(memory_id,None);self._nonzero_recall_ids.discard(memory_id)
+        self._dirty_structure_places.add(m.place_cognit_id)
 
     def _reindex_state(self,m,old_state)->None:
         if old_state==m.remembered_state:return
@@ -140,7 +163,8 @@ class SpatialMemory:
             if not any(ch in {"occupied","state","appearance"} for ch,_ in track.primitive_signature):continue
             features=tuple(sorted(track.primitive_signature));candidate=self._match_structure(features,track.state_signature,place.cognit_id if place else 0,tick,set(visible))
             if candidate:
-                self._materialize(candidate);old_state=candidate.remembered_state;candidate.confidence=min(1.,candidate.confidence+.12*(1-candidate.confidence));candidate.last_confirmed_tick=tick;candidate.last_confirmed_time_seconds=self.world_time_seconds;candidate.last_touch_time_seconds=self.world_time_seconds;candidate.relative_context=track.centroid;candidate.remembered_state=track.state_signature;self._reindex_state(candidate,old_state);candidate.reactivations+=1;candidate.status=self._status(candidate);self.reactivation_count+=1;self.confirmation_count+=1;active.add(candidate.cognit_id);visible.append(candidate.id)
+                self._materialize(candidate);old_state=candidate.remembered_state;old_context=candidate.relative_context;candidate.confidence=min(1.,candidate.confidence+.12*(1-candidate.confidence));candidate.last_confirmed_tick=tick;candidate.last_confirmed_time_seconds=self.world_time_seconds;candidate.last_touch_time_seconds=self.world_time_seconds;candidate.relative_context=track.centroid;candidate.remembered_state=track.state_signature;self._reindex_state(candidate,old_state);candidate.reactivations+=1;candidate.status=self._status(candidate);self.reactivation_count+=1;self.confirmation_count+=1;active.add(candidate.cognit_id);visible.append(candidate.id)
+                if old_context!=candidate.relative_context:self._dirty_structure_places.add(candidate.place_cognit_id)
             elif place:
                 node=graph.add_cognit(Cognit(graph.next_id,kind="MEMORY",confidence=.5));m=PersistentStructureMemory(self.next_memory_id,node.id,features,place.cognit_id,track.centroid,track.state_signature,.5,tick,last_confirmed_time_seconds=self.world_time_seconds,last_touch_time_seconds=self.world_time_seconds);self.structures[m.id]=m;self._index_order[m.id]=len(self._index_order);self._index_memory(m);self._indexed_ids.add(m.id);self.next_memory_id+=1;active.add(node.id);visible.append(m.id)
         if place:
@@ -192,15 +216,24 @@ class SpatialMemory:
 
     def recall(self,goal_target_ids,graph,tick:int,target_structure=None)->set[int]:
         if not self.enabled:self.last_recalled={};return set()
-        self._ensure_indexes();recalled=set();self.last_recalled={};associated=set(goal_target_ids);target_request=target_structure is not None
+        self._ensure_indexes();recalled=set();self.last_recalled={};self.last_target_structural_scores={};associated=set(goal_target_ids);target_request=target_structure is not None
         for target in goal_target_ids:
             associated.update(graph.outgoing_targets(target) if hasattr(graph,"outgoing_targets") else (r.target_id for r in graph.outgoing(target)))
-        if target_request:candidate_ids=set(self.structures)
+        if target_request:
+            self._refresh_dirty_place_structures();candidate_places=set()
+            for token in set(target_structure.relations):candidate_places.update(self._places_by_relation.get(token,()))
+            if not target_structure.relations:candidate_places.update(self._places_by_count.get(target_structure.participant_count,()))
+            for cognit_id in associated:
+                candidate_places.update(m.place_cognit_id for m in (self.structures[i] for i in self._by_cognit.get(cognit_id,())))
+                if cognit_id in self._by_place:candidate_places.add(cognit_id)
+            candidate_ids={i for place_id in candidate_places for i in self._by_place.get(place_id,())};self.last_target_candidate_places=len(candidate_places)
         else:
             candidate_ids=set()
             for cognit_id in associated:candidate_ids.update(self._by_cognit.get(cognit_id,()));candidate_ids.update(self._by_place.get(cognit_id,()))
         for memory_id in self._nonzero_recall_ids-candidate_ids:self.structures[memory_id].last_recall_strength=0.
-        place_groups={place_id:[self.structures[i] for i in sorted(ids,key=self._index_order.__getitem__)] for place_id,ids in self._by_place.items()} if target_request else {}
+        if target_request:
+            for memory_id in candidate_ids:self._materialize(self.structures[memory_id])
+        place_groups={place_id:[self.structures[i] for i in sorted(self._by_place.get(place_id,()),key=self._index_order.__getitem__)] for place_id in candidate_places} if target_request else {}
         structural_by_place={}
         self.last_retrieval_candidates=len(candidate_ids);self.last_retrieval_total=len(self.structures)
         nonzero=set()
@@ -211,13 +244,25 @@ class SpatialMemory:
             if target_request:
                 from .relational import memory_structure
                 group=place_groups[m.place_cognit_id]
-                if m.place_cognit_id not in structural_by_place:structural_by_place[m.place_cognit_id]=memory_structure(group).match(target_structure)
+                if m.place_cognit_id not in structural_by_place:structural_by_place[m.place_cognit_id]=memory_structure(group).match(target_structure);self.last_target_structural_scores[m.place_cognit_id]=structural_by_place[m.place_cognit_id]
                 structural=structural_by_place[m.place_cognit_id];role_support=min(1.,len(group)/max(1,target_structure.participant_count));relevance=max(relevance,.1+.65*structural+.25*role_support)
             strength=relevance*m.confidence*(.5+.5*self._recency(m,tick,256));m.last_recall_strength=strength
             if strength:nonzero.add(m.id)
             if strength>=.12:m.reactivations+=1;self.reactivation_count+=1;self.last_recalled[m.id]=strength;recalled|={m.cognit_id,m.place_cognit_id}
         self._nonzero_recall_ids=nonzero
         return recalled
+
+    def recall_legacy_target_result(self,goal_target_ids,graph,tick,target_structure):
+        associated=set(goal_target_ids)
+        for target in goal_target_ids:associated.update(graph.outgoing_targets(target) if hasattr(graph,"outgoing_targets") else (r.target_id for r in graph.outgoing(target)))
+        from .relational import memory_structure
+        groups={place_id:[self.structures[i] for i in sorted(ids,key=self._index_order.__getitem__)] for place_id,ids in self._by_place.items()}
+        recalled=set();strengths={};structural_scores={}
+        for place_id,group in groups.items():structural_scores[place_id]=memory_structure(group).match(target_structure)
+        for m in self.structures.values():
+            relevance=1. if m.cognit_id in associated else .35 if m.place_cognit_id in associated else 0.;group=groups[m.place_cognit_id];structural=structural_scores[m.place_cognit_id];role_support=min(1.,len(group)/max(1,target_structure.participant_count));relevance=max(relevance,.1+.65*structural+.25*role_support);strength=relevance*m.confidence*(.5+.5*self._recency(m,tick,256));strengths[m.id]=strength
+            if strength>=.12:recalled|={m.cognit_id,m.place_cognit_id}
+        return recalled,strengths,structural_scores
 
     def recall_legacy_result(self,goal_target_ids,graph,tick:int,target_structure=None):
         associated=set(goal_target_ids)

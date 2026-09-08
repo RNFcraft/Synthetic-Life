@@ -290,12 +290,13 @@ class SyntheticEntityCore:
                 goal.unavailable_ticks+=1
                 if self.world_time_seconds is not None and goal.unavailable_since_seconds is None:goal.unavailable_since_seconds=self.world_time_seconds
             if goal.origin!="TARGET":
-                factor=self.settings.goal_decay*(1-self.settings.goal_understanding_decay*understanding)
-                if self.world_time_seconds is None:goal.persistence*=factor
+                understanding_factor=1-self.settings.goal_understanding_decay*understanding
+                if self.world_time_seconds is None:goal.persistence*=self.settings.goal_decay*understanding_factor
                 else:
                     if goal.created_time_seconds is None:goal.created_time_seconds=self.world_time_seconds
                     last=goal.last_touch_time_seconds if goal.last_touch_time_seconds is not None else goal.created_time_seconds
-                    goal.persistence*=factor**(self.world_time_seconds-last);goal.last_touch_time_seconds=self.world_time_seconds
+                    goal.persistence*=self.settings.goal_decay**(self.world_time_seconds-last)
+                    goal.persistence*=understanding_factor;goal.last_touch_time_seconds=self.world_time_seconds
             goal.intensity=self.settings.goal_inertia*goal.intensity+(1-self.settings.goal_inertia)*candidate_intensity
             if goal.persistence<self.settings.goal_min_persistence:
                 self.state.completed_goal_lifetimes.append(goal.age);self.events.append(f"GOAL_COMPLETED G{goal.id}");self.state.goal=None
