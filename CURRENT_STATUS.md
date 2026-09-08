@@ -1,5 +1,18 @@
 # Synthetic Entity v0.5.3 — Current Status
 
+## CONTINUOUS WORLD COMPLETION
+
+CONTINUOUS WORLD COMPLETION: FAIL (verification pending)
+
+The implementation branch schedules `WORLD_SPAWN` and `MAINTENANCE` at
+absolute `WorldTime`, and normal `ContinuousRuntime` no longer dispatches
+`NativeWorld.world_tick()`. The frozen legacy `world_tick()` API remains.
+The first remaining blocker is environmental: the active Python environment
+does not contain `pytest` or the Python CMake package, while the existing
+CMake cache references an unavailable Visual Studio instance. Native rebuild,
+focused acceptance tests, persistence matrix, full pytest, and CTest have not
+been run; this gate must not be promoted until they pass.
+
 ## TRUE EVENT-DRIVEN COGNITION FRONTIER
 
 TRUE EVENT-DRIVEN COGNITION FRONTIER: PASS

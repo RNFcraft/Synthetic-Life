@@ -184,7 +184,11 @@ class SyntheticEntityCore:
         if self.backend:self.backend.engine.homeostatic_step([i-1 for i in current],self.settings.homeostasis_trace_decay,self.settings.homeostasis_learning_rate,self.settings.threshold_min,self.settings.threshold_max,self.settings.cognit_activity_decay,.999);self.backend.invalidate_state()
         else:
             for node in list(self.graph.nodes.values()):node.homeostatic_step(node.id in current,self.settings)
-        self._prune(frame.tick);self.previous_active=current;self.previous_context=frozenset(current);self.previous_body_signature=(frame.body.holding,frame.body.action_resistance>0,frame.body.touch_up,frame.body.touch_down,frame.body.touch_left,frame.body.touch_right);self.previous_action=kind;self.planner.committed();f.action=kind;f.committed=True;f.phase="COMMITTED";return Action(kind)
+        self.previous_active=current;self.previous_context=frozenset(current);self.previous_body_signature=(frame.body.holding,frame.body.action_resistance>0,frame.body.touch_up,frame.body.touch_down,frame.body.touch_left,frame.body.touch_right);self.previous_action=kind;self.planner.committed();f.action=kind;f.committed=True;f.phase="COMMITTED";return Action(kind)
+
+    def continuous_maintenance(self,maintenance_ordinal:int)->None:
+        """Bounded lifecycle transaction, driven by absolute-time runtime timers."""
+        self._prune(maintenance_ordinal)
 
     def deliberate(self,frame:SensoryFrame)->Action:
         """Advance bounded internal recall/planning without another World observation."""

@@ -92,6 +92,19 @@ class NativeWorld:
         result=self.native.world_tick(spawn,next_tick);self._refresh()
         if result.startswith("SPAWN_OBJECT:"):self.spawn_records.append(self._spawn_record(next(o for o in self.objects if o.id==int(result.split(':')[1])),self.world_tick_count))
         return result
+    def continuous_spawn(self,world_time,event_id):
+        """Apply one already-due continuous spawn attempt; Python owns its RNG policy."""
+        occupied={o.position for o in self.objects}|{b.position for b in self.bodies.values()}
+        free=[(x,y) for y in range(self.grid.height) for x in range(self.grid.width) if (x,y) not in occupied]
+        position=self.rng.choice(free) if free else None
+        object_id=self.native.apply_spawn_event(position,float(world_time),int(event_id));self._refresh()
+        if object_id is not None:
+            self.spawn_records.append(self._spawn_record(next(o for o in self.objects if o.id==object_id),self.world_tick_count))
+        return object_id
+    def disable_legacy_spawning(self):
+        self.native.configure_spawning(self.settings.max_objects,None,self.next_object_id);self._refresh()
+    def can_spawn_more(self):
+        return len(self.objects)+len(self.held_objects)<self.settings.max_objects
     def restore_native(self,world_time=0.,event_sequence=0):
         self.native.restore([(i,b.x,b.y,SHORT[b.orientation],b.appearance) for i,b in self.bodies.items()],[(o.id,o.x,o.y,o.state) for o in self.objects],[(i,o.id,o.x,o.y,o.state) for i,o in self.held_objects.items()],[self.body_resistance[i] for i in sorted(self.bodies)],self.world_tick_count,self.next_spawn_tick,self.next_object_id,self.conflict_cursor,self.conflict_count,[self.fairness_wins[i] for i in sorted(self.bodies)],world_time,event_sequence,self.settings.max_objects);self._refresh()
     def advance_world_time(self,seconds):self.native.advance_world_time(seconds)

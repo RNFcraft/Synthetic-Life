@@ -11,6 +11,8 @@ class Settings:
     entity_count: int = 1
     perception_radius: int = 4
     world_tick_interval: int = 1
+    # Absolute simulated-time maintenance cadence for ContinuousRuntime only.
+    continuous_maintenance_interval_seconds: float = 1.0
     world_event_weights: tuple[float,float,float] = (1.0,0.0,0.0)  # legacy API; autonomous events are disabled
     spawn_interval_min: int = 250
     spawn_interval_max: int = 750

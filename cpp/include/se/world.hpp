@@ -26,6 +26,7 @@ public:
   void advance_world_time(double seconds);
   void configure_spawning(std::uint32_t max_objects,std::optional<std::uint64_t>next_tick,std::uint32_t next_id){max_objects_=max_objects;next_spawn_tick_=next_tick;next_object_id_=next_id;}
   std::string world_tick(std::optional<std::pair<int,int>>spawn_position,std::optional<std::uint64_t>next_tick);
+  std::optional<std::uint32_t> apply_spawn_event(std::optional<std::pair<int,int>>spawn_position,double event_time,std::uint64_t event_id);
   double world_time()const noexcept{return world_time_;}std::uint64_t event_sequence()const noexcept{return event_sequence_;}
   std::uint64_t world_tick_count()const noexcept{return world_tick_count_;}std::optional<std::uint64_t>next_spawn_tick()const noexcept{return next_spawn_tick_;}std::uint32_t next_object_id()const noexcept{return next_object_id_;}
   const std::vector<Object>& objects() const noexcept{return objects_;}const std::vector<Body>& bodies()const noexcept{return bodies_;}
