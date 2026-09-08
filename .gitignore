@@ -5,4 +5,6 @@ __pycache__/
 snapshot*.json
 cpp/build/
 cpp/build-*/
+pip-cmake-install.out.log
+pip-cmake-install.err.log
 
