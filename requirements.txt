@@ -1,3 +1,15 @@
+# Runtime / research Python dependencies
 numpy>=1.26
 pygame>=2.5
+
+# Native C++/Python bridge
 pybind11>=3.0
+
+# Test suite
+pytest>=8.0
+
+# Build helpers available through pip.
+# NOTE: these do NOT install a C++ compiler. On Windows install
+# Visual Studio 2022 Build Tools with the Desktop development with C++ workload.
+cmake>=3.20
+ninja>=1.11
