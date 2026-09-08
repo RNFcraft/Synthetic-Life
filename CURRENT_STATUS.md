@@ -1,5 +1,84 @@
 # Synthetic Entity v0.5.3 — Current Status
 
+## TRUE EVENT-DRIVEN COGNITION FRONTIER
+
+TRUE EVENT-DRIVEN COGNITION FRONTIER: PASS
+
+## ARCHITECTURE
+
+    SENSORY_CHANGE
+      -> bounded observation / new cognition generation
+      -> COGNITION_WAKE
+      -> COGNITION_CONTINUE x N at the same WorldTime
+      -> QUIESCENT
+      -> one decision commit
+      -> WORLD_ACTION_COMPLETE at WorldTime + 0.15
+
+- Normal `ContinuousRuntime` uses dedicated continuous core/planner APIs and calls neither legacy `SyntheticEntityCore.step()` nor `DeliberativePlanner.deliberate()`.
+- One `COGNITION_CONTINUE` executes exactly one former planner-loop iteration.
+- `cognitive_tick`, planner `internal_tick`, and `total_cycles` increment once per continuation; EventSequence and float64 WorldTime remain independent.
+- External sensory evidence is applied once in the observation transaction. Predictions, trace, previous action/context, active homeostasis, planner commit, and action are committed once after quiescence.
+- Wake/continue payloads carry a monotonically increasing generation. Stale events are deterministic no-ops.
+
+## QUIESCENCE RULE
+
+The exact signature contains the working Cognit IDs, Goal ID, recalled Cognit IDs, action ranking, and candidate-plan action signature. Cognition becomes quiescent after this complete signature remains unchanged for two successive transition checks. No rounded float, elapsed time, timeout, or fixed cycle budget participates. The debug guard raises on runaway cognition without forcing an action.
+
+## CONTINUOUS BUDGET
+
+`max_deliberation_cycles` participates in continuous behavior: **NO**. The frozen legacy `deliberate()` retains its original budget. With the continuous maximum set to 1, the tested session still naturally performs three cycles and matches a maximum of 12.
+
+## FRONTIER PERSISTENCE
+
+Continuous `.seworld` schema version 2 persists cognition generation and phase, episode WorldTime/frame, current and working IDs, track IDs, convergence/signature state, current candidate plan, planner cycles/finalized state, behavior-affecting semantic caches, pending action/commit flag, and the exact scheduler frontier. Event-by-event continuation passes at all six required save phases. No-save, save-without-load, and save/load branches are identical.
+
+## HOMEOSTATIC EVENT SEMANTICS
+
+- Passive Cognit/Relation/memory/Goal evolution remains lazy elapsed-time behavior.
+- Recall stimulation, waves, and final active homeostasis remain causal activation operations. Same-time continuations invent no elapsed `dt`.
+
+## DETERMINISM
+
+- `PYTHONHASHSEED=1`: `debf85913f82f0b50be03200376aee2f025813f51af777a37ec38aed12fa80f3`
+- `PYTHONHASHSEED=77`: `debf85913f82f0b50be03200376aee2f025813f51af777a37ec38aed12fa80f3`
+- Renderer sampling and arbitrary host work between continuation events are observational.
+
+## FRONTIER COMPLEXITY
+
+- Planner continuations per completed decision: **3.0**.
+- Mean native FFI calls per continuation over five decisions: **8.93**.
+- Session-local working state and semantic caches persist across events and save/load.
+- `full_graph_sync_calls == 0`: **PASS**.
+- Normal native Python physical World calls: **0 / PASS**.
+
+## FRONTIER TESTS
+
+- Event-driven cognition frontier focused module: **14 passed**.
+- Frontier plus continuous runtime modules: **27 passed**.
+- Native-engine, causal, and elapsed compatibility selection: **56 passed**.
+- Full pytest: **197 passed**.
+- CTest Release: **1/1 passed**.
+- Long 5K/10K benchmarks were not run.
+
+## FIRST FAILURE
+
+None.
+
+## NEXT GATE
+
+**CONTINUOUS WORLD COMPLETION**
+
+Not started. It covers `WORLD_SPAWN` absolute-time scheduling, maintenance timers, and removal of the remaining heartbeat dependency.
+
+## FRONTIER MODIFIED FILES
+
+- consciousness/core.py
+- consciousness/planning.py
+- simulation/continuous.py
+- tests/test_v053_continuous_runtime.py
+- tests/test_v053_cognition_frontier.py
+- CURRENT_STATUS.md
+
 ## ELAPSED-TIME LAZY COGNITION
 
 ELAPSED-TIME LAZY COGNITION: PASS
@@ -108,20 +187,3 @@ Event/count state retained:
 - Normal native Python physical World calls: **0 / PASS**
 - Render sampling invariance: **PASS**
 - Long 5K/10K benchmarks were not run.
-
-## FIRST FAILURE
-
-None.
-
-## NEXT GATE
-
-**TRUE EVENT-DRIVEN COGNITION FRONTIER**
-
-That gate has not been started.
-
-## MODIFIED FILES
-
-- consciousness/memory.py
-- tests/test_v053_elapsed_corrections.py
-- V0_5_3_CONTINUOUS_RUNTIME_PLAN.md
-- CURRENT_STATUS.md

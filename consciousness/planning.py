@@ -7,6 +7,10 @@ from world.actions import ActionType
 class Plan:
     actions:tuple[ActionType,...];predicted_states:tuple[frozenset[int],...];score:float;confidence:float;goal_alignment:float;uncertainty:float;loop_risk:float;created_tick:int;revision:int=0
 
+@dataclass(slots=True)
+class DeliberationSession:
+    tick:int;current:frozenset[int];working:set[int];stable:int=0;previous_ranking:tuple[ActionType,...]=();previous_plan:tuple[int,...]=();previous_working:frozenset[int]=frozenset();previous_goal_id:int|None=None;previous_recalled:frozenset[int]=frozenset();candidate:Plan|None=None;semantic_cache:tuple[dict,dict,dict]|None=None;cycles:int=0;quiescent:bool=False;finalized:bool=False
+
 
 class DeliberativePlanner:
     def __init__(self,settings)->None:
@@ -45,6 +49,60 @@ class DeliberativePlanner:
         else:self.plans_created+=1;self.last_reason="CREATED"
         self.plan=current_plan
         return current_plan.actions[0] if current_plan.actions else core._choose_action().kind
+
+    def begin_continuous(self,core,current:set[int],tick:int)->DeliberationSession:
+        self._manage_goals(core,current,tick);self.cycles_last=0;self.converged=False
+        return DeliberationSession(tick,frozenset(current),set(current),semantic_cache=({}, {}, {}))
+
+    def continue_continuous(self,core,session:DeliberationSession)->bool:
+        if session.finalized:raise RuntimeError("continuous deliberation session already finalized")
+        if session.quiescent:return True
+        recalled=core.memory.recall(core.state.goal.target_cognit_ids if core.state.goal else (),core.graph,session.tick)
+        core.cognitive_tick+=1;cognitive_tick=core.cognitive_tick;recall_operations=[]
+        for node_id in recalled:
+            node=core.graph.nodes.get(node_id)
+            if node:recall_operations.append((node_id,.12*next((m.last_recall_strength for m in core.memory.structures.values() if m.cognit_id==node_id),.5)));session.working.add(node_id)
+        if core.backend:core.backend.receive_batch(recall_operations,cognitive_tick,core.settings)
+        else:
+            for node_id,energy in recall_operations:core.graph.nodes[node_id].receive(energy,cognitive_tick,core.settings)
+        wave=core._propagate(session.working,cognitive_tick);session.working=set(wave.active_ids)|set(recalled);core.last_wave=wave
+        core.state.futures=core._imagine(session.working);core.state.action_scores={a:f.score for a,f in core.state.futures.items()}
+        core.state.uncertainty=.8*core.state.uncertainty+.2*(1-max((f.confidence for f in core.state.futures.values()),default=0.))
+        initial_predictions={action:future.probabilities for action,future in core.state.futures.items()}
+        session.candidate=self._search(core,session.working,session.tick,session.semantic_cache,initial_predictions)
+        ranking=tuple(a for a,_ in sorted(core.state.action_scores.items(),key=lambda x:(-x[1],x[0].value)));signature=tuple(a.value for a in session.candidate.actions)
+        recalled_signature=frozenset(recalled);goal_id=core.state.goal.id if core.state.goal else None;working_signature=frozenset(session.working)
+        unchanged=ranking==session.previous_ranking and signature==session.previous_plan and working_signature==session.previous_working and goal_id==session.previous_goal_id and recalled_signature==session.previous_recalled
+        session.stable=session.stable+1 if unchanged else 0;session.previous_ranking,session.previous_plan=ranking,signature;session.previous_working=working_signature;session.previous_goal_id=goal_id;session.previous_recalled=recalled_signature
+        session.cycles+=1;self.cycles_last+=1;self.total_cycles+=1;self.internal_tick+=1
+        # A repeated behaviorally meaningful decision signature is the natural fixpoint.
+        session.quiescent=session.stable>=2;self.converged=session.quiescent
+        return session.quiescent
+
+    def finalize_continuous(self,core,session:DeliberationSession)->ActionType:
+        if not session.quiescent:raise RuntimeError("continuous deliberation is not quiescent")
+        if session.finalized:raise RuntimeError("continuous deliberation session already finalized")
+        session.finalized=True;self.last_active=frozenset(session.working);current_plan=session.candidate
+        if current_plan is None:raise RuntimeError("quiescent deliberation has no candidate")
+        if self.plan and self.plan.actions:
+            expected=self.plan.predicted_states[0] if self.plan.predicted_states else frozenset();overlap=len(expected&session.current)/max(1,len(expected|session.current))
+            if overlap<.15:self.plans_abandoned+=1;self.last_reason="PREDICTION_MISMATCH"
+            else:self.plans_revised+=1;self.last_reason="REVALIDATED"
+        else:self.plans_created+=1;self.last_reason="CREATED"
+        self.plan=current_plan
+        return current_plan.actions[0] if current_plan.actions else core._choose_action().kind
+
+    def session_to_dict(self,s:DeliberationSession)->dict:
+        def plan(p):
+            return None if p is None else {"actions":[a.name for a in p.actions],"predicted_states":[sorted(x) for x in p.predicted_states],"score":p.score,"confidence":p.confidence,"goal_alignment":p.goal_alignment,"uncertainty":p.uncertainty,"loop_risk":p.loop_risk,"created_tick":p.created_tick,"revision":p.revision}
+        ec,pc,sm=s.semantic_cache or ({},{},{})
+        encode=lambda cache:[[sorted(state),action.name,value] for (state,action),value in cache.items()]
+        return {"tick":s.tick,"current":sorted(s.current),"working":sorted(s.working),"stable":s.stable,"previous_ranking":[a.name for a in s.previous_ranking],"previous_plan":list(s.previous_plan),"previous_working":sorted(s.previous_working),"previous_goal_id":s.previous_goal_id,"previous_recalled":sorted(s.previous_recalled),"candidate":plan(s.candidate),"epistemic_cache":encode(ec),"progress_cache":encode(pc),"shared_memory":[[k,v] for k,v in sm.items()],"cycles":s.cycles,"quiescent":s.quiescent,"finalized":s.finalized}
+
+    def session_from_dict(self,d:dict)->DeliberationSession:
+        def decode(rows):return {(frozenset(state),ActionType[action]):value for state,action,value in rows}
+        raw=d.get("candidate");candidate=None if raw is None else Plan(tuple(ActionType[x] for x in raw["actions"]),tuple(frozenset(x) for x in raw["predicted_states"]),raw["score"],raw["confidence"],raw["goal_alignment"],raw["uncertainty"],raw["loop_risk"],raw["created_tick"],raw.get("revision",0))
+        return DeliberationSession(d["tick"],frozenset(d["current"]),set(d["working"]),d["stable"],tuple(ActionType[x] for x in d["previous_ranking"]),tuple(d["previous_plan"]),frozenset(d.get("previous_working",[])),d.get("previous_goal_id"),frozenset(d.get("previous_recalled",[])),candidate,(decode(d.get("epistemic_cache",[])),decode(d.get("progress_cache",[])),{int(k):v for k,v in d.get("shared_memory",[])}),d["cycles"],d["quiescent"],d["finalized"])
 
     def _manage_goals(self,core,current:set[int],tick:int)->None:
         goal=core.state.goal

@@ -1,4 +1,5 @@
 from collections import defaultdict,deque
+from dataclasses import dataclass
 from math import prod,sqrt
 from config import Settings
 from world.actions import Action,ActionType
@@ -14,12 +15,16 @@ from .relation import RelationStatus,RelationType
 from .sensory import SensoryPatternTracker
 from .percepts import PerceptualContinuityEngine
 from .memory import SpatialMemory
-from .planning import DeliberativePlanner
+from .planning import DeliberativePlanner,DeliberationSession
 from .relational import BeliefScene,RelationalStructure,observed_structure
 from .affordance import AffordanceEvidence
 from .state import ConsciousnessState,FutureEstimate,Goal,TraceEntry,WorkingTrace
 from .wave import ActivityWaveEngine,WaveResult
 
+
+@dataclass(slots=True)
+class ContinuousCognitionFrontier:
+    generation:int;world_time:float;frame:SensoryFrame;current:set[int];track_ids:tuple[int,...];session:DeliberationSession|None=None;phase:str="OBSERVED";action:ActionType|None=None;committed:bool=False
 
 class SyntheticEntityCore:
     """v0.2 cognitive loop. It consumes sensory values and returns an action only."""
@@ -49,6 +54,7 @@ class SyntheticEntityCore:
         self.cognitive_tick=0
         self.world_time_seconds:float|None=None
         self._selectivity_sum=0.;self._selectivity_count=0
+        self.continuous_frontier:ContinuousCognitionFrontier|None=None
     def _propagate(self,seeds:set[int],tick:int)->WaveResult:
         return self.backend.propagate_graph(self.graph,seeds,tick) if self.backend else self.wave.propagate(self.graph,seeds,tick)
 
@@ -65,6 +71,9 @@ class SyntheticEntityCore:
         self.next_goal_id+=1;self.state.goals_generated+=1;self.state.goal=goal;self.events.append(f"TARGET_RECEIVED G{goal.id}");return goal
 
     def step(self,frame:SensoryFrame,world_time:float|None=None)->Action:
+        return self._observe(frame,world_time,True)
+
+    def _observe(self,frame:SensoryFrame,world_time:float|None,commit:bool,generation:int=0):
         self.world_time_seconds=world_time;self.memory.set_world_time(world_time)
         if world_time is not None and self.backend:self.backend.begin_continuous_time(world_time)
         self.events=[];self.cognitive_tick+=1;cognitive_tick=self.cognitive_tick
@@ -122,7 +131,10 @@ class SyntheticEntityCore:
         elif not self.backend:
             self.transitions.observe(self.previous_active,self.previous_action,current);self._materialize_relations(frame.tick,current)
         self._update_intrinsic_state(current,matched,observation)
-        self._update_goal(current);self.state.futures=self._imagine(current);action=self._choose_action()
+        self._update_goal(current)
+        if not commit:
+            self.continuous_frontier=ContinuousCognitionFrontier(generation,float(world_time),frame,current,tuple(t.id for t in tracks));return None
+        self.state.futures=self._imagine(current);action=self._choose_action()
         if self.previous_action is not None and self.previous_context:
             body_sig=(frame.body.holding,frame.body.action_resistance>0,frame.body.touch_up,frame.body.touch_down,frame.body.touch_left,frame.body.touch_right);effect=body_sig!=self.previous_body_signature
             self.affordances.observe(self.previous_context,self.previous_action,effect,0.)
@@ -139,6 +151,40 @@ class SyntheticEntityCore:
             for node in list(self.graph.nodes.values()):node.homeostatic_step(node.id in current,self.settings)
         self._prune(frame.tick);self.previous_active=current;self.previous_context=frozenset(current);self.previous_body_signature=(frame.body.holding,frame.body.action_resistance>0,frame.body.touch_up,frame.body.touch_down,frame.body.touch_left,frame.body.touch_right);self.previous_action=action.kind
         return action
+
+    def begin_continuous_observation(self,frame:SensoryFrame,world_time:float,generation:int)->None:
+        self._observe(frame,world_time,False,generation)
+
+    def begin_continuous_cognition(self,generation:int)->bool:
+        f=self.continuous_frontier
+        if f is None or f.generation!=generation:return False
+        if f.phase=="OBSERVED":f.session=self.planner.begin_continuous(self,set(f.current),f.frame.tick);f.phase="DELIBERATING"
+        return True
+
+    def continue_continuous_cognition(self,generation:int)->bool|None:
+        f=self.continuous_frontier
+        if f is None or f.generation!=generation:return None
+        if f.phase!="DELIBERATING" or f.session is None:raise RuntimeError("invalid continuous cognition phase")
+        quiet=self.planner.continue_continuous(self,f.session)
+        if quiet:f.phase="QUIESCENT"
+        return quiet
+
+    def commit_continuous_action(self,generation:int)->Action|None:
+        f=self.continuous_frontier
+        if f is None or f.generation!=generation:return None
+        if f.committed:return Action(f.action)
+        if f.phase!="QUIESCENT" or f.session is None:raise RuntimeError("continuous cognition is not quiescent")
+        kind=self.planner.finalize_continuous(self,f.session);current=set(self.planner.last_active);frame=f.frame
+        if self.previous_action is not None and self.previous_context:
+            body_sig=(frame.body.holding,frame.body.action_resistance>0,frame.body.touch_up,frame.body.touch_down,frame.body.touch_left,frame.body.touch_right);effect=body_sig!=self.previous_body_signature;self.affordances.observe(self.previous_context,self.previous_action,effect,0.)
+        self.state.predictions=self._graph_predict(current,kind);self.predictions_without_composites=self._graph_predict(current,kind,exclude_composites=True)
+        if self.backend:self.backend.cognit_state_fields(sorted(current),(0,))
+        self.trace.append(TraceEntry(frame.tick,tuple((i,self.graph.nodes[i].activity) for i in sorted(current)),kind,tuple(sorted(self.state.predictions.items())),self.state.prediction_error,self.state.goal.id if self.state.goal else None,self.state.internal_tension,f.track_ids,self.state.representation_error))
+        self.state.loop_score=self.trace.loop_score(max_period=self.settings.loop_max_period,min_repeats=self.settings.loop_min_repeats)
+        if self.backend:self.backend.engine.homeostatic_step([i-1 for i in current],self.settings.homeostasis_trace_decay,self.settings.homeostasis_learning_rate,self.settings.threshold_min,self.settings.threshold_max,self.settings.cognit_activity_decay,.999);self.backend.invalidate_state()
+        else:
+            for node in list(self.graph.nodes.values()):node.homeostatic_step(node.id in current,self.settings)
+        self._prune(frame.tick);self.previous_active=current;self.previous_context=frozenset(current);self.previous_body_signature=(frame.body.holding,frame.body.action_resistance>0,frame.body.touch_up,frame.body.touch_down,frame.body.touch_left,frame.body.touch_right);self.previous_action=kind;self.planner.committed();f.action=kind;f.committed=True;f.phase="COMMITTED";return Action(kind)
 
     def deliberate(self,frame:SensoryFrame)->Action:
         """Advance bounded internal recall/planning without another World observation."""
