@@ -38,7 +38,8 @@ def test_subsecond_spawn_advances_native_time_and_event_sequence():
     runtime.run_until(.437)
     time, sequence = runtime.simulation.world.native.time_state()
     assert time == pytest.approx(.437)
-    assert sequence >= event_id
+    assert sequence == runtime.simulation.event_sequence.value
+    assert sequence != event_id  # scheduler insertion order is not physical execution order
 
 
 def test_save_load_preserves_spawn_rng_frontier(tmp_path):
@@ -51,3 +52,27 @@ def test_save_load_preserves_spawn_rng_frontier(tmp_path):
     assert restored.simulation.world.to_dict() == direct.simulation.world.to_dict()
     assert restored.simulation.rng.getstate() == direct.simulation.rng.getstate()
     assert _spawn_events(restored) == _spawn_events(direct)
+
+
+def test_low_scheduler_spawn_id_advances_physical_sequence_at_execution():
+    settings = replace(Settings(), object_count=0, max_objects=3, spawn_interval_min=2, spawn_interval_max=2)
+    runtime = ContinuousRuntime(704, settings)
+    spawn = next(e for e in runtime.scheduler.snapshot() if e.type is RuntimeEventType.WORLD_SPAWN)
+    runtime.run_until(1.95)
+    before = runtime.simulation.event_sequence.value
+    assert spawn.id < before
+    runtime.run_until(2.0)
+    assert runtime.simulation.event_sequence.value == before + 1
+    runtime.run_until(2.1)
+    assert runtime.simulation.event_sequence.value == before + 2
+
+
+def test_maintenance_enters_exact_continuous_world_time_without_cognitive_tick():
+    settings = replace(Settings(), continuous_maintenance_interval_seconds=10.0)
+    runtime = ContinuousRuntime(705, settings)
+    runtime.scheduler.schedule(.437, RuntimeEventType.MAINTENANCE)
+    before_tick = runtime.simulation.core.cognitive_tick
+    runtime.run_until(.437)
+    elapsed = runtime.simulation.core.backend.engine.continuous_time_state()
+    assert elapsed[2] == pytest.approx(.437)
+    assert runtime.simulation.core.cognitive_tick == before_tick

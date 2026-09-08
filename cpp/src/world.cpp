@@ -11,7 +11,7 @@ bool movement(ActionType a){return a>=ActionType::MoveUp&&a<=ActionType::MoveRig
 char orientation(int dx,int dy){return dy<0?'N':dy>0?'S':dx<0?'W':'E';}
 }
 void World::advance_world_time(double seconds){if(!std::isfinite(seconds)||seconds<world_time_)throw std::invalid_argument("world time must be finite and monotonic");world_time_=seconds;}
-ActionResult World::apply_intent(ActionType action,double issued,std::uint64_t event){if(!std::isfinite(issued)||issued<world_time_||event==0)throw std::invalid_argument("non-monotonic ActionIntent");world_time_=issued;event_sequence_=std::max(event_sequence_,event);return apply(action);}
+ActionResult World::apply_intent(ActionType action,double issued,std::uint64_t event){if(!std::isfinite(issued)||issued<world_time_||event!=event_sequence_+1)throw std::invalid_argument("non-monotonic ActionIntent");world_time_=issued;event_sequence_=event;return apply(action);}
 Body*World::body_by_id(std::uint32_t id){for(auto&b:bodies_)if(b.id==id)return&b;return nullptr;}const Body*World::body_by_id(std::uint32_t id)const{for(auto&b:bodies_)if(b.id==id)return&b;return nullptr;}
 bool World::occupied_by_body(int x,int y,std::uint32_t except)const{for(auto&b:bodies_)if(b.id!=except&&b.x==x&&b.y==y)return true;return false;}
 void World::initialize(Body body,std::vector<std::pair<int,int>> positions){body.id=0;std::vector<Object>objects;std::uint32_t id=1;for(auto[x,y]:positions)objects.push_back({id++,x,y,0});initialize_multi({body},std::move(objects));}
@@ -27,8 +27,8 @@ std::vector<ActionResult> World::resolve_intents(std::span<const std::uint32_t>i
  std::vector<ActionResult>out;out.reserve(ids.size());std::vector<std::size_t>order(ids.size());for(std::size_t i=0;i<order.size();++i)order[i]=i;std::sort(order.begin(),order.end(),[&](auto a,auto b){return ids[a]<ids[b];});std::vector<ActionResult>by_input(ids.size());for(auto k:order){auto id=ids[k];if(blocked[id]){resistance_[id]=1;by_input[k]=ActionResult::Blocked;}else by_input[k]=apply((ActionType)raw[k],id);}return by_input;}
 std::string World::world_tick(std::optional<std::pair<int,int>>position,std::optional<std::uint64_t>next){++world_tick_count_;if(!next_spawn_tick_||world_tick_count_<*next_spawn_tick_)return"NOTHING";if(!position){next_spawn_tick_=next;return"SPAWN_BLOCKED";}auto[x,y]=*position;if(!contains(x,y)||at(x,y)||occupied_by_body(x,y,UINT32_MAX))throw std::invalid_argument("invalid injected spawn");auto id=next_object_id_++;objects_.push_back({id,x,y,0});next_spawn_tick_=objects_.size()<max_objects_?next:std::nullopt;return"SPAWN_OBJECT:"+std::to_string(id);}
 std::optional<std::uint32_t> World::apply_spawn_event(std::optional<std::pair<int,int>>position,double time,std::uint64_t event){
- if(!std::isfinite(time)||time<world_time_||event==0)throw std::invalid_argument("non-monotonic spawn event");
- world_time_=time;event_sequence_=std::max(event_sequence_,event);
+ if(!std::isfinite(time)||time<world_time_||event!=event_sequence_+1)throw std::invalid_argument("non-monotonic spawn event");
+ world_time_=time;event_sequence_=event;
  std::size_t count=objects_.size();for(auto const& item:held_)if(item)++count;
  if(count>=max_objects_||!position)return std::nullopt;
  auto[x,y]=*position;if(!contains(x,y)||at(x,y)||occupied_by_body(x,y,UINT32_MAX))throw std::invalid_argument("invalid injected spawn");

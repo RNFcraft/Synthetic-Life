@@ -23,7 +23,7 @@ class RenderSnapshot:world_time:float;bodies:tuple[RenderBody,...];objects:tuple
 class ContinuousRuntime:
     ACTION_DURATION=.15
     def __init__(self,seed=12345,settings:Settings|None=None):
-        self.simulation=Simulation(seed,settings,backend="native");self.scheduler=EventScheduler();self.observation_ordinal=0;self.last_frame=None;self.actions_completed=0;self.cognition_wakes=0;self.cognition_continuations=0;self.cognition_generation=0;self.maintenance_ordinal=0;self._sensory_dirty=False;self._legacy_monolithic_frontier=False
+        self.simulation=Simulation(seed,settings,backend="native");self.scheduler=EventScheduler();self.observation_ordinal=0;self.last_frame=None;self.actions_completed=0;self.cognition_wakes=0;self.cognition_continuations=0;self.cognition_generation=0;self.maintenance_ordinal=0;self._legacy_monolithic_frontier=False
         world=self.simulation.world;first=world.next_spawn_tick;world.disable_legacy_spawning()
         if first is not None:self.scheduler.schedule(float(first),RuntimeEventType.WORLD_SPAWN)
         interval=self.simulation.settings.continuous_maintenance_interval_seconds
@@ -49,17 +49,19 @@ class ContinuousRuntime:
                 if action is not None:self.scheduler.schedule(now+self.ACTION_DURATION,RuntimeEventType.WORLD_ACTION_COMPLETE,action.kind.value)
             elif quiet is False:self.scheduler.schedule(now,RuntimeEventType.COGNITION_CONTINUE,event.payload)
         elif kind==RuntimeEventType.WORLD_ACTION_COMPLETE:
-            action=Action(ActionType(event.payload));intent=ActionIntent(action,WorldTime(now),event.id);self.simulation.world.apply_intent(intent);self.simulation.last_action=action;self.actions_completed+=1;self.scheduler.schedule(now,RuntimeEventType.SENSORY_CHANGE)
+            action=Action(ActionType(event.payload));physical_sequence=self.simulation.event_sequence.next();intent=ActionIntent(action,WorldTime(now),physical_sequence);self.simulation.world.apply_intent(intent);self.simulation.last_action=action;self.actions_completed+=1;self.scheduler.schedule(now,RuntimeEventType.SENSORY_CHANGE)
         elif kind==RuntimeEventType.WORLD_SPAWN:
-            before=self._sensory_signature();self.simulation.world.continuous_spawn(now,event.id);after=self._sensory_signature()
+            before=self._sensory_signature();position=self.simulation.world.continuous_spawn_position()
+            if position is not None:
+                physical_sequence=self.simulation.event_sequence.next();self.simulation.world.continuous_spawn(position,now,physical_sequence)
+            after=self._sensory_signature()
             if self.simulation.world.can_spawn_more():self.scheduler.schedule(now+self.simulation.world._sample_next_spawn(0),RuntimeEventType.WORLD_SPAWN)
             if before!=after:
-                if self._action_in_flight():self._sensory_dirty=True
-                else:self.scheduler.schedule(now,RuntimeEventType.SENSORY_CHANGE)
+                if not self._action_in_flight():self.scheduler.schedule(now,RuntimeEventType.SENSORY_CHANGE)
         elif kind==RuntimeEventType.MAINTENANCE:
             frontier=self.simulation.core.continuous_frontier
             if frontier is not None and frontier.phase in {"OBSERVED","DELIBERATING","QUIESCENT"}:self.scheduler.schedule(now,RuntimeEventType.MAINTENANCE);return
-            self.maintenance_ordinal+=1;self.simulation.core.continuous_maintenance(self.maintenance_ordinal)
+            self.maintenance_ordinal+=1;self.simulation.core.continuous_maintenance(now,self.maintenance_ordinal)
             self.scheduler.schedule(now+self.simulation.settings.continuous_maintenance_interval_seconds,RuntimeEventType.MAINTENANCE)
     def _sensory_signature(self):
         cells,body=self.simulation.world.native.perceive(self.observation_ordinal,0)
@@ -100,7 +102,7 @@ class ContinuousRuntime:
         try:self.simulation.core.backend.engine.save_graph(tmp);native=base64.b64encode(open(tmp,"rb").read()).decode("ascii")
         finally:os.unlink(tmp)
         engine=self.simulation.core.backend.engine;history=engine.transition_history();homeostasis=engine.homeostasis_runtime_state();elapsed=engine.continuous_time_state();elapsed_relations=engine.continuous_relation_time_state();dirty=engine.dirty_relation_state()
-        save_container(path,"world",{"META":{"schema":"synthetic-entity-continuous-world","version":4},"STATE":state,"CONT":{"scheduler":self.scheduler_state(),"observation_ordinal":self.observation_ordinal,"actions_completed":self.actions_completed,"cognition_wakes":self.cognition_wakes,"cognition_continuations":self.cognition_continuations,"cognition_generation":self.cognition_generation,"maintenance_ordinal":self.maintenance_ordinal,"sensory_dirty":self._sensory_dirty,"legacy_monolithic_frontier":self._legacy_monolithic_frontier,"transition_history":history,"homeostasis":homeostasis,"elapsed_cognits":elapsed,"elapsed_relations":elapsed_relations,"dirty_relations":dirty,"frontier":self._frontier_state()},"NBRN":{"encoding":"base64","data":native}},{"NBRN"})
+        save_container(path,"world",{"META":{"schema":"synthetic-entity-continuous-world","version":4},"STATE":state,"CONT":{"scheduler":self.scheduler_state(),"observation_ordinal":self.observation_ordinal,"actions_completed":self.actions_completed,"cognition_wakes":self.cognition_wakes,"cognition_continuations":self.cognition_continuations,"cognition_generation":self.cognition_generation,"maintenance_ordinal":self.maintenance_ordinal,"legacy_monolithic_frontier":self._legacy_monolithic_frontier,"transition_history":history,"homeostasis":homeostasis,"elapsed_cognits":elapsed,"elapsed_relations":elapsed_relations,"dirty_relations":dirty,"frontier":self._frontier_state()},"NBRN":{"encoding":"base64","data":native}},{"NBRN"})
     @classmethod
     def load_world(cls,path,settings=None):
         data=load_container(path,"world",{"META","STATE","CONT","NBRN"});fd,tmp=tempfile.mkstemp(suffix=".json");os.close(fd)
@@ -111,7 +113,7 @@ class ContinuousRuntime:
             with open(tmp,"wb") as stream:stream.write(base64.b64decode(data["NBRN"]["data"]))
             engine=sim.core.backend.engine;engine.load_graph(tmp);engine.restore_transition_history(data["CONT"].get("transition_history",[]));engine.restore_homeostasis_runtime_state(*data["CONT"]["homeostasis"]);engine.restore_continuous_time_state(*data["CONT"].get("elapsed_cognits",[False,0.0,0.0,[-1.0]*engine.cognit_count,[-1.0]*engine.cognit_count,[.25]*engine.cognit_count,0]));engine.restore_continuous_relation_time_state(*data["CONT"].get("elapsed_relations",[[],0]));engine.restore_dirty_relation_state(data["CONT"]["dirty_relations"]);sim.core.backend.invalidate_state()
         finally:os.unlink(tmp)
-        obj=cls.__new__(cls);obj.simulation=sim;obj.scheduler=EventScheduler();cont=data["CONT"];s=cont["scheduler"];events=[RuntimeEvent(t,i,getattr(RuntimeEventType,name),p) for t,i,name,p in s["events"]];obj.scheduler.restore(s["now"],s["next_id"],events);obj.observation_ordinal=cont["observation_ordinal"];obj.actions_completed=cont["actions_completed"];obj.cognition_wakes=cont["cognition_wakes"];obj.cognition_continuations=cont.get("cognition_continuations",0);obj.cognition_generation=cont.get("cognition_generation",0);obj.maintenance_ordinal=cont.get("maintenance_ordinal",0);obj._sensory_dirty=cont.get("sensory_dirty",False);obj._legacy_monolithic_frontier=cont.get("legacy_monolithic_frontier",data["META"].get("version",1)<2 and any(e.type==RuntimeEventType.COGNITION_WAKE for e in events))
+        obj=cls.__new__(cls);obj.simulation=sim;obj.scheduler=EventScheduler();cont=data["CONT"];s=cont["scheduler"];events=[RuntimeEvent(t,i,getattr(RuntimeEventType,name),p) for t,i,name,p in s["events"]];obj.scheduler.restore(s["now"],s["next_id"],events);obj.observation_ordinal=cont["observation_ordinal"];obj.actions_completed=cont["actions_completed"];obj.cognition_wakes=cont["cognition_wakes"];obj.cognition_continuations=cont.get("cognition_continuations",0);obj.cognition_generation=cont.get("cognition_generation",0);obj.maintenance_ordinal=cont.get("maintenance_ordinal",0);obj._legacy_monolithic_frontier=cont.get("legacy_monolithic_frontier",data["META"].get("version",1)<2 and any(e.type==RuntimeEventType.COGNITION_WAKE for e in events))
         if data["META"].get("version",3)<4:
             first=sim.world.next_spawn_tick;sim.world.disable_legacy_spawning()
             if first is not None and not any(e.type==RuntimeEventType.WORLD_SPAWN for e in events):obj.scheduler.schedule(max(obj.scheduler.now,float(first)),RuntimeEventType.WORLD_SPAWN)

@@ -7,11 +7,14 @@ CONTINUOUS WORLD COMPLETION: FAIL (verification pending)
 The implementation branch schedules `WORLD_SPAWN` and `MAINTENANCE` at
 absolute `WorldTime`, and normal `ContinuousRuntime` no longer dispatches
 `NativeWorld.world_tick()`. The frozen legacy `world_tick()` API remains.
-The first remaining blocker is environmental: the active Python environment
-does not contain `pytest` or the Python CMake package, while the existing
-CMake cache references an unavailable Visual Studio instance. Native rebuild,
-focused acceptance tests, persistence matrix, full pytest, and CTest have not
-been run; this gate must not be promoted until they pass.
+`RuntimeEvent.id` is now retained solely for scheduler ordering; physical
+World mutations allocate their own `Simulation.event_sequence` at execution.
+Maintenance passes its absolute deadline through the established continuous
+time entry point before bounded lifecycle work.
+The native environment is configured with CMake 4.4.3, Ninja 1.13.2, pytest
+9.1.1, and MSVC. A clean Release native build, focused continuous-world tests
+(4 passed), and CTest equivalence (1/1 passed) now run. The gate remains FAIL
+until its wider acceptance/persistence matrix and regressions pass.
 
 ## TRUE EVENT-DRIVEN COGNITION FRONTIER
 

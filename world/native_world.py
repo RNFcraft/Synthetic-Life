@@ -92,11 +92,15 @@ class NativeWorld:
         result=self.native.world_tick(spawn,next_tick);self._refresh()
         if result.startswith("SPAWN_OBJECT:"):self.spawn_records.append(self._spawn_record(next(o for o in self.objects if o.id==int(result.split(':')[1])),self.world_tick_count))
         return result
-    def continuous_spawn(self,world_time,event_id):
-        """Apply one already-due continuous spawn attempt; Python owns its RNG policy."""
+    def continuous_spawn_position(self):
+        """Choose a continuous spawn position without touching native World state."""
+        if not self.can_spawn_more():return None
         occupied={o.position for o in self.objects}|{b.position for b in self.bodies.values()}
         free=[(x,y) for y in range(self.grid.height) for x in range(self.grid.width) if (x,y) not in occupied]
-        position=self.rng.choice(free) if free else None
+        return self.rng.choice(free) if free else None
+    def continuous_spawn(self,position,world_time,event_id):
+        """Apply a selected continuous spawn as one physical event."""
+        if position is None:raise ValueError("continuous spawn requires a free position")
         object_id=self.native.apply_spawn_event(position,float(world_time),int(event_id));self._refresh()
         if object_id is not None:
             self.spawn_records.append(self._spawn_record(next(o for o in self.objects if o.id==object_id),self.world_tick_count))

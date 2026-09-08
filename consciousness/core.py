@@ -186,8 +186,10 @@ class SyntheticEntityCore:
             for node in list(self.graph.nodes.values()):node.homeostatic_step(node.id in current,self.settings)
         self.previous_active=current;self.previous_context=frozenset(current);self.previous_body_signature=(frame.body.holding,frame.body.action_resistance>0,frame.body.touch_up,frame.body.touch_down,frame.body.touch_left,frame.body.touch_right);self.previous_action=kind;self.planner.committed();f.action=kind;f.committed=True;f.phase="COMMITTED";return Action(kind)
 
-    def continuous_maintenance(self,maintenance_ordinal:int)->None:
+    def continuous_maintenance(self,world_time:float,maintenance_ordinal:int)->None:
         """Bounded lifecycle transaction, driven by absolute-time runtime timers."""
+        self.world_time_seconds=float(world_time);self.memory.set_world_time(world_time)
+        if self.backend:self.backend.begin_continuous_time(world_time)
         self._prune(maintenance_ordinal)
 
     def deliberate(self,frame:SensoryFrame)->Action:
