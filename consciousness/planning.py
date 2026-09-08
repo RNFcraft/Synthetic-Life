@@ -1,4 +1,6 @@
-from dataclasses import dataclass
+from collections import deque
+from dataclasses import dataclass,field
+from enum import Enum
 from heapq import nsmallest
 from world.actions import ActionType
 
@@ -7,9 +9,16 @@ from world.actions import ActionType
 class Plan:
     actions:tuple[ActionType,...];predicted_states:tuple[frozenset[int],...];score:float;confidence:float;goal_alignment:float;uncertainty:float;loop_risk:float;created_tick:int;revision:int=0
 
+class CognitiveWorkKind(Enum):
+    RECALL="RECALL";PROPAGATE="PROPAGATE";IMAGINE="IMAGINE";PLAN_REFINE="PLAN_REFINE"
+
+@dataclass(frozen=True,slots=True)
+class CognitiveWork:
+    kind:CognitiveWorkKind;key:tuple;payload:tuple[int,...]=()
+
 @dataclass(slots=True)
 class DeliberationSession:
-    tick:int;current:frozenset[int];working:set[int];stable:int=0;previous_ranking:tuple[ActionType,...]=();previous_plan:tuple[int,...]=();previous_working:frozenset[int]=frozenset();previous_goal_id:int|None=None;previous_recalled:frozenset[int]=frozenset();candidate:Plan|None=None;semantic_cache:tuple[dict,dict,dict]|None=None;cycles:int=0;quiescent:bool=False;finalized:bool=False
+    tick:int;current:frozenset[int];working:set[int];candidate:Plan|None=None;semantic_cache:tuple[dict,dict,dict]|None=None;cycles:int=0;quiescent:bool=False;finalized:bool=False;working_revision:int=0;last_recall_key:tuple|None=None;last_recalled:frozenset[int]=frozenset();pending_work:deque[CognitiveWork]=field(default_factory=deque);pending_keys:set[tuple]=field(default_factory=set);work_history:list[str]=field(default_factory=list)
 
 
 class DeliberativePlanner:
@@ -52,31 +61,47 @@ class DeliberativePlanner:
 
     def begin_continuous(self,core,current:set[int],tick:int)->DeliberationSession:
         self._manage_goals(core,current,tick);self.cycles_last=0;self.converged=False
-        return DeliberationSession(tick,frozenset(current),set(current),semantic_cache=({}, {}, {}))
+        session=DeliberationSession(tick,frozenset(current),set(current),semantic_cache=({}, {}, {}));self._enqueue_recall(core,session);return session
+
+    @staticmethod
+    def _enqueue(session:DeliberationSession,work:CognitiveWork)->None:
+        identity=(work.kind.value,work.key)
+        if identity not in session.pending_keys:session.pending_work.append(work);session.pending_keys.add(identity)
+
+    def _enqueue_recall(self,core,session:DeliberationSession)->None:
+        goal=core.state.goal;key=(goal.id if goal else None,tuple(goal.target_cognit_ids) if goal else (),session.working_revision)
+        if key!=session.last_recall_key:self._enqueue(session,CognitiveWork(CognitiveWorkKind.RECALL,key))
 
     def continue_continuous(self,core,session:DeliberationSession)->bool:
         if session.finalized:raise RuntimeError("continuous deliberation session already finalized")
         if session.quiescent:return True
-        recalled=core.memory.recall(core.state.goal.target_cognit_ids if core.state.goal else (),core.graph,session.tick)
-        core.cognitive_tick+=1;cognitive_tick=core.cognitive_tick;recall_operations=[]
-        for node_id in recalled:
-            node=core.graph.nodes.get(node_id)
-            if node:recall_operations.append((node_id,.12*next((m.last_recall_strength for m in core.memory.structures.values() if m.cognit_id==node_id),.5)));session.working.add(node_id)
-        if core.backend:core.backend.receive_batch(recall_operations,cognitive_tick,core.settings)
-        else:
-            for node_id,energy in recall_operations:core.graph.nodes[node_id].receive(energy,cognitive_tick,core.settings)
-        wave=core._propagate(session.working,cognitive_tick);session.working=set(wave.active_ids)|set(recalled);core.last_wave=wave
-        core.state.futures=core._imagine(session.working);core.state.action_scores={a:f.score for a,f in core.state.futures.items()}
-        core.state.uncertainty=.8*core.state.uncertainty+.2*(1-max((f.confidence for f in core.state.futures.values()),default=0.))
-        initial_predictions={action:future.probabilities for action,future in core.state.futures.items()}
-        session.candidate=self._search(core,session.working,session.tick,session.semantic_cache,initial_predictions)
-        ranking=tuple(a for a,_ in sorted(core.state.action_scores.items(),key=lambda x:(-x[1],x[0].value)));signature=tuple(a.value for a in session.candidate.actions)
-        recalled_signature=frozenset(recalled);goal_id=core.state.goal.id if core.state.goal else None;working_signature=frozenset(session.working)
-        unchanged=ranking==session.previous_ranking and signature==session.previous_plan and working_signature==session.previous_working and goal_id==session.previous_goal_id and recalled_signature==session.previous_recalled
-        session.stable=session.stable+1 if unchanged else 0;session.previous_ranking,session.previous_plan=ranking,signature;session.previous_working=working_signature;session.previous_goal_id=goal_id;session.previous_recalled=recalled_signature
+        if not session.pending_work:raise RuntimeError("continuous deliberation has no pending work and no candidate")
+        work=session.pending_work.popleft();session.pending_keys.discard((work.kind.value,work.key));session.work_history.append(work.kind.value)
+        core.cognitive_tick+=1;cognitive_tick=core.cognitive_tick
+        if work.kind is CognitiveWorkKind.RECALL:
+            recalled=core.memory.recall(core.state.goal.target_cognit_ids if core.state.goal else (),core.graph,session.tick);session.last_recall_key=work.key;session.last_recalled=frozenset(recalled);before=frozenset(session.working);recall_operations=[]
+            for node_id in recalled:
+                node=core.graph.nodes.get(node_id)
+                if node:recall_operations.append((node_id,.12*next((m.last_recall_strength for m in core.memory.structures.values() if m.cognit_id==node_id),.5)));session.working.add(node_id)
+            if core.backend:core.backend.receive_batch(recall_operations,cognitive_tick,core.settings)
+            else:
+                for node_id,energy in recall_operations:core.graph.nodes[node_id].receive(energy,cognitive_tick,core.settings)
+            if frozenset(session.working)!=before:session.working_revision+=1
+            seeds=tuple(sorted(session.working));self._enqueue(session,CognitiveWork(CognitiveWorkKind.PROPAGATE,(session.working_revision,seeds),seeds))
+        elif work.kind is CognitiveWorkKind.PROPAGATE:
+            before=frozenset(session.working);wave=core._propagate(set(work.payload),cognitive_tick);session.working=set(wave.active_ids)|set(session.last_recalled);core.last_wave=wave
+            if frozenset(session.working)!=before:session.working_revision+=1
+            if session.candidate is None or frozenset(session.working)!=before:
+                goal_id=core.state.goal.id if core.state.goal else None;self._enqueue(session,CognitiveWork(CognitiveWorkKind.IMAGINE,(session.working_revision,goal_id)))
+        elif work.kind is CognitiveWorkKind.IMAGINE:
+            core.state.futures=core._imagine(session.working);core.state.action_scores={a:f.score for a,f in core.state.futures.items()};core.state.uncertainty=.8*core.state.uncertainty+.2*(1-max((f.confidence for f in core.state.futures.values()),default=0.))
+            goal_id=core.state.goal.id if core.state.goal else None;self._enqueue(session,CognitiveWork(CognitiveWorkKind.PLAN_REFINE,(session.working_revision,goal_id)))
+        elif work.kind is CognitiveWorkKind.PLAN_REFINE:
+            initial_predictions={action:future.probabilities for action,future in core.state.futures.items()};session.candidate=self._search(core,session.working,session.tick,session.semantic_cache,initial_predictions);before_goal=core.state.goal.id if core.state.goal else None
+            self._manage_goals(core,session.working,session.tick);after_goal=core.state.goal.id if core.state.goal else None
+            if after_goal!=before_goal:session.candidate=None;self._enqueue_recall(core,session)
         session.cycles+=1;self.cycles_last+=1;self.total_cycles+=1;self.internal_tick+=1
-        # A repeated behaviorally meaningful decision signature is the natural fixpoint.
-        session.quiescent=session.stable>=2;self.converged=session.quiescent
+        session.quiescent=session.candidate is not None and not session.pending_work and not session.pending_keys;self.converged=session.quiescent
         return session.quiescent
 
     def finalize_continuous(self,core,session:DeliberationSession)->ActionType:
@@ -97,12 +122,21 @@ class DeliberativePlanner:
             return None if p is None else {"actions":[a.name for a in p.actions],"predicted_states":[sorted(x) for x in p.predicted_states],"score":p.score,"confidence":p.confidence,"goal_alignment":p.goal_alignment,"uncertainty":p.uncertainty,"loop_risk":p.loop_risk,"created_tick":p.created_tick,"revision":p.revision}
         ec,pc,sm=s.semantic_cache or ({},{},{})
         encode=lambda cache:[[sorted(state),action.name,value] for (state,action),value in cache.items()]
-        return {"tick":s.tick,"current":sorted(s.current),"working":sorted(s.working),"stable":s.stable,"previous_ranking":[a.name for a in s.previous_ranking],"previous_plan":list(s.previous_plan),"previous_working":sorted(s.previous_working),"previous_goal_id":s.previous_goal_id,"previous_recalled":sorted(s.previous_recalled),"candidate":plan(s.candidate),"epistemic_cache":encode(ec),"progress_cache":encode(pc),"shared_memory":[[k,v] for k,v in sm.items()],"cycles":s.cycles,"quiescent":s.quiescent,"finalized":s.finalized}
+        return {"tick":s.tick,"current":sorted(s.current),"working":sorted(s.working),"candidate":plan(s.candidate),"epistemic_cache":encode(ec),"progress_cache":encode(pc),"shared_memory":[[k,v] for k,v in sm.items()],"cycles":s.cycles,"quiescent":s.quiescent,"finalized":s.finalized,"working_revision":s.working_revision,"last_recall_key":s.last_recall_key,"last_recalled":sorted(s.last_recalled),"pending_work":[{"kind":w.kind.value,"key":w.key,"payload":list(w.payload)} for w in s.pending_work],"pending_keys":[[kind,key] for kind,key in sorted(s.pending_keys,key=repr)],"work_history":list(s.work_history)}
 
     def session_from_dict(self,d:dict)->DeliberationSession:
         def decode(rows):return {(frozenset(state),ActionType[action]):value for state,action,value in rows}
+        def freeze(value):return tuple(freeze(x) for x in value) if isinstance(value,(list,tuple)) else value
         raw=d.get("candidate");candidate=None if raw is None else Plan(tuple(ActionType[x] for x in raw["actions"]),tuple(frozenset(x) for x in raw["predicted_states"]),raw["score"],raw["confidence"],raw["goal_alignment"],raw["uncertainty"],raw["loop_risk"],raw["created_tick"],raw.get("revision",0))
-        return DeliberationSession(d["tick"],frozenset(d["current"]),set(d["working"]),d["stable"],tuple(ActionType[x] for x in d["previous_ranking"]),tuple(d["previous_plan"]),frozenset(d.get("previous_working",[])),d.get("previous_goal_id"),frozenset(d.get("previous_recalled",[])),candidate,(decode(d.get("epistemic_cache",[])),decode(d.get("progress_cache",[])),{int(k):v for k,v in d.get("shared_memory",[])}),d["cycles"],d["quiescent"],d["finalized"])
+        session=DeliberationSession(d["tick"],frozenset(d["current"]),set(d["working"]),candidate,(decode(d.get("epistemic_cache",[])),decode(d.get("progress_cache",[])),{int(k):v for k,v in d.get("shared_memory",[])}),d.get("cycles",0),d.get("quiescent",False),d.get("finalized",False),d.get("working_revision",0),freeze(d["last_recall_key"]) if d.get("last_recall_key") is not None else None,frozenset(d.get("last_recalled",[])))
+        if "pending_work" in d:
+            for raw_work in d["pending_work"]:
+                work=CognitiveWork(CognitiveWorkKind(raw_work["kind"]),freeze(raw_work["key"]),tuple(raw_work.get("payload",())));session.pending_work.append(work);session.pending_keys.add((work.kind.value,work.key))
+            session.work_history=list(d.get("work_history",[]))
+        elif not session.quiescent:
+            # v2 migration: the old frontier had no causal work boundary. Resume conservatively from one new recall chain.
+            session.last_recall_key=None;work=CognitiveWork(CognitiveWorkKind.RECALL,(d.get("previous_goal_id"),(),session.working_revision));session.pending_work.append(work);session.pending_keys.add((work.kind.value,work.key))
+        return session
 
     def _manage_goals(self,core,current:set[int],tick:int)->None:
         goal=core.state.goal

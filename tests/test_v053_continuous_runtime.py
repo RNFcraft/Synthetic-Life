@@ -18,8 +18,8 @@ def test_multiple_action_sensory_cognition_cycles_inside_one_second():
 
 def test_cognition_wakes_then_becomes_quiescent_without_fixed_cycle_budget():
     runtime=ContinuousRuntime(9);processed=runtime.run_to_quiescence()
-    assert processed==5 and runtime.cognition_wakes==1 and runtime.cognition_continuations==3
-    assert runtime.simulation.core.planner.cycles_last==3 and runtime.scheduler.snapshot()[0].time==pytest.approx(.15)
+    assert processed==6 and runtime.cognition_wakes==1 and runtime.cognition_continuations==4
+    assert runtime.simulation.core.planner.cycles_last==4 and runtime.scheduler.snapshot()[0].time==pytest.approx(.15)
 
 def test_render_sampling_frequency_cannot_change_runtime_state():
     states=[]

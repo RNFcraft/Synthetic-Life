@@ -6,7 +6,8 @@ from config import Settings
 from consciousness.native_engine import RuntimeEvent,RuntimeEventType
 from simulation import ContinuousRuntime
 from consciousness.core import SyntheticEntityCore
-from consciousness.planning import DeliberativePlanner
+from consciousness.planning import CognitiveWork,CognitiveWorkKind,DeliberativePlanner
+from consciousness.state import Goal
 
 
 def _one(runtime):
@@ -26,11 +27,13 @@ def _semantic(runtime):
 
 def test_scheduler_exposes_exactly_one_planner_iteration_per_continue():
     runtime=ContinuousRuntime(301);events=[];ticks=[];times=[]
-    for _ in range(5):
+    for _ in range(6):
         event=_one(runtime);events.append(event.type);ticks.append(runtime.simulation.core.cognitive_tick);times.append(event.time)
-    assert events==[RuntimeEventType.SENSORY_CHANGE,RuntimeEventType.COGNITION_WAKE,RuntimeEventType.COGNITION_CONTINUE,RuntimeEventType.COGNITION_CONTINUE,RuntimeEventType.COGNITION_CONTINUE]
-    assert ticks[2:]==[ticks[1]+1,ticks[1]+2,ticks[1]+3]
-    assert times==[0.]*5
+    assert events[:2]==[RuntimeEventType.SENSORY_CHANGE,RuntimeEventType.COGNITION_WAKE]
+    assert events[2:]==[RuntimeEventType.COGNITION_CONTINUE]*4
+    assert ticks[2:]==[ticks[1]+i for i in range(1,5)]
+    assert times==[0.]*6
+    assert runtime.simulation.core.continuous_frontier.session.work_history==["RECALL","PROPAGATE","IMAGINE","PLAN_REFINE"]
     assert runtime.simulation.core.continuous_frontier.committed
     assert len(runtime.simulation.core.trace.entries)==1
 
@@ -41,7 +44,7 @@ def test_continuous_trajectory_ignores_legacy_max_cycle_budget():
     assert low.cognition_continuations==high.cognition_continuations
     assert low.simulation.last_action==high.simulation.last_action
     assert low.simulation.core.trace.entries==high.simulation.core.trace.entries
-    assert low.simulation.core.planner.cycles_last==3>low.simulation.core.settings.max_deliberation_cycles
+    assert low.simulation.core.planner.cycles_last>low.simulation.core.settings.max_deliberation_cycles
 
 
 def test_stale_generation_is_a_deterministic_noop():
@@ -52,7 +55,7 @@ def test_stale_generation_is_a_deterministic_noop():
     assert _semantic(runtime)==before
 
 
-@pytest.mark.parametrize("events_before_save",(1,2,3,4,5,6))
+@pytest.mark.parametrize("events_before_save",(1,2,3,4,5,6,7))
 def test_exact_save_load_at_every_cognition_frontier(tmp_path,events_before_save):
     original=ContinuousRuntime(304)
     for _ in range(events_before_save):_one(original)
@@ -68,7 +71,7 @@ def test_action_and_observation_side_effects_commit_once():
     runtime=ContinuousRuntime(305);_one(runtime)
     occurrences=sum(p.occurrences for p in runtime.simulation.core.patterns.prototypes.values())
     trace_size=len(runtime.simulation.core.trace.entries)
-    for _ in range(4):_one(runtime)
+    for _ in range(5):_one(runtime)
     assert sum(p.occurrences for p in runtime.simulation.core.patterns.prototypes.values())==occurrences
     assert trace_size==0 and len(runtime.simulation.core.trace.entries)==1
     assert runtime.simulation.core.planner.plan_steps_executed==1
@@ -83,8 +86,13 @@ def test_normal_continuous_path_never_calls_legacy_monoliths(monkeypatch):
 
 def test_runaway_guard_raises_without_forcing_action(monkeypatch):
     runtime=ContinuousRuntime(307);_one(runtime);_one(runtime)
-    monkeypatch.setattr(runtime.simulation.core.planner,"continue_continuous",lambda core,session: False)
-    with pytest.raises(RuntimeError,match="event guard exceeded"):runtime.run_to_quiescence(guard=4)
+    def causal_loop(core,session):
+        work=session.pending_work.popleft();session.pending_keys.clear();session.work_history.append(work.kind.value)
+        next_kind=CognitiveWorkKind.IMAGINE if work.kind is CognitiveWorkKind.RECALL else CognitiveWorkKind.RECALL
+        next_work=CognitiveWork(next_kind,(len(session.work_history),));session.pending_work.append(next_work);session.pending_keys.add((next_kind.value,next_work.key));core.cognitive_tick+=1
+        return False
+    monkeypatch.setattr(runtime.simulation.core.planner,"continue_continuous",causal_loop)
+    with pytest.raises(RuntimeError,match=r"generation=1 world_time=0.0 pending=.*recent=.*goal_id="):runtime.run_to_quiescence(guard=4)
     assert runtime.actions_completed==0 and not runtime.simulation.core.continuous_frontier.committed
 
 
@@ -106,3 +114,36 @@ def test_save_is_observational_during_unfinished_cognition(tmp_path):
     for _ in range(15):
         _one(baseline);_one(saved);_one(loaded)
         assert _semantic(saved)==_semantic(baseline)==_semantic(loaded)
+
+
+def test_unchanged_inputs_run_each_causal_operation_only_once(monkeypatch):
+    runtime=ContinuousRuntime(310);_one(runtime);_one(runtime);core=runtime.simulation.core;calls={"recall":0,"imagine":0,"search":0}
+    recall,imagine,search=core.memory.recall,core._imagine,core.planner._search
+    monkeypatch.setattr(core.memory,"recall",lambda *a,**k:(calls.__setitem__("recall",calls["recall"]+1) or recall(*a,**k)))
+    monkeypatch.setattr(core,"_imagine",lambda *a,**k:(calls.__setitem__("imagine",calls["imagine"]+1) or imagine(*a,**k)))
+    monkeypatch.setattr(core.planner,"_search",lambda *a,**k:(calls.__setitem__("search",calls["search"]+1) or search(*a,**k)))
+    runtime.run_to_quiescence()
+    assert calls=={"recall":1,"imagine":1,"search":1}
+    assert core.continuous_frontier.session.pending_work==core.continuous_frontier.session.pending_work.__class__()
+
+
+def test_internal_goal_change_causes_a_second_recall_chain(monkeypatch):
+    runtime=ContinuousRuntime(311);_one(runtime);_one(runtime);core=runtime.simulation.core;calls=0;original_recall=core.memory.recall
+    def counted_recall(*args,**kwargs):
+        nonlocal calls;calls+=1;return original_recall(*args,**kwargs)
+    changed=False
+    def change_goal_once(*args):
+        nonlocal changed
+        if not changed:changed=True;core.state.goal=Goal(9001,(),1.,1.,1.)
+    monkeypatch.setattr(core.memory,"recall",counted_recall);monkeypatch.setattr(core.planner,"_manage_goals",change_goal_once)
+    runtime.run_to_quiescence()
+    assert calls==2
+    assert core.continuous_frontier.session.work_history==["RECALL","PROPAGATE","IMAGINE","PLAN_REFINE"]*2
+
+
+def test_v2_stability_frontier_migrates_to_causal_pending_work():
+    runtime=ContinuousRuntime(312);_one(runtime);_one(runtime);session=runtime.simulation.core.continuous_frontier.session
+    old={"tick":session.tick,"current":sorted(session.current),"working":sorted(session.working),"cycles":1,"quiescent":False,"finalized":False,"stable":1,"previous_goal_id":None,"candidate":None,"epistemic_cache":[],"progress_cache":[],"shared_memory":[]}
+    migrated=runtime.simulation.core.planner.session_from_dict(old)
+    assert [work.kind for work in migrated.pending_work]==[CognitiveWorkKind.RECALL]
+    assert migrated.work_history==[] and not migrated.quiescent

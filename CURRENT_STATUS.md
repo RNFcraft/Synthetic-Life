@@ -15,14 +15,36 @@ TRUE EVENT-DRIVEN COGNITION FRONTIER: PASS
       -> WORLD_ACTION_COMPLETE at WorldTime + 0.15
 
 - Normal `ContinuousRuntime` uses dedicated continuous core/planner APIs and calls neither legacy `SyntheticEntityCore.step()` nor `DeliberativePlanner.deliberate()`.
-- One `COGNITION_CONTINUE` executes exactly one former planner-loop iteration.
+- One `COGNITION_CONTINUE` consumes at most one explicit pending cognitive work item.
 - `cognitive_tick`, planner `internal_tick`, and `total_cycles` increment once per continuation; EventSequence and float64 WorldTime remain independent.
 - External sensory evidence is applied once in the observation transaction. Predictions, trace, previous action/context, active homeostasis, planner commit, and action are committed once after quiescence.
 - Wake/continue payloads carry a monotonically increasing generation. Stale events are deterministic no-ops.
 
-## QUIESCENCE RULE
+## QUIESCENCE MODEL
 
-The exact signature contains the working Cognit IDs, Goal ID, recalled Cognit IDs, action ranking, and candidate-plan action signature. Cognition becomes quiescent after this complete signature remains unchanged for two successive transition checks. No rounded float, elapsed time, timeout, or fixed cycle budget participates. The debug guard raises on runaway cognition without forcing an action.
+`QUIESCENT` iff a valid candidate exists, `pending_work` is empty, no deduplicated invalidation key remains pending, and the session is not finalized. There is no stable-count, repetition count, numeric epsilon, elapsed-time, timeout, minimum-cycle, or maximum-cycle stopping rule. The diagnostic guard reports generation, WorldTime, pending kinds, recent work history, and Goal ID, then raises without forcing an action.
+
+## COGNITIVE WORK TYPES
+
+- `RECALL`: seeded by a new sensory episode or a changed Goal/cue/revision; performs retrieval and exactly one recall stimulation.
+- `PROPAGATE`: caused by a recall/internal activation and carries explicit seed Cognits.
+- `IMAGINE`: caused by a new/invalidated working-state and Goal input.
+- `PLAN_REFINE`: caused by new futures; runs one existing bounded `_search`. A Goal/subgoal change invalidates the candidate and creates a new recall chain.
+
+## CAUSAL WORK CHAIN
+
+    RECALL
+      -> PROPAGATE
+      -> IMAGINE
+      -> PLAN_REFINE
+      -> EMPTY
+      -> QUIESCENT
+
+The internally changed-Goal fixture produces two such chains before quiescence.
+
+## RECALL SEMANTICS
+
+Recall may repeat only when its exact semantic key `(Goal ID, target IDs, working revision)` changes. Pending work identities are deduplicated. Repeated scheduler events alone cannot rerun recall or stimulate a Cognit: **NO**.
 
 ## CONTINUOUS BUDGET
 
@@ -30,7 +52,7 @@ The exact signature contains the working Cognit IDs, Goal ID, recalled Cognit ID
 
 ## FRONTIER PERSISTENCE
 
-Continuous `.seworld` schema version 2 persists cognition generation and phase, episode WorldTime/frame, current and working IDs, track IDs, convergence/signature state, current candidate plan, planner cycles/finalized state, behavior-affecting semantic caches, pending action/commit flag, and the exact scheduler frontier. Event-by-event continuation passes at all six required save phases. No-save, save-without-load, and save/load branches are identical.
+Continuous `.seworld` schema version 3 persists cognition generation/phase, ordered pending work and keys, working revision, last recall key/result, work history, current candidate, working IDs, semantic caches, planner counters/finalized state, pending action/commit flag, and exact scheduler frontier. Event-by-event continuation passes at all seven required work boundaries. No consumed v3 work replays after load. v1 retains its explicit legacy pending-wake adapter; v2 unfinished stable-counter sessions migrate conservatively into one causal recall chain and never resume `stable>=2` semantics.
 
 ## HOMEOSTATIC EVENT SEMANTICS
 
@@ -39,24 +61,25 @@ Continuous `.seworld` schema version 2 persists cognition generation and phase, 
 
 ## DETERMINISM
 
-- `PYTHONHASHSEED=1`: `debf85913f82f0b50be03200376aee2f025813f51af777a37ec38aed12fa80f3`
-- `PYTHONHASHSEED=77`: `debf85913f82f0b50be03200376aee2f025813f51af777a37ec38aed12fa80f3`
+- `PYTHONHASHSEED=1`: `f527b2d204acb87a7279e53783e66d3640086eba1bb70577653d855f21da2685`
+- `PYTHONHASHSEED=77`: `f527b2d204acb87a7279e53783e66d3640086eba1bb70577653d855f21da2685`
 - Renderer sampling and arbitrary host work between continuation events are observational.
 
-## FRONTIER COMPLEXITY
+## CONTINUATION COUNTS
 
-- Planner continuations per completed decision: **3.0**.
-- Mean native FFI calls per continuation over five decisions: **8.93**.
+- Small deterministic simple/Goal-invalidation sample: **min 4 / mean 6.0 / max 8** continuation events.
+- Ordinary 20-decision sample: **min 4 / mean 4.0 / max 4**; these values are observations, not invariants.
+- Ordinary sample mean native FFI calls per continuation: **15.16**.
 - Session-local working state and semantic caches persist across events and save/load.
 - `full_graph_sync_calls == 0`: **PASS**.
 - Normal native Python physical World calls: **0 / PASS**.
 
 ## FRONTIER TESTS
 
-- Event-driven cognition frontier focused module: **14 passed**.
-- Frontier plus continuous runtime modules: **27 passed**.
-- Native-engine, causal, and elapsed compatibility selection: **56 passed**.
-- Full pytest: **197 passed**.
+- Event-driven cognition frontier focused module: **18 passed**.
+- Frontier plus continuous runtime modules: **31 passed**.
+- Elapsed/native/causal/legacy compatibility selection: **81 passed**.
+- Full pytest: **201 passed**.
 - CTest Release: **1/1 passed**.
 - Long 5K/10K benchmarks were not run.
 
@@ -72,7 +95,6 @@ Not started. It covers `WORLD_SPAWN` absolute-time scheduling, maintenance timer
 
 ## FRONTIER MODIFIED FILES
 
-- consciousness/core.py
 - consciousness/planning.py
 - simulation/continuous.py
 - tests/test_v053_continuous_runtime.py

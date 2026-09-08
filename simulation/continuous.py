@@ -53,14 +53,18 @@ class ContinuousRuntime:
             if first.time>until:break
             for event in self.scheduler.pop_ready(first.time):
                 self._process(event);processed+=1
-                if processed>guard:raise RuntimeError("continuous runtime event guard exceeded")
+                if processed>guard:raise self._runaway_error()
         self.scheduler.pop_ready(float(until));self.simulation.world.advance_world_time(float(until));self.simulation.world_time=WorldTime(float(until));return processed
     def run_to_quiescence(self,guard=100000):
         processed=0;now=self.world_time
         while self.scheduler.size and self.scheduler.snapshot()[0].time<=now:
             for event in self.scheduler.pop_ready(now):self._process(event);processed+=1
-            if processed>guard:raise RuntimeError("continuous runtime event guard exceeded")
+            if processed>guard:raise self._runaway_error()
         return processed
+    def _runaway_error(self):
+        frontier=self.simulation.core.continuous_frontier;session=frontier.session if frontier else None;goal=self.simulation.core.state.goal
+        pending=[] if session is None else [work.kind.value for work in session.pending_work];history=[] if session is None else session.work_history[-12:]
+        return RuntimeError(f"continuous runtime event guard exceeded: generation={self.cognition_generation} world_time={self.world_time} pending={pending} recent={history} goal_id={None if goal is None else goal.id}")
     def render_snapshot(self):
         w=self.simulation.world;w._refresh();return RenderSnapshot(self.world_time,tuple(RenderBody(b.id,b.x,b.y,b.orientation,b.held_object_id) for b in w.bodies.values()),tuple(RenderObject(o.id,o.x,o.y,o.state) for o in w.objects))
     def scheduler_state(self):return {"now":self.world_time,"next_id":self.scheduler.next_id,"events":[[e.time,e.id,e.type.name,e.payload] for e in self.scheduler.snapshot()]}
@@ -76,7 +80,7 @@ class ContinuousRuntime:
         try:self.simulation.core.backend.engine.save_graph(tmp);native=base64.b64encode(open(tmp,"rb").read()).decode("ascii")
         finally:os.unlink(tmp)
         engine=self.simulation.core.backend.engine;history=engine.transition_history();homeostasis=engine.homeostasis_runtime_state();elapsed=engine.continuous_time_state();elapsed_relations=engine.continuous_relation_time_state();dirty=engine.dirty_relation_state()
-        save_container(path,"world",{"META":{"schema":"synthetic-entity-continuous-world","version":2},"STATE":state,"CONT":{"scheduler":self.scheduler_state(),"observation_ordinal":self.observation_ordinal,"actions_completed":self.actions_completed,"cognition_wakes":self.cognition_wakes,"cognition_continuations":self.cognition_continuations,"cognition_generation":self.cognition_generation,"legacy_monolithic_frontier":self._legacy_monolithic_frontier,"transition_history":history,"homeostasis":homeostasis,"elapsed_cognits":elapsed,"elapsed_relations":elapsed_relations,"dirty_relations":dirty,"frontier":self._frontier_state()},"NBRN":{"encoding":"base64","data":native}},{"NBRN"})
+        save_container(path,"world",{"META":{"schema":"synthetic-entity-continuous-world","version":3},"STATE":state,"CONT":{"scheduler":self.scheduler_state(),"observation_ordinal":self.observation_ordinal,"actions_completed":self.actions_completed,"cognition_wakes":self.cognition_wakes,"cognition_continuations":self.cognition_continuations,"cognition_generation":self.cognition_generation,"legacy_monolithic_frontier":self._legacy_monolithic_frontier,"transition_history":history,"homeostasis":homeostasis,"elapsed_cognits":elapsed,"elapsed_relations":elapsed_relations,"dirty_relations":dirty,"frontier":self._frontier_state()},"NBRN":{"encoding":"base64","data":native}},{"NBRN"})
     @classmethod
     def load_world(cls,path,settings=None):
         data=load_container(path,"world",{"META","STATE","CONT","NBRN"});fd,tmp=tempfile.mkstemp(suffix=".json");os.close(fd)
