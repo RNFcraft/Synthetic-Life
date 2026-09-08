@@ -28,7 +28,7 @@ public:
   bool remove_cognit(std::uint32_t id);
   std::size_t live_cognit_count()const{return cognit_count()-dead_cognits_;}
   RelationHandle add_relation(std::uint32_t source,std::uint32_t target,RelationType type,std::uint32_t action,double strength,double confidence,double probability);
-  std::vector<std::pair<RelationHandle,PersistedRelation>> outgoing(std::span<const std::uint32_t>sources)const;PersistedRelation relation_state(std::uint32_t source,RelationHandle h)const{return graph_.relations.state(source,h);}void update_relation(RelationHandle h,const PersistedRelation&r){graph_.relations.update(h,r);}
+  std::vector<std::pair<RelationHandle,PersistedRelation>> outgoing(std::span<const std::uint32_t>sources)const;PersistedRelation relation_state(std::uint32_t source,RelationHandle h)const{return graph_.relations.state(source,h);}void update_relation(RelationHandle h,const PersistedRelation&r);
   std::vector<std::uint32_t> outgoing_targets(std::span<const std::uint32_t>sources)const;
   bool remove_relation(RelationHandle handle){return graph_.relations.erase(handle);}bool relation_handle_valid(RelationHandle handle)const{return graph_.relations.valid(handle);}
   static constexpr std::size_t provisional_relation_bytes(){return RelationStore::provisional_record_bytes();}static constexpr std::size_t consolidated_relation_bytes(){return RelationStore::consolidated_record_bytes();}
@@ -45,6 +45,13 @@ public:
   void set_cognit_fields(std::span<const std::uint32_t>ids,std::span<const std::uint8_t>fields,std::span<const double>values);
   std::vector<double> cognit_state_masked(std::span<const std::uint32_t>ids,std::uint16_t field_mask)const;
   void homeostatic_step(std::span<const std::uint32_t>active,double trace_decay,double learning_rate,double threshold_min,double threshold_max,double activity_decay,double utility_decay);
+  void begin_continuous_time(double now,double trace_decay,double learning_rate,double threshold_min,double threshold_max,double activity_decay,double utility_decay,double relation_decay);
+  void materialize_cognits_at(std::span<const std::uint32_t> ids,double now);
+  std::tuple<bool,double,double,std::vector<double>,std::vector<double>,std::uint64_t> continuous_time_state()const{return{continuous_time_enabled_,continuous_epoch_,continuous_now_,cognit_last_touch_time_,cognit_last_active_time_,continuous_materialization_work_};}
+  void restore_continuous_time_state(bool enabled,double epoch,double now,const std::vector<double>&last_touch,const std::vector<double>&last_active,std::uint64_t work=0);
+  std::vector<double> cognit_elapsed_times(std::span<const std::uint32_t>ids)const;
+  std::tuple<std::vector<std::array<double,6>>,std::uint64_t> continuous_relation_time_state()const;
+  void restore_continuous_relation_time_state(const std::vector<std::array<double,6>>&,std::uint64_t work=0);
   void update_transition_evidence(std::span<const std::uint32_t> before,std::uint8_t action,std::span<const std::uint32_t> after);
   std::vector<MaterializedRelation> materialize_relations(const EvidenceConfig&,std::uint64_t world_tick);
   std::vector<MaterializedRelation> materialize_current(const EvidenceConfig&,std::uint64_t world_tick,std::span<const std::uint32_t>before,std::uint8_t action,std::span<const std::uint32_t>after,std::uint32_t max_new,std::uint32_t max_relations,double confidence_decay);
@@ -71,7 +78,21 @@ private:
   std::uint64_t homeostasis_tick_{};
   std::vector<HomeostasisPolicy>homeostasis_policies_;
   mutable std::vector<std::uint64_t>homeostasis_applied_;
+  mutable std::vector<double>cognit_last_touch_time_;
+  std::vector<double>cognit_last_active_time_;
+  bool continuous_time_enabled_{};
+  double continuous_epoch_{};
+  double continuous_now_{};
+  HomeostasisPolicy continuous_policy_{};
+  double continuous_relation_decay_{1.};
+  mutable std::uint64_t continuous_materialization_work_{};
+  mutable std::unordered_map<std::uint64_t,std::pair<std::uint32_t,double>>relation_last_touch_time_;
+  mutable std::unordered_map<std::uint64_t,std::pair<std::uint32_t,double>>relation_last_evidence_time_;
+  mutable std::uint64_t relation_materialization_work_{};
   void catch_up_homeostasis(std::uint32_t id)const;
+  void materialize_continuous_cognit(std::uint32_t id,double now)const;
+  double effective_relation_confidence(Edge&,RelationHandle,double decay)const;
+  static std::uint64_t relation_time_key(RelationHandle h){return(std::uint64_t(h.page)<<32)|h.slot;}
   void evolve_homeostasis(std::uint32_t id,bool active,const HomeostasisPolicy&)const;
   std::size_t dead_cognits_{};
   std::uint64_t state_revision_{};

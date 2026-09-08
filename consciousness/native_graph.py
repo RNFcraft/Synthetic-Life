@@ -31,7 +31,10 @@ class NativeCognit:
         self.homeostatic_threshold=min(settings.threshold_max,max(settings.threshold_min,self.homeostatic_threshold+settings.homeostasis_learning_rate*(self.activity_trace-self.target_activity)))
         self.activity*=settings.cognit_activity_decay;self.utility*=.999;self.refractory_ticks=max(0,self.refractory_ticks-1)
     def retention_score(self,tick,settings):
-        idle=tick-(self.last_activated_cognitive_tick or 0);recency=exp(-idle/max(1,settings.cognit_death_age))
+        elapsed=self._backend.engine.cognit_elapsed_times([self.id-1])
+        if elapsed:now,last_active=elapsed;idle=now-last_active
+        else:idle=tick-(self.last_activated_cognitive_tick or 0)
+        recency=exp(-idle/max(1,settings.cognit_death_age))
         return settings.retention_utility_weight*self.utility+settings.retention_confidence_weight*self.confidence+settings.retention_prediction_weight*self.predictive_contribution+settings.retention_recency_weight*recency
 
 

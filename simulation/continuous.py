@@ -28,7 +28,7 @@ class ContinuousRuntime:
     def _process(self,event):
         now,kind=event.time,event.type
         if kind==RuntimeEventType.SENSORY_CHANGE:
-            self.last_frame=self.simulation.world.perceive(self.observation_ordinal);self.observation_ordinal+=1;self.simulation.core.step(self.last_frame);self.scheduler.schedule(now,RuntimeEventType.COGNITION_WAKE)
+            self.last_frame=self.simulation.world.perceive(self.observation_ordinal);self.observation_ordinal+=1;self.simulation.core.step(self.last_frame,world_time=now);self.scheduler.schedule(now,RuntimeEventType.COGNITION_WAKE)
         elif kind==RuntimeEventType.COGNITION_WAKE:
             self.cognition_wakes+=1;action=self.simulation.core.deliberate(self.last_frame);self.scheduler.schedule(now+self.ACTION_DURATION,RuntimeEventType.WORLD_ACTION_COMPLETE,action.kind.value)
         elif kind==RuntimeEventType.WORLD_ACTION_COMPLETE:
@@ -60,8 +60,8 @@ class ContinuousRuntime:
         fd,tmp=tempfile.mkstemp(suffix=".native");os.close(fd)
         try:self.simulation.core.backend.engine.save_graph(tmp);native=base64.b64encode(open(tmp,"rb").read()).decode("ascii")
         finally:os.unlink(tmp)
-        engine=self.simulation.core.backend.engine;history=engine.transition_history();homeostasis=engine.homeostasis_runtime_state();dirty=engine.dirty_relation_state()
-        save_container(path,"world",{"META":{"schema":"synthetic-entity-continuous-world","version":1},"STATE":self.simulation.snapshot_data(semantic_graph=True),"CONT":{"scheduler":self.scheduler_state(),"observation_ordinal":self.observation_ordinal,"actions_completed":self.actions_completed,"cognition_wakes":self.cognition_wakes,"transition_history":history,"homeostasis":homeostasis,"dirty_relations":dirty,"frontier":self._frontier_state()},"NBRN":{"encoding":"base64","data":native}},{"NBRN"})
+        engine=self.simulation.core.backend.engine;history=engine.transition_history();homeostasis=engine.homeostasis_runtime_state();elapsed=engine.continuous_time_state();elapsed_relations=engine.continuous_relation_time_state();dirty=engine.dirty_relation_state()
+        save_container(path,"world",{"META":{"schema":"synthetic-entity-continuous-world","version":1},"STATE":self.simulation.snapshot_data(semantic_graph=True),"CONT":{"scheduler":self.scheduler_state(),"observation_ordinal":self.observation_ordinal,"actions_completed":self.actions_completed,"cognition_wakes":self.cognition_wakes,"transition_history":history,"homeostasis":homeostasis,"elapsed_cognits":elapsed,"elapsed_relations":elapsed_relations,"dirty_relations":dirty,"frontier":self._frontier_state()},"NBRN":{"encoding":"base64","data":native}},{"NBRN"})
     @classmethod
     def load_world(cls,path,settings=None):
         data=load_container(path,"world",{"META","STATE","CONT","NBRN"});fd,tmp=tempfile.mkstemp(suffix=".json");os.close(fd)
@@ -70,7 +70,7 @@ class ContinuousRuntime:
         fd,tmp=tempfile.mkstemp(suffix=".native");os.close(fd)
         try:
             with open(tmp,"wb") as stream:stream.write(base64.b64decode(data["NBRN"]["data"]))
-            engine=sim.core.backend.engine;engine.load_graph(tmp);engine.restore_transition_history(data["CONT"].get("transition_history",[]));engine.restore_homeostasis_runtime_state(*data["CONT"]["homeostasis"]);engine.restore_dirty_relation_state(data["CONT"]["dirty_relations"]);sim.core.backend.invalidate_state()
+            engine=sim.core.backend.engine;engine.load_graph(tmp);engine.restore_transition_history(data["CONT"].get("transition_history",[]));engine.restore_homeostasis_runtime_state(*data["CONT"]["homeostasis"]);engine.restore_continuous_time_state(*data["CONT"].get("elapsed_cognits",[False,0.0,0.0,[-1.0]*engine.cognit_count,[-1.0]*engine.cognit_count,0]));engine.restore_continuous_relation_time_state(*data["CONT"].get("elapsed_relations",[[],0]));engine.restore_dirty_relation_state(data["CONT"]["dirty_relations"]);sim.core.backend.invalidate_state()
         finally:os.unlink(tmp)
         obj=cls.__new__(cls);obj.simulation=sim;obj.scheduler=EventScheduler();cont=data["CONT"];s=cont["scheduler"];events=[RuntimeEvent(t,i,getattr(RuntimeEventType,name),p) for t,i,name,p in s["events"]];obj.scheduler.restore(s["now"],s["next_id"],events);obj.observation_ordinal=cont["observation_ordinal"];obj.actions_completed=cont["actions_completed"];obj.cognition_wakes=cont["cognition_wakes"]
         frontier=cont["frontier"];raw=frontier["frame"]

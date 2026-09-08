@@ -20,12 +20,14 @@ def _similarity(a:tuple,b:tuple,weights=None)->float:
 class PlaceMemory:
     id:int;cognit_id:int;signature:tuple;confidence:float=.5;visits:int=1;last_confirmed_tick:int=0
     views:list[tuple]=field(default_factory=list);contradictions:int=0;aliases:set[int]=field(default_factory=set)
+    last_confirmed_time_seconds:float|None=None
 
 @dataclass(slots=True)
 class PersistentStructureMemory:
     id:int;cognit_id:int;feature_signature:tuple;place_cognit_id:int;relative_context:tuple[float,float]
     remembered_state:tuple[int,...];confidence:float=.5;last_confirmed_tick:int=0;contradictions:int=0;reactivations:int=0
     last_recall_strength:float=0.;status:str="UNCERTAIN"
+    last_confirmed_time_seconds:float|None=None;last_touch_time_seconds:float|None=None
 
 class SpatialMemory:
     """Evidence-based topology; no world coordinates or object identifiers."""
@@ -35,7 +37,25 @@ class SpatialMemory:
         self.reactivation_count=0;self.confirmation_count=0;self.contradiction_count=0;self.alias_reconciliations=0;self.last_place_scores={};self.last_recalled={}
         self._by_place={};self._by_cognit={};self._by_feature={};self._by_state={};self._index_order={};self._indexed_ids=set();self._nonzero_recall_ids=set()
         self.last_retrieval_candidates=0;self.last_retrieval_total=0
+        self.world_time_seconds:float|None=None;self.materialization_work=0
         self.enabled=True
+
+    def set_world_time(self,now:float|None)->None:
+        if now is not None and (self.world_time_seconds is not None and now<self.world_time_seconds):raise ValueError("memory time moved backwards")
+        self.world_time_seconds=now
+
+    def _materialize(self,m)->None:
+        if self.world_time_seconds is None:return
+        last=m.last_touch_time_seconds
+        if last is None:last=m.last_confirmed_time_seconds if m.last_confirmed_time_seconds is not None else self.world_time_seconds
+        dt=self.world_time_seconds-last
+        if dt<0:raise ValueError("memory time moved backwards")
+        if dt:m.confidence*=self.settings.memory_confidence_decay**dt;m.last_touch_time_seconds=self.world_time_seconds;m.status=self._status(m);self.materialization_work+=1
+
+    def _recency(self,m,tick,scale):
+        if self.world_time_seconds is None:return exp(-(tick-m.last_confirmed_tick)/scale)
+        last=m.last_confirmed_time_seconds if m.last_confirmed_time_seconds is not None else self.world_time_seconds
+        return exp(-(self.world_time_seconds-last)/scale)
 
     def _rebuild_indexes(self)->None:
         self._by_place={};self._by_cognit={};self._by_feature={};self._by_state={};self._index_order={}
@@ -102,10 +122,10 @@ class SpatialMemory:
         key=(sig,previous,previous_action.value if previous_action is not None else None);self.place_evidence[key]+=1
         evidence=sum(n for (seen,_,_),n in self.place_evidence.items() if seen==sig)
         if place is None and evidence>=self.settings.place_birth_visits:
-            node=graph.add_cognit(Cognit(graph.next_id,kind="PLACE",confidence=.55));place=PlaceMemory(self.next_place_id,node.id,sig,.55,1,tick,[sig]);self.places[place.id]=place;self.next_place_id+=1
+            node=graph.add_cognit(Cognit(graph.next_id,kind="PLACE",confidence=.55));place=PlaceMemory(self.next_place_id,node.id,sig,.55,1,tick,[sig],last_confirmed_time_seconds=self.world_time_seconds);self.places[place.id]=place;self.next_place_id+=1
         if place:
             if not place.views or all(max(_similarity(sig,_rotate(v,r)) for r in range(4))<.9 for v in place.views):place.views.append(sig)
-            place.views=place.views[-8:];place.visits+=1;place.last_confirmed_tick=tick;place.confidence=min(1.,place.confidence+.04*(1-place.confidence));self.current_place_id=place.id
+            place.views=place.views[-8:];place.visits+=1;place.last_confirmed_tick=tick;place.last_confirmed_time_seconds=self.world_time_seconds;place.confidence=min(1.,place.confidence+.04*(1-place.confidence));self.current_place_id=place.id
             if previous and previous_action is not None:
                 av=previous_action.value;self.transitions[(previous,av,place.id)]+=1
                 if previous!=place.id:
@@ -120,15 +140,16 @@ class SpatialMemory:
             if not any(ch in {"occupied","state","appearance"} for ch,_ in track.primitive_signature):continue
             features=tuple(sorted(track.primitive_signature));candidate=self._match_structure(features,track.state_signature,place.cognit_id if place else 0,tick,set(visible))
             if candidate:
-                old_state=candidate.remembered_state;candidate.confidence=min(1.,candidate.confidence+.12*(1-candidate.confidence));candidate.last_confirmed_tick=tick;candidate.relative_context=track.centroid;candidate.remembered_state=track.state_signature;self._reindex_state(candidate,old_state);candidate.reactivations+=1;candidate.status=self._status(candidate);self.reactivation_count+=1;self.confirmation_count+=1;active.add(candidate.cognit_id);visible.append(candidate.id)
+                self._materialize(candidate);old_state=candidate.remembered_state;candidate.confidence=min(1.,candidate.confidence+.12*(1-candidate.confidence));candidate.last_confirmed_tick=tick;candidate.last_confirmed_time_seconds=self.world_time_seconds;candidate.last_touch_time_seconds=self.world_time_seconds;candidate.relative_context=track.centroid;candidate.remembered_state=track.state_signature;self._reindex_state(candidate,old_state);candidate.reactivations+=1;candidate.status=self._status(candidate);self.reactivation_count+=1;self.confirmation_count+=1;active.add(candidate.cognit_id);visible.append(candidate.id)
             elif place:
-                node=graph.add_cognit(Cognit(graph.next_id,kind="MEMORY",confidence=.5));m=PersistentStructureMemory(self.next_memory_id,node.id,features,place.cognit_id,track.centroid,track.state_signature,.5,tick);self.structures[m.id]=m;self._index_order[m.id]=len(self._index_order);self._index_memory(m);self._indexed_ids.add(m.id);self.next_memory_id+=1;active.add(node.id);visible.append(m.id)
+                node=graph.add_cognit(Cognit(graph.next_id,kind="MEMORY",confidence=.5));m=PersistentStructureMemory(self.next_memory_id,node.id,features,place.cognit_id,track.centroid,track.state_signature,.5,tick,last_confirmed_time_seconds=self.world_time_seconds,last_touch_time_seconds=self.world_time_seconds);self.structures[m.id]=m;self._index_order[m.id]=len(self._index_order);self._index_memory(m);self._indexed_ids.add(m.id);self.next_memory_id+=1;active.add(node.id);visible.append(m.id)
         if place:
             self._ensure_indexes()
             for memory_id in self._by_place.get(place.cognit_id,()):
                 m=self.structures[memory_id]
-                if m.place_cognit_id==place.cognit_id and m.id not in visible and tick-m.last_confirmed_tick>1:m.confidence*=1-self.settings.memory_contradiction_rate;m.contradictions+=1;m.status=self._status(m);self.contradiction_count+=1
-        for m in self.structures.values():m.confidence*=self.settings.memory_confidence_decay;m.status=self._status(m)
+                if m.place_cognit_id==place.cognit_id and m.id not in visible and tick-m.last_confirmed_tick>1:self._materialize(m);m.confidence*=1-self.settings.memory_contradiction_rate;m.contradictions+=1;m.status=self._status(m);self.contradiction_count+=1
+        if self.world_time_seconds is None:
+            for m in self.structures.values():m.confidence*=self.settings.memory_confidence_decay;m.status=self._status(m)
         return active
 
     @staticmethod
@@ -162,9 +183,10 @@ class SpatialMemory:
         best=None;score=0.;fs=set(features)
         for memory_id in sorted(candidate_ids,key=self._index_order.__getitem__):
             m=self.structures[memory_id]
+            self._materialize(m)
             if excluded and m.id in excluded:continue
             feature=len(fs&set(m.feature_signature))/max(1,len(fs|set(m.feature_signature)));state_score=sum(a==b for a,b in zip(state,m.remembered_state))/max(1,max(len(state),len(m.remembered_state)))
-            value=.5*feature+.16*state_score+(.18 if m.place_cognit_id==place_id else 0)+.08*exp(-(tick-m.last_confirmed_tick)/128)+.08*m.confidence
+            value=.5*feature+.16*state_score+(.18 if m.place_cognit_id==place_id else 0)+.08*self._recency(m,tick,128)+.08*m.confidence
             if value>score:best,score=m,value
         return best if best and score>=self.settings.memory_match_threshold+(1-best.confidence)*.08 else None
 
@@ -184,13 +206,14 @@ class SpatialMemory:
         nonzero=set()
         for memory_id in sorted(candidate_ids,key=self._index_order.__getitem__):
             m=self.structures[memory_id]
+            self._materialize(m)
             relevance=1. if m.cognit_id in associated else .35 if m.place_cognit_id in associated else 0.
             if target_request:
                 from .relational import memory_structure
                 group=place_groups[m.place_cognit_id]
                 if m.place_cognit_id not in structural_by_place:structural_by_place[m.place_cognit_id]=memory_structure(group).match(target_structure)
                 structural=structural_by_place[m.place_cognit_id];role_support=min(1.,len(group)/max(1,target_structure.participant_count));relevance=max(relevance,.1+.65*structural+.25*role_support)
-            strength=relevance*m.confidence*(.5+.5*exp(-(tick-m.last_confirmed_tick)/256));m.last_recall_strength=strength
+            strength=relevance*m.confidence*(.5+.5*self._recency(m,tick,256));m.last_recall_strength=strength
             if strength:nonzero.add(m.id)
             if strength>=.12:m.reactivations+=1;self.reactivation_count+=1;self.last_recalled[m.id]=strength;recalled|={m.cognit_id,m.place_cognit_id}
         self._nonzero_recall_ids=nonzero
@@ -213,7 +236,7 @@ class SpatialMemory:
         from dataclasses import asdict
         places=[]
         for p in self.places.values():d=asdict(p);d["aliases"]=sorted(p.aliases);places.append(d)
-        return {"places":places,"structures":[asdict(x) for x in self.structures.values()],"place_evidence":[[list(k[0]),k[1],k[2],v] for k,v in self.place_evidence.items()],"transitions":[[*k,v] for k,v in self.transitions.items()],"feature_seen":[[list(k),v] for k,v in self.feature_seen.items()],"feature_change":[[list(k),v] for k,v in self.feature_change.items()],"next_place_id":self.next_place_id,"next_memory_id":self.next_memory_id,"current_place_id":self.current_place_id,"reactivation_count":self.reactivation_count,"confirmation_count":self.confirmation_count,"contradiction_count":self.contradiction_count,"alias_reconciliations":self.alias_reconciliations}
+        return {"places":places,"structures":[asdict(x) for x in self.structures.values()],"place_evidence":[[list(k[0]),k[1],k[2],v] for k,v in self.place_evidence.items()],"transitions":[[*k,v] for k,v in self.transitions.items()],"feature_seen":[[list(k),v] for k,v in self.feature_seen.items()],"feature_change":[[list(k),v] for k,v in self.feature_change.items()],"next_place_id":self.next_place_id,"next_memory_id":self.next_memory_id,"current_place_id":self.current_place_id,"reactivation_count":self.reactivation_count,"confirmation_count":self.confirmation_count,"contradiction_count":self.contradiction_count,"alias_reconciliations":self.alias_reconciliations,"world_time_seconds":self.world_time_seconds}
 
     def restore(self,data:dict)->None:
         self.places={x["id"]:PlaceMemory(**{**x,"signature":tuple(tuple(v) for v in x["signature"]),"views":[tuple(tuple(v) for v in view) for view in x.get("views",[x["signature"]])],"aliases":set(x.get("aliases",[]))}) for x in data.get("places",[])}
@@ -221,4 +244,5 @@ class SpatialMemory:
         raw=data.get("place_evidence",[]);self.place_evidence=Counter({(tuple(tuple(v) for v in a),b,c):n for a,b,c,n in raw}) if raw and len(raw[0])==4 else Counter()
         self.transitions=Counter({tuple(x[:3]):x[3] for x in data.get("transitions",[])});self.feature_seen=Counter({tuple(k):v for k,v in data.get("feature_seen",[])});self.feature_change=Counter({tuple(k):v for k,v in data.get("feature_change",[])})
         for key in ("next_place_id","next_memory_id","current_place_id","reactivation_count","confirmation_count","contradiction_count","alias_reconciliations"):setattr(self,key,data.get(key,getattr(self,key)))
+        self.world_time_seconds=data.get("world_time_seconds")
         self._rebuild_indexes();self._nonzero_recall_ids={m.id for m in self.structures.values() if m.last_recall_strength}

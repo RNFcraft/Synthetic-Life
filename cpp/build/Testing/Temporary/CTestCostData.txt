@@ -1,2 +1,2 @@
-se_equivalence 26 0.000351604
+se_equivalence 29 0.000322307
 ---

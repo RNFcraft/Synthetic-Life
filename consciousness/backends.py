@@ -10,7 +10,7 @@ from .native_engine import NativeBrainEngine,EvidenceConfig
 
 class _ObservedEngine:
     """Expose the native API while invalidating Python's observational cache on mutation."""
-    _mutators=frozenset({'add_cognit','add_cognits','set_activity','set_refractory','set_cognit_states','set_cognit_fields','receive','receive_batch','remove_cognit','propagate','homeostatic_step','load_graph'})
+    _mutators=frozenset({'add_cognit','add_cognits','set_activity','set_refractory','set_cognit_states','set_cognit_fields','receive','receive_batch','remove_cognit','propagate','homeostatic_step','begin_continuous_time','materialize_cognits_at','load_graph'})
     def __init__(self,inner,on_mutation):self._inner=inner;self._on_mutation=on_mutation;self._wrapped={}
     def __getattr__(self,name):
         value=getattr(self._inner,name)
@@ -44,6 +44,8 @@ class NativeGraphBackend:
         if name=='set_cognit_states' and args:self.invalidate_state([int(i)+1 for i in args[0]]);return
         self.invalidate_state()
     def add_cognit(self,activity=0.,threshold=.25,confidence=.5):return self.engine.add_cognit(activity,threshold,confidence)
+    def begin_continuous_time(self,now):
+        s=self.settings;self.engine.begin_continuous_time(float(now),s.homeostasis_trace_decay,s.homeostasis_learning_rate,s.threshold_min,s.threshold_max,s.cognit_activity_decay,.999,s.relation_confidence_decay);self.invalidate_state()
     def propagate(self,seeds,cognitive_tick):self.ffi_calls+=1;return self.engine.propagate(list(seeds),cognitive_tick)
     def predict(self,active,action):self.ffi_calls+=1;return self.engine.predict_compact(list(active),action.value)
     def predict_actions_batch(self,active,actions):self.ffi_calls+=1;return self.engine.predict_actions_batch(list(active),[a.value for a in actions])

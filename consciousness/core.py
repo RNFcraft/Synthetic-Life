@@ -47,6 +47,7 @@ class SyntheticEntityCore:
         self.current_structure=RelationalStructure(0,());self.target_structure:RelationalStructure|None=None;self.target_mismatch=1.;self.previous_target_mismatch=1.;self.relational_nodes={};self.affordances=AffordanceEvidence();self.previous_context=frozenset();self.previous_body_signature=()
         self.belief_scene=BeliefScene();self.target_knowledge_uncertainty=1.
         self.cognitive_tick=0
+        self.world_time_seconds:float|None=None
         self._selectivity_sum=0.;self._selectivity_count=0
     def _propagate(self,seeds:set[int],tick:int)->WaveResult:
         return self.backend.propagate_graph(self.graph,seeds,tick) if self.backend else self.wave.propagate(self.graph,seeds,tick)
@@ -63,7 +64,9 @@ class SyntheticEntityCore:
         goal=Goal(self.next_goal_id,(node.id,),1.,1.,1.,persistence=1.,origin_tension=1.,origin="TARGET",target_signature=signature)
         self.next_goal_id+=1;self.state.goals_generated+=1;self.state.goal=goal;self.events.append(f"TARGET_RECEIVED G{goal.id}");return goal
 
-    def step(self,frame:SensoryFrame)->Action:
+    def step(self,frame:SensoryFrame,world_time:float|None=None)->Action:
+        self.world_time_seconds=world_time;self.memory.set_world_time(world_time)
+        if world_time is not None and self.backend:self.backend.begin_continuous_time(world_time)
         self.events=[];self.cognitive_tick+=1;cognitive_tick=self.cognitive_tick
         observation,protos=self.patterns.observe(frame,self.state.representation_coverage,self.state.predictions)
         tracks=self.perception.update(self.patterns.last_events,frame.tick,self.previous_action)
@@ -281,17 +284,26 @@ class SyntheticEntityCore:
         candidate_intensity=self.state.internal_tension
         if goal:
             goal.age+=1;understanding=(1-self.state.novelty)*(1-self.state.prediction_error)
-            if any(i in current for i in goal.target_cognit_ids):goal.unavailable_ticks=0;goal.target_last_seen=goal.age
-            else:goal.unavailable_ticks+=1
-            if goal.origin!="TARGET":goal.persistence*=self.settings.goal_decay*(1-self.settings.goal_understanding_decay*understanding)
+            available=any(i in current for i in goal.target_cognit_ids)
+            if available:goal.unavailable_ticks=0;goal.target_last_seen=goal.age;goal.unavailable_since_seconds=None
+            else:
+                goal.unavailable_ticks+=1
+                if self.world_time_seconds is not None and goal.unavailable_since_seconds is None:goal.unavailable_since_seconds=self.world_time_seconds
+            if goal.origin!="TARGET":
+                factor=self.settings.goal_decay*(1-self.settings.goal_understanding_decay*understanding)
+                if self.world_time_seconds is None:goal.persistence*=factor
+                else:
+                    if goal.created_time_seconds is None:goal.created_time_seconds=self.world_time_seconds
+                    last=goal.last_touch_time_seconds if goal.last_touch_time_seconds is not None else goal.created_time_seconds
+                    goal.persistence*=factor**(self.world_time_seconds-last);goal.last_touch_time_seconds=self.world_time_seconds
             goal.intensity=self.settings.goal_inertia*goal.intensity+(1-self.settings.goal_inertia)*candidate_intensity
             if goal.persistence<self.settings.goal_min_persistence:
                 self.state.completed_goal_lifetimes.append(goal.age);self.events.append(f"GOAL_COMPLETED G{goal.id}");self.state.goal=None
-            elif goal.origin!="TARGET" and goal.unavailable_ticks>self.settings.goal_unavailable_limit:
+            elif goal.origin!="TARGET" and ((self.world_time_seconds is None and goal.unavailable_ticks>self.settings.goal_unavailable_limit) or (self.world_time_seconds is not None and goal.unavailable_since_seconds is not None and self.world_time_seconds-goal.unavailable_since_seconds>self.settings.goal_unavailable_limit)):
                 goal.status="RETIRED";self.state.goals_retired+=1;self.state.completed_goal_lifetimes.append(goal.age);self.events.append(f"GOAL_RETIRED G{goal.id}");self.state.goal=None
         if self.state.goal is None and candidate_ids and candidate_intensity>=self.settings.goal_tension_threshold:
             self.state.goal=Goal(self.next_goal_id,candidate_ids,1.0,candidate_intensity,1-self.state.uncertainty,
-                persistence=self.settings.goal_initial_persistence,origin_tension=candidate_intensity)
+                persistence=self.settings.goal_initial_persistence,origin_tension=candidate_intensity,created_time_seconds=self.world_time_seconds,last_touch_time_seconds=self.world_time_seconds)
             self.next_goal_id+=1;self.state.goals_generated+=1;self.events.append(f"GOAL_CREATED G{self.state.goal.id}")
 
     def _imagine(self,current:set[int])->dict[ActionType,FutureEstimate]:

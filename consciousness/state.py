@@ -9,6 +9,7 @@ class Goal:
     id:int;target_cognit_ids:tuple[int,...];activation_direction:float;intensity:float;confidence:float
     age:int=0;persistence:float=0.85;origin_tension:float=0.0;target_last_seen:int=0;unavailable_ticks:int=0;status:str="ACTIVE"
     parent_id:int|None=None;depth:int=0;origin:str="INTRINSIC";target_signature:tuple=()
+    created_time_seconds:float|None=None;last_touch_time_seconds:float|None=None;unavailable_since_seconds:float|None=None;cooldown_until_seconds:float|None=None
 
 
 @dataclass(frozen=True,slots=True)
