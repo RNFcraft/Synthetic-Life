@@ -13,9 +13,10 @@ Maintenance passes its absolute deadline through the established continuous
 time entry point before bounded lifecycle work.
 The native environment is configured with CMake 4.4.3, Ninja 1.13.2, pytest
 9.1.1, and MSVC. A clean Release native build, focused continuous-world tests
-(6 passed), focused continuous runtime/frontier tests (31 passed), and CTest
-equivalence (1/1 passed) now run. The gate remains FAIL
-until its wider acceptance/persistence matrix and regressions pass.
+(6 passed), focused continuous runtime/frontier/elapsed tests (75 passed),
+full pytest (207 passed), and CTest equivalence (1/1 passed) now run. A small
+`PYTHONHASHSEED=1/77` continuous trajectory digest is identical. The gate
+remains FAIL until its wider explicit acceptance/persistence matrix is added.
 
 ## TRUE EVENT-DRIVEN COGNITION FRONTIER
 
