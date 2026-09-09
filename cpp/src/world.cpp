@@ -34,4 +34,5 @@ std::optional<std::uint32_t> World::apply_spawn_event(std::optional<std::pair<in
  auto[x,y]=*position;if(!contains(x,y)||at(x,y)||occupied_by_body(x,y,UINT32_MAX))throw std::invalid_argument("invalid injected spawn");
  auto id=next_object_id_++;objects_.push_back({id,x,y,0});return id;
 }
+RenderSnapshot World::latest_render_snapshot()const{RenderSnapshot s{world_time_,event_sequence_,width_,height_};for(auto const&b:bodies_)s.bodies.push_back({b.id,b.x,b.y,b.orientation,b.appearance,b.held_object_id});for(auto const&o:objects_)s.objects.push_back({o.id,o.x,o.y,o.state});for(std::size_t i=0;i<held_.size();++i)if(held_[i])s.held_objects.push_back({(std::uint32_t)i,held_[i]->id,held_[i]->state});return s;}
 }

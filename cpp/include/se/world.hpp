@@ -1,5 +1,6 @@
 #pragma once
 #include "types.hpp"
+#include "render_snapshot.hpp"
 #include <optional>
 #include <span>
 #include <string>
@@ -33,6 +34,7 @@ public:
   const Body& body() const noexcept{return bodies_.front();}const std::vector<std::optional<Object>>& held_objects()const noexcept{return held_;}
   double resistance(std::uint32_t id=0)const noexcept{return resistance_.at(id);}std::uint32_t conflict_cursor()const{return conflict_cursor_;}std::uint64_t conflict_count()const{return conflict_count_;}const std::vector<std::uint64_t>&fairness_wins()const{return fairness_wins_;}
   const std::vector<double>& resistances()const noexcept{return resistance_;}
+  RenderSnapshot latest_render_snapshot()const;
 private:
   int width_,height_,radius_;std::vector<Body>bodies_{Body{}};std::vector<Object>objects_;std::vector<std::optional<Object>>held_{1};std::vector<double>resistance_{0.};
   std::uint32_t conflict_cursor_{},next_object_id_{1},max_objects_{};std::uint64_t conflict_count_{},world_tick_count_{};std::vector<std::uint64_t>fairness_wins_{0};std::optional<std::uint64_t>next_spawn_tick_;
