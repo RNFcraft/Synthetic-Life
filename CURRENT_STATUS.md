@@ -1,5 +1,20 @@
 # Synthetic Entity v0.5.3 — Current Status
 
+## NATIVE C++ SDL3 / OPENGL OBSERVER
+
+NATIVE C++ SDL3 / OPENGL OBSERVER: IN PROGRESS
+
+PASS 1 — NATIVE RENDER SNAPSHOT BOUNDARY: PASS
+
+PASS 2 — SDL3 / OPENGL NATIVE 2D RENDERER: IN PROGRESS
+
+The optional `SE_BUILD_OBSERVER` CMake target fetches pinned SDL 3.2.8 and
+builds a native OpenGL observer plus deterministic demo. Its native frame loop
+accepts only value-owned `RenderSnapshot` values through `SnapshotSource`; it
+does not invoke Python or mutate `World`. Renderer geometry preparation is
+unit-testable without a window. Live concurrent attachment to the authoritative
+world remains deliberately outside this pass.
+
 ## CONTINUOUS WORLD COMPLETION
 
 CONTINUOUS WORLD COMPLETION: PASS
