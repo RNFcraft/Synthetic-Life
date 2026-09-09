@@ -69,7 +69,8 @@ std::vector<DrawPrimitive> prepare_draw_data(const RenderSnapshot& snapshot,
 
 class NativeObserver::Impl {
 public:
-    Impl(int width, int height) {
+    Impl(int width, int height):width(width),height(height) {}
+    void initialize() {
         if (!SDL_Init(SDL_INIT_VIDEO)) throw std::runtime_error(SDL_GetError());
         SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
         SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3);
@@ -81,20 +82,23 @@ public:
         if (!context) throw std::runtime_error(SDL_GetError());
         SDL_GL_SetSwapInterval(1);
     }
-    ~Impl() {
+    void shutdown() {
         if (context) SDL_GL_DestroyContext(context);
         if (window) SDL_DestroyWindow(window);
+        context=nullptr; window=nullptr;
         SDL_Quit();
     }
+    ~Impl() { shutdown(); }
     SDL_Window* window{};
     SDL_GLContext context{};
     bool open{true};
+    int width, height;
 };
 
-NativeObserver::NativeObserver(int width, int height) : impl_(std::make_unique<Impl>(width, height)) {}
-NativeObserver::~NativeObserver() = default;
-NativeObserver::NativeObserver(NativeObserver&&) noexcept = default;
-NativeObserver& NativeObserver::operator=(NativeObserver&&) noexcept = default;
+NativeObserver::NativeObserver(int width, int height) : impl_(std::make_unique<Impl>(width, height)) { impl_->initialize(); }
+NativeObserver::NativeObserver(std::shared_ptr<RenderSnapshotChannel> channel, int width, int height)
+    : impl_(std::make_unique<Impl>(width, height)), source_(std::make_shared<ChannelSnapshotSource>(std::move(channel))) {}
+NativeObserver::~NativeObserver() { stop(); }
 bool NativeObserver::is_open() const { return impl_ && impl_->open; }
 
 bool NativeObserver::pump_events() {
@@ -165,5 +169,14 @@ void NativeObserver::render(const RenderSnapshot& snapshot) {
 void NativeObserver::run(const SnapshotSource& source) {
     while (pump_events()) render(source.latest());
 }
+
+bool NativeObserver::start() {
+    if (!source_ || running_.exchange(true)) return false;
+    thread_ = std::thread([this] { impl_->initialize(); while (running_ && pump_events()) { render(source_->latest()); ++frames_; } impl_->shutdown(); running_ = false; });
+    return true;
+}
+void NativeObserver::stop() { running_ = false; if (thread_.joinable()) thread_.join(); }
+bool NativeObserver::is_running() const noexcept { return running_; }
+std::uint64_t NativeObserver::frames_rendered() const noexcept { return frames_; }
 
 } // namespace se

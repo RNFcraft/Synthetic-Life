@@ -32,6 +32,10 @@ if(SE_BUILD_OBSERVER)
   add_library(se_observer src/observer.cpp)
   target_include_directories(se_observer PUBLIC include)
   target_link_libraries(se_observer PUBLIC SDL3::SDL3 OpenGL::GL)
+  target_link_libraries(_native_brain PRIVATE se_observer)
+  target_compile_definitions(_native_brain PRIVATE SE_WITH_OBSERVER=1)
+  add_custom_command(TARGET _native_brain POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different $<TARGET_FILE:SDL3::SDL3> $<TARGET_FILE_DIR:_native_brain>)
 
   add_executable(se_observer_demo tests/observer_demo.cpp)
   target_link_libraries(se_observer_demo PRIVATE se_observer)

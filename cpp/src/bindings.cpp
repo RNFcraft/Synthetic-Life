@@ -1,5 +1,8 @@
 #include "se/native_brain_engine.hpp"
 #include "se/world.hpp"
+#ifdef SE_WITH_OBSERVER
+#include "se/observer.hpp"
+#endif
 #include "se/event_scheduler.hpp"
 #include <algorithm>
 #include <pybind11/pybind11.h>
@@ -10,6 +13,9 @@ PYBIND11_MODULE(_native_brain,m){
   py::class_<RuntimeEvent>(m,"RuntimeEvent").def(py::init([](double t,std::uint64_t id,RuntimeEventType type,std::uint64_t payload){return RuntimeEvent{t,id,type,payload};})).def_readonly("time",&RuntimeEvent::time).def_readonly("id",&RuntimeEvent::id).def_readonly("type",&RuntimeEvent::type).def_readonly("payload",&RuntimeEvent::payload);
   py::enum_<RuntimeEventType>(m,"RuntimeEventType").value("WORLD_ACTION_COMPLETE",RuntimeEventType::WorldActionComplete).value("WORLD_SPAWN",RuntimeEventType::WorldSpawn).value("SENSORY_CHANGE",RuntimeEventType::SensoryChange).value("COGNITION_WAKE",RuntimeEventType::CognitionWake).value("COGNITION_CONTINUE",RuntimeEventType::CognitionContinue).value("MEMORY_TIMER",RuntimeEventType::MemoryTimer).value("RELATION_TIMER",RuntimeEventType::RelationTimer).value("MAINTENANCE",RuntimeEventType::Maintenance).value("EXTERNAL_INPUT",RuntimeEventType::ExternalInput);
   py::class_<EventScheduler>(m,"EventScheduler").def(py::init<>()).def("schedule",&EventScheduler::schedule,py::arg("time"),py::arg("event_type"),py::arg("payload")=0).def("pop_ready",&EventScheduler::pop_ready).def("snapshot",&EventScheduler::snapshot).def("restore",&EventScheduler::restore).def_property_readonly("now",&EventScheduler::now).def_property_readonly("next_id",&EventScheduler::next_id).def_property_readonly("size",&EventScheduler::size);
+#ifdef SE_WITH_OBSERVER
+  py::class_<NativeObserver>(m,"NativeObserver").def("start",&NativeObserver::start).def("stop",&NativeObserver::stop).def_property_readonly("is_running",&NativeObserver::is_running).def_property_readonly("frames_rendered",&NativeObserver::frames_rendered);
+#endif
   py::class_<World>(m,"WorldRuntime").def(py::init<int,int,int>(),py::arg("width")=30,py::arg("height")=30,py::arg("radius")=4)
     .def("initialize",[](World&w,int x,int y,const std::string&o,const std::vector<std::pair<int,int>>&objects){w.initialize({x,y,o.empty()?'N':o[0]},objects);})
     .def("initialize_multi",[](World&w,const std::vector<std::tuple<std::uint32_t,int,int,std::string,std::uint16_t>>&bodies,const std::vector<std::tuple<std::uint32_t,int,int,int>>&objects){std::vector<Body>bs;std::vector<Object>os;for(auto&[id,x,y,o,appearance]:bodies)bs.push_back({x,y,o.empty()?'N':o[0],0,appearance,id});for(auto&[id,x,y,state]:objects)os.push_back({id,x,y,state});w.initialize_multi(std::move(bs),std::move(os));})
@@ -21,6 +27,9 @@ PYBIND11_MODULE(_native_brain,m){
     .def("resolve_intents",[](World&w,const std::vector<std::uint32_t>&ids,const std::vector<std::uint8_t>&actions){auto rows=w.resolve_intents(ids,actions);std::vector<int>out;for(auto value:rows)out.push_back((int)value);return out;})
     .def("apply_intent",[](World&w,int action,double issued,std::uint64_t event){return (int)w.apply_intent((ActionType)action,issued,event);})
     .def("advance_world_time",&World::advance_world_time).def("time_state",[](const World&w){return py::make_tuple(w.world_time(),w.event_sequence());})
+#ifdef SE_WITH_OBSERVER
+    .def("create_observer",[](World&w){return std::make_unique<NativeObserver>(w.snapshot_channel());})
+#endif
     .def("latest_render_snapshot",[](const World&w){auto s=w.latest_render_snapshot();py::list bodies,objects,held;for(auto const&b:s.bodies)bodies.append(py::make_tuple(b.id,b.x,b.y,std::string(1,b.orientation),b.appearance,b.held_object_id));for(auto const&o:s.objects)objects.append(py::make_tuple(o.id,o.x,o.y,o.state));for(auto const&h:s.held_objects)held.append(py::make_tuple(h.owner_body_id,h.object_id,h.state));return py::make_tuple(s.world_time,s.event_sequence,s.world_width,s.world_height,bodies,objects,held);})
     .def("state",[](const World&w){py::list objects;for(auto&o:w.objects())objects.append(py::make_tuple(o.id,o.x,o.y,o.state));auto&b=w.body();return py::make_tuple(b.x,b.y,std::string(1,b.orientation),b.held_object_id,objects,w.resistance());})
     .def("full_state",[](const World&w){py::list bodies,objects,held;for(auto&b:w.bodies())bodies.append(py::make_tuple(b.id,b.x,b.y,std::string(1,b.orientation),b.held_object_id,b.appearance));auto sorted=w.objects();std::sort(sorted.begin(),sorted.end(),[](auto&a,auto&b){return a.id<b.id;});for(auto&o:sorted)objects.append(py::make_tuple(o.id,o.x,o.y,o.state));for(std::size_t i=0;i<w.held_objects().size();++i)if(w.held_objects()[i]){auto&o=*w.held_objects()[i];held.append(py::make_tuple((std::uint32_t)i,o.id,o.x,o.y,o.state));}return py::make_tuple(bodies,objects,held,w.world_tick_count(),w.next_spawn_tick(),w.next_object_id(),w.conflict_cursor(),w.conflict_count(),w.fairness_wins());})
