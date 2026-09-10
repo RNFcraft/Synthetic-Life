@@ -172,11 +172,22 @@ void NativeObserver::run(const SnapshotSource& source) {
 
 bool NativeObserver::start() {
     if (!source_ || running_.exchange(true)) return false;
-    thread_ = std::thread([this] { impl_->initialize(); while (running_ && pump_events()) { render(source_->latest()); ++frames_; } impl_->shutdown(); running_ = false; });
+    thread_ = std::thread([this] {
+        try {
+            impl_->initialize();
+            while (running_ && pump_events()) {
+                auto snapshot=source_->latest();render(snapshot);last_sequence_=snapshot.event_sequence;++frames_;
+            }
+            impl_->shutdown();
+        } catch (...) { impl_->shutdown(); }
+        running_=false;
+    });
     return true;
 }
 void NativeObserver::stop() { running_ = false; if (thread_.joinable()) thread_.join(); }
 bool NativeObserver::is_running() const noexcept { return running_; }
 std::uint64_t NativeObserver::frames_rendered() const noexcept { return frames_; }
+std::uint64_t NativeObserver::last_snapshot_event_sequence() const noexcept { return last_sequence_; }
+RenderSnapshot NativeObserver::latest_snapshot() const { return source_ ? source_->latest() : RenderSnapshot{}; }
 
 } // namespace se

@@ -68,6 +68,8 @@ public:
     void stop();
     bool is_running() const noexcept;
     std::uint64_t frames_rendered() const noexcept;
+    std::uint64_t last_snapshot_event_sequence() const noexcept;
+    RenderSnapshot latest_snapshot() const;
 
 private:
     class Impl;
@@ -76,6 +78,7 @@ private:
     std::thread thread_;
     std::atomic<bool> running_{false};
     std::atomic<std::uint64_t> frames_{0};
+    std::atomic<std::uint64_t> last_sequence_{0};
 };
 
 } // namespace se

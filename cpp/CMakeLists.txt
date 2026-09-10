@@ -41,6 +41,6 @@ if(SE_BUILD_OBSERVER)
   target_link_libraries(se_observer_demo PRIVATE se_observer)
 
   add_executable(se_observer_tests tests/observer.cpp)
-  target_link_libraries(se_observer_tests PRIVATE se_observer)
+  target_link_libraries(se_observer_tests PRIVATE se_observer se_engine)
   add_test(NAME se_observer_tests COMMAND se_observer_tests)
 endif()
