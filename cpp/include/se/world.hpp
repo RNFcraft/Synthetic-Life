@@ -38,6 +38,7 @@ public:
   RenderSnapshot latest_render_snapshot()const;
   std::shared_ptr<RenderSnapshotChannel> snapshot_channel()const noexcept{return snapshot_channel_;}
 private:
+  ActionResult apply_internal(ActionType action,std::uint32_t body_id);
   int width_,height_,radius_;std::vector<Body>bodies_{Body{}};std::vector<Object>objects_;std::vector<std::optional<Object>>held_{1};std::vector<double>resistance_{0.};
   std::uint32_t conflict_cursor_{},next_object_id_{1},max_objects_{};std::uint64_t conflict_count_{},world_tick_count_{};std::vector<std::uint64_t>fairness_wins_{0};std::optional<std::uint64_t>next_spawn_tick_;
   double world_time_{};std::uint64_t event_sequence_{};

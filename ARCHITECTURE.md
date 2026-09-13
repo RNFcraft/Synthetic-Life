@@ -273,7 +273,7 @@ The current accepted v0.5.3a cognition frontier has:
 
 - `ELAPSED-TIME LAZY COGNITION: PASS`;
 - `TRUE EVENT-DRIVEN COGNITION FRONTIER: PASS`;
-- full pytest: 237 passed;
+- full pytest: 238 passed;
 - CTest Release: 2/2 passed;
 - identical deterministic trajectory digest for `PYTHONHASHSEED=1` and `77`;
 - `full_graph_sync_calls == 0`;
@@ -296,6 +296,8 @@ C++ WorldRuntime
 
 The observer never schedules cognitive work, advances WorldTime, or mutates authoritative World state. A native snapshot channel supplies value-owned state to its independent SDL3/OpenGL frame thread; observer lifecycle and frame cadence are trajectory-invariant and are excluded from persistence.
 
+The snapshot channel is a latest-state-only C++20 `atomic<shared_ptr<const RenderSnapshot>>`: it has no mutex, queue, condition variable, or renderer back-pressure. `_native_brain` and `SDL3.dll` are runtime-local build outputs and are not versioned repository artifacts. A future observer-only panel may visualize Cognits as nodes, Relations as edges, and activation as highlight/brightness/pulse; that UI is not implemented in this gate.
+
 ## 14. Current roadmap
 
 ```text
@@ -310,4 +312,4 @@ v0.5.2 frozen native compatibility baseline                    DONE
     -> Entity visual/retina/gaze input
 ```
 
-The immediate development target is `SCALING CLEANUP`.
+The immediate development target is `SCALING / NATIVE-BOUNDARY CLEANUP`.

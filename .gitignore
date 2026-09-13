@@ -1,5 +1,6 @@
 __pycache__/
 *.py[cod]
+consciousness/SDL3.dll
 .pytest_cache/
 .vscode/
 *.jsonl

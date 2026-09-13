@@ -119,6 +119,7 @@ python -m pybind11 --cmakedir
 ```
 
 The Release `_native_brain` module is emitted into the `consciousness/` package by the current CMake configuration.
+When the observer is enabled, its runtime `SDL3.dll` is copied beside the module. Both files are local build outputs and are intentionally excluded from Git.
 
 If CMake reports that no C++ compiler is available on Windows, open a **Developer PowerShell for VS 2022** or install the Visual Studio C++ workload listed above.
 
@@ -135,7 +136,7 @@ python -m pytest -q
 
 Current repository-reported acceptance state for v0.5.3a:
 
-- full pytest: **237 passed**
+- full pytest: **238 passed**
 - CTest Release: **2/2 passed**
 - deterministic `PYTHONHASHSEED=1/77` trajectory digest: identical
 - `full_graph_sync_calls == 0`
@@ -164,7 +165,7 @@ v0.5.2 native frozen baseline                    DONE
     -> Entity visual/retina/gaze input
 ```
 
-The next gate is **SCALING CLEANUP**. Continuous spawning and maintenance now use absolute scheduled events, and the optional native SDL3/OpenGL observer reads value-owned snapshots from the authoritative C++ World without affecting its trajectory.
+The next gate is **SCALING / NATIVE-BOUNDARY CLEANUP**. Continuous spawning and maintenance now use absolute scheduled events, and the optional native SDL3/OpenGL observer reads value-owned snapshots from the authoritative C++ World without affecting its trajectory.
 
 ## Important design invariants
 

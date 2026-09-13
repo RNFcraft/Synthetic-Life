@@ -1,4 +1,5 @@
 from consciousness.native_engine import WorldRuntime
+from pathlib import Path
 from simulation import ContinuousRuntime
 from world import ActionType
 
@@ -31,3 +32,8 @@ def test_native_snapshot_sampling_is_trajectory_invisible():
         for _ in range(100):sampled.simulation.world.native.latest_render_snapshot()
         sampled.run_until(point)
     assert (sampled.scheduler_state(),sampled.simulation.world.native.time_state(),sampled.simulation.rng.getstate(),sampled.simulation.world.to_dict(),sampled.cognition_generation,sampled.actions_completed,sampled.maintenance_ordinal)==(plain.scheduler_state(),plain.simulation.world.native.time_state(),plain.simulation.rng.getstate(),plain.simulation.world.to_dict(),plain.cognition_generation,plain.actions_completed,plain.maintenance_ordinal)
+def test_render_snapshot_channel_has_no_mutex_in_production_header():
+    source=(Path(__file__).parents[1]/"cpp"/"include"/"se"/"render_snapshot.hpp").read_text()
+    channel=source[source.index("class RenderSnapshotChannel"):]
+    assert "std::mutex" not in channel and "lock_guard" not in channel
+    assert "std::atomic<std::shared_ptr<const RenderSnapshot>>" in channel

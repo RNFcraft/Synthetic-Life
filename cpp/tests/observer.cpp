@@ -45,5 +45,7 @@ int main() {
     auto a_channel=a.snapshot_channel(), b_channel=b.snapshot_channel(); assert(a_channel!=b_channel);
     a.set_body_state(1,2,1,'E'); assert(a_channel->latest()->bodies[0].x==2); assert(b_channel->latest()->bodies[0].x==1);
     b.set_body_state(1,1,2,'S'); assert(b_channel->latest()->bodies[0].y==2); assert(a_channel->latest()->bodies[0].y==1);
+    se::World direct(4,4,1);direct.initialize_multi({{1,1,'N',0,1,0}},{});auto direct_channel=direct.snapshot_channel();auto direct_before=direct_channel->latest();auto direct_sequence=direct.event_sequence();direct.apply(se::ActionType::MoveRight,0);auto direct_after=direct_channel->latest();assert(direct_after->bodies[0].x==2&&direct_after->bodies[0].y==1);assert(direct_before->bodies[0].x==1&&direct_before->bodies[0].y==1);assert(direct.event_sequence()==direct_sequence&&direct_after->event_sequence==direct_sequence);
+    se::World batch(5,3,1);batch.initialize_multi({{0,1,'E',0,1,0},{4,1,'W',0,1,1}},{});auto batch_channel=batch.snapshot_channel();auto batch_before=batch_channel->latest();std::uint32_t ids[]={0,1};std::uint8_t actions[]={static_cast<std::uint8_t>(se::ActionType::MoveRight),static_cast<std::uint8_t>(se::ActionType::MoveLeft)};batch.resolve_intents(ids,actions);auto batch_after=batch_channel->latest();assert(batch.bodies()[0].x==1&&batch.bodies()[1].x==3);assert(batch_after->bodies[0].x==1&&batch_after->bodies[1].x==3);assert(batch_before->bodies[0].x==0&&batch_before->bodies[1].x==4);assert(batch_after->event_sequence==batch.event_sequence());
     return 0;
 }

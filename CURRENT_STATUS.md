@@ -16,8 +16,19 @@ unit-testable without a window. Live attachment uses the native snapshot channel
 owned by the same authoritative `WorldRuntime`; lifecycle, trajectory invariance,
 post-stop continuation, and persistence exclusion are covered by tests.
 
+Observer closure details:
+
+- `RenderSnapshotChannel` is a latest-state-only C++20 `atomic<shared_ptr<const RenderSnapshot>>`; production code contains no mutex, lock guard, queue, condition variable, or spin lock.
+- Public `World::apply()` mutates through `apply_internal()` and publishes exactly one fresh immutable snapshot without changing EventSequence.
+- `World::apply_intent()` and `World::resolve_intents()` use the same non-publishing helper; multi-body resolution publishes one coherent snapshot only after the complete batch.
+- Previously retained snapshots remain immutable and safe while newer snapshots are published concurrently.
+- Observer sampling causes zero Python per-frame calls, scheduler/World events, EventSequence increments, or cognition work. Renderer wall-clock has no path into WorldTime, scheduler, RNG, or cognition.
+- Future observer work may add a separate right-side panel or inset for Cognit nodes, Relation edges, and activation highlighting/pulses. No brain-visualization UI was implemented in this pass.
+- `_native_brain` and `SDL3.dll` are runtime-local build outputs. Neither is tracked; `cpp/build*`, `CMakeFiles`, CMake cache files, and pip build logs are also excluded.
+- Repository cleanup: **PASS**.
+
 Current verification after a fresh observer-enabled Release build: focused
-render/observer/continuous-world tests **36 passed**; full pytest **237 passed**;
+live observer **5 passed**, continuous-world **28 passed**, render snapshot/observer **4 passed**; full pytest **238 passed**;
 CTest Release **2/2 passed**.
 
 ## CONTINUOUS WORLD COMPLETION
@@ -32,7 +43,7 @@ World mutations allocate their own `Simulation.event_sequence` at execution.
 Maintenance passes its absolute deadline through the established continuous
 time entry point before bounded lifecycle work.
 Final verification: continuous-world focused tests 28 passed; focused
-runtime/frontier/elapsed selection 97 passed; full pytest 237 passed; clean
+runtime/frontier/elapsed selection 97 passed; full pytest 238 passed; clean
 observer-enabled Release native build PASS; CTest 2/2 PASS. `PYTHONHASHSEED=1/77` digest:
 `e334137aab48aac629c9ac0d4dbc77ea8ec7f51203acda0c970a9bb647c3d731`.
 Normal continuous `world_tick` calls, native Python physical World calls, and
@@ -129,7 +140,7 @@ None.
 
 ## NEXT GATE
 
-**SCALING CLEANUP**
+**SCALING / NATIVE-BOUNDARY CLEANUP**
 
 Not started. Continuous World completion and the native SDL3/OpenGL observer are complete.
 
