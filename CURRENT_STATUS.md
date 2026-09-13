@@ -1,5 +1,38 @@
 # Synthetic Entity v0.5.3 — Current Status
 
+## BRAIN VIEW SCALING OPTIMIZATION
+
+BRAIN VIEW SCALING OPTIMIZATION: PASS
+
+- Producer limits are named observer constants: **1024 Cognits / 4096 Relations**.
+  Snapshots also carry exact total/visible/active counts and truncation state.
+- Deterministic selection prioritizes active, recent, and newly created Cognits.
+  Relations are top-K ranked from visible sources by current use/activity,
+  strength and confidence; both endpoints must be visible.
+- Normal publication performs **no** `RelationStore::snapshot()` or other full
+  Relation-vector copy. It reads raw observational fields and does not touch lazy
+  time, confidence, use markers, RNG, revisions, or lifecycle.
+- Panel-area LOD is **128–512 nodes** and at most `min(nodes*4, 2048)` edges.
+  The tested desktop panel displays **128 / 10000 Cognits** and at most
+  **512 / 50000 Relations**.
+- `NativeObserver` caches snapshot identity, viewport dimensions and CPU/GPU
+  geometry. Repeated frames do not rebuild unchanged graph geometry.
+- Edges use one dynamic `GL_LINES` VBO draw; Cognits use one circular
+  `GL_POINTS` VBO draw. The previous CPU pixel-walk/scissor Relation renderer
+  is removed.
+- Presentation history is bounded: current cached geometry is LOD-bounded and
+  Cognit birth identity uses a compact monotonic-ID frontier rather than an
+  unbounded per-Cognit map.
+- 10,000-Cognit/50,000-unique-Relation fixture: snapshot **1024 / 4096**,
+  publication **1.809 ms** observed locally; exact selection is repeatable.
+- Focused observer/continuous regression: **41 passed**; full pytest:
+  **251 passed**; observer-enabled Release build: **PASS**; CTest: **2/2**.
+- Real Windows window smoke and resize-safe rendering: **PASS**.
+- Python calls per render frame: **0**; `full_graph_sync_calls`: **0**;
+  exact trajectory invariance: **PASS**. Established `PYTHONHASHSEED=1/77`
+  digest remains `e334137aab48aac629c9ac0d4dbc77ea8ec7f51203acda0c970a9bb647c3d731`.
+
+
 ## NATIVE OBSERVER VISUAL UI + BRAIN GRAPH
 
 NATIVE OBSERVER VISUAL UI + BRAIN GRAPH: PASS

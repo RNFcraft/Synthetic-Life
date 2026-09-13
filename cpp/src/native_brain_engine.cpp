@@ -6,14 +6,21 @@
 #include <fstream>
 #include <stdexcept>
 #include <cstring>
+#include <queue>
 namespace se {
 void NativeBrainEngine::publish_brain_snapshot(double world_time,std::uint64_t cognitive_tick,std::uint64_t generation,std::span<const std::uint32_t>active){
   BrainSnapshot out;out.world_time=world_time;out.cognitive_tick=cognitive_tick;out.cognition_generation=generation;
-  std::unordered_set<std::uint32_t> active_set(active.begin(),active.end());
-  out.nodes.reserve(live_cognit_count());
-  for(std::uint32_t id=0;id<graph_.cognit_count();++id)if(cognit_alive(id))out.nodes.push_back({id,graph_.activity[id],graph_.threshold[id],graph_.confidence[id],bool(graph_.flags[id]&2),true,graph_.last_active_cognitive_tick[id]});
-  auto rows=graph_.relations.snapshot();out.edges.reserve(rows.size());
-  for(auto const&r:rows){double used=(r.last_used_cognitive_tick==cognitive_tick&&cognitive_tick)?1.:0.;if(active_set.contains(r.source)&&active_set.contains(r.target))used=std::max(used,.65);out.edges.push_back({r.source,r.target,r.type,r.strength,r.confidence,used});}
+  out.total_cognits=live_cognit_count();out.total_relations=relation_count();
+  std::unordered_set<std::uint32_t> active_set;for(auto id:active)if(cognit_alive(id))active_set.insert(id);out.active_cognits=static_cast<std::uint32_t>(active_set.size());
+  std::unordered_set<std::uint32_t> active_neighbors;for(auto id:active_set)graph_.for_each_outgoing(id,[&](Edge const&e,RelationHandle){if(cognit_alive(e.target))active_neighbors.insert(e.target);});
+  struct Candidate{std::uint32_t id;bool active,connected;std::uint64_t recent;double activity,confidence;};std::vector<Candidate> candidates;candidates.reserve(graph_.cognit_count());
+  for(std::uint32_t id=0;id<graph_.cognit_count();++id)if(cognit_alive(id))candidates.push_back({id,active_set.contains(id),active_neighbors.contains(id),graph_.last_active_cognitive_tick[id],graph_.activity[id],graph_.confidence[id]});
+  auto better=[](auto const&a,auto const&b){if(a.active!=b.active)return a.active>b.active;if(a.active&&a.activity!=b.activity)return a.activity>b.activity;if(a.recent!=b.recent)return a.recent>b.recent;if(a.connected!=b.connected)return a.connected>b.connected;if(a.id!=b.id)return a.id>b.id;if(a.activity!=b.activity)return a.activity>b.activity;return a.confidence>b.confidence;};
+  if(candidates.size()>kMaxBrainSnapshotNodes){std::partial_sort(candidates.begin(),candidates.begin()+kMaxBrainSnapshotNodes,candidates.end(),better);candidates.resize(kMaxBrainSnapshotNodes);out.truncated=true;}else std::sort(candidates.begin(),candidates.end(),better);
+  std::unordered_set<std::uint32_t> visible;visible.reserve(candidates.size()*2);out.nodes.reserve(candidates.size());for(auto const&c:candidates){visible.insert(c.id);out.nodes.push_back({c.id,c.activity,graph_.threshold[c.id],c.confidence,false,true,c.recent});}
+  struct RankedEdge{BrainEdgeState edge;double score;};auto worse=[](RankedEdge const&a,RankedEdge const&b){if(a.score!=b.score)return a.score>b.score;if(a.edge.source!=b.edge.source)return a.edge.source>b.edge.source;return a.edge.target>b.edge.target;};std::priority_queue<RankedEdge,std::vector<RankedEdge>,decltype(worse)> best(worse);
+  for(auto const&c:candidates)graph_.for_each_outgoing(c.id,[&](Edge const&e,RelationHandle){if(!visible.contains(e.target))return;double used=(e.last_used_cognitive_tick==cognitive_tick&&cognitive_tick)?1.:0.;if(active_set.contains(c.id)&&active_set.contains(e.target))used=std::max(used,.65);double score=used*1000.+e.strength*10.+e.confidence;RankedEdge row{{c.id,e.target,static_cast<std::uint8_t>(e.type),e.strength,e.confidence,used},score};if(best.size()<kMaxBrainSnapshotEdges)best.push(row);else if(score>best.top().score){best.pop();best.push(row);}});
+  out.edges.reserve(best.size());while(!best.empty()){out.edges.push_back(best.top().edge);best.pop();}std::sort(out.edges.begin(),out.edges.end(),[](auto const&a,auto const&b){if(a.activation!=b.activation)return a.activation>b.activation;if(a.strength!=b.strength)return a.strength>b.strength;if(a.confidence!=b.confidence)return a.confidence>b.confidence;if(a.source!=b.source)return a.source<b.source;return a.target<b.target;});out.truncated=out.truncated||out.edges.size()<out.total_relations;
   brain_channel_->publish(std::move(out));
 }
 void NativeBrainEngine::update_outcomes(std::span<const std::uint32_t>before,std::span<const std::uint32_t>current,int action,std::uint64_t tick,double confirmation,double contradiction,double utility,double consolidated_confidence){

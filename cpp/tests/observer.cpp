@@ -5,6 +5,7 @@
 #include <atomic>
 #include <thread>
 #include <unordered_set>
+#include <numeric>
 #include "se/world.hpp"
 #include "se/native_brain_engine.hpp"
 
@@ -48,6 +49,7 @@ int main() {
     std::atomic<bool> brain_done{false};std::thread brain_writer([&]{for(std::uint64_t n=100;n<2000;++n){se::BrainSnapshot v;v.cognitive_tick=n;v.nodes.push_back({unsigned(n),.5,.2,.6,false,true,n});brains.publish(std::move(v));}brain_done=true;});std::thread brain_reader([&]{std::uint64_t previous=0;while(!brain_done){auto v=brains.latest();if(v){assert(v->cognitive_tick>=previous);previous=v->cognitive_tick;assert(v->nodes.size()==1);}}});brain_writer.join();brain_reader.join();assert(brains.latest()->cognitive_tick==1999);
     se::NativeBrainEngine engine;engine.add_cognits(3);engine.set_activity(1,.9);engine.add_relation(0,1,se::RelationType::Sequential,0,.8,.7,0);std::uint32_t active[]={1};engine.publish_brain_snapshot(2.5,7,4,active);auto graph=engine.brain_snapshot_channel()->latest();assert(graph->nodes.size()==3&&graph->edges.size()==1&&graph->nodes[1].activity==.9&&graph->edges[0].source==0&&graph->edges[0].target==1);
     auto graph_draw=se::prepare_brain_draw_data(*graph,300,240);assert(graph_draw.nodes.size()==3&&graph_draw.edges.size()==1);
+    se::NativeBrainEngine large;large.add_cognits(10000);for(std::uint32_t i=0;i<50000;++i){auto source=i%10000,target=(source+(i/10000)+1)%10000;large.add_relation(source,target,se::RelationType::Associative,0,double(i%100)/100.,.6,0);}for(std::uint32_t i=0;i<20;++i)large.set_activity(i,.9-double(i)*.01);std::vector<std::uint32_t> hot(20);std::iota(hot.begin(),hot.end(),0);large.publish_brain_snapshot(1.,42,3,hot);auto bounded=large.brain_snapshot_channel()->latest();assert(bounded->total_cognits==10000&&bounded->total_relations==50000&&bounded->nodes.size()==se::kMaxBrainSnapshotNodes&&bounded->edges.size()<=se::kMaxBrainSnapshotEdges&&bounded->active_cognits==20&&bounded->truncated);for(std::uint32_t i=0;i<20;++i)assert(bounded->nodes[i].id==i);auto first_ids=bounded->nodes;large.publish_brain_snapshot(1.,42,3,hot);auto repeat=large.brain_snapshot_channel()->latest();for(std::size_t i=0;i<first_ids.size();++i)assert(first_ids[i].id==repeat->nodes[i].id);auto lod=se::prepare_brain_draw_data(*bounded,300,400);assert(lod.nodes.size()<=128&&lod.edges.size()<=512);
     se::World a(4,4,1); a.initialize_multi({{1,1,'N',0,1,1}},{}); se::World b=a;
     auto a_channel=a.snapshot_channel(), b_channel=b.snapshot_channel(); assert(a_channel!=b_channel);
     a.set_body_state(1,2,1,'E'); assert(a_channel->latest()->bodies[0].x==2); assert(b_channel->latest()->bodies[0].x==1);

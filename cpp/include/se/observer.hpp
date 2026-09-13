@@ -74,6 +74,7 @@ public:
     bool is_running() const noexcept;
     std::uint64_t frames_rendered() const noexcept;
     std::uint64_t last_snapshot_event_sequence() const noexcept;
+    std::uint64_t brain_snapshot_rebuilds() const noexcept;
     RenderSnapshot latest_snapshot() const;
     BrainSnapshot latest_brain_snapshot() const;
 
@@ -86,6 +87,7 @@ private:
     std::atomic<bool> running_{false};
     std::atomic<std::uint64_t> frames_{0};
     std::atomic<std::uint64_t> last_sequence_{0};
+    std::atomic<std::uint64_t> brain_rebuilds_{0};
 };
 
 } // namespace se

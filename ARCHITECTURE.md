@@ -310,6 +310,16 @@ persisted nor fed back into the simulation. Python per-frame involvement is
 zero. `_native_brain` and `SDL3.dll` are runtime-local build outputs and are not
 versioned repository artifacts.
 
+Brain observation is explicitly bounded. The producer emits at most 1024
+Cognits and 4096 Relations while retaining total authoritative counts. It scans
+raw Cognit priorities and iterates Relations only from the selected source set;
+it never creates a complete Relation snapshot. The renderer applies a second
+panel-area LOD (128–512 nodes, at most 2048 edges), caches geometry by immutable
+snapshot identity and viewport size, and uploads dynamic VBOs only on a cache
+miss. Normal frames issue one batched `GL_LINES` edge pass and one circular
+`GL_POINTS` node pass. Render cost is therefore bounded independently of total
+authoritative graph size.
+
 The production host in `main.py` constructs `ContinuousRuntime`, attaches one native observer, and advances target WorldTime from monotonic host time plus the requested speed multiplier. The observer thread owns SDL polling and rendering; Python performs no per-frame calls. Headless execution uses the identical continuous runtime and differs only by omitting observer creation. The historical Pygame `ui/` package is legacy/debug-only and is not imported by production.
 
 ## 14. Current roadmap

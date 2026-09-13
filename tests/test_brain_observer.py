@@ -1,4 +1,5 @@
 from simulation import ContinuousRuntime
+import time
 
 
 def _causal(runtime):
@@ -37,3 +38,17 @@ def test_brain_snapshots_are_immutable_latest_only():
     runtime.publish_brain_snapshot();old=engine.latest_brain_snapshot()
     runtime.run_until(.5);runtime.publish_brain_snapshot();new=engine.latest_brain_snapshot()
     assert old[0]==0.0 and new[0]==.5 and old!=new
+
+
+def test_same_snapshot_is_not_rebuilt_each_render_frame():
+    runtime=ContinuousRuntime(seed=534);runtime.publish_brain_snapshot()
+    observer=runtime.simulation.world.native.create_brain_observer(runtime.simulation.core.backend.engine)
+    assert observer.start()
+    deadline=time.monotonic()+5
+    while observer.frames_rendered<10 and time.monotonic()<deadline:time.sleep(.01)
+    before=(observer.frames_rendered,observer.brain_snapshot_rebuilds)
+    time.sleep(.1);middle=(observer.frames_rendered,observer.brain_snapshot_rebuilds)
+    runtime.publish_brain_snapshot();deadline=time.monotonic()+5
+    while observer.brain_snapshot_rebuilds<middle[1]+1 and time.monotonic()<deadline:time.sleep(.01)
+    after=observer.brain_snapshot_rebuilds;observer.stop()
+    assert middle[0]>before[0] and middle[1]==before[1] and after==middle[1]+1

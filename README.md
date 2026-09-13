@@ -168,6 +168,10 @@ occupies the right. Authoritative native cognition publishes immutable,
 latest-only `BrainSnapshot` values at cognitive event boundaries. Node layout,
 birth pulses and glow are ephemeral observer state. The renderer performs no
 Python callback and cannot affect cognition, WorldTime, EventSequence, or RNG.
+For large brains, its immutable view is capped at 1024 Cognits/4096 Relations
+and then reduced by screen-space LOD. Visible/total counts remain explicit.
+Cached dynamic OpenGL batches replace per-frame layout rebuilding and the old
+per-pixel Relation drawing.
 
 ## Persistence
 
