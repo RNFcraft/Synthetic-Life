@@ -146,6 +146,14 @@ class Settings:
     max_new_cognits_per_tick: int = 4
     max_new_relations_per_tick: int = 16
     telemetry_history: int = 100_000
+    # RECEPTIVE SYMBOL GROUNDING (identity is external; meaning is learned)
+    language_min_support: int = 3
+    language_min_lift: float = 1.20
+    language_relation_initial_strength: float = 0.80
+    language_relation_confirmation_rate: float = 0.30
+    language_relation_contradiction_rate: float = 0.20
+    language_confidence_k: float = 3.0
+    language_symbol_activation: float = 1.0
     # AGENCY
     agency_min_confidence: float = 0.15
     # SIMULATION SPEED (scheduler only; never enters cognition)

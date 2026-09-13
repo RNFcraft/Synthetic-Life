@@ -322,7 +322,30 @@ authoritative graph size.
 
 The production host in `main.py` constructs `ContinuousRuntime`, attaches one native observer, and advances target WorldTime from monotonic host time plus the requested speed multiplier. The observer thread owns SDL polling and rendering; Python performs no per-frame calls. Headless execution uses the identical continuous runtime and differs only by omitting observer creation. The historical Pygame `ui/` package is legacy/debug-only and is not imported by production.
 
-## 14. Current roadmap
+## 14. Receptive symbol grounding
+
+Language Pass 1 is a separate external sensory modality:
+
+```text
+external exact token
+    -> immutable LanguageFrame
+    -> scheduled LANGUAGE_INPUT(message_id)
+    -> identity-only LanguageLexicon
+    -> ordinary LANGUAGE_SYMBOL Cognit
+    -> contrastive support/background/lift evidence
+    -> ordinary directed ASSOCIATIVE Relations
+    -> existing native activity wave
+```
+
+Token identity is supplied; token meaning is learned. Grounding uses only the
+entity's current internal Cognit context and never raw World state. The language
+transaction neither changes physical EventSequence nor creates an ActionIntent.
+`LANG` persists identity and unfinished statistical evidence; semantic effect is
+carried by the same native Cognit/Relation graph as all other learned structure.
+This pass implements neither sentences, syntax, commands, production nor a
+pretrained linguistic representation.
+
+## 15. Current roadmap
 
 ```text
 v0.5.2 frozen native compatibility baseline                    DONE
@@ -330,10 +353,12 @@ v0.5.2 frozen native compatibility baseline                    DONE
     -> true event-driven cognition frontier                     DONE
     -> continuous world completion                              DONE
     -> native C++ SDL3/OpenGL observer                           DONE
-    -> scaling cleanup                                           NEXT
+    -> bounded GPU brain-view scaling                            DONE
+    -> receptive symbol grounding                               DONE
+    -> multi-token compositional grounding                      NEXT
     -> continuous multi-entity runtime
     -> full 3D World
     -> Entity visual/retina/gaze input
 ```
 
-The immediate development target is `SCALING / NATIVE-BOUNDARY CLEANUP`.
+The next language gate is `MULTI-TOKEN SEQUENCE + COMPOSITIONAL GROUNDING`.

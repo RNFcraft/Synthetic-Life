@@ -173,6 +173,20 @@ and then reduced by screen-space LOD. Visible/total counts remain explicit.
 Cached dynamic OpenGL batches replace per-frame layout rebuilding and the old
 per-pixel Relation drawing.
 
+## Receptive symbol grounding
+
+The first language gate learns meanings for one exact external nonce token at a
+time. `runtime.inject_language("dax")` creates or reuses a normal
+`LANGUAGE_SYMBOL` Cognit, records contrastive co-occurrence with the entity's
+currently active internal Cognits, and after repeated evidence learns directed
+ordinary ASSOCIATIVE Relations. Re-presenting the symbol then cues the learned
+experience through the existing native wave.
+
+The lexicon supplies identity only—not a dictionary. There are no pretrained
+models, embeddings, word/action mappings, syntax, language production, or raw
+World labels in this pass. Language inputs are deterministic external cognitive
+events and do not mutate the physical World or commit actions.
+
 ## Persistence
 
 The project uses two main persistence surfaces:
@@ -180,7 +194,9 @@ The project uses two main persistence surfaces:
 - `.sebrain` — durable learned cognition/native brain payload;
 - `.seworld` — exact continuous World and execution frontier.
 
-Continuous `.seworld` schema v4 includes the scheduler, unfinished cognition frontier, and absolute spawn/maintenance frontiers. Save/load is behaviorally observational: no-save, save and save/load continuation produce the same trajectory.
+Continuous `.seworld` schema v5 includes the scheduler, unfinished cognition
+frontier, absolute spawn/maintenance frontiers, and pending language inbox.
+Save/load remains behaviorally observational.
 
 ## Project status and roadmap
 
@@ -190,13 +206,15 @@ v0.5.2 native frozen baseline                    DONE
     -> true event-driven cognition frontier       DONE
     -> continuous world completion                DONE
     -> C++ SDL3/OpenGL native observer             DONE
-    -> scaling cleanup                             NEXT
+    -> bounded GPU brain-view scaling              DONE
+    -> receptive symbol grounding                  DONE
+    -> multi-token compositional grounding         NEXT
     -> continuous multi-entity runtime
     -> full 3D World
     -> Entity visual/retina/gaze input
 ```
 
-The next gate is **SCALING / NATIVE-BOUNDARY CLEANUP**. Continuous spawning and maintenance now use absolute scheduled events, and the optional native SDL3/OpenGL observer reads value-owned snapshots from the authoritative C++ World without affecting its trajectory.
+The next language gate is **MULTI-TOKEN SEQUENCE + COMPOSITIONAL GROUNDING**.
 
 ## Important design invariants
 

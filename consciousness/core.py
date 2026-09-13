@@ -20,6 +20,7 @@ from .relational import BeliefScene,RelationalStructure,observed_structure
 from .affordance import AffordanceEvidence
 from .state import ConsciousnessState,FutureEstimate,Goal,TraceEntry,WorkingTrace
 from .wave import ActivityWaveEngine,WaveResult
+from .language import LanguageLexicon
 
 
 @dataclass(slots=True)
@@ -55,6 +56,7 @@ class SyntheticEntityCore:
         self.world_time_seconds:float|None=None
         self._selectivity_sum=0.;self._selectivity_count=0
         self.continuous_frontier:ContinuousCognitionFrontier|None=None
+        self.language=LanguageLexicon(self)
     def _propagate(self,seeds:set[int],tick:int)->WaveResult:
         return self.backend.propagate_graph(self.graph,seeds,tick) if self.backend else self.wave.propagate(self.graph,seeds,tick)
 

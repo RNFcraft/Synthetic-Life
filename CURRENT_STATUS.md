@@ -1,5 +1,38 @@
 # Synthetic Entity v0.5.3 — Current Status
 
+## LANGUAGE PASS 1 — RECEPTIVE SYMBOL GROUNDING
+
+LANGUAGE PASS 1 — RECEPTIVE SYMBOL GROUNDING: PASS
+
+- Immutable `LanguageFrame(message_id, issued_at_world_time, surface)` carries
+  exact NFC/trimmed single-token identity and no semantic label.
+- `ContinuousRuntime.inject_language()` schedules a scalar `LANGUAGE_INPUT`
+  message ID in normal `(WorldTime, event ID)` order. The deterministic inbox
+  owns pending frames and consumes one only after successful processing.
+- `LanguageLexicon` maps exact surface identity to an ordinary
+  `LANGUAGE_SYMBOL` Cognit. It stores exposure/background/co-occurrence counts,
+  never token meaning, actions, coordinates, World IDs, or sensory labels.
+- Grounding context is restricted to the entity's current frontier/wave Cognits;
+  raw World state and other language symbols are excluded.
+- Repeated contrastive support, conditional probability and lift materialize
+  only directed ordinary `ASSOCIATIVE` Relations. Later missing-context evidence
+  gradually weakens strength/confidence.
+- A language cue stimulates only its symbol Cognit and uses the existing native
+  propagation wave. Trained nonce symbols preferentially activate their learned
+  experiential Cognit; novel symbols have no relation or predefined action.
+- Nonce/permutation/distractor/contradiction/functional retrieval proofs: PASS.
+- Language causes physical EventSequence increments: **0**; direct action
+  commits: **0**; `full_graph_sync_calls`: **0**.
+- Continuous `.seworld` schema v5 persists lexicon evidence, next message ID and
+  pending inbox; v4 and earlier migrate to empty language state. `.sebrain` v4
+  uses `LANG` for transferable lexical/evidence state while learned Relations
+  remain in native `NBRN`; older empty-LANG brains load normally.
+- Focused language tests: **9 passed**; critical regressions: **74 passed**;
+  full pytest: **260 passed**; Release native build: **PASS**; CTest: **2/2**.
+- `PYTHONHASHSEED=1/77` language curriculum: identical. No-language established
+  digest remains `e334137aab48aac629c9ac0d4dbc77ea8ec7f51203acda0c970a9bb647c3d731`.
+
+
 ## BRAIN VIEW SCALING OPTIMIZATION
 
 BRAIN VIEW SCALING OPTIMIZATION: PASS
