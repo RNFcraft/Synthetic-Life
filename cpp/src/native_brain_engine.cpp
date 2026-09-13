@@ -7,6 +7,15 @@
 #include <stdexcept>
 #include <cstring>
 namespace se {
+void NativeBrainEngine::publish_brain_snapshot(double world_time,std::uint64_t cognitive_tick,std::uint64_t generation,std::span<const std::uint32_t>active){
+  BrainSnapshot out;out.world_time=world_time;out.cognitive_tick=cognitive_tick;out.cognition_generation=generation;
+  std::unordered_set<std::uint32_t> active_set(active.begin(),active.end());
+  out.nodes.reserve(live_cognit_count());
+  for(std::uint32_t id=0;id<graph_.cognit_count();++id)if(cognit_alive(id))out.nodes.push_back({id,graph_.activity[id],graph_.threshold[id],graph_.confidence[id],bool(graph_.flags[id]&2),true,graph_.last_active_cognitive_tick[id]});
+  auto rows=graph_.relations.snapshot();out.edges.reserve(rows.size());
+  for(auto const&r:rows){double used=(r.last_used_cognitive_tick==cognitive_tick&&cognitive_tick)?1.:0.;if(active_set.contains(r.source)&&active_set.contains(r.target))used=std::max(used,.65);out.edges.push_back({r.source,r.target,r.type,r.strength,r.confidence,used});}
+  brain_channel_->publish(std::move(out));
+}
 void NativeBrainEngine::update_outcomes(std::span<const std::uint32_t>before,std::span<const std::uint32_t>current,int action,std::uint64_t tick,double confirmation,double contradiction,double utility,double consolidated_confidence){
  auto gen=next_generation();for(auto id:current)if(cognit_alive(id))candidate_gen_[id]=gen;
  for(auto s:before){if(!cognit_alive(s))continue;

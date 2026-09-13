@@ -1,6 +1,7 @@
 #pragma once
 
 #include "se/render_snapshot.hpp"
+#include "se/brain_snapshot.hpp"
 
 #include <memory>
 #include <atomic>
@@ -18,6 +19,9 @@ struct WorldFitTransform {
 };
 
 enum class DrawPrimitiveKind { grid, object, body, orientation, held_object };
+struct BrainNodeVisual { std::uint32_t id{};float x{},y{},radius{},intensity{};bool composite{},appearing{}; };
+struct BrainEdgeVisual { std::uint32_t source{},target{};float x1{},y1{},x2{},y2{},intensity{},thickness{};std::uint8_t type{}; };
+struct BrainDrawData { std::vector<BrainNodeVisual>nodes;std::vector<BrainEdgeVisual>edges; };
 
 struct DrawPrimitive {
     DrawPrimitiveKind kind{};
@@ -35,6 +39,7 @@ WorldFitTransform fit_world_to_viewport(int world_width, int world_height,
                                         int viewport_width, int viewport_height);
 std::vector<DrawPrimitive> prepare_draw_data(const RenderSnapshot& snapshot,
                                              int viewport_width, int viewport_height);
+BrainDrawData prepare_brain_draw_data(const BrainSnapshot& snapshot,int width,int height);
 
 class SnapshotSource {
 public:
@@ -53,7 +58,7 @@ private: std::shared_ptr<RenderSnapshotChannel> channel_;
 class NativeObserver {
 public:
     NativeObserver(int width = 960, int height = 720);
-    explicit NativeObserver(std::shared_ptr<RenderSnapshotChannel> channel, int width = 960, int height = 720);
+    explicit NativeObserver(std::shared_ptr<RenderSnapshotChannel> channel, std::shared_ptr<BrainSnapshotChannel> brain = {}, int width = 1100, int height = 720);
     ~NativeObserver();
     NativeObserver(const NativeObserver&) = delete;
     NativeObserver& operator=(const NativeObserver&) = delete;
@@ -70,11 +75,13 @@ public:
     std::uint64_t frames_rendered() const noexcept;
     std::uint64_t last_snapshot_event_sequence() const noexcept;
     RenderSnapshot latest_snapshot() const;
+    BrainSnapshot latest_brain_snapshot() const;
 
 private:
     class Impl;
     std::unique_ptr<Impl> impl_;
     std::shared_ptr<SnapshotSource> source_;
+    std::shared_ptr<BrainSnapshotChannel> brain_;
     std::thread thread_;
     std::atomic<bool> running_{false};
     std::atomic<std::uint64_t> frames_{0};

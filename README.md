@@ -34,6 +34,26 @@ World
 
 The cognitive core does not receive raw World/Grid state, physical IDs, collision IDs, spawn schedule or evaluator labels.
 
+## Production entrypoint
+
+```text
+python main.py
+    -> ContinuousRuntime
+    -> authoritative C++ WorldRuntime
+    -> NativeObserver
+    -> SDL3/OpenGL
+```
+
+```powershell
+python main.py
+python main.py --speed 10
+python main.py --headless --seconds 100
+python main.py --headless --seconds 100 --save run.seworld
+python main.py --load run.seworld
+```
+
+`--seconds` is an absolute target WorldTime. Interactive wall-clock time is only a pacing source; renderer FPS never advances simulation. Headless mode uses the same `ContinuousRuntime` without an observer. Pygame is no longer a production dependency; `ui/` remains unsupported legacy/debug code and requires a separately installed Pygame if used manually.
+
 ## Event-driven cognition
 
 Normal continuous execution no longer performs a complete decision in one hidden cognition loop.
@@ -136,11 +156,18 @@ python -m pytest -q
 
 Current repository-reported acceptance state for v0.5.3a:
 
-- full pytest: **238 passed**
+- full pytest: **247 passed**
 - CTest Release: **2/2 passed**
 - deterministic `PYTHONHASHSEED=1/77` trajectory digest: identical
 - `full_graph_sync_calls == 0`
 - normal native Python physical World calls: **0**
+
+The native observer is a dark research dashboard: the physical World occupies
+the left viewport and a live Cognit/Relation graph plus compact status readout
+occupies the right. Authoritative native cognition publishes immutable,
+latest-only `BrainSnapshot` values at cognitive event boundaries. Node layout,
+birth pulses and glow are ephemeral observer state. The renderer performs no
+Python callback and cannot affect cognition, WorldTime, EventSequence, or RNG.
 
 ## Persistence
 

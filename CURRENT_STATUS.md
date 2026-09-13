@@ -1,5 +1,54 @@
 # Synthetic Entity v0.5.3 — Current Status
 
+## NATIVE OBSERVER VISUAL UI + BRAIN GRAPH
+
+NATIVE OBSERVER VISUAL UI + BRAIN GRAPH: PASS
+
+- The SDL3/OpenGL window now uses a 72/28 research layout: polished physical
+  viewport left, Brain and Status panels right.
+- Native Cognits render as activity-scaled nodes; primitive/composite state has
+  a secondary mark. Native Relations render as typed, strength/confidence-scaled
+  edges and highlight only from observed current use/activity.
+- New Cognit IDs acquire observer-local birth time and fade/scale in. Stable
+  deterministic ID hashing retains layout across snapshots without simulation RNG.
+- `BrainSnapshotChannel` is an immutable latest-only
+  `atomic<shared_ptr<const BrainSnapshot>>`. Snapshot production reads the sole
+  authoritative native graph and occurs once at causal runtime boundaries, not
+  per render frame.
+- The render thread reads only `RenderSnapshotChannel` and
+  `BrainSnapshotChannel`. Python callbacks per frame: **0**.
+- Graph/status DTOs and presentation state are excluded from `.sebrain` and
+  `.seworld`; publication leaves `full_graph_sync_calls == 0`.
+- Focused brain/native observer/continuous regression: **53 passed**.
+- Full pytest: **250 passed**. Observer-enabled Release build: **PASS**.
+- CTest Release: **2/2 passed**.
+- Real Windows graphical smoke: **PASS** (resize-safe split viewport, live graph,
+  clean timed close).
+- `PYTHONHASHSEED=1/77` established trajectory digest remains
+  `e334137aab48aac629c9ac0d4dbc77ea8ec7f51203acda0c970a9bb647c3d731`.
+
+## PRODUCTION NATIVE UI MIGRATION
+
+PRODUCTION NATIVE UI MIGRATION: PASS
+
+    python main.py
+      -> ContinuousRuntime
+      -> authoritative native WorldRuntime
+      -> immutable RenderSnapshotChannel
+      -> NativeObserver thread
+      -> SDL3/OpenGL
+
+- Default execution contains no Pygame import and never calls `Simulation.step()` per frame.
+- Live target WorldTime comes only from monotonic host time multiplied by `--speed`; observer frames never define simulation progress.
+- `--headless --seconds T` runs the same `ContinuousRuntime` without an observer and advances to absolute WorldTime `T`.
+- `--save` uses `.seworld`; `--load` restores through `ContinuousRuntime.load_world()` before observer attachment.
+- `--ticks` was removed. Legacy tick telemetry is explicitly rejected instead of reintroducing the discrete runtime.
+- Observer shutdown, Ctrl+C, and exceptions execute idempotent `observer.stop()` cleanup.
+- The old `ui/` package remains legacy/debug-only. Pygame was removed from production requirements.
+- Focused entrypoint **9 passed**; live observer **5 passed**; continuous-world **28 passed**; render snapshot/observer **4 passed**.
+- Full pytest **247 passed**; observer-enabled Release build **PASS**; CTest Release **2/2 passed**.
+- Established `PYTHONHASHSEED=1/77` digest remains `e334137aab48aac629c9ac0d4dbc77ea8ec7f51203acda0c970a9bb647c3d731`.
+
 ## NATIVE C++ SDL3 / OPENGL OBSERVER
 
 NATIVE C++ SDL3 / OPENGL OBSERVER: PASS
@@ -23,12 +72,13 @@ Observer closure details:
 - `World::apply_intent()` and `World::resolve_intents()` use the same non-publishing helper; multi-body resolution publishes one coherent snapshot only after the complete batch.
 - Previously retained snapshots remain immutable and safe while newer snapshots are published concurrently.
 - Observer sampling causes zero Python per-frame calls, scheduler/World events, EventSequence increments, or cognition work. Renderer wall-clock has no path into WorldTime, scheduler, RNG, or cognition.
-- Future observer work may add a separate right-side panel or inset for Cognit nodes, Relation edges, and activation highlighting/pulses. No brain-visualization UI was implemented in this pass.
+- The observer now includes the separate right-side Cognit/Relation visualization
+  described above; it remains wholly downstream of authoritative cognition.
 - `_native_brain` and `SDL3.dll` are runtime-local build outputs. Neither is tracked; `cpp/build*`, `CMakeFiles`, CMake cache files, and pip build logs are also excluded.
 - Repository cleanup: **PASS**.
 
 Current verification after a fresh observer-enabled Release build: focused
-live observer **5 passed**, continuous-world **28 passed**, render snapshot/observer **4 passed**; full pytest **238 passed**;
+live observer **5 passed**, continuous-world **28 passed**, render snapshot/observer **4 passed**; full pytest **247 passed**;
 CTest Release **2/2 passed**.
 
 ## CONTINUOUS WORLD COMPLETION
@@ -43,7 +93,7 @@ World mutations allocate their own `Simulation.event_sequence` at execution.
 Maintenance passes its absolute deadline through the established continuous
 time entry point before bounded lifecycle work.
 Final verification: continuous-world focused tests 28 passed; focused
-runtime/frontier/elapsed selection 97 passed; full pytest 238 passed; clean
+runtime/frontier/elapsed selection 97 passed; full pytest 247 passed; clean
 observer-enabled Release native build PASS; CTest 2/2 PASS. `PYTHONHASHSEED=1/77` digest:
 `e334137aab48aac629c9ac0d4dbc77ea8ec7f51203acda0c970a9bb647c3d731`.
 Normal continuous `world_tick` calls, native Python physical World calls, and

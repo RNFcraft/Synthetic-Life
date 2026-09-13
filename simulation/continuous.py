@@ -74,15 +74,24 @@ class ContinuousRuntime:
             first=self.scheduler.snapshot()[0]
             if first.time>until:break
             for event in self.scheduler.pop_ready(first.time):
-                self._process(event);processed+=1
+                self._process(event)
+                if event.type in (RuntimeEventType.SENSORY_CHANGE,RuntimeEventType.COGNITION_WAKE,RuntimeEventType.COGNITION_CONTINUE,RuntimeEventType.MAINTENANCE):self.publish_brain_snapshot()
+                processed+=1
                 if processed>guard:raise self._runaway_error()
         self.scheduler.pop_ready(float(until));self.simulation.world.advance_world_time(float(until));self.simulation.world_time=WorldTime(float(until));return processed
     def run_to_quiescence(self,guard=100000):
         processed=0;now=self.world_time
         while self.scheduler.size and self.scheduler.snapshot()[0].time<=now:
-            for event in self.scheduler.pop_ready(now):self._process(event);processed+=1
+            for event in self.scheduler.pop_ready(now):
+                self._process(event)
+                if event.type in (RuntimeEventType.SENSORY_CHANGE,RuntimeEventType.COGNITION_WAKE,RuntimeEventType.COGNITION_CONTINUE,RuntimeEventType.MAINTENANCE):self.publish_brain_snapshot()
+                processed+=1
             if processed>guard:raise self._runaway_error()
         return processed
+    def publish_brain_snapshot(self):
+        """One coarse observer-only publication at causal event boundaries."""
+        core=self.simulation.core;active=sorted(i-1 for i in core.last_wave.active_ids)
+        core.backend.engine.publish_brain_snapshot(float(self.world_time),core.cognitive_tick,self.cognition_generation,active)
     def _runaway_error(self):
         frontier=self.simulation.core.continuous_frontier;session=frontier.session if frontier else None;goal=self.simulation.core.state.goal
         pending=[] if session is None else [work.kind.value for work in session.pending_work];history=[] if session is None else session.work_history[-12:]

@@ -1,6 +1,5 @@
 # Runtime / research Python dependencies
 numpy>=1.26
-pygame>=2.5
 
 # Native C++/Python bridge
 pybind11>=3.0

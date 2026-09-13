@@ -1,6 +1,7 @@
 #pragma once
 #include "cognitive_graph.hpp"
 #include "activity_wave.hpp"
+#include "brain_snapshot.hpp"
 #include <unordered_map>
 #include <deque>
 #include <unordered_set>
@@ -15,7 +16,9 @@ struct PlannerTransition{std::vector<std::vector<std::pair<std::uint32_t,double>
 struct EvidenceConfig{std::uint32_t minimum_support{3},consolidated_support{20};double minimum_lift{1},confidence_k{8},consolidated_confidence{.68};};
 class NativeBrainEngine{
 public:
-  explicit NativeBrainEngine(std::size_t evidence_window=512):evidence_window_(evidence_window){}
+  explicit NativeBrainEngine(std::size_t evidence_window=512):evidence_window_(evidence_window),brain_channel_(std::make_shared<BrainSnapshotChannel>()){}
+  void publish_brain_snapshot(double world_time,std::uint64_t cognitive_tick,std::uint64_t generation,std::span<const std::uint32_t>active);
+  std::shared_ptr<BrainSnapshotChannel> brain_snapshot_channel()const{return brain_channel_;}
   std::uint32_t add_cognit(double activity=0,double threshold=.25,double confidence=.5){auto id=graph_.add_cognit(activity,threshold,confidence);resize_scratch();return id;}
   std::uint32_t add_cognits(std::uint32_t count,double activity=0,double threshold=.25,double confidence=.5){auto first=(std::uint32_t)graph_.cognit_count();for(std::uint32_t i=0;i<count;++i)graph_.add_cognit(activity,threshold,confidence);resize_scratch();return first;}
   void set_activity(std::uint32_t id,double value){catch_up_homeostasis(id);if(!cognit_alive(id))throw std::out_of_range("dead or invalid Cognit");graph_.activity.at(id)=value;++state_revision_;}
@@ -74,6 +77,7 @@ public:
   std::size_t logical_bytes()const{return graph_.relations.logical_bytes()+graph_.activity.size()*8*sizeof(double)+graph_.last_active_cognitive_tick.size()*sizeof(std::uint64_t)+graph_.age.size()*2*sizeof(std::uint32_t)+graph_.refractory.size()*sizeof(std::uint16_t)+graph_.flags.size();}
   CognitiveGraph& graph(){return graph_;}
 private:
+  std::shared_ptr<BrainSnapshotChannel> brain_channel_;
   struct HomeostasisPolicy{std::uint64_t first;double lam,rate,tmin,tmax,activity_decay,utility_decay;};
   std::uint64_t homeostasis_tick_{};
   std::vector<HomeostasisPolicy>homeostasis_policies_;

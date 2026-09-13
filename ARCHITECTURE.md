@@ -273,7 +273,7 @@ The current accepted v0.5.3a cognition frontier has:
 
 - `ELAPSED-TIME LAZY COGNITION: PASS`;
 - `TRUE EVENT-DRIVEN COGNITION FRONTIER: PASS`;
-- full pytest: 238 passed;
+- full pytest: 247 passed;
 - CTest Release: 2/2 passed;
 - identical deterministic trajectory digest for `PYTHONHASHSEED=1` and `77`;
 - `full_graph_sync_calls == 0`;
@@ -291,12 +291,26 @@ The observer path is implemented as:
 ```text
 C++ WorldRuntime
     -> native read-only RenderSnapshot
-    -> SDL3 + OpenGL observer
+    -> RenderSnapshotChannel ------------------+
+C++ authoritative Cognit/Relation substrate   |
+    -> immutable BrainSnapshot                 |
+    -> BrainSnapshotChannel -------------------+
+                                                -> SDL3 + OpenGL observer
 ```
 
 The observer never schedules cognitive work, advances WorldTime, or mutates authoritative World state. A native snapshot channel supplies value-owned state to its independent SDL3/OpenGL frame thread; observer lifecycle and frame cadence are trajectory-invariant and are excluded from persistence.
 
-The snapshot channel is a latest-state-only C++20 `atomic<shared_ptr<const RenderSnapshot>>`: it has no mutex, queue, condition variable, or renderer back-pressure. `_native_brain` and `SDL3.dll` are runtime-local build outputs and are not versioned repository artifacts. A future observer-only panel may visualize Cognits as nodes, Relations as edges, and activation as highlight/brightness/pulse; that UI is not implemented in this gate.
+Both channels are latest-state-only C++20 `atomic<shared_ptr<const ...>>`
+boundaries: they have no queue, renderer back-pressure, or mutable-state read.
+Brain snapshots contain only numeric Cognit/Relation visualization fields;
+Goals, planner state, memory and BeliefScene do not cross the boundary.
+Publication happens at causal runtime events rather than render FPS. Layout,
+birth animation and glow use observer-local presentation state and are neither
+persisted nor fed back into the simulation. Python per-frame involvement is
+zero. `_native_brain` and `SDL3.dll` are runtime-local build outputs and are not
+versioned repository artifacts.
+
+The production host in `main.py` constructs `ContinuousRuntime`, attaches one native observer, and advances target WorldTime from monotonic host time plus the requested speed multiplier. The observer thread owns SDL polling and rendering; Python performs no per-frame calls. Headless execution uses the identical continuous runtime and differs only by omitting observer creation. The historical Pygame `ui/` package is legacy/debug-only and is not imported by production.
 
 ## 14. Current roadmap
 
