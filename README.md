@@ -9,7 +9,8 @@ Current accepted gates:
 - **v0.5.2 frozen native baseline — PASS**
 - **ELAPSED-TIME LAZY COGNITION — PASS**
 - **TRUE EVENT-DRIVEN COGNITION FRONTIER — PASS**
-- **CONTINUOUS WORLD COMPLETION — NEXT**
+- **CONTINUOUS WORLD COMPLETION — PASS**
+- **NATIVE C++ SDL3/OPENGL OBSERVER — PASS**
 
 See [ARCHITECTURE.md](ARCHITECTURE.md) for the full architecture and [CURRENT_STATUS.md](CURRENT_STATUS.md) for the latest acceptance state.
 
@@ -105,7 +106,7 @@ From a fresh clone:
 python -m pip install --upgrade pip
 python -m pip install -r requirements.txt
 
-cmake -S cpp -B cpp/build
+cmake -S cpp -B cpp/build -DSE_BUILD_OBSERVER=ON
 cmake --build cpp/build --config Release
 ctest --test-dir cpp/build -C Release --output-on-failure
 python -m pytest -q
@@ -126,7 +127,7 @@ If CMake reports that no C++ compiler is available on Windows, open a **Develope
 Typical verification:
 
 ```powershell
-cmake -S cpp -B cpp/build
+cmake -S cpp -B cpp/build -DSE_BUILD_OBSERVER=ON
 cmake --build cpp/build --config Release
 ctest --test-dir cpp/build -C Release --output-on-failure
 python -m pytest -q
@@ -134,8 +135,8 @@ python -m pytest -q
 
 Current repository-reported acceptance state for v0.5.3a:
 
-- full pytest: **201 passed**
-- CTest Release: **1/1 passed**
+- full pytest: **237 passed**
+- CTest Release: **2/2 passed**
 - deterministic `PYTHONHASHSEED=1/77` trajectory digest: identical
 - `full_graph_sync_calls == 0`
 - normal native Python physical World calls: **0**
@@ -147,7 +148,7 @@ The project uses two main persistence surfaces:
 - `.sebrain` — durable learned cognition/native brain payload;
 - `.seworld` — exact continuous World and execution frontier.
 
-Continuous `.seworld` schema v3 includes the scheduler and unfinished cognition frontier, including ordered pending cognitive work. Save/load is intended to be behaviorally observational: no-save, save and save/load continuation must produce the same trajectory.
+Continuous `.seworld` schema v4 includes the scheduler, unfinished cognition frontier, and absolute spawn/maintenance frontiers. Save/load is behaviorally observational: no-save, save and save/load continuation produce the same trajectory.
 
 ## Project status and roadmap
 
@@ -155,17 +156,15 @@ Continuous `.seworld` schema v3 includes the scheduler and unfinished cognition 
 v0.5.2 native frozen baseline                    DONE
     -> elapsed-time lazy cognition                DONE
     -> true event-driven cognition frontier       DONE
-    -> continuous world completion                NEXT
-    -> C++ SDL3/OpenGL native observer
-    -> scaling cleanup
+    -> continuous world completion                DONE
+    -> C++ SDL3/OpenGL native observer             DONE
+    -> scaling cleanup                             NEXT
     -> continuous multi-entity runtime
     -> full 3D World
     -> Entity visual/retina/gaze input
 ```
 
-The next gate is **CONTINUOUS WORLD COMPLETION**. Its job is to remove the remaining World heartbeat/tick dependence by scheduling spawning and maintenance directly in absolute continuous time.
-
-After that gate passes, development moves to a native **SDL3 + OpenGL observer**, isolated from cognition and physics so renderer FPS cannot affect the simulated life trajectory.
+The next gate is **SCALING CLEANUP**. Continuous spawning and maintenance now use absolute scheduled events, and the optional native SDL3/OpenGL observer reads value-owned snapshots from the authoritative C++ World without affecting its trajectory.
 
 ## Important design invariants
 

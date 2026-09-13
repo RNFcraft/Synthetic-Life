@@ -4,11 +4,12 @@ This is a hybrid runtime, not a rewrite of the Python intelligence layer. Python
 
 Implemented native responsibilities include Cognit structure-of-arrays state; permanent deletion tombstones; sparse versioned Relation handles; provisional/consolidated payloads; wave and batch prediction; bounded factorized TransitionEvidence; lazy quota-aware materialization; native relation outcomes/lifecycle; exact lazy homeostasis; and checksummed binary graph persistence. Normal runtime has no full Python/native graph synchronization.
 
-The module also exposes a `WorldRuntime` foundation covering single-entity movement, pushing, grab/carry/release, interaction, turning, resistance, SensoryFrame mechanics, continuous `double` WorldTime and independent EventSequence validation. A 1000-action differential test passes against Python World. Python remains the normal authoritative World until native seeded spawning and multi-entity conflict resolution are complete.
+The module also exposes the authoritative native `WorldRuntime`, covering multi-entity movement, pushing, grab/carry/release, interaction, resistance, immutable perception, simultaneous conflicts, rotating fairness, absolute-time spawning/maintenance, continuous `double` WorldTime and independent EventSequence. Python World remains only the frozen differential oracle in normal native execution.
 
 Build and verify:
 
 ```powershell
+cmake -S cpp -B cpp/build -DSE_BUILD_OBSERVER=ON
 cmake --build cpp/build --config Release
 ctest --test-dir cpp/build -C Release --output-on-failure
 python -m pytest -q

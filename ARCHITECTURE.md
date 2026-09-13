@@ -233,16 +233,12 @@ The bounded `_search()` operator may still use planning horizon/beam width as an
 
 The Python World remains a frozen differential oracle and compatibility implementation. Normal native runtime must not step Python physics.
 
-### Remaining world-continuity work
+### Continuous World scheduling
 
-The next gate is `CONTINUOUS WORLD COMPLETION`:
-
-- move spawning to absolute scheduled `WORLD_SPAWN` events;
-- move periodic maintenance/lifecycle work to explicit timers/events;
-- remove remaining behavior dependence on `world_tick()` / heartbeat cadence;
-- preserve the frozen Python World tick schedule only as a compatibility oracle.
-
-Until that gate passes, the cognition side is event-driven but the World still contains compatibility heartbeat/tick mechanisms.
+`CONTINUOUS WORLD COMPLETION` is complete. Spawning uses absolute scheduled
+`WORLD_SPAWN` events, lifecycle work uses explicit `MAINTENANCE` events, and
+normal continuous behavior has no dependency on `world_tick()` or heartbeat
+cadence. The frozen Python World tick schedule remains only as a compatibility oracle.
 
 ## 11. Persistence
 
@@ -254,7 +250,7 @@ Stores durable learned cognition and the native `NBRN` graph payload.
 
 ### `.seworld`
 
-Continuous `.seworld` schema v3 stores the exact execution frontier, including:
+Continuous `.seworld` schema v4 stores the exact execution frontier, including:
 
 - scheduler time, IDs and pending events;
 - native World state;
@@ -267,6 +263,7 @@ Continuous `.seworld` schema v3 stores the exact execution frontier, including:
 - working revision and last recall state;
 - current candidate plan and planner semantic caches required for exact continuation;
 - pending/committed action state.
+- absolute spawn and maintenance scheduler frontiers.
 
 Save is observational: saving must not change the future trajectory. v1/v2 continuous snapshots retain explicit compatibility/migration handling.
 
@@ -276,8 +273,8 @@ The current accepted v0.5.3a cognition frontier has:
 
 - `ELAPSED-TIME LAZY COGNITION: PASS`;
 - `TRUE EVENT-DRIVEN COGNITION FRONTIER: PASS`;
-- full pytest: 201 passed;
-- CTest Release: 1/1 passed;
+- full pytest: 237 passed;
+- CTest Release: 2/2 passed;
 - identical deterministic trajectory digest for `PYTHONHASHSEED=1` and `77`;
 - `full_graph_sync_calls == 0`;
 - normal native Python physical World calls: 0;
@@ -289,7 +286,7 @@ The v0.5.2 benchmark/freeze data remains the performance/compatibility baseline.
 
 Rendering is intentionally not part of cognition or physics.
 
-The current Python `RenderSnapshot` is a proof surface. The planned post-world-completion renderer is:
+The observer path is implemented as:
 
 ```text
 C++ WorldRuntime
@@ -297,7 +294,7 @@ C++ WorldRuntime
     -> SDL3 + OpenGL observer
 ```
 
-The observer must never schedule cognitive work, advance WorldTime or mutate authoritative World state. High FPS must not create high-frequency Python FFI traffic in the final native observer path.
+The observer never schedules cognitive work, advances WorldTime, or mutates authoritative World state. A native snapshot channel supplies value-owned state to its independent SDL3/OpenGL frame thread; observer lifecycle and frame cadence are trajectory-invariant and are excluded from persistence.
 
 ## 14. Current roadmap
 
@@ -305,12 +302,12 @@ The observer must never schedule cognitive work, advance WorldTime or mutate aut
 v0.5.2 frozen native compatibility baseline                    DONE
     -> elapsed-time lazy cognition                              DONE
     -> true event-driven cognition frontier                     DONE
-    -> continuous world completion                              NEXT
-    -> native C++ SDL3/OpenGL observer
-    -> scaling cleanup
+    -> continuous world completion                              DONE
+    -> native C++ SDL3/OpenGL observer                           DONE
+    -> scaling cleanup                                           NEXT
     -> continuous multi-entity runtime
     -> full 3D World
     -> Entity visual/retina/gaze input
 ```
 
-The immediate development target is `CONTINUOUS WORLD COMPLETION`. The renderer should not begin until that gate passes.
+The immediate development target is `SCALING CLEANUP`.

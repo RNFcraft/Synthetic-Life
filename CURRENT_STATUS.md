@@ -2,18 +2,23 @@
 
 ## NATIVE C++ SDL3 / OPENGL OBSERVER
 
-NATIVE C++ SDL3 / OPENGL OBSERVER: IN PROGRESS
+NATIVE C++ SDL3 / OPENGL OBSERVER: PASS
 
 PASS 1 — NATIVE RENDER SNAPSHOT BOUNDARY: PASS
 
-PASS 2 — SDL3 / OPENGL NATIVE 2D RENDERER: IN PROGRESS
+PASS 2 — SDL3 / OPENGL NATIVE 2D RENDERER: PASS
 
 The optional `SE_BUILD_OBSERVER` CMake target fetches pinned SDL 3.2.8 and
 builds a native OpenGL observer plus deterministic demo. Its native frame loop
 accepts only value-owned `RenderSnapshot` values through `SnapshotSource`; it
 does not invoke Python or mutate `World`. Renderer geometry preparation is
-unit-testable without a window. Live concurrent attachment to the authoritative
-world remains deliberately outside this pass.
+unit-testable without a window. Live attachment uses the native snapshot channel
+owned by the same authoritative `WorldRuntime`; lifecycle, trajectory invariance,
+post-stop continuation, and persistence exclusion are covered by tests.
+
+Current verification after a fresh observer-enabled Release build: focused
+render/observer/continuous-world tests **36 passed**; full pytest **237 passed**;
+CTest Release **2/2 passed**.
 
 ## CONTINUOUS WORLD COMPLETION
 
@@ -27,8 +32,8 @@ World mutations allocate their own `Simulation.event_sequence` at execution.
 Maintenance passes its absolute deadline through the established continuous
 time entry point before bounded lifecycle work.
 Final verification: continuous-world focused tests 28 passed; focused
-runtime/frontier/elapsed selection 97 passed; full pytest 229 passed; clean
-Release native build PASS; CTest 1/1 PASS. `PYTHONHASHSEED=1/77` digest:
+runtime/frontier/elapsed selection 97 passed; full pytest 237 passed; clean
+observer-enabled Release native build PASS; CTest 2/2 PASS. `PYTHONHASHSEED=1/77` digest:
 `e334137aab48aac629c9ac0d4dbc77ea8ec7f51203acda0c970a9bb647c3d731`.
 Normal continuous `world_tick` calls, native Python physical World calls, and
 `full_graph_sync_calls` are all zero.
@@ -81,11 +86,11 @@ Recall may repeat only when its exact semantic key `(Goal ID, target IDs, workin
 
 ## CONTINUOUS BUDGET
 
-`max_deliberation_cycles` participates in continuous behavior: **NO**. The frozen legacy `deliberate()` retains its original budget. With the continuous maximum set to 1, the tested session still naturally performs three cycles and matches a maximum of 12.
+`max_deliberation_cycles` participates in continuous behavior: **NO**. The frozen legacy `deliberate()` retains its original budget. With the continuous maximum set to 1, the tested session still consumes its four causally pending work items and matches a maximum of 12.
 
 ## FRONTIER PERSISTENCE
 
-Continuous `.seworld` schema version 3 persists cognition generation/phase, ordered pending work and keys, working revision, last recall key/result, work history, current candidate, working IDs, semantic caches, planner counters/finalized state, pending action/commit flag, and exact scheduler frontier. Event-by-event continuation passes at all seven required work boundaries. No consumed v3 work replays after load. v1 retains its explicit legacy pending-wake adapter; v2 unfinished stable-counter sessions migrate conservatively into one causal recall chain and never resume `stable>=2` semantics.
+Continuous `.seworld` schema version 4 persists the schema-v3 cognition frontier plus absolute spawn and maintenance scheduling state. Event-by-event continuation passes at all seven required cognitive work boundaries. No consumed work replays after load. v1 retains its explicit legacy pending-wake adapter; v2 unfinished stable-counter sessions migrate conservatively into one causal recall chain; v3 snapshots deterministically reconstruct the new World timers.
 
 ## HOMEOSTATIC EVENT SEMANTICS
 
@@ -107,13 +112,15 @@ Continuous `.seworld` schema version 3 persists cognition generation/phase, orde
 - `full_graph_sync_calls == 0`: **PASS**.
 - Normal native Python physical World calls: **0 / PASS**.
 
-## FRONTIER TESTS
+## FRONTIER GATE CHECKPOINT TESTS
+
+Focused frontier counts are retained; repository-wide counts reflect the current observer-enabled build:
 
 - Event-driven cognition frontier focused module: **18 passed**.
 - Frontier plus continuous runtime modules: **31 passed**.
 - Elapsed/native/causal/legacy compatibility selection: **81 passed**.
-- Full pytest: **201 passed**.
-- CTest Release: **1/1 passed**.
+- Full pytest: **237 passed**.
+- CTest Release: **2/2 passed**.
 - Long 5K/10K benchmarks were not run.
 
 ## FIRST FAILURE
@@ -122,9 +129,9 @@ None.
 
 ## NEXT GATE
 
-**CONTINUOUS WORLD COMPLETION**
+**SCALING CLEANUP**
 
-Not started. It covers `WORLD_SPAWN` absolute-time scheduling, maintenance timers, and removal of the remaining heartbeat dependency.
+Not started. Continuous World completion and the native SDL3/OpenGL observer are complete.
 
 ## FRONTIER MODIFIED FILES
 
