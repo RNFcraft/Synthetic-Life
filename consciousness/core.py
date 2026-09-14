@@ -20,7 +20,7 @@ from .relational import BeliefScene,RelationalStructure,observed_structure
 from .affordance import AffordanceEvidence
 from .state import ConsciousnessState,FutureEstimate,Goal,TraceEntry,WorkingTrace
 from .wave import ActivityWaveEngine,WaveResult
-from .language import LanguageLexicon
+from .language import GroundingContextEntry,GroundingContextSnapshot,GroundingContextTracker,LanguageLexicon,LanguageProcessingResult
 
 
 @dataclass(slots=True)
@@ -57,6 +57,7 @@ class SyntheticEntityCore:
         self._selectivity_sum=0.;self._selectivity_count=0
         self.continuous_frontier:ContinuousCognitionFrontier|None=None
         self.language=LanguageLexicon(self)
+        self.grounding_context=GroundingContextTracker(settings);self.last_language_result=None
     def _propagate(self,seeds:set[int],tick:int)->WaveResult:
         return self.backend.propagate_graph(self.graph,seeds,tick) if self.backend else self.wave.propagate(self.graph,seeds,tick)
 
@@ -90,6 +91,10 @@ class SyntheticEntityCore:
         current_place=self.memory.places.get(self.memory.current_place_id).cognit_id if self.memory.current_place_id in self.memory.places else None
         bound_active=self.belief_scene.update(self.memory.structures.values(),current_place,frame.tick,self.graph,self.relational_nodes);relational_active.update(bound_active);self.target_mismatch=self.belief_scene.mismatch(self.target_structure) if self.target_structure else 1.;self.target_knowledge_uncertainty=self.belief_scene.knowledge_uncertainty
         matched=self._match_and_birth(observation,protos,cognitive_tick)
+        embodied={i:1. for i in set(memory_active)|relational_active if i in self.graph.nodes and self.graph.nodes[i].kind not in {"TARGET","LANGUAGE_SYMBOL"}}
+        for node_id,salience in matched.items():embodied[node_id]=max(embodied.get(node_id,0.),max(0.,min(1.,salience)))
+        context=GroundingContextSnapshot(float(world_time if world_time is not None else frame.tick),generation or frame.tick,tuple(GroundingContextEntry(i,embodied[i]) for i in sorted(embodied)))
+        self.grounding_context.observe(context)
         recalled=self.memory.recall(self.state.goal.target_cognit_ids if self.state.goal else (),self.graph,frame.tick,self.target_structure);seeds=set(memory_active)|set(recalled)|relational_active
         if self.state.goal and self.state.goal.origin=="TARGET":seeds.update(self.state.goal.target_cognit_ids)
         if self.backend:self.backend.receive_batch([(node_id,self.settings.sensory_activation*.5) for node_id in seeds if node_id in self.graph.nodes],cognitive_tick,self.settings)
@@ -156,6 +161,16 @@ class SyntheticEntityCore:
 
     def begin_continuous_observation(self,frame:SensoryFrame,world_time:float,generation:int)->None:
         self._observe(frame,world_time,False,generation)
+
+    def process_language(self,frame):
+        self.world_time_seconds=frame.issued_at_world_time;self.memory.set_world_time(frame.issued_at_world_time)
+        if self.backend:self.backend.begin_continuous_time(frame.issued_at_world_time)
+        context=self.grounding_context.eligible(frame.issued_at_world_time);self.cognitive_tick+=1
+        symbol,candidates,created=self.language.learn(frame,context,self.grounding_context)
+        if symbol is None:wave=WaveResult(frozenset(),0.,0)
+        else:
+            self.backend.receive(symbol,self.settings.language_symbol_activation,self.cognitive_tick,self.settings);wave=self._propagate({symbol},self.cognitive_tick)
+        self.language.last_language_wave_active_ids=wave.active_ids;result=LanguageProcessingResult(symbol,wave,candidates,created);self.last_language_result=result;return result
 
     def begin_continuous_cognition(self,generation:int)->bool:
         f=self.continuous_frontier

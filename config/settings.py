@@ -154,6 +154,12 @@ class Settings:
     language_relation_contradiction_rate: float = 0.20
     language_confidence_k: float = 3.0
     language_symbol_activation: float = 1.0
+    language_grounding_horizon_seconds: float = 1.0
+    language_grounding_tau_seconds: float = 0.5
+    language_min_background_seconds: float = 0.5
+    language_lift_saturation: float = 3.0
+    language_recent_contexts: int = 16
+    language_max_provisional_candidates_per_symbol: int = 256
     # AGENCY
     agency_min_confidence: float = 0.15
     # SIMULATION SPEED (scheduler only; never enters cognition)

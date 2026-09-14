@@ -1,8 +1,10 @@
-# Synthetic Entity Architecture — v0.5.3a
+# Synthetic Entity Architecture — v0.5.4
 
 Synthetic Entity is an experimental embodied cognitive architecture built around a sparse, continuously changing graph of Cognits (`κ`) and Relations (`ρ`). It is not a Transformer/LLM inference loop and does not depend on a frozen policy network. The current system learns through persistent predictive, causal, spatial, and goal-directed state that changes during interaction with the world.
 
-The v0.5.2 runtime remains the frozen compatibility oracle. v0.5.3a adds continuous float64 time, lazy elapsed-time state and a true scheduler-visible event-driven cognition frontier while preserving the legacy discrete APIs for differential testing.
+The v0.5.2 runtime remains the frozen compatibility oracle. v0.5.4 retains the
+v0.5.3 continuous float64/event-driven architecture and adds receptive embodied
+symbol grounding while preserving legacy differential oracles.
 
 ## 1. Authority split
 
@@ -269,7 +271,7 @@ Save is observational: saving must not change the future trajectory. v1/v2 conti
 
 ## 12. Determinism and acceptance invariants
 
-The current accepted v0.5.3a cognition frontier has:
+The current accepted v0.5.4 cognition frontier has:
 
 - `ELAPSED-TIME LAZY COGNITION: PASS`;
 - `TRUE EVENT-DRIVEN COGNITION FRONTIER: PASS`;
@@ -280,7 +282,7 @@ The current accepted v0.5.3a cognition frontier has:
 - normal native Python physical World calls: 0;
 - renderer sampling invariance: PASS.
 
-The v0.5.2 benchmark/freeze data remains the performance/compatibility baseline. Long v0.5.3 5K/10K benchmarks have intentionally not been rerun during the correctness migration.
+The v0.5.2 benchmark/freeze data remains the performance/compatibility baseline. Long v0.5.4 5K/10K benchmarks have intentionally not been rerun during the correctness migration.
 
 ## 13. Observer/rendering architecture
 
@@ -322,7 +324,7 @@ authoritative graph size.
 
 The production host in `main.py` constructs `ContinuousRuntime`, attaches one native observer, and advances target WorldTime from monotonic host time plus the requested speed multiplier. The observer thread owns SDL polling and rendering; Python performs no per-frame calls. Headless execution uses the identical continuous runtime and differs only by omitting observer creation. The historical Pygame `ui/` package is legacy/debug-only and is not imported by production.
 
-## 14. Receptive symbol grounding
+## 14. Receptive embodied symbol grounding
 
 Language Pass 1 is a separate external sensory modality:
 
@@ -336,6 +338,17 @@ external exact token
     -> ordinary directed ASSOCIATIVE Relations
     -> existing native activity wave
 ```
+
+Before recall or planning, each real observation publishes an immutable
+`GroundingContextSnapshot` containing only sensory-derived internal Cognit IDs
+and salience. A bounded tracker accrues ordinary experiential background mass
+over WorldTime and retains a 1-second eligibility window with 0.5-second decay
+tau. Language never reads or overwrites `core.last_wave`.
+
+At LANGUAGE_INPUT, the core first enters the frame's exact native continuous
+time. Python derives deterministic conditional probability/lift parameters and
+submits one coarse generic Relation batch; C++ remains only the numeric
+authority. Unfinished cognition causes same-time event-ID deferral.
 
 Token identity is supplied; token meaning is learned. Grounding uses only the
 entity's current internal Cognit context and never raw World state. The language

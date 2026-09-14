@@ -31,6 +31,7 @@ public:
   bool remove_cognit(std::uint32_t id);
   std::size_t live_cognit_count()const{return cognit_count()-dead_cognits_;}
   RelationHandle add_relation(std::uint32_t source,std::uint32_t target,RelationType type,std::uint32_t action,double strength,double confidence,double probability);
+  std::uint32_t upsert_relation_states_batch(std::uint32_t source,const std::vector<PersistedRelation>&rows,std::uint32_t max_new,std::uint32_t max_total);
   std::vector<std::pair<RelationHandle,PersistedRelation>> outgoing(std::span<const std::uint32_t>sources)const;PersistedRelation relation_state(std::uint32_t source,RelationHandle h)const{return graph_.relations.state(source,h);}void update_relation(RelationHandle h,const PersistedRelation&r);
   std::vector<std::uint32_t> outgoing_targets(std::span<const std::uint32_t>sources)const;
   bool remove_relation(RelationHandle handle){return graph_.relations.erase(handle);}bool relation_handle_valid(RelationHandle handle)const{return graph_.relations.valid(handle);}

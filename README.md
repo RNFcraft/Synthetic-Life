@@ -2,7 +2,7 @@
 
 Synthetic-Life is an experimental embodied cognitive architecture built around a sparse, continuously changing graph of Cognits (`κ`) and Relations (`ρ`). The project is not an LLM/Transformer inference wrapper and does not use a frozen policy network as its learned core. Learning, prediction, memory, goals and action selection evolve during interaction with the World.
 
-The current development line is **v0.5.3a**.
+The current development line is **v0.5.4**.
 
 Current accepted gates:
 
@@ -154,7 +154,7 @@ ctest --test-dir cpp/build -C Release --output-on-failure
 python -m pytest -q
 ```
 
-Current repository-reported acceptance state for v0.5.3a:
+Current repository-reported acceptance state for v0.5.4:
 
 - full pytest: **247 passed**
 - CTest Release: **2/2 passed**
@@ -173,7 +173,7 @@ and then reduced by screen-space LOD. Visible/total counts remain explicit.
 Cached dynamic OpenGL batches replace per-frame layout rebuilding and the old
 per-pixel Relation drawing.
 
-## Receptive symbol grounding
+## Receptive embodied symbol grounding
 
 The first language gate learns meanings for one exact external nonce token at a
 time. `runtime.inject_language("dax")` creates or reuses a normal
@@ -187,6 +187,13 @@ models, embeddings, word/action mappings, syntax, language production, or raw
 World labels in this pass. Language inputs are deterministic external cognitive
 events and do not mutate the physical World or commit actions.
 
+The accepted v0.5.4 proof uses real `World → SensoryFrame → Cognit` contexts.
+Context is captured before recall/planning, receives WorldTime-based temporal
+credit, and contributes to a language-independent experiential background.
+Nonce-label permutation swaps learned retrieval accordingly, and a first word
+can be learned without any competing second token. Language waves remain
+separate from ordinary cognition waves.
+
 ## Persistence
 
 The project uses two main persistence surfaces:
@@ -194,7 +201,7 @@ The project uses two main persistence surfaces:
 - `.sebrain` — durable learned cognition/native brain payload;
 - `.seworld` — exact continuous World and execution frontier.
 
-Continuous `.seworld` schema v5 includes the scheduler, unfinished cognition
+Continuous `.seworld` schema v6 includes the scheduler, unfinished cognition
 frontier, absolute spawn/maintenance frontiers, and pending language inbox.
 Save/load remains behaviorally observational.
 

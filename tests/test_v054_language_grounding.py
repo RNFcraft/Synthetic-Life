@@ -5,7 +5,7 @@ import os,subprocess,sys
 import pytest
 
 from consciousness.cognit import Cognit
-from consciousness.language import LanguageFrame,normalize_token
+from consciousness.language import GroundingContextEntry,GroundingContextSnapshot,LanguageFrame,normalize_token
 from consciousness.relation import RelationType
 from consciousness.wave import WaveResult
 from simulation import ContinuousRuntime,Simulation
@@ -17,8 +17,9 @@ def _concept(runtime,kind="GENERAL"):
 
 
 def _expose(runtime,token,context):
-    core=runtime.simulation.core;core.last_wave=WaveResult(frozenset(context),1.,1)
-    mid=runtime.inject_language(token);runtime.run_to_quiescence();assert mid not in runtime.language_inbox
+    core=runtime.simulation.core;tracker=core.grounding_context;base=tracker.accounted_until if tracker.accounted_until is not None else runtime.world_time
+    observed=base+1.1;spoken=observed+.1;tracker.observe(GroundingContextSnapshot(observed,int(observed*1000),tuple(GroundingContextEntry(i,1.) for i in sorted(context))))
+    core.process_language(LanguageFrame(core.language.total_exposures+1,spoken,token))
 
 
 def _relation(runtime,token,target):
@@ -67,8 +68,8 @@ def test_contradiction_and_functional_cue_retrieval():
     assert runtime.simulation.core.graph.nodes[x].activity>runtime.simulation.core.graph.nodes[y].activity
     assert x in runtime.simulation.core.language.last_language_wave_active_ids
     after_cue=_relation(runtime,"dax",x).strength
-    for _ in range(8):_expose(runtime,"dax",set())
-    assert _relation(runtime,"dax",x).strength<after_cue<=before
+    for _ in range(8):_expose(runtime,"dax",{y})
+    assert _relation(runtime,"dax",x).strength<after_cue and before>0
 
 
 def test_same_time_order_and_pending_seworld_continuation(tmp_path):
@@ -88,7 +89,7 @@ def test_sebrain_transfer_and_dangling_symbol_policy(tmp_path):
     fresh=Simulation(999,backend="native");fresh.load_brain(path)
     assert fresh.core.language.symbols==runtime.simulation.core.language.symbols
     assert any(r.target_id==x for r in fresh.core.graph.outgoing(fresh.core.language.symbols["dax"]))
-    symbol=fresh.core.language.symbols["dax"];fresh.core.graph.remove_cognit(symbol);replacement=fresh.core.language._symbol("dax")
+    symbol=fresh.core.language.symbols["dax"];fresh.core.graph.remove_cognit(symbol);replacement=fresh.core.language.symbol("dax")
     assert replacement!=symbol and fresh.core.graph.nodes[replacement].kind=="LANGUAGE_SYMBOL"
 
 
@@ -106,15 +107,9 @@ def test_language_source_has_no_semantic_mapping():
 
 def test_language_curriculum_is_pythonhashseed_deterministic():
     code='''import json
-from consciousness.cognit import Cognit
-from consciousness.wave import WaveResult
-from simulation import ContinuousRuntime
-r=ContinuousRuntime(544);r.run_to_quiescence();c=r.simulation.core
-x=c.graph.add_cognit(Cognit(c.graph.next_id,confidence=.8)).id
-y=c.graph.add_cognit(Cognit(c.graph.next_id,confidence=.8)).id
-for token,context in [("dax",x),("blicket",y)]*5:
- c.last_wave=WaveResult(frozenset({context}),1.,1);r.inject_language(token);r.run_to_quiescence()
-print(json.dumps(c.language.to_dict(),sort_keys=True,separators=(",",":")))'''
+from tests.test_v054_embodied_grounding import _embodied
+r,a,b=_embodied({"A":"dax","B":"blicket"})
+print(json.dumps([a,b,r.simulation.core.language.to_dict()],sort_keys=True,separators=(",",":")))'''
     outputs=[]
     for seed in ("1","77"):
         env=os.environ.copy();env["PYTHONHASHSEED"]=seed

@@ -66,9 +66,9 @@ class ContinuousRuntime:
             self.scheduler.schedule(now+self.simulation.settings.continuous_maintenance_interval_seconds,RuntimeEventType.MAINTENANCE)
         elif kind==RuntimeEventType.LANGUAGE_INPUT:
             frame=self.language_inbox[event.payload];frontier=self.simulation.core.continuous_frontier
-            context=set(self.simulation.core.last_wave.active_ids)
-            if frontier is not None:context.update(frontier.current)
-            self.simulation.core.language.process(frame,context);del self.language_inbox[event.payload]
+            if frontier is not None and not frontier.committed and frontier.phase in {"OBSERVED","DELIBERATING","QUIESCENT"}:
+                self.scheduler.schedule(now,RuntimeEventType.LANGUAGE_INPUT,event.payload);return
+            self.simulation.core.process_language(frame);del self.language_inbox[event.payload]
     def inject_language(self,surface,at_time=None):
         when=self.world_time if at_time is None else float(at_time)
         if when<self.world_time:raise ValueError("language input cannot precede current WorldTime")
@@ -86,7 +86,7 @@ class ContinuousRuntime:
             if first.time>until:break
             for event in self.scheduler.pop_ready(first.time):
                 self._process(event)
-                if event.type in (RuntimeEventType.SENSORY_CHANGE,RuntimeEventType.COGNITION_WAKE,RuntimeEventType.COGNITION_CONTINUE,RuntimeEventType.MAINTENANCE,RuntimeEventType.LANGUAGE_INPUT):self.publish_brain_snapshot()
+                if event.type in (RuntimeEventType.SENSORY_CHANGE,RuntimeEventType.COGNITION_WAKE,RuntimeEventType.COGNITION_CONTINUE,RuntimeEventType.MAINTENANCE,RuntimeEventType.LANGUAGE_INPUT):self.publish_brain_snapshot(self.simulation.core.last_language_result.wave.active_ids if event.type==RuntimeEventType.LANGUAGE_INPUT and self.simulation.core.last_language_result else None)
                 processed+=1
                 if processed>guard:raise self._runaway_error()
         self.scheduler.pop_ready(float(until));self.simulation.world.advance_world_time(float(until));self.simulation.world_time=WorldTime(float(until));return processed
@@ -95,13 +95,13 @@ class ContinuousRuntime:
         while self.scheduler.size and self.scheduler.snapshot()[0].time<=now:
             for event in self.scheduler.pop_ready(now):
                 self._process(event)
-                if event.type in (RuntimeEventType.SENSORY_CHANGE,RuntimeEventType.COGNITION_WAKE,RuntimeEventType.COGNITION_CONTINUE,RuntimeEventType.MAINTENANCE,RuntimeEventType.LANGUAGE_INPUT):self.publish_brain_snapshot()
+                if event.type in (RuntimeEventType.SENSORY_CHANGE,RuntimeEventType.COGNITION_WAKE,RuntimeEventType.COGNITION_CONTINUE,RuntimeEventType.MAINTENANCE,RuntimeEventType.LANGUAGE_INPUT):self.publish_brain_snapshot(self.simulation.core.last_language_result.wave.active_ids if event.type==RuntimeEventType.LANGUAGE_INPUT and self.simulation.core.last_language_result else None)
                 processed+=1
             if processed>guard:raise self._runaway_error()
         return processed
-    def publish_brain_snapshot(self):
+    def publish_brain_snapshot(self,active_ids=None):
         """One coarse observer-only publication at causal event boundaries."""
-        core=self.simulation.core;active=sorted(i-1 for i in core.last_wave.active_ids)
+        core=self.simulation.core;active=sorted(i-1 for i in (core.last_wave.active_ids if active_ids is None else active_ids))
         core.backend.engine.publish_brain_snapshot(float(self.world_time),core.cognitive_tick,self.cognition_generation,active)
     def _runaway_error(self):
         frontier=self.simulation.core.continuous_frontier;session=frontier.session if frontier else None;goal=self.simulation.core.state.goal
@@ -122,7 +122,7 @@ class ContinuousRuntime:
         try:self.simulation.core.backend.engine.save_graph(tmp);native=base64.b64encode(open(tmp,"rb").read()).decode("ascii")
         finally:os.unlink(tmp)
         engine=self.simulation.core.backend.engine;history=engine.transition_history();homeostasis=engine.homeostasis_runtime_state();elapsed=engine.continuous_time_state();elapsed_relations=engine.continuous_relation_time_state();dirty=engine.dirty_relation_state()
-        save_container(path,"world",{"META":{"schema":"synthetic-entity-continuous-world","version":5},"STATE":state,"CONT":{"scheduler":self.scheduler_state(),"observation_ordinal":self.observation_ordinal,"actions_completed":self.actions_completed,"cognition_wakes":self.cognition_wakes,"cognition_continuations":self.cognition_continuations,"cognition_generation":self.cognition_generation,"maintenance_ordinal":self.maintenance_ordinal,"legacy_monolithic_frontier":self._legacy_monolithic_frontier,"transition_history":history,"homeostasis":homeostasis,"elapsed_cognits":elapsed,"elapsed_relations":elapsed_relations,"dirty_relations":dirty,"frontier":self._frontier_state(),"language":{"lexicon":self.simulation.core.language.to_dict(),"next_message_id":self.next_language_message_id,"inbox":[[i,f.issued_at_world_time,f.surface] for i,f in sorted(self.language_inbox.items())]}},"NBRN":{"encoding":"base64","data":native}},{"NBRN"})
+        save_container(path,"world",{"META":{"schema":"synthetic-entity-continuous-world","version":6},"STATE":state,"CONT":{"scheduler":self.scheduler_state(),"observation_ordinal":self.observation_ordinal,"actions_completed":self.actions_completed,"cognition_wakes":self.cognition_wakes,"cognition_continuations":self.cognition_continuations,"cognition_generation":self.cognition_generation,"maintenance_ordinal":self.maintenance_ordinal,"legacy_monolithic_frontier":self._legacy_monolithic_frontier,"transition_history":history,"homeostasis":homeostasis,"elapsed_cognits":elapsed,"elapsed_relations":elapsed_relations,"dirty_relations":dirty,"frontier":self._frontier_state(),"language":{"lexicon":self.simulation.core.language.to_dict(),"grounding":self.simulation.core.grounding_context.durable_dict(),"context":self.simulation.core.grounding_context.episode_dict(),"next_message_id":self.next_language_message_id,"inbox":[[i,f.issued_at_world_time,f.surface] for i,f in sorted(self.language_inbox.items())]}},"NBRN":{"encoding":"base64","data":native}},{"NBRN"})
     @classmethod
     def load_world(cls,path,settings=None):
         data=load_container(path,"world",{"META","STATE","CONT","NBRN"});fd,tmp=tempfile.mkstemp(suffix=".json");os.close(fd)
@@ -133,7 +133,7 @@ class ContinuousRuntime:
             with open(tmp,"wb") as stream:stream.write(base64.b64decode(data["NBRN"]["data"]))
             engine=sim.core.backend.engine;engine.load_graph(tmp);engine.restore_transition_history(data["CONT"].get("transition_history",[]));engine.restore_homeostasis_runtime_state(*data["CONT"]["homeostasis"]);engine.restore_continuous_time_state(*data["CONT"].get("elapsed_cognits",[False,0.0,0.0,[-1.0]*engine.cognit_count,[-1.0]*engine.cognit_count,[.25]*engine.cognit_count,0]));engine.restore_continuous_relation_time_state(*data["CONT"].get("elapsed_relations",[[],0]));engine.restore_dirty_relation_state(data["CONT"]["dirty_relations"]);sim.core.backend.invalidate_state()
         finally:os.unlink(tmp)
-        obj=cls.__new__(cls);obj.simulation=sim;obj.scheduler=EventScheduler();cont=data["CONT"];s=cont["scheduler"];events=[RuntimeEvent(t,i,getattr(RuntimeEventType,name),p) for t,i,name,p in s["events"]];obj.scheduler.restore(s["now"],s["next_id"],events);obj.observation_ordinal=cont["observation_ordinal"];obj.actions_completed=cont["actions_completed"];obj.cognition_wakes=cont["cognition_wakes"];obj.cognition_continuations=cont.get("cognition_continuations",0);obj.cognition_generation=cont.get("cognition_generation",0);obj.maintenance_ordinal=cont.get("maintenance_ordinal",0);obj._legacy_monolithic_frontier=cont.get("legacy_monolithic_frontier",data["META"].get("version",1)<2 and any(e.type==RuntimeEventType.COGNITION_WAKE for e in events));language=cont.get("language",{});from consciousness.language import LanguageLexicon;sim.core.language=LanguageLexicon.from_dict(sim.core,language.get("lexicon",{}));obj.next_language_message_id=int(language.get("next_message_id",1));obj.language_inbox={int(i):LanguageFrame(int(i),float(t),surface) for i,t,surface in language.get("inbox",[])}
+        obj=cls.__new__(cls);obj.simulation=sim;obj.scheduler=EventScheduler();cont=data["CONT"];s=cont["scheduler"];events=[RuntimeEvent(t,i,getattr(RuntimeEventType,name),p) for t,i,name,p in s["events"]];obj.scheduler.restore(s["now"],s["next_id"],events);obj.observation_ordinal=cont["observation_ordinal"];obj.actions_completed=cont["actions_completed"];obj.cognition_wakes=cont["cognition_wakes"];obj.cognition_continuations=cont.get("cognition_continuations",0);obj.cognition_generation=cont.get("cognition_generation",0);obj.maintenance_ordinal=cont.get("maintenance_ordinal",0);obj._legacy_monolithic_frontier=cont.get("legacy_monolithic_frontier",data["META"].get("version",1)<2 and any(e.type==RuntimeEventType.COGNITION_WAKE for e in events));language=cont.get("language",{});from consciousness.language import LanguageLexicon;sim.core.language=LanguageLexicon.from_dict(sim.core,language.get("lexicon",{}));sim.core.grounding_context.restore_durable(language.get("grounding",{}));sim.core.grounding_context.restore_episode(language.get("context",{}));obj.next_language_message_id=int(language.get("next_message_id",1));obj.language_inbox={int(i):LanguageFrame(int(i),float(t),surface) for i,t,surface in language.get("inbox",[])}
         if data["META"].get("version",3)<4:
             first=sim.world.next_spawn_tick;sim.world.disable_legacy_spawning()
             if first is not None and not any(e.type==RuntimeEventType.WORLD_SPAWN for e in events):obj.scheduler.schedule(max(obj.scheduler.now,float(first)),RuntimeEventType.WORLD_SPAWN)

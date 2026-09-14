@@ -136,7 +136,7 @@ class Simulation:
         snapshot=self.snapshot_data(semantic_graph=bool(self.core.backend));graph=snapshot["cognitive_graph"];core=snapshot["core"]
         patterns={"prototypes":core["prototypes"],"composites":{"composites":core["composites"]["composites"],"dependencies":core["composites"]["dependencies"],"created_total":core["composites"]["created_total"],"deleted_total":core["composites"]["deleted_total"]}}
         learned={"transforms":core["perception"]["transforms"],"relation_diagnostics":core["relation_diagnostics"],"calibration":core["calibration"],"affordances":core["affordances"],"relational_nodes":core["relational"]["nodes"]}
-        sections={"META":{"schema":"synthetic-entity-brain","version":4 if self.core.backend else 3,"episode_boundary":True,"numeric_backend":self.core.backend_name},"COGN":{"next_id":graph["next_id"],"nodes":graph["nodes"]},"RELA":{"relations":graph["relations"]},"PATT":patterns,"SPAT":core["memory"],"BELS":core["relational"]["belief_scene"],"LEAR":learned,"LANG":self.core.language.to_dict()}
+        sections={"META":{"schema":"synthetic-entity-brain","version":5 if self.core.backend else 4,"episode_boundary":True,"numeric_backend":self.core.backend_name},"COGN":{"next_id":graph["next_id"],"nodes":graph["nodes"]},"RELA":{"relations":graph["relations"]},"PATT":patterns,"SPAT":core["memory"],"BELS":core["relational"]["belief_scene"],"LEAR":learned,"LANG":{"lexicon":self.core.language.to_dict(),"grounding":self.core.grounding_context.durable_dict()}}
         if self.core.backend:
             fd,tmp=tempfile.mkstemp(suffix='.native');os.close(fd)
             try:self.core.backend.engine.save_graph(tmp);sections["NBRN"]={"encoding":"base64","data":base64.b64encode(open(tmp,'rb').read()).decode('ascii')}
@@ -166,7 +166,7 @@ class Simulation:
                     except OSError:pass
             for node in self.core.graph.nodes.values():node.activity=0.;node.refractory_ticks=0
             from consciousness.language import LanguageLexicon
-            self.core.language=LanguageLexicon.from_dict(self.core,data.get("LANG",{}))
+            language=data.get("LANG",{});lexicon=language.get("lexicon",language);self.core.language=LanguageLexicon.from_dict(self.core,lexicon);self.core.grounding_context.restore_durable(language.get("grounding",{}))
             self.core.belief_scene.new_episode()
         finally:
             try:os.unlink(tmp)

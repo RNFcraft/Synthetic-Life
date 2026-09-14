@@ -152,7 +152,7 @@ def test_v3_world_migrates_to_v4_without_rng_draw(tmp_path):
     migrated=ContinuousRuntime.load_world(v3,settings);spawns=_spawn_events(migrated);maint=[e for e in migrated.scheduler.snapshot() if e.type==RuntimeEventType.MAINTENANCE]
     assert spawns and spawns[0][0]==max(current,float(legacy));assert len(maint)==1 and maint[0].time==current+settings.continuous_maintenance_interval_seconds
     assert migrated.simulation.world.next_spawn_tick is None and migrated.simulation.snapshot_data()["random_state"]==rng
-    out=Path(tmp_path)/"migrated.seworld";migrated.save_world(out);assert load_container(out,"world",{"META","STATE","CONT","NBRN"})["META"]["version"]==5
+    out=Path(tmp_path)/"migrated.seworld";migrated.save_world(out);assert load_container(out,"world",{"META","STATE","CONT","NBRN"})["META"]["version"]==6
 
 @pytest.mark.parametrize("boundary",(.99,1.0,1.01,1.15,1.2,1.35))
 def test_continuous_world_persistence_matrix(tmp_path,boundary):

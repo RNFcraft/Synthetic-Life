@@ -1,37 +1,45 @@
-# Synthetic Entity v0.5.3 — Current Status
+# Synthetic Entity v0.5.4 — Current Status
 
-## LANGUAGE PASS 1 — RECEPTIVE SYMBOL GROUNDING
+## LANGUAGE PASS 1.1 — EMBODIED GROUNDING HARDENING
 
+LANGUAGE PASS 1.1 — EMBODIED GROUNDING HARDENING: PASS
+
+- `GroundingContextSnapshot` is captured inside the real observation transaction
+  from matched sensory Cognits, perceptual/memory-active Cognits, and current
+  relational/bound Cognits, before recall and planning propagation.
+- Grounding never reads ordinary `core.last_wave`. A language wave is returned as
+  `LanguageProcessingResult` and does not overwrite the ordinary wave.
+- `GroundingContextTracker` uses WorldTime, a **1.0 s** horizon and **0.5 s**
+  exponential tau. Recent salience merges by deterministic maximum.
+- Experiential background mass accrues from ordinary embodied contexts over
+  elapsed WorldTime. It is independent of language event count and render FPS;
+  minimum background before Relation birth is **0.5 s**.
+- Relation strength/confidence are deterministic functions of accumulated
+  support mass, grounded trials, experiential background and lift. Curriculum
+  order invariance passes.
+- LANGUAGE_INPUT enters exact native continuous time before mutation, consumes
+  one cognitive tick, and defers at the same WorldTime behind unfinished
+  cognition. An action already in flight is neither cancelled nor duplicated.
+- Vocabulary respects `max_cognits`; Relation creation respects `max_relations`
+  and `max_new_relations_per_tick`. Unmaterialized evidence is capped at **256**
+  candidates per symbol.
+- Language performs **0 outgoing scans** and one generic coarse native Relation
+  batch when updates exist. Python retains meaning policy; C++ mutates numeric
+  Relation state. `full_graph_sync_calls == 0`.
+- Real embodied nonce grounding, embodied label permutation, first-word-only
+  grounding, temporal delay/expiry, last-wave isolation, deferral, exact time,
+  resource bounds, order invariance, and real legacy migration: **PASS**.
+- `.seworld` schema **v6** persists durable background plus recent context
+  frontier/inbox. `.sebrain` schema **v5** transfers durable grounding but no
+  recent episode context or pending utterance.
+- Focused language tests: **19 passed**; critical regressions: **97 passed**;
+  full pytest: **270 passed**; Release native build: **PASS**; CTest: **2/2**.
+- No-language `PYTHONHASHSEED=1/77` trajectory remains deterministic with digest
+  `e334137aab48aac629c9ac0d4dbc77ea8ec7f51203acda0c970a9bb647c3d731`;
+  the real embodied curriculum is also identical under both hash seeds.
+
+The earlier association-only Pass 1 proof is superseded by this embodied gate.
 LANGUAGE PASS 1 — RECEPTIVE SYMBOL GROUNDING: PASS
-
-- Immutable `LanguageFrame(message_id, issued_at_world_time, surface)` carries
-  exact NFC/trimmed single-token identity and no semantic label.
-- `ContinuousRuntime.inject_language()` schedules a scalar `LANGUAGE_INPUT`
-  message ID in normal `(WorldTime, event ID)` order. The deterministic inbox
-  owns pending frames and consumes one only after successful processing.
-- `LanguageLexicon` maps exact surface identity to an ordinary
-  `LANGUAGE_SYMBOL` Cognit. It stores exposure/background/co-occurrence counts,
-  never token meaning, actions, coordinates, World IDs, or sensory labels.
-- Grounding context is restricted to the entity's current frontier/wave Cognits;
-  raw World state and other language symbols are excluded.
-- Repeated contrastive support, conditional probability and lift materialize
-  only directed ordinary `ASSOCIATIVE` Relations. Later missing-context evidence
-  gradually weakens strength/confidence.
-- A language cue stimulates only its symbol Cognit and uses the existing native
-  propagation wave. Trained nonce symbols preferentially activate their learned
-  experiential Cognit; novel symbols have no relation or predefined action.
-- Nonce/permutation/distractor/contradiction/functional retrieval proofs: PASS.
-- Language causes physical EventSequence increments: **0**; direct action
-  commits: **0**; `full_graph_sync_calls`: **0**.
-- Continuous `.seworld` schema v5 persists lexicon evidence, next message ID and
-  pending inbox; v4 and earlier migrate to empty language state. `.sebrain` v4
-  uses `LANG` for transferable lexical/evidence state while learned Relations
-  remain in native `NBRN`; older empty-LANG brains load normally.
-- Focused language tests: **9 passed**; critical regressions: **74 passed**;
-  full pytest: **260 passed**; Release native build: **PASS**; CTest: **2/2**.
-- `PYTHONHASHSEED=1/77` language curriculum: identical. No-language established
-  digest remains `e334137aab48aac629c9ac0d4dbc77ea8ec7f51203acda0c970a9bb647c3d731`.
-
 
 ## BRAIN VIEW SCALING OPTIMIZATION
 
