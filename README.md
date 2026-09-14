@@ -2,7 +2,7 @@
 
 Synthetic-Life is an experimental embodied cognitive architecture built around a sparse, continuously changing graph of Cognits (`κ`) and Relations (`ρ`). The project is not an LLM/Transformer inference wrapper and does not use a frozen policy network as its learned core. Learning, prediction, memory, goals and action selection evolve during interaction with the World.
 
-The current development line is **v0.5.5**.
+The current development line is **v0.5.6**.
 
 Current accepted gates:
 
@@ -154,9 +154,9 @@ ctest --test-dir cpp/build -C Release --output-on-failure
 python -m pytest -q
 ```
 
-Current repository-reported acceptance state for v0.5.5:
+Current repository-reported acceptance state for v0.5.6:
 
-- full pytest: **294 passed**
+- full pytest: **302 passed**
 - CTest Release: **2/2 passed**
 - deterministic `PYTHONHASHSEED=1/77` trajectory digest: identical
 - `full_graph_sync_calls == 0`
@@ -237,6 +237,27 @@ ENTITY role is only a channel foundation for a future real SPEAK gate; no entity
 speech production, echo, or fabricated response exists in v0.5.5.
 Save/load remains behaviorally observational.
 
+## Relational compositional grounding
+
+Pass 3 resolves each constituent only through the intersection of its learned,
+materialized Pass-1 grounding targets and its actual retrieval wave. Resolution
+is bounded and deterministic, excludes language/target Cognits, and preserves
+unresolved alternatives when learned evidence is tied.
+
+When exactly one resolved constituent denotes an existing `RELATIONAL` or
+`BOUND_RELATION` Cognit and two other constituents resolve to participants, the
+runtime emits an immutable `LanguageRelationalResult` containing a real
+`RelationalStructure`. Participant order supplies directed role indices; no
+surface word has a hard-coded role or meaning. A held-out triple therefore
+composes on its first occurrence, while reversing its two participant tokens
+changes the binding. Without a learned relational anchor the result remains
+partial and unbound.
+
+This composition is read-only retrieval. It does not create phrase Cognits,
+semantic Relations, Goals, ActionIntents, or World mutations. `BeliefScene`
+consumes the resulting structure through its existing binding API. Persistence
+schemas remain `.seworld v7` and `.sebrain v6`.
+
 ## Project status and roadmap
 
 ```text
@@ -248,13 +269,14 @@ v0.5.2 native frozen baseline                    DONE
     -> bounded GPU brain-view scaling              DONE
     -> receptive symbol grounding                  DONE
     -> multi-token sequence/basic composition      DONE
-    -> relational compositional grounding          NEXT
+    -> relational compositional grounding          DONE
+    -> grounded requests / language -> goals       NEXT
     -> continuous multi-entity runtime
     -> full 3D World
     -> Entity visual/retina/gaze input
 ```
 
-The next language gate is **MULTI-TOKEN SEQUENCE + COMPOSITIONAL GROUNDING**.
+The next language gate is **GROUNDED REQUESTS / LANGUAGE -> GOALS**.
 
 ## Important design invariants
 

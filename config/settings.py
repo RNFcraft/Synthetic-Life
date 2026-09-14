@@ -162,6 +162,7 @@ class Settings:
     language_max_provisional_candidates_per_symbol: int = 256
     # ORDERED EXACT-SYMBOL UTTERANCES (Pass 2; no tokenizer or grammar)
     language_max_tokens_per_utterance: int = 16
+    language_max_semantic_anchors_per_token: int = 8
     language_sequence_min_support: int = 2
     language_sequence_confidence_k: float = 3.0
     language_max_sequence_candidates_per_symbol: int = 64

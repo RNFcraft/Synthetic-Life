@@ -1,8 +1,8 @@
-# Synthetic Entity Architecture — v0.5.5
+# Synthetic Entity Architecture — v0.5.6
 
 Synthetic Entity is an experimental embodied cognitive architecture built around a sparse, continuously changing graph of Cognits (`κ`) and Relations (`ρ`). It is not a Transformer/LLM inference loop and does not depend on a frozen policy network. The current system learns through persistent predictive, causal, spatial, and goal-directed state that changes during interaction with the world.
 
-The v0.5.2 runtime remains the frozen compatibility oracle. v0.5.5 retains the
+The v0.5.2 runtime remains the frozen compatibility oracle. v0.5.6 retains the
 v0.5.3 continuous float64/event-driven architecture and adds receptive embodied
 symbol grounding while preserving legacy differential oracles.
 
@@ -402,7 +402,30 @@ frame. ENTITY is a reserved display role only: speech production is not
 implemented and the observer invents no entity output. Dialogue presentation
 state is excluded from `.seworld` and `.sebrain`.
 
-## 16. Current roadmap
+## 16. Relational compositional grounding
+
+Pass 3 adds a bounded, read-only semantic composition layer after constituent
+retrieval. For each token position it intersects the token's materialized
+Pass-1 ASSOCIATIVE targets with that token's actual wave, removes dead,
+`LANGUAGE_SYMBOL`, and `TARGET` Cognits, then ranks remaining anchors by learned
+evidence and Cognit confidence with stable ID tie-breaking. Equal learned
+evidence is retained as ambiguity rather than converted into certainty.
+
+An existing `RELATIONAL` token Cognit maps through `core.relational_nodes`; an
+existing `BOUND_RELATION` maps through `BeliefScene`. These are the only sources
+of `RelationToken`. With one resolved relational anchor and two resolved
+non-relational anchors, utterance order binds participants to directed role
+indices and creates a normal immutable `RelationalStructure`. The structure is
+compatible with `BeliefScene.best_binding`; absent support yields a partial
+result with no invented relation.
+
+`LanguageRelationalResult` is transient derived output. It owns no semantic
+policy and performs no learning, graph mutation, Goal/ActionIntent creation, or
+World mutation. The persisted Pass-2 frontier contains all information needed
+to derive the same result after mid-utterance `.seworld v7` continuation;
+`.sebrain` remains v6.
+
+## 17. Current roadmap
 
 ```text
 v0.5.2 frozen native compatibility baseline                    DONE
@@ -413,10 +436,11 @@ v0.5.2 frozen native compatibility baseline                    DONE
     -> bounded GPU brain-view scaling                            DONE
     -> receptive symbol grounding                               DONE
     -> multi-token sequence/basic composition                   DONE
-    -> relational compositional grounding                       NEXT
+    -> relational compositional grounding                       DONE
+    -> grounded requests / language -> goals                    NEXT
     -> continuous multi-entity runtime
     -> full 3D World
     -> Entity visual/retina/gaze input
 ```
 
-The next language gate is `RELATIONAL COMPOSITIONAL GROUNDING`.
+The next language gate is `GROUNDED REQUESTS / LANGUAGE -> GOALS`.

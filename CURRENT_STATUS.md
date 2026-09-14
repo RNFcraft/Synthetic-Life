@@ -1,4 +1,33 @@
-# Synthetic Entity v0.5.5 — Current Status
+# Synthetic Entity v0.5.6 — Current Status
+
+## LANGUAGE PASS 3 — RELATIONAL COMPOSITIONAL GROUNDING
+
+LANGUAGE PASS 3 — RELATIONAL COMPOSITIONAL GROUNDING: PASS
+
+- Immutable `LanguageRelationalResult` exposes ordered symbol IDs, bounded
+  semantic slots, a real `RelationalStructure` when supported, confidence,
+  unresolved positions, and Cognit provenance.
+- A slot can use only a live, non-language, non-target Cognit that is both a
+  materialized Pass-1 grounding target and active in that token's actual
+  retrieval wave. Candidate ranking and ambiguity handling are bounded and
+  deterministic; equal learned evidence remains unresolved.
+- Relational meaning comes only from existing `RELATIONAL` token Cognits or
+  existing `BOUND_RELATION` beliefs. Two non-relational participants are bound
+  in utterance order to directed roles `(0, 1)`; no relation is invented when
+  a relational anchor is absent.
+- Held-out first-occurrence triples compose immediately from constituent
+  meanings, and reversing participant order reverses the participant binding.
+  The result is directly consumable by `BeliefScene`.
+- Composition is read-only interpretation: it creates no phrase Cognit,
+  ASSOCIATIVE meaning, Goal, ActionIntent, World mutation, or evidence refresh.
+  Frozen Pass-2 sequence learning remains unchanged.
+- Persistence remains `.seworld v7` / `.sebrain v6`; an unfinished utterance
+  resumes to the identical derived relational result.
+- Focused Pass-3 tests: **8 passed**; frozen Pass-1/2 plus Pass-3 tests:
+  **37 passed**; full pytest: **302 passed**; clean Release build: **PASS**;
+  CTest: **2/2**; `full_graph_sync_calls == 0`; `PYTHONHASHSEED=1/77`: identical.
+
+NEXT PASS: GROUNDED REQUESTS / LANGUAGE -> GOALS
 
 ## LANGUAGE PASS 2 — MULTI-TOKEN SEQUENCE + BASIC COMPOSITIONAL RETRIEVAL
 
