@@ -34,3 +34,16 @@ def test_sequence_bookkeeping_follows_real_cognit_deletion_and_rebirth():
     assert "wug" not in core.language.symbols and wug not in core.language.sequence_support and wug not in core.language.sequence_trials and wug not in core.language.sequence_materialized
     assert core.language.sequence_support[dax]=={blicket:2} and all(wug not in rows for rows in core.language.sequence_support.values()) and all(wug not in rows for rows in core.language.sequence_materialized.values())
     replacement=core.language.symbol("wug");assert replacement>wug and replacement not in core.language.sequence_support.get(dax,{})
+
+
+def test_bounded_dialogue_channel_roles_and_observer_boundary():
+    runtime=ContinuousRuntime(733);engine=runtime.simulation.core.backend.engine
+    for n in range(70):engine.publish_dialogue_line(float(n),1 if n%2==0 else 2,f"line-{n}")
+    revision,lines=engine.dialogue_snapshot();assert revision==70 and len(lines)==64 and lines[0][0]==7 and lines[-1]==(70,69.,2,"line-69")
+    observer=runtime.simulation.world.native.create_brain_observer(engine);assert observer.latest_dialogue_snapshot()==(revision,lines)
+
+
+def test_external_dialogue_publishes_once_after_deferral_and_once_per_utterance():
+    runtime=ContinuousRuntime(734);runtime.run_to_quiescence();core=runtime.simulation.core;cognition=core.continuous_frontier;cognition.committed=False;cognition.phase="OBSERVED";runtime.inject_language("dax");event=runtime.scheduler.pop_ready(runtime.world_time)[0];runtime._process(event);assert core.backend.engine.dialogue_snapshot()==(0,[])
+    cognition.committed=True;cognition.phase="COMMITTED";runtime.run_to_quiescence();revision,lines=core.backend.engine.dialogue_snapshot();assert revision==1 and [line[3] for line in lines]==["dax"]
+    runtime.inject_utterance(("dax","wug"));runtime.run_to_quiescence();revision,lines=core.backend.engine.dialogue_snapshot();assert revision==2 and [line[3] for line in lines]==["dax","dax wug"] and all(line[2]==1 for line in lines)

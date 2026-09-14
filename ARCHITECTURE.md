@@ -275,7 +275,7 @@ The current accepted v0.5.4 cognition frontier has:
 
 - `ELAPSED-TIME LAZY COGNITION: PASS`;
 - `TRUE EVENT-DRIVEN COGNITION FRONTIER: PASS`;
-- full pytest: 289 passed;
+- full pytest: 294 passed;
 - CTest Release: 2/2 passed;
 - identical deterministic trajectory digest for `PYTHONHASHSEED=1` and `77`;
 - `full_graph_sync_calls == 0`;
@@ -388,6 +388,19 @@ language understanding.
 `.seworld v7` persists the active utterance frontier and resumes the next token
 exactly once; `.sebrain v6` persists durable sequence evidence. The respective
 v6-world and v5-brain migrations preserve frozen Pass-1 state.
+
+Every language continuation revalidates the ordinary cognition frontier, and
+maintenance is deferred at the same WorldTime while an utterance is active.
+The real Cognit deletion path invokes bounded Python language-bookkeeping
+cleanup; it does not scan or reinterpret the native graph.
+
+The observer layout is now `DIALOGUE | WORLD | BRAIN / STATUS`. A native
+latest-only `DialogueSnapshotChannel` retains at most 64 immutable UTF-8 lines
+and is read only by the render thread. Python publishes one EXTERNAL line when a
+language input is actually accepted, never per token continuation or render
+frame. ENTITY is a reserved display role only: speech production is not
+implemented and the observer invents no entity output. Dialogue presentation
+state is excluded from `.seworld` and `.sebrain`.
 
 ## 16. Current roadmap
 

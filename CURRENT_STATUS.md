@@ -4,6 +4,8 @@
 
 LANGUAGE PASS 2 — MULTI-TOKEN SEQUENCE + BASIC COMPOSITIONAL RETRIEVAL: PASS
 
+LANGUAGE PASS 2 CLOSURE: PASS — FROZEN
+
 - Immutable `LanguageUtteranceFrame` accepts only externally segmented exact
   NFC symbols, with a maximum of **16** tokens. A string is not treated as a
   tokenized utterance; the frozen single-token API delegates to Pass 1.
@@ -11,6 +13,9 @@ LANGUAGE PASS 2 — MULTI-TOKEN SEQUENCE + BASIC COMPOSITIONAL RETRIEVAL: PASS
   consumes one continuation/cognitive tick, followed by one COMPOSE
   continuation/tick, all at the utterance's unchanged WorldTime. Utterances do
   not interleave.
+- Every `LANGUAGE_CONTINUE` rechecks the ordinary cognition transaction and
+  reschedules at the same WorldTime when it is unfinished. Maintenance likewise
+  performs no lifecycle work while a language frontier is active.
 - One embodied context is frozen at utterance arrival and reused for every
   token. Token waves cannot become grounding input for later tokens. Pure
   multi-token retrieval leaves Pass-1 embodied evidence unchanged.
@@ -29,8 +34,16 @@ LANGUAGE PASS 2 — MULTI-TOKEN SEQUENCE + BASIC COMPOSITIONAL RETRIEVAL: PASS
   execution state; real v6 single-token worlds migrate without graph mutation.
   `.sebrain` schema **v6** transfers sequence evidence/materialized bookkeeping;
   real Pass-1 v5 brains migrate with empty sequence evidence.
-- Focused Pass-2 tests: **13 passed**; frozen Pass-1 tests: **25 passed**;
-  critical regressions: **145 passed**; full pytest: **289 passed**; Release
+- Language sequence/evidence dictionaries follow real Cognit deletion through
+  `LanguageLexicon.on_cognit_deleted`; forgotten tokens are reborn under a new
+  monotonic ID without inheriting stale sequence state.
+- The native SDL3/OpenGL observer has a bounded left **DIALOGUE** panel backed by
+  a latest-only immutable 64-line native channel. Accepted EXTERNAL utterances
+  publish once at event boundaries. ENTITY is reserved for future real speech;
+  entity language production is not implemented and no fake response is shown.
+- Focused closure/UI tests: **27 passed**; focused Pass-2 tests: **13 passed**;
+  frozen Pass-1 tests: **25 passed**; critical regressions: **115 passed**;
+  full pytest: **294 passed**; Release
   native build: **PASS**; CTest: **2/2**.
 - `full_graph_sync_calls == 0`; no-language digest remains
   `e334137aab48aac629c9ac0d4dbc77ea8ec7f51203acda0c970a9bb647c3d731`;

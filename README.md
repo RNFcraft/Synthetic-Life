@@ -156,7 +156,7 @@ python -m pytest -q
 
 Current repository-reported acceptance state for v0.5.5:
 
-- full pytest: **289 passed**
+- full pytest: **294 passed**
 - CTest Release: **2/2 passed**
 - deterministic `PYTHONHASHSEED=1/77` trajectory digest: identical
 - `full_graph_sync_calls == 0`
@@ -224,6 +224,17 @@ combination can retrieve both learned meanings before its first adjacency is
 recorded. This proves ordered exact-symbol processing and basic constituent
 composition—not grammar, syntax induction, phrase concepts, commands, or
 general natural-language understanding.
+
+Ordinary cognition and maintenance cannot interleave inside an active language
+frontier: both language continuation and maintenance use same-WorldTime
+deterministic deferral. Sequence bookkeeping is cleaned when Cognits are really
+deleted, so a later reborn token cannot inherit a forgotten symbol's edges.
+
+The native observer uses a responsive `DIALOGUE | WORLD | BRAIN / STATUS`
+layout. Its left panel reads a latest-only immutable native snapshot containing
+at most 64 event-boundary lines. Incoming EXTERNAL utterances appear once. The
+ENTITY role is only a channel foundation for a future real SPEAK gate; no entity
+speech production, echo, or fabricated response exists in v0.5.5.
 Save/load remains behaviorally observational.
 
 ## Project status and roadmap
