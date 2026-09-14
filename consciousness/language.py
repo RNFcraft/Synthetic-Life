@@ -222,12 +222,16 @@ class LanguageLexicon:
             if support>=s.language_request_min_support and probability>=s.language_request_min_probability:
                 symbol=self.symbols.get(token)
                 if symbol is not None:updates.append((symbol,probability,confidence,support))
-        made=0
+        made=0;remaining=self.core.settings.max_new_relations_per_tick
         for symbol,probability,confidence,support in updates:
+            existing=any(r.target_id==self.request_concept_id and r.relation_type.name=="ASSOCIATIVE" for r in self.core.graph.outgoing(symbol))
+            if existing:
+                self.request_materialized.add(symbol);continue
+            if remaining<=0:continue
             self.core.backend.ffi_calls+=1;self.core.backend.language_relation_batch_calls+=1;self.native_relation_batch_calls+=1
-            created=self.core.backend.engine.upsert_relation_states_batch(symbol-1,[(self.request_concept_id,1,0,probability*confidence,confidence,probability,support,1.)],self.core.settings.max_new_relations_per_tick,self.core.settings.max_relations)
-            if created:made+=1
-            self.request_materialized.add(symbol)
+            created=self.core.backend.engine.upsert_relation_states_batch(symbol-1,[(self.request_concept_id,1,0,probability*confidence,confidence,probability,support,1.)],remaining,self.core.settings.max_relations)
+            if created:made+=1;remaining-=1
+            if any(r.target_id==self.request_concept_id and r.relation_type.name=="ASSOCIATIVE" for r in self.core.graph.outgoing(symbol)):self.request_materialized.add(symbol)
         return made
     def compose_request(self,relational,token_results):
         cues=[]

@@ -455,11 +455,24 @@ cue, while every non-cue Pass-3 semantic slot must be resolved. The derived
 with `origin="LANGUAGE_REQUEST"`; planner, memory recall, BeliefScene mismatch,
 imagination, and action scoring remain the existing generic machinery.
 
+Relational-goal behavior is selected by the presence of a matching ordinary
+target structure and target Cognits, never by `Goal.origin`; origin is only
+provenance. Therefore a language Goal enters the same target seeding,
+progress/action scoring, and relational subgoal management as an external
+target. The closure curriculum trains a cue against X and proves first-use
+generalization to independently grounded Y, which was never demonstrated with
+that cue.
+
 Language interpretation creates no ActionIntent and changes neither physical
 World nor EventSequence. Request evidence and concept identity live in the
 existing UTF-8 LANG persistence payload (`.seworld v7`, `.sebrain v6`) with
 missing fields interpreted as the v0.5.6 no-request state. Token identity is
 Unicode NFC only, with no case or script normalization.
+
+Queued v7 utterance rows optionally carry a serialized request target; legacy
+three-field inbox rows remain valid. Request relation materialization uses one
+deterministic shared `max_new_relations_per_tick` budget across all qualifying
+cue symbols and records a cue only after the ordinary Relation exists.
 
 ## 18. Current roadmap
 
@@ -479,4 +492,4 @@ v0.5.2 frozen native compatibility baseline                    DONE
     -> Entity visual/retina/gaze input
 ```
 
-The planned high-level language foundation through grounded Goals is frozen.
+v0.5.x LANGUAGE FOUNDATION: FROZEN

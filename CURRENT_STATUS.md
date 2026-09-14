@@ -6,6 +6,10 @@ LANGUAGE PASS 4 — GROUNDED REQUESTS / LANGUAGE -> GOALS: PASS
 
 LANGUAGE PASS 4: FROZEN
 
+LANGUAGE PASS 4 CLOSURE: PASS
+
+LANGUAGE PASS 4 — GROUNDED REQUESTS / LANGUAGE -> GOALS: FROZEN
+
 - Request intent is learned contrastively from externally demonstrated desired
   structures. An arbitrary NFC token can acquire an ordinary ASSOCIATIVE link
   to one generic `COMMUNICATIVE_REQUEST` Cognit; no spelling or command is
@@ -25,6 +29,18 @@ LANGUAGE PASS 4: FROZEN
   Cognits, normal Pass-1 grounding, a learned nonce request cue, and a held-out
   first request. Request-label permutation and an untrained `take` control prove
   that surface spelling supplies no intent.
+- Request-cue generalization is now held out: `mip` is demonstrated only with
+  structure X, while independently grounded structure Y is never paired with
+  `mip` until its first successful requested Goal. The same Y remains a
+  description without the cue.
+- Relational Goal behavior is generic: provenance is not used to select planner
+  mechanics. Any active Goal whose target Cognits and `target_structure` agree
+  enters target seeding, progress/action scoring, and relational subgoal
+  management; this includes `LANGUAGE_REQUEST`.
+- Queued request utterances persist their target structure in backward-compatible
+  v7 inbox rows; old three-field rows still load. One global deterministic
+  `max_new_relations_per_tick` budget spans all qualifying request cues, and a
+  cue is marked materialized only after its actual ASSOCIATIVE Relation exists.
 - Language identity is Unicode `str`, normalized by NFC only. Cyrillic/Latin
   confusables, case, CJK, Greek, emoji, and arrows remain exact distinct tokens;
   canonically equivalent accented forms share one symbol. Containers encode
@@ -32,8 +48,8 @@ LANGUAGE PASS 4: FROZEN
 - Request evidence/concept identity/materialized cue bookkeeping persist in the
   existing LANG payload. Previous v0.5.6 payloads migrate with no request cues;
   schemas remain `.seworld v7` and `.sebrain v6`.
-- Focused Pass-4 tests: **8 passed**; focused Pass-1–4: **46 passed**; full
-  pytest: **311 passed**; Release build: **PASS**; CTest: **2/2**;
+- Focused Pass-4 closure tests: **12 passed**; focused Pass-1–4: **50 passed**;
+  full pytest: **315 passed**; Release build: **PASS**; CTest: **2/2**;
   `full_graph_sync_calls == 0`; `PYTHONHASHSEED=1/77`: identical.
 
 ## LANGUAGE PASS 3 — RELATIONAL COMPOSITIONAL GROUNDING
@@ -75,7 +91,7 @@ LANGUAGE PASS 3: FROZEN
   **38 passed**; full pytest: **303 passed**; Release build: **PASS**;
   CTest: **2/2**; `full_graph_sync_calls == 0`; `PYTHONHASHSEED=1/77`: identical.
 
-NEXT PASS: GROUNDED REQUESTS / LANGUAGE -> GOALS
+v0.5.x LANGUAGE FOUNDATION: FROZEN
 
 ## LANGUAGE PASS 2 — MULTI-TOKEN SEQUENCE + BASIC COMPOSITIONAL RETRIEVAL
 

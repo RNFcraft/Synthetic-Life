@@ -145,7 +145,7 @@ class DeliberativePlanner:
             self.subgoal_cooldown_until=tick+16
             if core.goal_stack:core.state.goal=core.goal_stack.pop();core.state.parent_resumptions+=1
             return
-        if not goal or goal.parent_id is not None or goal.origin!="TARGET" or not core.memory.structures:return
+        if not goal or goal.parent_id is not None or not core.is_relational_goal(goal) or not core.memory.structures:return
         # Prefer repairing a known violated binding with a learned causal edge.
         # Missing-participant recall below is the fallback when no such edge is known.
         if core.belief_scene.last_binding.violated or core.belief_scene.last_binding.unknown:

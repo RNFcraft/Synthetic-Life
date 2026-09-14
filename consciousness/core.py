@@ -76,6 +76,9 @@ class SyntheticEntityCore:
         goal=Goal(self.next_goal_id,(node.id,),1.,confidence,confidence,persistence=1.,origin_tension=confidence,origin=origin,target_signature=signature)
         self.next_goal_id+=1;self.state.goals_generated+=1;self.state.goal=goal;self.events.append(f"TARGET_RECEIVED G{goal.id}");return goal
 
+    def is_relational_goal(self,goal)->bool:
+        return bool(goal and self.target_structure is not None and set(goal.target_cognit_ids)&self.target_cognit_ids)
+
     def step(self,frame:SensoryFrame,world_time:float|None=None)->Action:
         return self._observe(frame,world_time,True)
 
@@ -99,7 +102,7 @@ class SyntheticEntityCore:
         context=GroundingContextSnapshot(float(world_time if world_time is not None else frame.tick),generation or frame.tick,tuple(GroundingContextEntry(i,embodied[i]) for i in sorted(embodied)))
         self.grounding_context.observe(context)
         recalled=self.memory.recall(self.state.goal.target_cognit_ids if self.state.goal else (),self.graph,frame.tick,self.target_structure);seeds=set(memory_active)|set(recalled)|relational_active
-        if self.state.goal and self.state.goal.origin=="TARGET":seeds.update(self.state.goal.target_cognit_ids)
+        if self.is_relational_goal(self.state.goal):seeds.update(self.state.goal.target_cognit_ids)
         if self.backend:self.backend.receive_batch([(node_id,self.settings.sensory_activation*.5) for node_id in seeds if node_id in self.graph.nodes],cognitive_tick,self.settings)
         else:
             for node_id in seeds:
@@ -365,7 +368,7 @@ class SyntheticEntityCore:
             else:
                 goal.unavailable_ticks+=1
                 if self.world_time_seconds is not None and goal.unavailable_since_seconds is None:goal.unavailable_since_seconds=self.world_time_seconds
-            if goal.origin!="TARGET":
+            if not self.is_relational_goal(goal):
                 understanding_factor=1-self.settings.goal_understanding_decay*understanding
                 if self.world_time_seconds is None:goal.persistence*=self.settings.goal_decay*understanding_factor
                 else:
@@ -376,7 +379,7 @@ class SyntheticEntityCore:
             goal.intensity=self.settings.goal_inertia*goal.intensity+(1-self.settings.goal_inertia)*candidate_intensity
             if goal.persistence<self.settings.goal_min_persistence:
                 self.state.completed_goal_lifetimes.append(goal.age);self.events.append(f"GOAL_COMPLETED G{goal.id}");self.state.goal=None
-            elif goal.origin!="TARGET" and ((self.world_time_seconds is None and goal.unavailable_ticks>self.settings.goal_unavailable_limit) or (self.world_time_seconds is not None and goal.unavailable_since_seconds is not None and self.world_time_seconds-goal.unavailable_since_seconds>self.settings.goal_unavailable_limit)):
+            elif not self.is_relational_goal(goal) and ((self.world_time_seconds is None and goal.unavailable_ticks>self.settings.goal_unavailable_limit) or (self.world_time_seconds is not None and goal.unavailable_since_seconds is not None and self.world_time_seconds-goal.unavailable_since_seconds>self.settings.goal_unavailable_limit)):
                 goal.status="RETIRED";self.state.goals_retired+=1;self.state.completed_goal_lifetimes.append(goal.age);self.events.append(f"GOAL_RETIRED G{goal.id}");self.state.goal=None
         if self.state.goal is None and candidate_ids and candidate_intensity>=self.settings.goal_tension_threshold:
             self.state.goal=Goal(self.next_goal_id,candidate_ids,1.0,candidate_intensity,1-self.state.uncertainty,

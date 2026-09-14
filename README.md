@@ -156,7 +156,7 @@ python -m pytest -q
 
 Current repository-reported acceptance state for v0.5.7:
 
-- full pytest: **311 passed**
+- full pytest: **315 passed**
 - CTest Release: **2/2 passed**
 - deterministic `PYTHONHASHSEED=1/77` trajectory digest: identical
 - `full_graph_sync_calls == 0`
@@ -289,6 +289,14 @@ There is no lowercasing, case folding, transliteration, language detection, or
 morphology. Request evidence is durable in the existing `.seworld v7` and
 `.sebrain v6` LANG payloads; v0.5.6 data loads with no invented request cues.
 
+The closure proof trains a cue only with structure X, independently grounds Y,
+and then accepts the first-ever `cue + Y` as Goal(Y); bare Y remains a
+description. Goal provenance never selects planner mechanics: any relational
+Goal with the ordinary target state enters existing target-progress/action
+scoring and subgoal management. Queued request demonstrations retain their
+target across save/load, including legacy three-field v7 inbox rows. Request
+Relation births share one deterministic global per-tick budget.
+
 ## Project status and roadmap
 
 ```text
@@ -307,7 +315,7 @@ v0.5.2 native frozen baseline                    DONE
     -> Entity visual/retina/gaze input
 ```
 
-The planned high-level language foundation through grounded Goals is frozen.
+v0.5.x LANGUAGE FOUNDATION: FROZEN
 
 ## Important design invariants
 

@@ -3,6 +3,8 @@ import os,subprocess,sys,unicodedata
 
 from config import Settings
 from consciousness.language import LanguageFrame,normalize_token
+from consciousness.cognit import Cognit
+from consciousness.memory import PersistentStructureMemory,PlaceMemory
 from consciousness.relational import RelationalStructure
 from persistence import load_container
 from simulation import ContinuousRuntime,Simulation
@@ -81,3 +83,43 @@ def test_request_pythonhashseed_determinism():
     for seed in ("1","77"):
         env=os.environ.copy();env["PYTHONHASHSEED"]=seed;out.append(subprocess.check_output([sys.executable,"-c",code],env=env))
     assert out[0]==out[1]
+
+
+def test_held_out_request_generalizes_to_independently_grounded_structure_y():
+    runtime,_,_=_prepared();core=runtime.simulation.core;structure_x=_say(runtime,("dax","wug","blicket")).relational_structure
+    relation=core.graph.add_cognit(Cognit(core.graph.next_id,kind="RELATIONAL",confidence=.9)).id;left=core.graph.add_cognit(Cognit(core.graph.next_id,kind="GENERAL",confidence=.9)).id;right=core.graph.add_cognit(Cognit(core.graph.next_id,kind="GENERAL",confidence=.9)).id;token=(0,1,1);core.relational_nodes[token]=relation
+    for n,(word,target) in enumerate((("zorp",relation),("foo",left),("bar",right)),50):core.process_language_token(LanguageFrame(n,runtime.world_time,word),{target:1.})
+    core.grounding_context.latest=None;core.grounding_context.historical.clear();structure_y=_say(runtime,("zorp","foo","bar")).relational_structure
+    _train_request(runtime,structure_x);core.state.goal=None
+    description=_ask(runtime,("zorp","foo","bar"));assert description.desired_structure is None and core.state.goal is None
+    request=_ask(runtime,("mip","zorp","foo","bar"));assert request.desired_structure==request.relational_result.relational_structure
+    assert request.desired_structure.source_cognits==(left,right) and request.desired_structure.role_edges==((0,1,token),)
+    assert core.state.goal.origin=="LANGUAGE_REQUEST"
+
+
+def test_language_request_goal_enters_generic_relational_planner_management():
+    runtime,_,_=_prepared();core=runtime.simulation.core;structure=_say(runtime,("dax","wug","blicket")).relational_structure;goal=core.install_relational_goal(structure,.8,"LANGUAGE_REQUEST")
+    place=core.graph.add_cognit(Cognit(core.graph.next_id)).id;memory=core.graph.add_cognit(Cognit(core.graph.next_id)).id;core.memory.places[1]=PlaceMemory(1,place,(),.8);core.memory.structures[1]=PersistentStructureMemory(1,memory,(),place,(0.,0.),(),.8,last_recall_strength=.5)
+    calls=[];original=core.predicted_target_progress;core.predicted_target_progress=lambda current,action:(calls.append((frozenset(current),action)),original(current,action))[1]
+    core.state.action_scores={a:0. for a in core.available_actions};core.planner.deliberate(core,set(),0)
+    assert core.state.goal.parent_id==goal.id and core.state.subgoals_created==1 and calls
+
+
+def test_pending_request_target_roundtrip_preserves_exact_continuation(tmp_path):
+    runtime,_,_=_prepared();structure=_say(runtime,("dax","wug","blicket")).relational_structure;_train_request(runtime,structure);runtime.simulation.core.state.goal=None
+    message=runtime.inject_utterance(("mip","dax","wug","blicket"),runtime.world_time,structure);path=tmp_path/"pending-request.seworld";runtime.save_world(path);loaded=ContinuousRuntime.load_world(path)
+    assert loaded.language_inbox[message].request_target==structure
+    runtime.run_to_quiescence();loaded.run_to_quiescence()
+    assert runtime.simulation.core.language.to_dict()==loaded.simulation.core.language.to_dict()
+    assert runtime.last_utterance_result.request_result==loaded.last_utterance_result.request_result
+    assert runtime.simulation.core.state.goal.id==loaded.simulation.core.state.goal.id
+
+
+def test_request_relation_budget_is_global_and_materializes_only_real_relations():
+    settings=replace(Settings(),language_request_min_support=1,language_request_min_probability=.75,max_new_relations_per_tick=1,language_min_support=1,language_min_lift=0.,language_min_background_seconds=0.)
+    runtime,_,_=_prepared();runtime.simulation.settings=settings;runtime.simulation.core.settings=settings;core=runtime.simulation.core;structure=_say(runtime,("dax","wug","blicket")).relational_structure
+    for _ in range(2):runtime.inject_utterance(("dax","wug","blicket"));runtime.run_to_quiescence()
+    before=core.graph.relation_count;runtime.inject_utterance(("mip","zap","dax","wug","blicket"),runtime.world_time,structure);runtime.run_to_quiescence()
+    created=core.graph.relation_count-before;assert created<=1 and len(core.language.request_materialized)<=1
+    for symbol in core.language.request_materialized:
+        assert any(r.target_id==core.language.request_concept_id for r in core.graph.outgoing(symbol))
