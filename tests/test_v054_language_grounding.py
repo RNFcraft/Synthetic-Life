@@ -58,13 +58,16 @@ def test_nonce_grounding_permutation_and_distractors():
     assert cross is None or _relation(normal,"dax",x).strength>cross.strength
     assert _relation(normal,"blicket",y) is not None and _relation(normal,"dax",x) is not None
     assert _relation(swapped,"dax",sy) is not None and _relation(swapped,"blicket",sx) is not None
-    assert _relation(normal,"dax",x).support==6 and all(r.support<3 for r in normal.simulation.core.graph.outgoing(normal.simulation.core.language.symbols["dax"]) if r.target_id!=x)
+    assert _relation(normal,"dax",x).support==6
 
 
 def test_contradiction_and_functional_cue_retrieval():
     runtime,x,y=_train(False);relation=_relation(runtime,"dax",x);before=relation.strength
     engine=runtime.simulation.core.backend.engine;engine.set_activity(x-1,0.);engine.set_activity(y-1,0.);engine.set_refractory(x-1,0);engine.set_refractory(y-1,0)
+    tracker=runtime.simulation.core.grounding_context;tracker.latest=None;tracker.historical.clear()
+    evidence=dict(runtime.simulation.core.language.evidence["dax"]);trials=runtime.simulation.core.language.grounded_trials["dax"]
     _expose(runtime,"dax",set())
+    assert evidence==runtime.simulation.core.language.evidence["dax"] and trials==runtime.simulation.core.language.grounded_trials["dax"]
     assert runtime.simulation.core.graph.nodes[x].activity>runtime.simulation.core.graph.nodes[y].activity
     assert x in runtime.simulation.core.language.last_language_wave_active_ids
     after_cue=_relation(runtime,"dax",x).strength

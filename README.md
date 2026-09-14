@@ -156,7 +156,7 @@ python -m pytest -q
 
 Current repository-reported acceptance state for v0.5.4:
 
-- full pytest: **247 passed**
+- full pytest: **274 passed**
 - CTest Release: **2/2 passed**
 - deterministic `PYTHONHASHSEED=1/77` trajectory digest: identical
 - `full_graph_sync_calls == 0`
@@ -188,8 +188,10 @@ World labels in this pass. Language inputs are deterministic external cognitive
 events and do not mutate the physical World or commit actions.
 
 The accepted v0.5.4 proof uses real `World → SensoryFrame → Cognit` contexts.
-Context is captured before recall/planning, receives WorldTime-based temporal
-credit, and contributes to a language-independent experiential background.
+Context is captured before recall/planning and contributes to a
+language-independent experiential background. The latest percept remains
+current at full salience until another real observation replaces it; only then
+does it decay from its exact retirement WorldTime through the bounded history.
 Nonce-label permutation swaps learned retrieval accordingly, and a first word
 can be learned without any competing second token. Language waves remain
 separate from ordinary cognition waves.
@@ -202,7 +204,10 @@ The project uses two main persistence surfaces:
 - `.seworld` — exact continuous World and execution frontier.
 
 Continuous `.seworld` schema v6 includes the scheduler, unfinished cognition
-frontier, absolute spawn/maintenance frontiers, and pending language inbox.
+frontier, absolute spawn/maintenance frontiers, exact grounding
+current/historical frontier, and pending language inbox. It migrates the real
+previous-language v5 lexicon schema. `.sebrain` v5 likewise migrates the real
+previous-language v4 `LANG` schema while starting a clean episode.
 Save/load remains behaviorally observational.
 
 ## Project status and roadmap

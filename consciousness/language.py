@@ -16,6 +16,8 @@ class GroundingContextEntry:cognit_id:int;salience:float
 @dataclass(frozen=True,slots=True)
 class GroundingContextSnapshot:world_time:float;observation_generation:int;entries:tuple[GroundingContextEntry,...]
 @dataclass(frozen=True,slots=True)
+class HistoricalGroundingContext:snapshot:GroundingContextSnapshot;retired_at_world_time:float
+@dataclass(frozen=True,slots=True)
 class LanguageProcessingResult:symbol_id:int|None;wave:WaveResult;grounding_candidates_updated:int;grounding_relations_materialized:int
 
 def normalize_token(surface:str)->str:
@@ -25,7 +27,9 @@ def normalize_token(surface:str)->str:
 
 class GroundingContextTracker:
     """Observational WorldTime-weighted history of sensory-derived Cognit IDs."""
-    def __init__(self,settings):self.settings=settings;self.latest=None;self.recent=deque(maxlen=settings.language_recent_contexts);self.background_mass={};self.total_experience_time=0.;self.accounted_until=None
+    def __init__(self,settings):self.settings=settings;self.latest=None;self.historical=deque(maxlen=settings.language_recent_contexts);self.background_mass={};self.total_experience_time=0.;self.accounted_until=None
+    @property
+    def recent(self):return self.historical
     def accrue(self,now):
         if self.accounted_until is None:self.accounted_until=float(now);return
         if now<self.accounted_until:raise ValueError("grounding context time moved backwards")
@@ -34,11 +38,16 @@ class GroundingContextTracker:
             for e in self.latest.entries:self.background_mass[e.cognit_id]=self.background_mass.get(e.cognit_id,0.)+e.salience*dt
             self.total_experience_time+=dt
         self.accounted_until=float(now)
-    def observe(self,snapshot):self.accrue(snapshot.world_time);self.latest=snapshot;self.recent.append(snapshot)
+    def observe(self,snapshot):
+        self.accrue(snapshot.world_time)
+        if self.latest is not None:self.historical.append(HistoricalGroundingContext(self.latest,float(snapshot.world_time)))
+        self.latest=snapshot
     def eligible(self,now):
         self.accrue(now);merged={};h=self.settings.language_grounding_horizon_seconds;tau=self.settings.language_grounding_tau_seconds
-        for snapshot in self.recent:
-            age=float(now)-snapshot.world_time
+        if self.latest is not None:
+            for e in self.latest.entries:merged[e.cognit_id]=max(merged.get(e.cognit_id,0.),e.salience)
+        for item in self.historical:
+            snapshot=item.snapshot;age=float(now)-item.retired_at_world_time
             if age<0 or age>h:continue
             credit=exp(-age/max(tau,1e-12))
             for e in snapshot.entries:merged[e.cognit_id]=max(merged.get(e.cognit_id,0.),e.salience*credit)
@@ -48,9 +57,13 @@ class GroundingContextTracker:
     @staticmethod
     def _load(raw):return None if raw is None else GroundingContextSnapshot(float(raw[0]),int(raw[1]),tuple(GroundingContextEntry(int(i),float(q)) for i,q in raw[2]))
     def durable_dict(self):return {"background_mass":[[i,v] for i,v in sorted(self.background_mass.items())],"total_experience_time":self.total_experience_time}
-    def episode_dict(self):return {"latest":self._dump(self.latest),"recent":[self._dump(x) for x in self.recent],"accounted_until":self.accounted_until}
+    def episode_dict(self):return {"latest":self._dump(self.latest),"historical":[[self._dump(x.snapshot),x.retired_at_world_time] for x in self.historical],"accounted_until":self.accounted_until}
     def restore_durable(self,data):data=data or {};self.background_mass={int(i):float(v) for i,v in data.get("background_mass",[])};self.total_experience_time=float(data.get("total_experience_time",0.))
-    def restore_episode(self,data):data=data or {};self.latest=self._load(data.get("latest"));self.recent=deque((self._load(x) for x in data.get("recent",[])),maxlen=self.settings.language_recent_contexts);self.accounted_until=data.get("accounted_until")
+    def restore_episode(self,data):
+        data=data or {};self.latest=self._load(data.get("latest"));rows=data.get("historical")
+        if rows is None:rows=[[self._load(x),float(self._load(x).world_time)] for x in data.get("recent",[]) if self._load(x)!=self.latest]
+        else:rows=[[self._load(x),float(t)] for x,t in rows]
+        self.historical=deque((HistoricalGroundingContext(x,t) for x,t in rows),maxlen=self.settings.language_recent_contexts);self.accounted_until=data.get("accounted_until")
 
 class LanguageLexicon:
     """Identity and bounded evidence only; Relations carry learned meaning."""
@@ -77,7 +90,7 @@ class LanguageLexicon:
         made=0
         if updates:
             self.core.backend.ffi_calls+=1;self.core.backend.language_relation_batch_calls+=1;self.native_relation_batch_calls+=1
-            made=self.core.backend.engine.upsert_relation_states_batch(symbol-1,updates,self.core.settings.max_new_relations_per_tick,self.core.settings.max_relations);self.grounding_relations_materialized+=made;previous.update(new_targets[:made])
+            created=self.core.backend.engine.upsert_relation_states_batch(symbol-1,updates,self.core.settings.max_new_relations_per_tick,self.core.settings.max_relations);created={int(i)+1 for i in created};made=len(created);self.grounding_relations_materialized+=made;previous.update(created)
         return symbol,len(rows),made
     def _metrics(self,token,target,tracker):
         count,mass=self.evidence[token][target];conditional=mass/max(1,self.grounded_trials.get(token,0));background=tracker.background_mass.get(target,0.)/max(tracker.total_experience_time,1e-12);return count,conditional,conditional/max(background,1e-9)
@@ -104,4 +117,13 @@ class LanguageLexicon:
     def to_dict(self):return {"symbols":dict(sorted(self.symbols.items())),"exposures":dict(sorted(self.exposures.items())),"grounded_trials":dict(sorted(self.grounded_trials.items())),"evidence":{k:[[i,n,m] for i,(n,m) in sorted(v.items())] for k,v in sorted(self.evidence.items())},"materialized":{k:sorted(v) for k,v in sorted(self.materialized.items())},"total_exposures":self.total_exposures,"grounding_relations_materialized":self.grounding_relations_materialized}
     @classmethod
     def from_dict(cls,core,data):
-        obj=cls(core);data=data or {};obj.symbols={str(k):int(v) for k,v in data.get("symbols",{}).items()};obj.exposures={str(k):int(v) for k,v in data.get("exposures",{}).items()};obj.grounded_trials={str(k):int(v) for k,v in data.get("grounded_trials",{}).items()};obj.evidence={str(k):{int(i):(int(n),float(m)) for i,n,m in rows} for k,rows in data.get("evidence",{}).items()};obj.materialized={str(k):set(map(int,v)) for k,v in data.get("materialized",{}).items()};obj.total_exposures=int(data.get("total_exposures",0));obj.grounding_relations_materialized=int(data.get("grounding_relations_materialized",0));return obj
+        obj=cls(core);data=data or {};obj.symbols={str(k):int(v) for k,v in data.get("symbols",{}).items()};obj.exposures={str(k):int(v) for k,v in data.get("exposures",{}).items()};legacy="support" in data and "evidence" not in data
+        obj.grounded_trials=({k:int(obj.exposures.get(k,0)) for k in obj.symbols} if legacy else {str(k):int(v) for k,v in data.get("grounded_trials",{}).items()})
+        if legacy:obj.evidence={str(k):{int(i):(int(n),float(n)) for i,n in rows} for k,rows in data.get("support",{}).items()}
+        else:obj.evidence={str(k):{int(i):(int(n),float(m)) for i,n,m in rows} for k,rows in data.get("evidence",{}).items()}
+        obj.materialized={str(k):set(map(int,v)) for k,v in data.get("materialized",{}).items()};obj.total_exposures=int(data.get("total_exposures",0));obj.grounding_relations_materialized=int(data.get("grounding_relations_materialized",0));obj._legacy_grounding=({"background_mass":[[int(i),float(n)] for i,n in data.get("background",[])],"total_experience_time":float(data.get("total_exposures",0))} if legacy else None)
+        if legacy or "materialized" not in data:
+            for token,source in obj.symbols.items():obj.materialized[token]={r.target_id for r in core.graph.outgoing(source) if r.relation_type.name=="ASSOCIATIVE"}
+        return obj
+    def restore_legacy_grounding(self,tracker):
+        if getattr(self,"_legacy_grounding",None) is not None:tracker.restore_durable(self._legacy_grounding)

@@ -9,8 +9,10 @@ LANGUAGE PASS 1.1 — EMBODIED GROUNDING HARDENING: PASS
   relational/bound Cognits, before recall and planning propagation.
 - Grounding never reads ordinary `core.last_wave`. A language wave is returned as
   `LanguageProcessingResult` and does not overwrite the ordinary wave.
-- `GroundingContextTracker` uses WorldTime, a **1.0 s** horizon and **0.5 s**
-  exponential tau. Recent salience merges by deterministic maximum.
+- `GroundingContextTracker` keeps the latest embodied context current, at full
+  salience, until a real observation replaces it. Replaced contexts retire at
+  that exact WorldTime and then use a **1.0 s** horizon and **0.5 s** exponential
+  tau measured from retirement; duplicate salience merges by deterministic max.
 - Experiential background mass accrues from ordinary embodied contexts over
   elapsed WorldTime. It is independent of language event count and render FPS;
   minimum background before Relation birth is **0.5 s**.
@@ -23,17 +25,23 @@ LANGUAGE PASS 1.1 — EMBODIED GROUNDING HARDENING: PASS
 - Vocabulary respects `max_cognits`; Relation creation respects `max_relations`
   and `max_new_relations_per_tick`. Unmaterialized evidence is capped at **256**
   candidates per symbol.
-- Language performs **0 outgoing scans** and one generic coarse native Relation
-  batch when updates exist. Python retains meaning policy; C++ mutates numeric
-  Relation state. `full_graph_sync_calls == 0`.
+- Language performs **0 outgoing scans in normal learning** and one generic
+  coarse native Relation batch when updates exist. The batch returns exact
+  created targets and updates only its owned numeric fields, preserving all
+  other existing Relation metadata. Python retains meaning policy; C++ mutates
+  numeric Relation state. `full_graph_sync_calls == 0`.
 - Real embodied nonce grounding, embodied label permutation, first-word-only
   grounding, temporal delay/expiry, last-wave isolation, deferral, exact time,
   resource bounds, order invariance, and real legacy migration: **PASS**.
-- `.seworld` schema **v6** persists durable background plus recent context
-  frontier/inbox. `.sebrain` schema **v5** transfers durable grounding but no
-  recent episode context or pending utterance.
-- Focused language tests: **19 passed**; critical regressions: **97 passed**;
-  full pytest: **270 passed**; Release native build: **PASS**; CTest: **2/2**.
+- `.seworld` schema **v6** persists durable background plus the exact
+  current/historical retirement frontier and inbox. Real previous-language
+  `.seworld v5` state migrates to v6. `.sebrain` schema **v5** transfers durable
+  grounding but no episode context or pending utterance; real previous-language
+  `.sebrain v4` migrates to v5. Legacy count background uses an explicit
+  one-exposure/one-compatibility-unit normalization because elapsed time was not
+  present, and materialized targets are reconstructed from the persisted graph.
+- Focused language tests: **23 passed**; critical regressions: **145 passed**;
+  full pytest: **274 passed**; Release native build: **PASS**; CTest: **2/2**.
 - No-language `PYTHONHASHSEED=1/77` trajectory remains deterministic with digest
   `e334137aab48aac629c9ac0d4dbc77ea8ec7f51203acda0c970a9bb647c3d731`;
   the real embodied curriculum is also identical under both hash seeds.

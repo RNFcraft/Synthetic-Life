@@ -166,7 +166,7 @@ class Simulation:
                     except OSError:pass
             for node in self.core.graph.nodes.values():node.activity=0.;node.refractory_ticks=0
             from consciousness.language import LanguageLexicon
-            language=data.get("LANG",{});lexicon=language.get("lexicon",language);self.core.language=LanguageLexicon.from_dict(self.core,lexicon);self.core.grounding_context.restore_durable(language.get("grounding",{}))
+            language=data.get("LANG",{});lexicon=language.get("lexicon",language);self.core.language=LanguageLexicon.from_dict(self.core,lexicon);self.core.grounding_context.restore_durable(language.get("grounding",{}));self.core.language.restore_legacy_grounding(self.core.grounding_context)
             self.core.belief_scene.new_episode()
         finally:
             try:os.unlink(tmp)

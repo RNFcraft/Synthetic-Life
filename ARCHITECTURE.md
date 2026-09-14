@@ -252,7 +252,7 @@ Stores durable learned cognition and the native `NBRN` graph payload.
 
 ### `.seworld`
 
-Continuous `.seworld` schema v4 stores the exact execution frontier, including:
+Continuous `.seworld` schema v6 stores the exact execution frontier, including:
 
 - scheduler time, IDs and pending events;
 - native World state;
@@ -275,7 +275,7 @@ The current accepted v0.5.4 cognition frontier has:
 
 - `ELAPSED-TIME LAZY COGNITION: PASS`;
 - `TRUE EVENT-DRIVEN COGNITION FRONTIER: PASS`;
-- full pytest: 247 passed;
+- full pytest: 274 passed;
 - CTest Release: 2/2 passed;
 - identical deterministic trajectory digest for `PYTHONHASHSEED=1` and `77`;
 - `full_graph_sync_calls == 0`;
@@ -342,8 +342,10 @@ external exact token
 Before recall or planning, each real observation publishes an immutable
 `GroundingContextSnapshot` containing only sensory-derived internal Cognit IDs
 and salience. A bounded tracker accrues ordinary experiential background mass
-over WorldTime and retains a 1-second eligibility window with 0.5-second decay
-tau. Language never reads or overwrites `core.last_wave`.
+over WorldTime. The latest snapshot remains current without attenuation until
+replaced; retired snapshots then retain a 1-second eligibility window with a
+0.5-second decay tau measured from retirement. Language never reads or
+overwrites `core.last_wave`.
 
 At LANGUAGE_INPUT, the core first enters the frame's exact native continuous
 time. Python derives deterministic conditional probability/lift parameters and
@@ -355,6 +357,10 @@ entity's current internal Cognit context and never raw World state. The language
 transaction neither changes physical EventSequence nor creates an ActionIntent.
 `LANG` persists identity and unfinished statistical evidence; semantic effect is
 carried by the same native Cognit/Relation graph as all other learned structure.
+Real previous-language `.seworld v5` and `.sebrain v4` count schemas migrate
+deterministically to v6/v5. Since they lacked elapsed experience time, migration
+alone maps one old exposure to one compatibility experience unit and rebuilds
+materialized target bookkeeping from persisted ASSOCIATIVE Relations.
 This pass implements neither sentences, syntax, commands, production nor a
 pretrained linguistic representation.
 

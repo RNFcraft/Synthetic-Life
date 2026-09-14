@@ -6,6 +6,7 @@ from config import Settings
 from consciousness.cognit import Cognit
 from consciousness.language import GroundingContextEntry,GroundingContextSnapshot,GroundingContextTracker,LanguageFrame
 from consciousness.native_engine import RuntimeEventType
+from consciousness.relation import RelationStatus,RelationType
 from consciousness.wave import WaveResult
 from simulation import ContinuousRuntime
 from persistence import load_container,save_container
@@ -27,8 +28,16 @@ def _embodied(mapping,only_first=False):
         for label,token in pairs:generation+=1;t+=1.2;_observe(runtime,label,t,generation);core.process_language(LanguageFrame(generation,t+.1,token))
     generation+=1;t+=1.2;rep_a=_observe(runtime,"A",t,generation)
     generation+=1;t+=1.2;rep_b=_observe(runtime,"B",t,generation)
+    # Pure retrieval: no current or historical embodied context may train the cue.
+    tracker=core.grounding_context;tracker.accrue(t+.1);tracker.latest=None;tracker.historical.clear();tracker.accounted_until=t+.1
+    before=(core.language.grounded_trials.get("dax",0),dict(core.language.evidence.get("dax",{})))
+    ids=list(range(core.backend.engine.cognit_count))
+    for i in ids:core.backend.engine.set_activity(i,0.);core.backend.engine.set_refractory(i,0)
     result=core.process_language(LanguageFrame(999,t+.1,"dax"));wave=set(result.wave.active_ids)
-    return runtime,len(wave&rep_a),len(wave&rep_b)
+    assert before==(core.language.grounded_trials.get("dax",0),core.language.evidence.get("dax",{}))
+    only_a=rep_a-rep_b;only_b=rep_b-rep_a
+    score_a=sum(core.graph.nodes[i].activity for i in only_a)/max(1,len(only_a));score_b=sum(core.graph.nodes[i].activity for i in only_b)/max(1,len(only_b))
+    return runtime,score_a,score_b
 
 
 def test_real_world_perception_embodied_grounding_and_permutation():
@@ -43,21 +52,23 @@ def test_first_word_learns_from_unlabelled_embodied_background():
     assert a>b and set(runtime.simulation.core.language.symbols)=={"dax"}
 
 
-def test_worldtime_temporal_credit_and_expiration():
+def test_current_context_and_retirement_time_semantics():
     settings=replace(Settings(),language_grounding_horizon_seconds=1.,language_grounding_tau_seconds=.5)
-    tracker=GroundingContextTracker(settings);tracker.observe(GroundingContextSnapshot(2.,1,(GroundingContextEntry(7,1.),)))
-    assert tracker.eligible(2.25)[7]==pytest.approx(.6065306597126334)
-    assert tracker.eligible(3.01)=={}
+    tracker=GroundingContextTracker(settings);tracker.observe(GroundingContextSnapshot(0.,1,(GroundingContextEntry(7,1.),)))
+    assert tracker.eligible(5.)[7]==1. and tracker.background_mass[7]==pytest.approx(5.)
+    tracker.observe(GroundingContextSnapshot(5.,2,(GroundingContextEntry(8,.8),)))
+    assert tracker.eligible(5.25)==pytest.approx({7:.6065306597126334,8:.8})
+    assert tracker.eligible(6.01)==pytest.approx({8:.8})
 
 
-def test_delayed_trial_is_grounded_but_expired_exposure_is_not():
+def test_current_trial_remains_grounded_until_replaced():
     settings=replace(Settings(),language_min_background_seconds=.1,language_min_support=1)
     near=ContinuousRuntime(656,settings);node=near.simulation.core.graph.add_cognit(Cognit(near.simulation.core.graph.next_id)).id
     near.simulation.core.grounding_context.observe(GroundingContextSnapshot(0.,1,(GroundingContextEntry(node,1.),)));near.simulation.core.grounding_context.accrue(.2);near.simulation.core.process_language(LanguageFrame(1,.4,"dax"))
     assert near.simulation.core.language.grounded_trials["dax"]==1
     far=ContinuousRuntime(657,settings);other=far.simulation.core.graph.add_cognit(Cognit(far.simulation.core.graph.next_id)).id
     far.simulation.core.grounding_context.observe(GroundingContextSnapshot(0.,1,(GroundingContextEntry(other,1.),)));far.simulation.core.grounding_context.accrue(2.);far.simulation.core.process_language(LanguageFrame(1,2.,"dax"))
-    assert far.simulation.core.language.grounded_trials.get("dax",0)==0 and far.simulation.core.language.evidence["dax"]=={}
+    assert far.simulation.core.language.grounded_trials["dax"]==1 and far.simulation.core.language.evidence["dax"][other][0]==1
 
 
 def test_grounding_ignores_last_wave_and_language_wave_is_separate():
@@ -98,7 +109,45 @@ def test_evidence_and_relation_state_are_order_invariant():
     assert run("AABAB")==run("BAABA")
 
 
-def test_real_old_language_schema_migration(tmp_path):
+def _old_lexicon(core):
+    lex=core.language
+    return {"symbols":dict(lex.symbols),"exposures":dict(lex.exposures),"support":{k:[[i,n] for i,(n,_) in rows.items()] for k,rows in lex.evidence.items()},"background":[[i,int(v)] for i,v in core.grounding_context.background_mass.items()],"total_exposures":lex.total_exposures,"grounding_relations_materialized":lex.grounding_relations_materialized}
+
+
+def test_real_previous_language_seworld_v5_migration(tmp_path):
+    runtime,_,_=_embodied({"A":"dax","B":"blicket"});message=runtime.inject_language("pending",runtime.world_time+.5);old=_old_lexicon(runtime.simulation.core)
+    source=runtime.simulation.core.language.symbols["dax"];before=[tuple(r._values) for r in runtime.simulation.core.graph.outgoing(source)]
+    world=tmp_path/"new.seworld";runtime.save_world(world);data=load_container(world,"world",{"META","STATE","CONT","NBRN"});data["META"]["version"]=5;data["CONT"]["language"]={"lexicon":old,"next_message_id":runtime.next_language_message_id,"inbox":[[message,runtime.language_inbox[message].issued_at_world_time,"pending"]]};legacy=tmp_path/"v5.seworld";save_container(legacy,"world",data,{"NBRN"});loaded=ContinuousRuntime.load_world(legacy)
+    lex=loaded.simulation.core.language;assert lex.symbols==old["symbols"] and lex.exposures==old["exposures"] and message in loaded.language_inbox
+    assert lex.grounded_trials["dax"]==old["exposures"]["dax"] and loaded.simulation.core.grounding_context.total_experience_time==old["total_exposures"]
+    assert [tuple(r._values) for r in loaded.simulation.core.graph.outgoing(source)]==before and lex.materialized["dax"]
+    upgraded=tmp_path/"upgraded.seworld";loaded.save_world(upgraded);assert load_container(upgraded,"world",{"META","STATE","CONT","NBRN"})["META"]["version"]==6
+
+
+def test_real_previous_language_sebrain_v4_and_pre_language_migration(tmp_path):
+    runtime,_,_=_embodied({"A":"dax","B":"blicket"});old=_old_lexicon(runtime.simulation.core);brain=tmp_path/"new.sebrain";runtime.simulation.save_brain(brain);sections=load_container(brain,"brain",{"META","COGN","RELA","PATT","SPAT","BELS","LEAR","LANG","NBRN"});sections["META"]["version"]=4;sections["LANG"]=old;old_brain=tmp_path/"v4-language.sebrain";save_container(old_brain,"brain",sections,{"LANG","NBRN"});fresh=runtime.simulation.__class__(659,backend="native");fresh.load_brain(old_brain)
+    assert fresh.core.language.symbols==old["symbols"] and fresh.core.language.materialized["dax"] and fresh.core.grounding_context.total_experience_time==old["total_exposures"]
+    fresh.core.grounding_context.latest=None;fresh.core.grounding_context.historical.clear();cue_time=fresh.core.memory.world_time_seconds or 0.;fresh.core.process_language(LanguageFrame(100,cue_time,"dax"));assert fresh.core.language.last_language_wave_active_ids
+    upgraded=tmp_path/"upgraded.sebrain";fresh.save_brain(upgraded);assert load_container(upgraded,"brain",{"META","COGN","RELA","PATT","SPAT","BELS","LEAR","LANG","NBRN"})["META"]["version"]==5
+    sections["LANG"]={};empty=tmp_path/"v4-empty.sebrain";save_container(empty,"brain",sections,{"LANG","NBRN"});blank=runtime.simulation.__class__(660,backend="native");blank.load_brain(empty);assert blank.core.language.symbols=={} and not blank.core.grounding_context.recent
+
+
+def test_native_language_batch_preserves_metadata_and_reports_exact_creations():
+    runtime=ContinuousRuntime(661);core=runtime.simulation.core;a=core.graph.add_cognit(Cognit(core.graph.next_id)).id;b=core.graph.add_cognit(Cognit(core.graph.next_id)).id;c=core.graph.add_cognit(Cognit(core.graph.next_id)).id
+    relation,_=core.graph.connect(a,b,RelationType.ASSOCIATIVE);relation.status=RelationStatus.CONSOLIDATED;relation.contradiction_evidence=.4;relation.usefulness=.6;relation.confirmations=7;relation.last_used_cognitive_tick=9;relation.last_evidence_world_tick=11
+    created=core.backend.engine.upsert_relation_states_batch(a-1,[(b,1,0,.8,.9,.7,12,2.5),(c,1,0,.5,.6,.4,3,1.5)],1,core.settings.max_relations)
+    assert created==[c-1]
+    updated=next(r for r in core.graph.outgoing(a) if r.target_id==b);assert (updated.strength,updated.confidence,updated.prediction_probability,updated.support,updated.lift)==(.8,.9,.7,12,2.5)
+    assert (updated.status,updated.contradiction_evidence,updated.usefulness,updated.confirmations,updated.last_used_cognitive_tick,updated.last_evidence_world_tick)==(RelationStatus.CONSOLIDATED,.4,.6,7,9,11)
+    new=next(r for r in core.graph.outgoing(a) if r.target_id==c);assert new.status is RelationStatus.PROVISIONAL and new.relation_type is RelationType.ASSOCIATIVE and (new.support,new.lift)==(3,1.5)
+
+
+def test_current_grounding_frontier_v6_round_trip(tmp_path):
+    runtime=ContinuousRuntime(662);tracker=runtime.simulation.core.grounding_context;a=runtime.simulation.core.graph.add_cognit(Cognit(runtime.simulation.core.graph.next_id)).id;b=runtime.simulation.core.graph.add_cognit(Cognit(runtime.simulation.core.graph.next_id)).id
+    tracker.observe(GroundingContextSnapshot(1.,1,(GroundingContextEntry(a,.7),)));tracker.observe(GroundingContextSnapshot(4.,2,(GroundingContextEntry(b,.8),)));tracker.accrue(4.25);path=tmp_path/"frontier.seworld";runtime.save_world(path);loaded=ContinuousRuntime.load_world(path).simulation.core.grounding_context
+    assert loaded.episode_dict()==tracker.episode_dict() and loaded.durable_dict()==tracker.durable_dict() and loaded.eligible(4.5)==tracker.eligible(4.5)
+
+
+def test_pre_language_world_migration(tmp_path):
     runtime=ContinuousRuntime(658);world=tmp_path/"new.seworld";runtime.save_world(world);data=load_container(world,"world",{"META","STATE","CONT","NBRN"});data["META"]["version"]=4;data["CONT"].pop("language",None);legacy=tmp_path/"v4.seworld";save_container(legacy,"world",data,{"NBRN"});loaded=ContinuousRuntime.load_world(legacy)
     assert loaded.simulation.core.language.symbols=={} and loaded.simulation.core.grounding_context.recent==loaded.simulation.core.grounding_context.recent.__class__(maxlen=loaded.simulation.settings.language_recent_contexts)
-    brain=tmp_path/"new.sebrain";runtime.simulation.save_brain(brain);sections=load_container(brain,"brain",{"META","COGN","RELA","PATT","SPAT","BELS","LEAR","LANG","NBRN"});sections["META"]["version"]=4;sections["LANG"]={};old_brain=tmp_path/"v4.sebrain";save_container(old_brain,"brain",sections,{"LANG","NBRN"});fresh=runtime.simulation.__class__(659,backend="native");fresh.load_brain(old_brain);assert fresh.core.language.symbols=={} and not fresh.core.grounding_context.recent
