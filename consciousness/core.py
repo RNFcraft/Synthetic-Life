@@ -63,14 +63,17 @@ class SyntheticEntityCore:
 
     def receive_target(self,target)->Goal:
         """Convert a relational target description into ordinary graph substrate."""
-        self.target_structure=RelationalStructure.from_points(target.offsets);signature=tuple((x,y,"spatial_relation",d,0) for x,y,d in self.target_structure.relations)
+        return self.install_relational_goal(RelationalStructure.from_points(target.offsets),1.,"TARGET")
+
+    def install_relational_goal(self,structure:RelationalStructure,confidence:float,origin:str)->Goal:
+        self.target_structure=structure;signature=tuple((x,y,"spatial_relation",d,0) for x,y,d in structure.relations)
         pattern=CognitPattern(signature,occurrence_count=1,stability=1.,predictive_value=0.,is_translation_tolerant=True)
         node=self.graph.add_cognit(Cognit(self.graph.next_id,pattern=pattern,kind="TARGET",confidence=1.))
-        for token in self.target_structure.relations:
+        for token in structure.relations:
             if token not in self.relational_nodes:self.relational_nodes[token]=self.graph.add_cognit(Cognit(self.graph.next_id,kind="RELATIONAL",confidence=1.)).id
             relation,_=self.graph.connect(node.id,self.relational_nodes[token],RelationType.ASSOCIATIVE);relation.strength=relation.prediction_probability=1.;relation.confidence=1.;relation.support+=1
         self.pattern_nodes[signature]=node.id;self.target_cognit_ids.add(node.id)
-        goal=Goal(self.next_goal_id,(node.id,),1.,1.,1.,persistence=1.,origin_tension=1.,origin="TARGET",target_signature=signature)
+        goal=Goal(self.next_goal_id,(node.id,),1.,confidence,confidence,persistence=1.,origin_tension=confidence,origin=origin,target_signature=signature)
         self.next_goal_id+=1;self.state.goals_generated+=1;self.state.goal=goal;self.events.append(f"TARGET_RECEIVED G{goal.id}");return goal
 
     def step(self,frame:SensoryFrame,world_time:float|None=None)->Action:
@@ -493,6 +496,7 @@ class SyntheticEntityCore:
             node_id=self.deletion_candidates.popleft()
             if node_id not in self.graph.nodes or self.composites.is_protected(node_id):continue
             node=self.graph.nodes[node_id]
+            if node.kind=="COMMUNICATIVE_REQUEST":continue
             if node.retention_score(self.cognitive_tick,self.settings)>=self.settings.retention_threshold:continue
             if node.pattern:
                 if node.pattern.selectivity_trials:self._selectivity_sum-=node.pattern.match_selectivity;self._selectivity_count-=1

@@ -1,8 +1,8 @@
-# Synthetic Entity Architecture — v0.5.6
+# Synthetic Entity Architecture — v0.5.7
 
 Synthetic Entity is an experimental embodied cognitive architecture built around a sparse, continuously changing graph of Cognits (`κ`) and Relations (`ρ`). It is not a Transformer/LLM inference loop and does not depend on a frozen policy network. The current system learns through persistent predictive, causal, spatial, and goal-directed state that changes during interaction with the world.
 
-The v0.5.2 runtime remains the frozen compatibility oracle. v0.5.6 retains the
+The v0.5.2 runtime remains the frozen compatibility oracle. v0.5.7 retains the
 v0.5.3 continuous float64/event-driven architecture and adds receptive embodied
 symbol grounding while preserving legacy differential oracles.
 
@@ -439,7 +439,29 @@ path. No semantic Cognit ID is supplied to language grounding. Both the initial
 surface labels and a complete nonce-label permutation compose the same held-out
 first-occurrence structure.
 
-## 17. Current roadmap
+## 17. Learned grounded requests
+
+Pass 4 adds one generic `COMMUNICATIVE_REQUEST` Cognit and bounded deterministic
+per-token request support/trial evidence. External demonstrations supply a
+desired relational structure; contrastive non-request utterances provide the
+negative denominator. Only thresholded support and conditional probability
+materialize an ordinary token-to-concept ASSOCIATIVE Relation. Surface text has
+no built-in request semantics.
+
+At COMPOSE, the request concept must occur in the actual wave of a materialized
+cue, while every non-cue Pass-3 semantic slot must be resolved. The derived
+`LanguageRequestResult` then carries the unchanged `RelationalStructure` into
+`SyntheticEntityCore.install_relational_goal`. This creates an ordinary Goal
+with `origin="LANGUAGE_REQUEST"`; planner, memory recall, BeliefScene mismatch,
+imagination, and action scoring remain the existing generic machinery.
+
+Language interpretation creates no ActionIntent and changes neither physical
+World nor EventSequence. Request evidence and concept identity live in the
+existing UTF-8 LANG persistence payload (`.seworld v7`, `.sebrain v6`) with
+missing fields interpreted as the v0.5.6 no-request state. Token identity is
+Unicode NFC only, with no case or script normalization.
+
+## 18. Current roadmap
 
 ```text
 v0.5.2 frozen native compatibility baseline                    DONE
@@ -451,10 +473,10 @@ v0.5.2 frozen native compatibility baseline                    DONE
     -> receptive symbol grounding                               DONE
     -> multi-token sequence/basic composition                   DONE
     -> relational compositional grounding                       DONE
-    -> grounded requests / language -> goals                    NEXT
+    -> grounded requests / language -> goals                    DONE
     -> continuous multi-entity runtime
     -> full 3D World
     -> Entity visual/retina/gaze input
 ```
 
-The next language gate is `GROUNDED REQUESTS / LANGUAGE -> GOALS`.
+The planned high-level language foundation through grounded Goals is frozen.

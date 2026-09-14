@@ -14,7 +14,7 @@ class LanguageFrame:
     def __post_init__(self):object.__setattr__(self,"surface",normalize_token(self.surface))
 @dataclass(frozen=True,slots=True)
 class LanguageUtteranceFrame:
-    message_id:int;issued_at_world_time:float;tokens:tuple[str,...]
+    message_id:int;issued_at_world_time:float;tokens:tuple[str,...];request_target:RelationalStructure|None=None
     def __post_init__(self):
         normalized=tuple(normalize_token(x) for x in self.tokens)
         if not normalized:raise ValueError("LanguageUtteranceFrame requires at least one token")
@@ -34,8 +34,11 @@ class LanguageSemanticSlot:
 class LanguageRelationalResult:
     ordered_symbol_ids:tuple[int|None,...];semantic_slots:tuple[LanguageSemanticSlot,...];relational_structure:RelationalStructure|None;confidence:float;unresolved_slots:tuple[int,...];provenance:tuple[tuple[int,int],...]
 @dataclass(frozen=True,slots=True)
+class LanguageRequestResult:
+    relational_result:LanguageRelationalResult;request_confidence:float;request_cue_symbol_ids:tuple[int,...];desired_structure:RelationalStructure|None;goal_id:int|None;provenance:tuple[tuple[int,int],...]
+@dataclass(frozen=True,slots=True)
 class LanguageUtteranceResult:
-    message_id:int;world_time:float;tokens:tuple[str,...];ordered_symbol_ids:tuple[int|None,...];token_results:tuple[LanguageProcessingResult,...];sequence_edges:tuple[tuple[int,int],...];composed_active_ids:frozenset[int];token_count:int;relational_result:LanguageRelationalResult|None=None
+    message_id:int;world_time:float;tokens:tuple[str,...];ordered_symbol_ids:tuple[int|None,...];token_results:tuple[LanguageProcessingResult,...];sequence_edges:tuple[tuple[int,int],...];composed_active_ids:frozenset[int];token_count:int;relational_result:LanguageRelationalResult|None=None;request_result:LanguageRequestResult|None=None
 @dataclass(slots=True)
 class LanguageUtteranceFrontier:
     frame:LanguageUtteranceFrame;grounding_context:dict[int,float];next_token_index:int=0;processed_symbol_ids:list[int|None]=None;token_results:list[LanguageProcessingResult]=None;phase:str="TOKEN"
@@ -90,8 +93,9 @@ class GroundingContextTracker:
 
 class LanguageLexicon:
     """Identity and bounded evidence only; Relations carry learned meaning."""
-    def __init__(self,core):self.core=core;self.symbols={};self.exposures={};self.grounded_trials={};self.evidence={};self.materialized={};self.sequence_support={};self.sequence_trials={};self.sequence_materialized={};self.total_exposures=0;self.grounding_relations_materialized=0;self.sequence_relations_materialized=0;self.last_language_symbol_id=None;self.last_language_wave_active_ids=frozenset();self.outgoing_scans=0;self.native_relation_batch_calls=0;self.native_sequence_batch_calls=0
+    def __init__(self,core):self.core=core;self.symbols={};self.exposures={};self.grounded_trials={};self.evidence={};self.materialized={};self.sequence_support={};self.sequence_trials={};self.sequence_materialized={};self.request_concept_id=None;self.request_support={};self.request_trials={};self.request_materialized=set();self.total_exposures=0;self.grounding_relations_materialized=0;self.sequence_relations_materialized=0;self.last_language_symbol_id=None;self.last_language_wave_active_ids=frozenset();self.outgoing_scans=0;self.native_relation_batch_calls=0;self.native_sequence_batch_calls=0
     def symbol(self,surface):
+        surface=normalize_token(surface)
         node_id=self.symbols.get(surface)
         if node_id is not None and node_id not in self.core.graph.nodes:self.symbols.pop(surface,None);self.exposures.pop(surface,None);self.grounded_trials.pop(surface,None);self.evidence.pop(surface,None);self.materialized.pop(surface,None);node_id=None
         if node_id is None:
@@ -205,6 +209,40 @@ class LanguageLexicon:
                 confidence=min(values)
                 structure=RelationalStructure.from_role_edges(participant_ids,((0,1,relation_token),),confidence)
         return LanguageRelationalResult(tuple(symbol_ids),tuple(slots),structure,confidence,tuple(unresolved),tuple(provenance))
+    def learn_request(self,tokens,demonstrated):
+        for token in tokens:self.request_trials[token]=self.request_trials.get(token,0)+1
+        if not demonstrated:return 0
+        if self.request_concept_id is None:
+            if len(self.core.graph.nodes)>=self.core.settings.max_cognits:return 0
+            self.request_concept_id=self.core.graph.add_cognit(Cognit(self.core.graph.next_id,kind="COMMUNICATIVE_REQUEST",confidence=1.)).id
+        for token in tokens:self.request_support[token]=self.request_support.get(token,0)+1
+        updates=[];s=self.core.settings
+        for token in sorted(set(tokens)):
+            support=self.request_support[token];trials=self.request_trials[token];probability=support/max(1,trials);confidence=support/(support+s.language_request_confidence_k)
+            if support>=s.language_request_min_support and probability>=s.language_request_min_probability:
+                symbol=self.symbols.get(token)
+                if symbol is not None:updates.append((symbol,probability,confidence,support))
+        made=0
+        for symbol,probability,confidence,support in updates:
+            self.core.backend.ffi_calls+=1;self.core.backend.language_relation_batch_calls+=1;self.native_relation_batch_calls+=1
+            created=self.core.backend.engine.upsert_relation_states_batch(symbol-1,[(self.request_concept_id,1,0,probability*confidence,confidence,probability,support,1.)],self.core.settings.max_new_relations_per_tick,self.core.settings.max_relations)
+            if created:made+=1
+            self.request_materialized.add(symbol)
+        return made
+    def compose_request(self,relational,token_results):
+        cues=[]
+        if self.request_concept_id is not None:
+            for result in token_results:
+                if result.symbol_id in self.request_materialized and self.request_concept_id in result.wave.active_ids:cues.append(result.symbol_id)
+        cues=tuple(sorted(set(cues)));confidence=0.
+        for symbol in cues:
+            token=next(k for k,v in self.symbols.items() if v==symbol);support=self.request_support[token];probability=support/max(1,self.request_trials[token]);confidence=max(confidence,probability*support/(support+self.core.settings.language_request_confidence_k))
+        cue_positions={slot.token_position for slot in relational.semantic_slots if slot.symbol_id in cues}
+        complete=relational.relational_structure is not None and not any(position not in cue_positions for position in relational.unresolved_slots)
+        desired=relational.relational_structure if cues and complete else None;goal=None
+        if desired is not None:goal=self.core.install_relational_goal(desired,confidence,"LANGUAGE_REQUEST")
+        provenance=tuple((symbol,self.request_concept_id) for symbol in cues)
+        return LanguageRequestResult(relational,confidence,cues,desired,None if goal is None else goal.id,provenance)
     @property
     def language_symbol_count(self):return len(self.symbols)
     @property
@@ -213,7 +251,7 @@ class LanguageLexicon:
     def grounding_candidates(self):return sum(map(len,self.evidence.values()))
     @property
     def sequence_candidates(self):return sum(map(len,self.sequence_support.values()))
-    def to_dict(self):return {"symbols":dict(sorted(self.symbols.items())),"exposures":dict(sorted(self.exposures.items())),"grounded_trials":dict(sorted(self.grounded_trials.items())),"evidence":{k:[[i,n,m] for i,(n,m) in sorted(v.items())] for k,v in sorted(self.evidence.items())},"materialized":{k:sorted(v) for k,v in sorted(self.materialized.items())},"sequence_support":[[s,t,n] for s,rows in sorted(self.sequence_support.items()) for t,n in sorted(rows.items())],"sequence_trials":[[s,n] for s,n in sorted(self.sequence_trials.items())],"sequence_materialized":[[s,sorted(v)] for s,v in sorted(self.sequence_materialized.items())],"total_exposures":self.total_exposures,"grounding_relations_materialized":self.grounding_relations_materialized,"sequence_relations_materialized":self.sequence_relations_materialized}
+    def to_dict(self):return {"symbols":dict(sorted(self.symbols.items())),"exposures":dict(sorted(self.exposures.items())),"grounded_trials":dict(sorted(self.grounded_trials.items())),"evidence":{k:[[i,n,m] for i,(n,m) in sorted(v.items())] for k,v in sorted(self.evidence.items())},"materialized":{k:sorted(v) for k,v in sorted(self.materialized.items())},"sequence_support":[[s,t,n] for s,rows in sorted(self.sequence_support.items()) for t,n in sorted(rows.items())],"sequence_trials":[[s,n] for s,n in sorted(self.sequence_trials.items())],"sequence_materialized":[[s,sorted(v)] for s,v in sorted(self.sequence_materialized.items())],"request_concept_id":self.request_concept_id,"request_support":dict(sorted(self.request_support.items())),"request_trials":dict(sorted(self.request_trials.items())),"request_materialized":sorted(self.request_materialized),"total_exposures":self.total_exposures,"grounding_relations_materialized":self.grounding_relations_materialized,"sequence_relations_materialized":self.sequence_relations_materialized}
     @classmethod
     def from_dict(cls,core,data):
         obj=cls(core);data=data or {};obj.symbols={str(k):int(v) for k,v in data.get("symbols",{}).items()};obj.exposures={str(k):int(v) for k,v in data.get("exposures",{}).items()};legacy="support" in data and "evidence" not in data
@@ -222,7 +260,7 @@ class LanguageLexicon:
         else:obj.evidence={str(k):{int(i):(int(n),float(m)) for i,n,m in rows} for k,rows in data.get("evidence",{}).items()}
         obj.materialized={str(k):set(map(int,v)) for k,v in data.get("materialized",{}).items()};obj.sequence_support={};
         for s,t,n in data.get("sequence_support",[]):obj.sequence_support.setdefault(int(s),{})[int(t)]=int(n)
-        obj.sequence_trials={int(s):int(n) for s,n in data.get("sequence_trials",[])};obj.sequence_materialized={int(s):set(map(int,v)) for s,v in data.get("sequence_materialized",[])};obj.total_exposures=int(data.get("total_exposures",0));obj.grounding_relations_materialized=int(data.get("grounding_relations_materialized",0));obj.sequence_relations_materialized=int(data.get("sequence_relations_materialized",0));obj._legacy_grounding=({"background_mass":[[int(i),float(n)] for i,n in data.get("background",[])],"total_experience_time":float(data.get("total_exposures",0))} if legacy else None)
+        obj.sequence_trials={int(s):int(n) for s,n in data.get("sequence_trials",[])};obj.sequence_materialized={int(s):set(map(int,v)) for s,v in data.get("sequence_materialized",[])};obj.request_concept_id=data.get("request_concept_id");obj.request_support={str(k):int(v) for k,v in data.get("request_support",{}).items()};obj.request_trials={str(k):int(v) for k,v in data.get("request_trials",{}).items()};obj.request_materialized=set(map(int,data.get("request_materialized",[])));obj.total_exposures=int(data.get("total_exposures",0));obj.grounding_relations_materialized=int(data.get("grounding_relations_materialized",0));obj.sequence_relations_materialized=int(data.get("sequence_relations_materialized",0));obj._legacy_grounding=({"background_mass":[[int(i),float(n)] for i,n in data.get("background",[])],"total_experience_time":float(data.get("total_exposures",0))} if legacy else None)
         if legacy or "materialized" not in data:
             for token,source in obj.symbols.items():obj.materialized[token]={r.target_id for r in core.graph.outgoing(source) if r.relation_type.name=="ASSOCIATIVE"}
         if "sequence_materialized" not in data:
@@ -235,7 +273,8 @@ class LanguageLexicon:
     def on_cognit_deleted(self,cognit_id):
         dead_tokens=[token for token,symbol in self.symbols.items() if symbol==cognit_id]
         for token in dead_tokens:
-            self.symbols.pop(token,None);self.exposures.pop(token,None);self.grounded_trials.pop(token,None);self.evidence.pop(token,None);self.materialized.pop(token,None)
+            self.symbols.pop(token,None);self.exposures.pop(token,None);self.grounded_trials.pop(token,None);self.evidence.pop(token,None);self.materialized.pop(token,None);self.request_support.pop(token,None);self.request_trials.pop(token,None);self.request_materialized.discard(cognit_id)
+        if self.request_concept_id==cognit_id:self.request_concept_id=None;self.request_materialized.clear()
         self.sequence_support.pop(cognit_id,None);self.sequence_trials.pop(cognit_id,None);self.sequence_materialized.pop(cognit_id,None)
         for source in tuple(self.sequence_support):
             self.sequence_support[source].pop(cognit_id,None)

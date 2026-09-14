@@ -2,7 +2,7 @@
 
 Synthetic-Life is an experimental embodied cognitive architecture built around a sparse, continuously changing graph of Cognits (`κ`) and Relations (`ρ`). The project is not an LLM/Transformer inference wrapper and does not use a frozen policy network as its learned core. Learning, prediction, memory, goals and action selection evolve during interaction with the World.
 
-The current development line is **v0.5.6**.
+The current development line is **v0.5.7**.
 
 Current accepted gates:
 
@@ -154,9 +154,9 @@ ctest --test-dir cpp/build -C Release --output-on-failure
 python -m pytest -q
 ```
 
-Current repository-reported acceptance state for v0.5.6:
+Current repository-reported acceptance state for v0.5.7:
 
-- full pytest: **303 passed**
+- full pytest: **311 passed**
 - CTest Release: **2/2 passed**
 - deterministic `PYTHONHASHSEED=1/77` trajectory digest: identical
 - `full_graph_sync_calls == 0`
@@ -267,6 +267,28 @@ label. `source_cognits` contains only the two participants, canonical
 `relations` retain ordinary structural matching, and directed `role_edges`
 allow generic `BeliefScene` scoring to distinguish correct and reversed roles.
 
+## Learned grounded requests
+
+Pass 4 learns request intent from contrastive external desired-state
+demonstrations. An arbitrary exact NFC token may acquire an ASSOCIATIVE link to
+the generic `COMMUNICATIVE_REQUEST` Cognit; neither that concept nor the token
+encodes an action. A retrieved request cue plus a complete Pass-3 structure
+produces `LanguageRequestResult` and installs the structure through the ordinary
+Goal system with `origin="LANGUAGE_REQUEST"`. The existing planner then sees the
+same `core.target_structure` used by other relational goals.
+
+The same grounded structure without a learned cue remains a description and
+creates no Goal. Incomplete/ambiguous structures also remain non-operative.
+Language interpretation never selects an ActionType, emits an ActionIntent, or
+mutates World/EventSequence. The acceptance curriculum proves this with real
+World-derived meanings, a held-out first-ever requested combination, arbitrary
+request-label permutation, and an untrained command-looking control.
+
+External text is UTF-8 and Python identity is exact Unicode after NFC only.
+There is no lowercasing, case folding, transliteration, language detection, or
+morphology. Request evidence is durable in the existing `.seworld v7` and
+`.sebrain v6` LANG payloads; v0.5.6 data loads with no invented request cues.
+
 ## Project status and roadmap
 
 ```text
@@ -279,13 +301,13 @@ v0.5.2 native frozen baseline                    DONE
     -> receptive symbol grounding                  DONE
     -> multi-token sequence/basic composition      DONE
     -> relational compositional grounding          DONE
-    -> grounded requests / language -> goals       NEXT
+    -> grounded requests / language -> goals       DONE
     -> continuous multi-entity runtime
     -> full 3D World
     -> Entity visual/retina/gaze input
 ```
 
-The next language gate is **GROUNDED REQUESTS / LANGUAGE -> GOALS**.
+The planned high-level language foundation through grounded Goals is frozen.
 
 ## Important design invariants
 

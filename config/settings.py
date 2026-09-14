@@ -166,6 +166,9 @@ class Settings:
     language_sequence_min_support: int = 2
     language_sequence_confidence_k: float = 3.0
     language_max_sequence_candidates_per_symbol: int = 64
+    language_request_min_support: int = 2
+    language_request_min_probability: float = 0.75
+    language_request_confidence_k: float = 2.0
     # AGENCY
     agency_min_confidence: float = 0.15
     # SIMULATION SPEED (scheduler only; never enters cognition)

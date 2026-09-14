@@ -1,4 +1,40 @@
-# Synthetic Entity v0.5.6 — Current Status
+# Synthetic Entity v0.5.7 — Current Status
+
+## LANGUAGE PASS 4 — GROUNDED REQUESTS / LANGUAGE -> GOALS
+
+LANGUAGE PASS 4 — GROUNDED REQUESTS / LANGUAGE -> GOALS: PASS
+
+LANGUAGE PASS 4: FROZEN
+
+- Request intent is learned contrastively from externally demonstrated desired
+  structures. An arbitrary NFC token can acquire an ordinary ASSOCIATIVE link
+  to one generic `COMMUNICATIVE_REQUEST` Cognit; no spelling or command is
+  hard-coded and the concept contains no ActionType semantics.
+- Immutable `LanguageRequestResult` records the Pass-3 result, retrieved cue
+  symbols, confidence, desired structure, Goal ID, and provenance. A Goal is
+  installed only when the learned cue is retrieved and all non-cue Pass-3 roles
+  form a complete relational structure.
+- `SyntheticEntityCore.install_relational_goal` is the shared ordinary Goal
+  path. Language preserves canonical relations, directed role edges and bound
+  participant Cognits with `origin="LANGUAGE_REQUEST"`; the existing
+  BeliefScene/planner machinery consumes `core.target_structure`.
+- Description controls create the same Pass-3 structure without a Goal.
+  Ambiguous or incomplete requests create no Goal. Language never chooses an
+  action and does not mutate World, EventSequence, or ActionIntent state.
+- The embodied acceptance path uses real World-derived participant/relation
+  Cognits, normal Pass-1 grounding, a learned nonce request cue, and a held-out
+  first request. Request-label permutation and an untrained `take` control prove
+  that surface spelling supplies no intent.
+- Language identity is Unicode `str`, normalized by NFC only. Cyrillic/Latin
+  confusables, case, CJK, Greek, emoji, and arrows remain exact distinct tokens;
+  canonically equivalent accented forms share one symbol. Containers encode
+  JSON as UTF-8 without ASCII escaping.
+- Request evidence/concept identity/materialized cue bookkeeping persist in the
+  existing LANG payload. Previous v0.5.6 payloads migrate with no request cues;
+  schemas remain `.seworld v7` and `.sebrain v6`.
+- Focused Pass-4 tests: **8 passed**; focused Pass-1–4: **46 passed**; full
+  pytest: **311 passed**; Release build: **PASS**; CTest: **2/2**;
+  `full_graph_sync_calls == 0`; `PYTHONHASHSEED=1/77`: identical.
 
 ## LANGUAGE PASS 3 — RELATIONAL COMPOSITIONAL GROUNDING
 

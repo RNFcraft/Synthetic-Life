@@ -82,20 +82,20 @@ class ContinuousRuntime:
                 if frontier.next_token_index==len(frontier.frame.tokens):frontier.phase="COMPOSE"
                 self.scheduler.schedule(now,RuntimeEventType.LANGUAGE_CONTINUE,event.payload)
             elif frontier.phase=="COMPOSE":
-                core=self.simulation.core;core.world_time_seconds=now;core.memory.set_world_time(now);core.backend.begin_continuous_time(now);core.cognitive_tick+=1;edges,_=core.language.learn_sequence(frontier.processed_symbol_ids);active=frozenset(i for result in frontier.token_results for i in result.wave.active_ids if i in core.graph.nodes and core.graph.nodes[i].kind!="LANGUAGE_SYMBOL");relational=core.language.compose_relational(frontier.frame.tokens,frontier.processed_symbol_ids,frontier.token_results);self.last_utterance_result=LanguageUtteranceResult(frontier.frame.message_id,now,frontier.frame.tokens,tuple(frontier.processed_symbol_ids),tuple(frontier.token_results),edges,active,len(frontier.frame.tokens),relational);frontier.phase="DONE";self.language_utterances_processed+=1;del self.language_inbox[event.payload];self.language_frontier=None
+                core=self.simulation.core;core.world_time_seconds=now;core.memory.set_world_time(now);core.backend.begin_continuous_time(now);core.cognitive_tick+=1;edges,_=core.language.learn_sequence(frontier.processed_symbol_ids);active=frozenset(i for result in frontier.token_results for i in result.wave.active_ids if i in core.graph.nodes and core.graph.nodes[i].kind!="LANGUAGE_SYMBOL");relational=core.language.compose_relational(frontier.frame.tokens,frontier.processed_symbol_ids,frontier.token_results);core.language.learn_request(frontier.frame.tokens,frontier.frame.request_target is not None);request=core.language.compose_request(relational,frontier.token_results);self.last_utterance_result=LanguageUtteranceResult(frontier.frame.message_id,now,frontier.frame.tokens,tuple(frontier.processed_symbol_ids),tuple(frontier.token_results),edges,active,len(frontier.frame.tokens),relational,request);frontier.phase="DONE";self.language_utterances_processed+=1;del self.language_inbox[event.payload];self.language_frontier=None
     def inject_language(self,surface,at_time=None):
         when=self.world_time if at_time is None else float(at_time)
         if when<self.world_time:raise ValueError("language input cannot precede current WorldTime")
         message_id=self.next_language_message_id;frame=LanguageFrame(message_id,when,surface)
         self.next_language_message_id+=1;self.language_inbox[message_id]=frame;self.scheduler.schedule(when,RuntimeEventType.LANGUAGE_INPUT,message_id);return message_id
-    def inject_utterance(self,tokens,at_time=None):
+    def inject_utterance(self,tokens,at_time=None,request_target=None):
         if isinstance(tokens,str):raise TypeError("utterance token boundaries must be supplied explicitly")
         tokens=tuple(tokens)
-        if len(tokens)==1:return self.inject_language(tokens[0],at_time)
+        if len(tokens)==1 and request_target is None:return self.inject_language(tokens[0],at_time)
         if len(tokens)>self.simulation.settings.language_max_tokens_per_utterance:raise ValueError("utterance exceeds language_max_tokens_per_utterance")
         when=self.world_time if at_time is None else float(at_time)
         if when<self.world_time:raise ValueError("language input cannot precede current WorldTime")
-        message_id=self.next_language_message_id;frame=LanguageUtteranceFrame(message_id,when,tokens)
+        message_id=self.next_language_message_id;frame=LanguageUtteranceFrame(message_id,when,tokens,request_target)
         self.next_language_message_id+=1;self.language_inbox[message_id]=frame;self.scheduler.schedule(when,RuntimeEventType.LANGUAGE_INPUT,message_id);return message_id
     def _publish_external_dialogue(self,world_time,text):self.simulation.core.backend.engine.publish_dialogue_line(float(world_time),1,text)
     def _sensory_signature(self):
@@ -139,9 +139,16 @@ class ContinuousRuntime:
     @staticmethod
     def _language_result_load(raw):
         ids,energy,steps,transmitted=raw["wave"];return LanguageProcessingResult(raw["symbol_id"],WaveResult(frozenset(ids),energy,steps,transmitted),raw["candidates"],raw["created"])
+    @staticmethod
+    def _structure_dict(value):return None if value is None else {"participant_count":value.participant_count,"relations":value.relations,"confidence":value.confidence,"source_cognits":value.source_cognits,"role_edges":value.role_edges}
+    @staticmethod
+    def _structure_load(raw):
+        if raw is None:return None
+        from consciousness.relational import RelationalStructure
+        return RelationalStructure(int(raw["participant_count"]),tuple(tuple(x) for x in raw["relations"]),float(raw["confidence"]),tuple(raw.get("source_cognits",())),tuple((x[0],x[1],tuple(x[2])) for x in raw.get("role_edges",())))
     def _language_frontier_state(self):
         f=self.language_frontier
-        return None if f is None else {"frame":[f.frame.message_id,f.frame.issued_at_world_time,list(f.frame.tokens)],"grounding_context":[[i,q] for i,q in sorted(f.grounding_context.items())],"next_token_index":f.next_token_index,"processed_symbol_ids":f.processed_symbol_ids,"token_results":[self._language_result_dict(x) for x in f.token_results],"phase":f.phase}
+        return None if f is None else {"frame":[f.frame.message_id,f.frame.issued_at_world_time,list(f.frame.tokens),self._structure_dict(f.frame.request_target)],"grounding_context":[[i,q] for i,q in sorted(f.grounding_context.items())],"next_token_index":f.next_token_index,"processed_symbol_ids":f.processed_symbol_ids,"token_results":[self._language_result_dict(x) for x in f.token_results],"phase":f.phase}
     def _utterance_result_state(self):
         r=self.last_utterance_result
         return None if r is None else {"message_id":r.message_id,"world_time":r.world_time,"tokens":list(r.tokens),"ordered_symbol_ids":list(r.ordered_symbol_ids),"token_results":[self._language_result_dict(x) for x in r.token_results],"sequence_edges":[list(x) for x in r.sequence_edges],"composed_active_ids":sorted(r.composed_active_ids),"token_count":r.token_count}
@@ -171,7 +178,7 @@ class ContinuousRuntime:
         obj=cls.__new__(cls);obj.simulation=sim;obj.scheduler=EventScheduler();cont=data["CONT"];s=cont["scheduler"];events=[RuntimeEvent(t,i,getattr(RuntimeEventType,name),p) for t,i,name,p in s["events"]];obj.scheduler.restore(s["now"],s["next_id"],events);obj.observation_ordinal=cont["observation_ordinal"];obj.actions_completed=cont["actions_completed"];obj.cognition_wakes=cont["cognition_wakes"];obj.cognition_continuations=cont.get("cognition_continuations",0);obj.cognition_generation=cont.get("cognition_generation",0);obj.maintenance_ordinal=cont.get("maintenance_ordinal",0);obj._legacy_monolithic_frontier=cont.get("legacy_monolithic_frontier",data["META"].get("version",1)<2 and any(e.type==RuntimeEventType.COGNITION_WAKE for e in events));language=cont.get("language",{});from consciousness.language import LanguageLexicon;sim.core.language=LanguageLexicon.from_dict(sim.core,language.get("lexicon",{}));sim.core.grounding_context.restore_durable(language.get("grounding",{}));sim.core.language.restore_legacy_grounding(sim.core.grounding_context);sim.core.grounding_context.restore_episode(language.get("context",{}));obj.next_language_message_id=int(language.get("next_message_id",1));obj.language_inbox={int(i):(LanguageFrame(int(i),float(t),value) if isinstance(value,str) else LanguageUtteranceFrame(int(i),float(t),tuple(value))) for i,t,value in language.get("inbox",[])};obj.language_utterances_processed=int(language.get("utterances_processed",0));obj.language_tokens_processed=int(language.get("tokens_processed",0));obj.language_frontier=None;obj.last_utterance_result=None
         active=language.get("active_frontier")
         if active is not None:
-            i,t,tokens=active["frame"];obj.language_frontier=LanguageUtteranceFrontier(LanguageUtteranceFrame(int(i),float(t),tuple(tokens)),{int(k):float(v) for k,v in active["grounding_context"]},int(active["next_token_index"]),list(active["processed_symbol_ids"]),[obj._language_result_load(x) for x in active["token_results"]],active["phase"])
+            frame=active["frame"];i,t,tokens=frame[:3];target=obj._structure_load(frame[3]) if len(frame)>3 else None;obj.language_frontier=LanguageUtteranceFrontier(LanguageUtteranceFrame(int(i),float(t),tuple(tokens),target),{int(k):float(v) for k,v in active["grounding_context"]},int(active["next_token_index"]),list(active["processed_symbol_ids"]),[obj._language_result_load(x) for x in active["token_results"]],active["phase"])
         last=language.get("last_utterance_result")
         if last is not None:obj.last_utterance_result=LanguageUtteranceResult(int(last["message_id"]),float(last["world_time"]),tuple(last["tokens"]),tuple(last["ordered_symbol_ids"]),tuple(obj._language_result_load(x) for x in last["token_results"]),tuple(tuple(x) for x in last["sequence_edges"]),frozenset(last["composed_active_ids"]),int(last["token_count"]))
         if data["META"].get("version",3)<4:
