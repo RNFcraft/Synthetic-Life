@@ -71,11 +71,35 @@ def test_current_trial_remains_grounded_until_replaced():
     assert far.simulation.core.language.grounded_trials["dax"]==1 and far.simulation.core.language.evidence["dax"][other][0]==1
 
 
+def _single_grounded_token():
+    runtime=ContinuousRuntime(663,replace(Settings(),language_min_support=1,language_min_lift=0.,language_min_background_seconds=0.));core=runtime.simulation.core;target=core.graph.add_cognit(Cognit(core.graph.next_id)).id
+    core.grounding_context.observe(GroundingContextSnapshot(1.,1,(GroundingContextEntry(target,1.),)));core.process_language(LanguageFrame(1,1.,"dax"))
+    return runtime,target
+
+
+def test_pure_retrieval_does_not_refresh_grounding_evidence_or_relation_time():
+    runtime,target=_single_grounded_token();core=runtime.simulation.core;tracker=core.grounding_context;tracker.latest=None;tracker.historical.clear();tracker.accounted_until=1.
+    relation=next(r for r in core.graph.outgoing(core.language.symbols["dax"]) if r.target_id==target);before_numeric=tuple(relation._values[:10]);before=(core.language.grounded_trials["dax"],{k:dict(v) for k,v in core.language.evidence.items()},{k:set(v) for k,v in core.language.materialized.items()},core.backend.language_relation_batch_calls,core.backend.engine.continuous_relation_time_state())
+    core.backend.engine.set_activity(target-1,0.);core.backend.engine.set_refractory(target-1,0);result=core.process_language(LanguageFrame(2,1.,"dax"));after_relation=next(r for r in core.graph.outgoing(core.language.symbols["dax"]) if r.target_id==target)
+    assert result.wave.active_ids and target in result.wave.active_ids and core.graph.nodes[target].activity>0.
+    assert before==(core.language.grounded_trials["dax"],core.language.evidence,core.language.materialized,core.backend.language_relation_batch_calls,core.backend.engine.continuous_relation_time_state())
+    assert tuple(after_relation._values[:10])==before_numeric
+
+
+def test_valid_context_updates_once_and_excluded_only_context_does_not():
+    runtime,target=_single_grounded_token();core=runtime.simulation.core;tracker=core.grounding_context;before_trials=core.language.grounded_trials["dax"];before_count=core.language.evidence["dax"][target][0];before_batches=core.backend.language_relation_batch_calls
+    tracker.observe(GroundingContextSnapshot(2.,2,(GroundingContextEntry(target,.8),)));core.process_language(LanguageFrame(2,2.,"dax"))
+    assert core.language.grounded_trials["dax"]==before_trials+1 and core.language.evidence["dax"][target][0]==before_count+1 and core.backend.language_relation_batch_calls==before_batches+1 and core.world_time_seconds==2.
+    excluded_symbol=core.language.symbols["dax"];excluded_target=core.graph.add_cognit(Cognit(core.graph.next_id,kind="TARGET")).id;tracker.accrue(3.);tracker.latest=None;tracker.historical.clear();tracker.accounted_until=3.;state=(core.language.grounded_trials["dax"],{k:dict(v) for k,v in core.language.evidence.items()},core.backend.language_relation_batch_calls)
+    tracker.observe(GroundingContextSnapshot(3.,3,(GroundingContextEntry(excluded_symbol,1.),GroundingContextEntry(excluded_target,1.))));core.process_language(LanguageFrame(3,3.,"dax"))
+    assert state==(core.language.grounded_trials["dax"],core.language.evidence,core.backend.language_relation_batch_calls)
+
+
 def test_grounding_ignores_last_wave_and_language_wave_is_separate():
     runtime=ContinuousRuntime(651,replace(Settings(),object_count=0,max_objects=0,language_min_background_seconds=0.01));core=runtime.simulation.core
     context=_observe(runtime,"A",1.,1);decoy=core.graph.add_cognit(Cognit(core.graph.next_id)).id;ordinary=WaveResult(frozenset({decoy}),.4,1);core.last_wave=ordinary
     core.process_language(LanguageFrame(1,1.1,"dax"));assert core.last_wave is ordinary
-    assert decoy not in core.language.evidence["dax"] and set(core.language.evidence["dax"]).issubset(context)
+    evidence=core.language.evidence.get("dax",{});assert decoy not in evidence and set(evidence).issubset(context)
 
 
 def test_active_frontier_defers_same_time_exactly_once():

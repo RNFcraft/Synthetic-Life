@@ -78,15 +78,16 @@ class LanguageLexicon:
     def learn(self,frame,context,tracker):
         token=normalize_token(frame.surface);symbol=self.symbol(token);self.last_language_symbol_id=symbol;self.total_exposures+=1;self.exposures[token]=self.exposures.get(token,0)+1
         if symbol is None:return None,0,0
-        rows=self.evidence.setdefault(token,{})
+        filtered={target:q for target,q in sorted(context.items()) if target!=symbol and target in self.core.graph.nodes and self.core.graph.nodes[target].kind not in {"LANGUAGE_SYMBOL","TARGET"}}
+        rows=self.evidence.get(token)
+        if not filtered:return symbol,0 if rows is None else len(rows),0
+        if rows is None:rows=self.evidence.setdefault(token,{})
         for target in tuple(rows):
             if target not in self.core.graph.nodes:rows.pop(target);self.materialized.setdefault(token,set()).discard(target)
-        if context:
-            self.grounded_trials[token]=self.grounded_trials.get(token,0)+1
-            for target,q in sorted(context.items()):
-                if target==symbol or target not in self.core.graph.nodes or self.core.graph.nodes[target].kind in {"LANGUAGE_SYMBOL","TARGET"}:continue
-                count,mass=rows.get(target,(0,0.));rows[target]=(count+1,mass+q)
-        self._bound(token,tracker);updates=self._relation_rows(token,tracker);previous=self.materialized.setdefault(token,set());new_targets=[row[0] for row in updates if row[0] not in previous]
+        self.grounded_trials[token]=self.grounded_trials.get(token,0)+1
+        for target,q in filtered.items():
+            count,mass=rows.get(target,(0,0.));rows[target]=(count+1,mass+q)
+        self._bound(token,tracker);updates=self._relation_rows(token,tracker);previous=self.materialized.setdefault(token,set())
         made=0
         if updates:
             self.core.backend.ffi_calls+=1;self.core.backend.language_relation_batch_calls+=1;self.native_relation_batch_calls+=1

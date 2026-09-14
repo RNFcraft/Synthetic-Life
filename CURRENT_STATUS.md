@@ -19,6 +19,10 @@ LANGUAGE PASS 1.1 — EMBODIED GROUNDING HARDENING: PASS
 - Relation strength/confidence are deterministic functions of accumulated
   support mass, grounded trials, experiential background and lift. Curriculum
   order invariance passes.
+- Pure symbol retrieval is Relation use, not grounding evidence. With no valid
+  filtered embodied context it increments exposure diagnostics and propagates
+  the symbol wave, but performs no grounded trial, evidence mutation, language
+  Relation batch, or learner-driven Relation evidence/touch-time refresh.
 - LANGUAGE_INPUT enters exact native continuous time before mutation, consumes
   one cognitive tick, and defers at the same WorldTime behind unfinished
   cognition. An action already in flight is neither cancelled nor duplicated.
@@ -40,8 +44,8 @@ LANGUAGE PASS 1.1 — EMBODIED GROUNDING HARDENING: PASS
   `.sebrain v4` migrates to v5. Legacy count background uses an explicit
   one-exposure/one-compatibility-unit normalization because elapsed time was not
   present, and materialized targets are reconstructed from the persisted graph.
-- Focused language tests: **23 passed**; critical regressions: **145 passed**;
-  full pytest: **274 passed**; Release native build: **PASS**; CTest: **2/2**.
+- Focused language tests: **25 passed**; critical regressions: **145 passed**;
+  full pytest: **276 passed**; Release native build: **PASS**; CTest: **2/2**.
 - No-language `PYTHONHASHSEED=1/77` trajectory remains deterministic with digest
   `e334137aab48aac629c9ac0d4dbc77ea8ec7f51203acda0c970a9bb647c3d731`;
   the real embodied curriculum is also identical under both hash seeds.
