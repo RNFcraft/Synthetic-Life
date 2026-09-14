@@ -176,3 +176,16 @@ class LanguageLexicon:
         return obj
     def restore_legacy_grounding(self,tracker):
         if getattr(self,"_legacy_grounding",None) is not None:tracker.restore_durable(self._legacy_grounding)
+    def on_cognit_deleted(self,cognit_id):
+        dead_tokens=[token for token,symbol in self.symbols.items() if symbol==cognit_id]
+        for token in dead_tokens:
+            self.symbols.pop(token,None);self.exposures.pop(token,None);self.grounded_trials.pop(token,None);self.evidence.pop(token,None);self.materialized.pop(token,None)
+        self.sequence_support.pop(cognit_id,None);self.sequence_trials.pop(cognit_id,None);self.sequence_materialized.pop(cognit_id,None)
+        for source in tuple(self.sequence_support):
+            self.sequence_support[source].pop(cognit_id,None)
+            if not self.sequence_support[source]:self.sequence_support.pop(source,None)
+        for source in tuple(self.sequence_materialized):
+            self.sequence_materialized[source].discard(cognit_id)
+            if not self.sequence_materialized[source]:self.sequence_materialized.pop(source,None)
+        for token in tuple(self.evidence):
+            self.evidence[token].pop(cognit_id,None);self.materialized.setdefault(token,set()).discard(cognit_id)

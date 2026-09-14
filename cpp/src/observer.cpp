@@ -18,7 +18,7 @@ namespace {
 constexpr float kPadding = 16.0f;
 
 const std::array<std::uint8_t,7>& glyph(char c){
-    static const std::array<std::uint8_t,7> blank{};
+    static const std::array<std::uint8_t,7> fallback{31,17,2,4,0,4,0};
     static const std::unordered_map<char,std::array<std::uint8_t,7>> g={
       {'A',{14,17,17,31,17,17,17}},{'B',{30,17,17,30,17,17,30}},{'C',{14,17,16,16,16,17,14}},
       {'D',{30,17,17,17,17,17,30}},{'E',{31,16,16,30,16,16,31}},{'G',{14,17,16,23,17,17,15}},
@@ -31,7 +31,7 @@ const std::array<std::uint8_t,7>& glyph(char c){
       {'3',{30,1,1,14,1,1,30}},{'4',{2,6,10,18,31,2,2}},{'5',{31,16,16,30,1,1,30}},
       {'6',{14,16,16,30,17,17,14}},{'7',{31,1,2,4,8,8,8}},{'8',{14,17,17,14,17,17,14}},
       {'9',{14,17,17,15,1,1,14}},{'.',{0,0,0,0,0,4,4}},{':',{0,4,4,0,4,4,0}},{'-',{0,0,0,31,0,0,0}},{'/',{1,2,2,4,8,8,16}}
-    };auto it=g.find(c);return it==g.end()?blank:it->second;
+    };auto it=g.find(c);return it==g.end()?fallback:it->second;
 }
 
 std::pair<float, float> direction_for(char orientation) {
@@ -148,8 +148,8 @@ public:
 };
 
 NativeObserver::NativeObserver(int width, int height) : impl_(std::make_unique<Impl>(width, height)) { impl_->initialize(); }
-NativeObserver::NativeObserver(std::shared_ptr<RenderSnapshotChannel> channel, std::shared_ptr<BrainSnapshotChannel> brain, int width, int height)
-    : impl_(std::make_unique<Impl>(width, height)), source_(std::make_shared<ChannelSnapshotSource>(std::move(channel))), brain_(std::move(brain)) {}
+NativeObserver::NativeObserver(std::shared_ptr<RenderSnapshotChannel> channel, std::shared_ptr<BrainSnapshotChannel> brain,std::shared_ptr<DialogueSnapshotChannel> dialogue, int width, int height)
+    : impl_(std::make_unique<Impl>(width, height)), source_(std::make_shared<ChannelSnapshotSource>(std::move(channel))), brain_(std::move(brain)),dialogue_(std::move(dialogue)) {}
 NativeObserver::~NativeObserver() { stop(); }
 bool NativeObserver::is_open() const { return impl_ && impl_->open; }
 
@@ -168,16 +168,18 @@ void NativeObserver::render(const RenderSnapshot& snapshot) {
     glViewport(0, 0, width, height);
     glClearColor(0.055f, 0.075f, 0.10f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT);
-    const int dashboard=std::clamp(int(width*.28f),240,std::max(240,width-240));const int world_width=std::max(1,width-dashboard);
+    const int dialogue_width=std::clamp(int(width*.21f),120,std::max(120,width-480));const int dashboard=std::clamp(int(width*.27f),220,std::max(220,width-dialogue_width-240));const int world_width=std::max(1,width-dialogue_width-dashboard);
     const auto draw_data = prepare_draw_data(snapshot, world_width, height);
     glEnable(GL_SCISSOR_TEST);
     auto rect=[&](int x,int y,int w,int h,float r,float g,float b){if(w<=0||h<=0)return;glScissor(x,height-y-h,w,h);glClearColor(r,g,b,1);glClear(GL_COLOR_BUFFER_BIT);};
     auto text=[&](int x,int y,const std::string&s,int scale,float r,float g,float b){int pen=x;for(char c:s){if(c==' '){pen+=6*scale;continue;}auto const&bits=glyph(c);for(int row=0;row<7;++row)for(int col=0;col<5;++col)if(bits[row]&(1<<(4-col)))rect(pen+col*scale,y+row*scale,scale,scale,r,g,b);pen+=6*scale;}};
-    rect(8,8,world_width-16,height-16,.075f,.10f,.13f);rect(world_width+8,8,dashboard-16,height-16,.07f,.09f,.115f);
-    const int brain_x=world_width+20,brain_y=22,brain_w=dashboard-40,brain_h=std::max(120,int(height*.62f));rect(brain_x,brain_y,brain_w,brain_h,.045f,.065f,.09f);rect(brain_x,brain_y+brain_h+14,brain_w,std::max(20,height-brain_h-58),.055f,.075f,.095f);
+    rect(8,8,dialogue_width-16,height-16,.055f,.075f,.095f);rect(dialogue_width+8,8,world_width-16,height-16,.075f,.10f,.13f);rect(dialogue_width+world_width+8,8,dashboard-16,height-16,.07f,.09f,.115f);
+    const int brain_x=dialogue_width+world_width+20,brain_y=22,brain_w=dashboard-40,brain_h=std::max(120,int(height*.62f));rect(brain_x,brain_y,brain_w,brain_h,.045f,.065f,.09f);rect(brain_x,brain_y+brain_h+14,brain_w,std::max(20,height-brain_h-58),.055f,.075f,.095f);
+    text(18,20,"DIALOGUE",2,.55f,.74f,.86f);
+    if(dialogue_){auto dialogue=dialogue_->latest();if(dialogue){int line_h=15,max_lines=std::max(0,(height-62)/line_h),shown=std::min<int>(max_lines,dialogue->lines.size()),y=height-24-shown*line_h,max_chars=std::max(1,(dialogue_width-34)/6);for(auto it=dialogue->lines.end()-shown;it!=dialogue->lines.end();++it){std::string line=(it->role==DialogueRole::External?"> ":"E> ")+it->text;if((int)line.size()>max_chars)line.resize(max_chars);text(18,y,line,1,it->role==DialogueRole::External?.72f:.48f,it->role==DialogueRole::External?.78f:.82f,it->role==DialogueRole::External?.82f:.65f);y+=line_h;}}}
     for (const auto& primitive : draw_data) {
         if (primitive.kind == DrawPrimitiveKind::grid) {
-            glScissor(static_cast<int>(primitive.x),
+            glScissor(dialogue_width+static_cast<int>(primitive.x),
                       height - static_cast<int>(primitive.y + primitive.height),
                       static_cast<int>(primitive.width), static_cast<int>(primitive.height));
             glClearColor(0.12f, 0.16f, 0.20f, 1.0f);
@@ -185,20 +187,20 @@ void NativeObserver::render(const RenderSnapshot& snapshot) {
             glClearColor(0.19f, 0.24f, 0.29f, 1.0f);
             const auto fit = fit_world_to_viewport(snapshot.world_width, snapshot.world_height, world_width, height);
             for (int x = 0; x <= snapshot.world_width; ++x) {
-                const int line_x = static_cast<int>(fit.origin_x + x * fit.cell_size);
+                const int line_x = dialogue_width+static_cast<int>(fit.origin_x + x * fit.cell_size);
                 glScissor(line_x, height - static_cast<int>(fit.origin_y + fit.grid_height),
                           1, static_cast<int>(fit.grid_height));
                 glClear(GL_COLOR_BUFFER_BIT);
             }
             for (int y = 0; y <= snapshot.world_height; ++y) {
                 const int line_y = height - static_cast<int>(fit.origin_y + y * fit.cell_size);
-                glScissor(static_cast<int>(fit.origin_x), line_y,
+                glScissor(dialogue_width+static_cast<int>(fit.origin_x), line_y,
                           static_cast<int>(fit.grid_width), 1);
                 glClear(GL_COLOR_BUFFER_BIT);
             }
             continue;
         }
-        float x = primitive.x + 2.0f;
+        float x = dialogue_width+primitive.x + 2.0f;
         float y = primitive.y + 2.0f;
         float side = std::max(1.0f, primitive.width - 4.0f);
         if (primitive.kind == DrawPrimitiveKind::object) glClearColor(0.95f, 0.65f, 0.18f, 1.0f);
@@ -258,5 +260,6 @@ std::uint64_t NativeObserver::last_snapshot_event_sequence() const noexcept { re
 std::uint64_t NativeObserver::brain_snapshot_rebuilds() const noexcept { return brain_rebuilds_; }
 RenderSnapshot NativeObserver::latest_snapshot() const { return source_ ? source_->latest() : RenderSnapshot{}; }
 BrainSnapshot NativeObserver::latest_brain_snapshot() const { auto value=brain_?brain_->latest():nullptr;return value?*value:BrainSnapshot{}; }
+DialogueSnapshot NativeObserver::latest_dialogue_snapshot() const { auto value=dialogue_?dialogue_->latest():nullptr;return value?*value:DialogueSnapshot{}; }
 
 } // namespace se

@@ -61,19 +61,22 @@ class ContinuousRuntime:
                 if not self._action_in_flight():self.scheduler.schedule(now,RuntimeEventType.SENSORY_CHANGE)
         elif kind==RuntimeEventType.MAINTENANCE:
             frontier=self.simulation.core.continuous_frontier
-            if frontier is not None and frontier.phase in {"OBSERVED","DELIBERATING","QUIESCENT"}:self.scheduler.schedule(now,RuntimeEventType.MAINTENANCE);return
+            if self.language_frontier is not None or (frontier is not None and frontier.phase in {"OBSERVED","DELIBERATING","QUIESCENT"}):self.scheduler.schedule(now,RuntimeEventType.MAINTENANCE);return
             self.maintenance_ordinal+=1;self.simulation.core.continuous_maintenance(now,self.maintenance_ordinal)
             self.scheduler.schedule(now+self.simulation.settings.continuous_maintenance_interval_seconds,RuntimeEventType.MAINTENANCE)
         elif kind==RuntimeEventType.LANGUAGE_INPUT:
             frame=self.language_inbox[event.payload];frontier=self.simulation.core.continuous_frontier
             if (frontier is not None and not frontier.committed and frontier.phase in {"OBSERVED","DELIBERATING","QUIESCENT"}) or self.language_frontier is not None:
                 self.scheduler.schedule(now,RuntimeEventType.LANGUAGE_INPUT,event.payload);return
-            if isinstance(frame,LanguageFrame):self.simulation.core.process_language(frame);del self.language_inbox[event.payload]
+            if isinstance(frame,LanguageFrame):self._publish_external_dialogue(frame.issued_at_world_time,frame.surface);self.simulation.core.process_language(frame);del self.language_inbox[event.payload]
             else:
-                context=dict(self.simulation.core.grounding_context.eligible(now));self.language_frontier=LanguageUtteranceFrontier(frame,context);self.scheduler.schedule(now,RuntimeEventType.LANGUAGE_CONTINUE,event.payload)
+                self._publish_external_dialogue(frame.issued_at_world_time," ".join(frame.tokens));context=dict(self.simulation.core.grounding_context.eligible(now));self.language_frontier=LanguageUtteranceFrontier(frame,context);self.scheduler.schedule(now,RuntimeEventType.LANGUAGE_CONTINUE,event.payload)
         elif kind==RuntimeEventType.LANGUAGE_CONTINUE:
             frontier=self.language_frontier
             if frontier is None or frontier.frame.message_id!=event.payload:return
+            cognition=self.simulation.core.continuous_frontier
+            if cognition is not None and not cognition.committed and cognition.phase in {"OBSERVED","DELIBERATING","QUIESCENT"}:
+                self.scheduler.schedule(now,RuntimeEventType.LANGUAGE_CONTINUE,event.payload);return
             if frontier.phase=="TOKEN":
                 index=frontier.next_token_index;token=frontier.frame.tokens[index];result=self.simulation.core.process_language_token(LanguageFrame(frontier.frame.message_id,frontier.frame.issued_at_world_time,token),frontier.grounding_context);frontier.processed_symbol_ids.append(result.symbol_id);frontier.token_results.append(result);frontier.next_token_index+=1;self.language_tokens_processed+=1
                 if frontier.next_token_index==len(frontier.frame.tokens):frontier.phase="COMPOSE"
@@ -94,6 +97,7 @@ class ContinuousRuntime:
         if when<self.world_time:raise ValueError("language input cannot precede current WorldTime")
         message_id=self.next_language_message_id;frame=LanguageUtteranceFrame(message_id,when,tokens)
         self.next_language_message_id+=1;self.language_inbox[message_id]=frame;self.scheduler.schedule(when,RuntimeEventType.LANGUAGE_INPUT,message_id);return message_id
+    def _publish_external_dialogue(self,world_time,text):self.simulation.core.backend.engine.publish_dialogue_line(float(world_time),1,text)
     def _sensory_signature(self):
         cells,body=self.simulation.world.native.perceive(self.observation_ordinal,0)
         return tuple(cells),tuple(body)

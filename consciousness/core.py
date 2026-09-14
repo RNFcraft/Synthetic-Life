@@ -498,4 +498,4 @@ class SyntheticEntityCore:
                 if node.pattern.selectivity_trials:self._selectivity_sum-=node.pattern.match_selectivity;self._selectivity_count-=1
                 self.pattern_nodes.pop(node.pattern.signature,None)
                 for p in node.pattern.participants:self.primitive_index[p].discard(node_id)
-            self.graph.remove_cognit(node_id);self.events.append(f"COGNIT_DELETED κ{node_id}")
+            self.graph.remove_cognit(node_id);self.language.on_cognit_deleted(node_id);self.events.append(f"COGNIT_DELETED κ{node_id}")

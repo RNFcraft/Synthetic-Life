@@ -2,6 +2,7 @@
 
 #include "se/render_snapshot.hpp"
 #include "se/brain_snapshot.hpp"
+#include "se/dialogue_snapshot.hpp"
 
 #include <memory>
 #include <atomic>
@@ -58,7 +59,7 @@ private: std::shared_ptr<RenderSnapshotChannel> channel_;
 class NativeObserver {
 public:
     NativeObserver(int width = 960, int height = 720);
-    explicit NativeObserver(std::shared_ptr<RenderSnapshotChannel> channel, std::shared_ptr<BrainSnapshotChannel> brain = {}, int width = 1100, int height = 720);
+    explicit NativeObserver(std::shared_ptr<RenderSnapshotChannel> channel, std::shared_ptr<BrainSnapshotChannel> brain = {},std::shared_ptr<DialogueSnapshotChannel> dialogue = {}, int width = 1100, int height = 720);
     ~NativeObserver();
     NativeObserver(const NativeObserver&) = delete;
     NativeObserver& operator=(const NativeObserver&) = delete;
@@ -77,12 +78,14 @@ public:
     std::uint64_t brain_snapshot_rebuilds() const noexcept;
     RenderSnapshot latest_snapshot() const;
     BrainSnapshot latest_brain_snapshot() const;
+    DialogueSnapshot latest_dialogue_snapshot() const;
 
 private:
     class Impl;
     std::unique_ptr<Impl> impl_;
     std::shared_ptr<SnapshotSource> source_;
     std::shared_ptr<BrainSnapshotChannel> brain_;
+    std::shared_ptr<DialogueSnapshotChannel> dialogue_;
     std::thread thread_;
     std::atomic<bool> running_{false};
     std::atomic<std::uint64_t> frames_{0};
