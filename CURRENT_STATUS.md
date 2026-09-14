@@ -1,4 +1,40 @@
-# Synthetic Entity v0.5.4 — Current Status
+# Synthetic Entity v0.5.5 — Current Status
+
+## LANGUAGE PASS 2 — MULTI-TOKEN SEQUENCE + BASIC COMPOSITIONAL RETRIEVAL
+
+LANGUAGE PASS 2 — MULTI-TOKEN SEQUENCE + BASIC COMPOSITIONAL RETRIEVAL: PASS
+
+- Immutable `LanguageUtteranceFrame` accepts only externally segmented exact
+  NFC symbols, with a maximum of **16** tokens. A string is not treated as a
+  tokenized utterance; the frozen single-token API delegates to Pass 1.
+- Multi-token work uses one persistable `LanguageUtteranceFrontier`. Each token
+  consumes one continuation/cognitive tick, followed by one COMPOSE
+  continuation/tick, all at the utterance's unchanged WorldTime. Utterances do
+  not interleave.
+- One embodied context is frozen at utterance arrival and reused for every
+  token. Token waves cannot become grounding input for later tokens. Pure
+  multi-token retrieval leaves Pass-1 embodied evidence unchanged.
+- Python maintains bounded directional adjacency evidence (minimum support
+  **2**, confidence k **3.0**, at most **64** candidates/source). A finalization
+  batch materializes ordinary LANGUAGE_SYMBOL `SEQUENTIAL` Relations under the
+  existing global Cognit/Relation budgets.
+- Composition is the deterministic union of non-language Cognits retrieved by
+  constituent token waves. There are no phrase Cognits, phrase dictionaries,
+  grammar roles, command mappings, Goals, or ActionIntents.
+- First-ever pair retrieval, real embodied constituent composition, unseen
+  combination generalization, order permutation, duplicate/unknown tokens,
+  frozen-context isolation, capacity pressure and evidence order invariance:
+  **PASS**.
+- `.seworld` schema **v7** persists pending utterances and exact mid-utterance
+  execution state; real v6 single-token worlds migrate without graph mutation.
+  `.sebrain` schema **v6** transfers sequence evidence/materialized bookkeeping;
+  real Pass-1 v5 brains migrate with empty sequence evidence.
+- Focused Pass-2 tests: **13 passed**; frozen Pass-1 tests: **25 passed**;
+  critical regressions: **145 passed**; full pytest: **289 passed**; Release
+  native build: **PASS**; CTest: **2/2**.
+- `full_graph_sync_calls == 0`; no-language digest remains
+  `e334137aab48aac629c9ac0d4dbc77ea8ec7f51203acda0c970a9bb647c3d731`;
+  utterance curriculum is identical under `PYTHONHASHSEED=1/77`.
 
 ## LANGUAGE PASS 1.1 — EMBODIED GROUNDING HARDENING
 

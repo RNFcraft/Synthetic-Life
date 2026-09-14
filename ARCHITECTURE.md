@@ -1,8 +1,8 @@
-# Synthetic Entity Architecture — v0.5.4
+# Synthetic Entity Architecture — v0.5.5
 
 Synthetic Entity is an experimental embodied cognitive architecture built around a sparse, continuously changing graph of Cognits (`κ`) and Relations (`ρ`). It is not a Transformer/LLM inference loop and does not depend on a frozen policy network. The current system learns through persistent predictive, causal, spatial, and goal-directed state that changes during interaction with the world.
 
-The v0.5.2 runtime remains the frozen compatibility oracle. v0.5.4 retains the
+The v0.5.2 runtime remains the frozen compatibility oracle. v0.5.5 retains the
 v0.5.3 continuous float64/event-driven architecture and adds receptive embodied
 symbol grounding while preserving legacy differential oracles.
 
@@ -252,7 +252,7 @@ Stores durable learned cognition and the native `NBRN` graph payload.
 
 ### `.seworld`
 
-Continuous `.seworld` schema v6 stores the exact execution frontier, including:
+Continuous `.seworld` schema v7 stores the exact execution frontier, including:
 
 - scheduler time, IDs and pending events;
 - native World state;
@@ -275,14 +275,14 @@ The current accepted v0.5.4 cognition frontier has:
 
 - `ELAPSED-TIME LAZY COGNITION: PASS`;
 - `TRUE EVENT-DRIVEN COGNITION FRONTIER: PASS`;
-- full pytest: 274 passed;
+- full pytest: 289 passed;
 - CTest Release: 2/2 passed;
 - identical deterministic trajectory digest for `PYTHONHASHSEED=1` and `77`;
 - `full_graph_sync_calls == 0`;
 - normal native Python physical World calls: 0;
 - renderer sampling invariance: PASS.
 
-The v0.5.2 benchmark/freeze data remains the performance/compatibility baseline. Long v0.5.4 5K/10K benchmarks have intentionally not been rerun during the correctness migration.
+The v0.5.2 benchmark/freeze data remains the performance/compatibility baseline. Long v0.5.5 5K/10K benchmarks have intentionally not been rerun during the correctness migration.
 
 ## 13. Observer/rendering architecture
 
@@ -364,7 +364,32 @@ materialized target bookkeeping from persisted ASSOCIATIVE Relations.
 This pass implements neither sentences, syntax, commands, production nor a
 pretrained linguistic representation.
 
-## 15. Current roadmap
+## 15. Ordered exact-symbol sequence and basic composition
+
+Pass 2 adds immutable externally segmented utterances and a persistable
+same-WorldTime execution frontier. Each continuation performs exactly one token
+or one final COMPOSE work item. The utterance captures one embodied grounding
+context before token processing, preventing earlier token waves from becoming
+later-token grounding evidence.
+
+After all constituent waves exist, Python records only adjacent directional
+symbol pairs and derives deterministic bounded evidence. The generic native
+coarse batch materializes ordinary `SEQUENTIAL` Relations while preserving
+global resource limits and native numeric authority. No adjacency crosses an
+utterance boundary.
+
+`LanguageUtteranceResult` retains token order, constituent results, observed
+adjacency and the union of retrieved non-language Cognits. It creates neither a
+phrase Cognit nor phrase-specific meaning. Consequently first-ever combinations
+compose from existing constituent ASSOCIATIVE semantics before same-utterance
+sequence learning. This is not grammar, syntax induction, commands, or natural
+language understanding.
+
+`.seworld v7` persists the active utterance frontier and resumes the next token
+exactly once; `.sebrain v6` persists durable sequence evidence. The respective
+v6-world and v5-brain migrations preserve frozen Pass-1 state.
+
+## 16. Current roadmap
 
 ```text
 v0.5.2 frozen native compatibility baseline                    DONE
@@ -374,10 +399,11 @@ v0.5.2 frozen native compatibility baseline                    DONE
     -> native C++ SDL3/OpenGL observer                           DONE
     -> bounded GPU brain-view scaling                            DONE
     -> receptive symbol grounding                               DONE
-    -> multi-token compositional grounding                      NEXT
+    -> multi-token sequence/basic composition                   DONE
+    -> relational compositional grounding                       NEXT
     -> continuous multi-entity runtime
     -> full 3D World
     -> Entity visual/retina/gaze input
 ```
 
-The next language gate is `MULTI-TOKEN SEQUENCE + COMPOSITIONAL GROUNDING`.
+The next language gate is `RELATIONAL COMPOSITIONAL GROUNDING`.

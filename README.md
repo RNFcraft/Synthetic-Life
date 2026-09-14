@@ -2,7 +2,7 @@
 
 Synthetic-Life is an experimental embodied cognitive architecture built around a sparse, continuously changing graph of Cognits (`κ`) and Relations (`ρ`). The project is not an LLM/Transformer inference wrapper and does not use a frozen policy network as its learned core. Learning, prediction, memory, goals and action selection evolve during interaction with the World.
 
-The current development line is **v0.5.4**.
+The current development line is **v0.5.5**.
 
 Current accepted gates:
 
@@ -154,9 +154,9 @@ ctest --test-dir cpp/build -C Release --output-on-failure
 python -m pytest -q
 ```
 
-Current repository-reported acceptance state for v0.5.4:
+Current repository-reported acceptance state for v0.5.5:
 
-- full pytest: **274 passed**
+- full pytest: **289 passed**
 - CTest Release: **2/2 passed**
 - deterministic `PYTHONHASHSEED=1/77` trajectory digest: identical
 - `full_graph_sync_calls == 0`
@@ -203,11 +203,27 @@ The project uses two main persistence surfaces:
 - `.sebrain` — durable learned cognition/native brain payload;
 - `.seworld` — exact continuous World and execution frontier.
 
-Continuous `.seworld` schema v6 includes the scheduler, unfinished cognition
-frontier, absolute spawn/maintenance frontiers, exact grounding
-current/historical frontier, and pending language inbox. It migrates the real
-previous-language v5 lexicon schema. `.sebrain` v5 likewise migrates the real
-previous-language v4 `LANG` schema while starting a clean episode.
+Continuous `.seworld` schema v7 includes the scheduler, unfinished cognition
+frontier, absolute spawn/maintenance frontiers, exact grounding frontier,
+pending ordered utterances, and a resumable token cursor. It migrates v6
+single-token worlds. `.sebrain` v6 stores durable grounding and bounded
+SEQUENTIAL adjacency evidence while starting a clean episode; v5 Pass-1 brains
+migrate with no invented sequence evidence.
+
+## Ordered utterances and basic composition
+
+Pass 2 accepts externally segmented exact-token tuples such as
+`("dax", "wug")`. All tokens retain one external WorldTime and one frozen
+embodied context, but execute as separate resumable cognitive work items. After
+constituent retrieval, a final work item records adjacent directional
+LANGUAGE_SYMBOL `SEQUENTIAL` evidence.
+
+The composed result is only the union of non-language Cognits retrieved through
+the constituents' already learned ASSOCIATIVE Relations. Thus a first-ever
+combination can retrieve both learned meanings before its first adjacency is
+recorded. This proves ordered exact-symbol processing and basic constituent
+composition—not grammar, syntax induction, phrase concepts, commands, or
+general natural-language understanding.
 Save/load remains behaviorally observational.
 
 ## Project status and roadmap
@@ -220,7 +236,8 @@ v0.5.2 native frozen baseline                    DONE
     -> C++ SDL3/OpenGL native observer             DONE
     -> bounded GPU brain-view scaling              DONE
     -> receptive symbol grounding                  DONE
-    -> multi-token compositional grounding         NEXT
+    -> multi-token sequence/basic composition      DONE
+    -> relational compositional grounding          NEXT
     -> continuous multi-entity runtime
     -> full 3D World
     -> Entity visual/retina/gaze input

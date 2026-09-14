@@ -145,14 +145,14 @@ def test_real_previous_language_seworld_v5_migration(tmp_path):
     lex=loaded.simulation.core.language;assert lex.symbols==old["symbols"] and lex.exposures==old["exposures"] and message in loaded.language_inbox
     assert lex.grounded_trials["dax"]==old["exposures"]["dax"] and loaded.simulation.core.grounding_context.total_experience_time==old["total_exposures"]
     assert [tuple(r._values) for r in loaded.simulation.core.graph.outgoing(source)]==before and lex.materialized["dax"]
-    upgraded=tmp_path/"upgraded.seworld";loaded.save_world(upgraded);assert load_container(upgraded,"world",{"META","STATE","CONT","NBRN"})["META"]["version"]==6
+    upgraded=tmp_path/"upgraded.seworld";loaded.save_world(upgraded);assert load_container(upgraded,"world",{"META","STATE","CONT","NBRN"})["META"]["version"]==7
 
 
 def test_real_previous_language_sebrain_v4_and_pre_language_migration(tmp_path):
     runtime,_,_=_embodied({"A":"dax","B":"blicket"});old=_old_lexicon(runtime.simulation.core);brain=tmp_path/"new.sebrain";runtime.simulation.save_brain(brain);sections=load_container(brain,"brain",{"META","COGN","RELA","PATT","SPAT","BELS","LEAR","LANG","NBRN"});sections["META"]["version"]=4;sections["LANG"]=old;old_brain=tmp_path/"v4-language.sebrain";save_container(old_brain,"brain",sections,{"LANG","NBRN"});fresh=runtime.simulation.__class__(659,backend="native");fresh.load_brain(old_brain)
     assert fresh.core.language.symbols==old["symbols"] and fresh.core.language.materialized["dax"] and fresh.core.grounding_context.total_experience_time==old["total_exposures"]
     fresh.core.grounding_context.latest=None;fresh.core.grounding_context.historical.clear();cue_time=fresh.core.memory.world_time_seconds or 0.;fresh.core.process_language(LanguageFrame(100,cue_time,"dax"));assert fresh.core.language.last_language_wave_active_ids
-    upgraded=tmp_path/"upgraded.sebrain";fresh.save_brain(upgraded);assert load_container(upgraded,"brain",{"META","COGN","RELA","PATT","SPAT","BELS","LEAR","LANG","NBRN"})["META"]["version"]==5
+    upgraded=tmp_path/"upgraded.sebrain";fresh.save_brain(upgraded);assert load_container(upgraded,"brain",{"META","COGN","RELA","PATT","SPAT","BELS","LEAR","LANG","NBRN"})["META"]["version"]==6
     sections["LANG"]={};empty=tmp_path/"v4-empty.sebrain";save_container(empty,"brain",sections,{"LANG","NBRN"});blank=runtime.simulation.__class__(660,backend="native");blank.load_brain(empty);assert blank.core.language.symbols=={} and not blank.core.grounding_context.recent
 
 

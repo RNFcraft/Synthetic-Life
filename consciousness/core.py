@@ -163,9 +163,13 @@ class SyntheticEntityCore:
         self._observe(frame,world_time,False,generation)
 
     def process_language(self,frame):
+        context=self.grounding_context.eligible(frame.issued_at_world_time)
+        return self.process_language_token(frame,context)
+
+    def process_language_token(self,frame,context):
         self.world_time_seconds=frame.issued_at_world_time;self.memory.set_world_time(frame.issued_at_world_time)
         if self.backend:self.backend.begin_continuous_time(frame.issued_at_world_time)
-        context=self.grounding_context.eligible(frame.issued_at_world_time);self.cognitive_tick+=1
+        self.cognitive_tick+=1
         symbol,candidates,created=self.language.learn(frame,context,self.grounding_context)
         if symbol is None:wave=WaveResult(frozenset(),0.,0)
         else:

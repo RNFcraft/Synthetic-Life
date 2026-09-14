@@ -12,6 +12,13 @@ class LanguageFrame:
     message_id:int;issued_at_world_time:float;surface:str
     def __post_init__(self):object.__setattr__(self,"surface",normalize_token(self.surface))
 @dataclass(frozen=True,slots=True)
+class LanguageUtteranceFrame:
+    message_id:int;issued_at_world_time:float;tokens:tuple[str,...]
+    def __post_init__(self):
+        normalized=tuple(normalize_token(x) for x in self.tokens)
+        if not normalized:raise ValueError("LanguageUtteranceFrame requires at least one token")
+        object.__setattr__(self,"tokens",normalized)
+@dataclass(frozen=True,slots=True)
 class GroundingContextEntry:cognit_id:int;salience:float
 @dataclass(frozen=True,slots=True)
 class GroundingContextSnapshot:world_time:float;observation_generation:int;entries:tuple[GroundingContextEntry,...]
@@ -19,6 +26,15 @@ class GroundingContextSnapshot:world_time:float;observation_generation:int;entri
 class HistoricalGroundingContext:snapshot:GroundingContextSnapshot;retired_at_world_time:float
 @dataclass(frozen=True,slots=True)
 class LanguageProcessingResult:symbol_id:int|None;wave:WaveResult;grounding_candidates_updated:int;grounding_relations_materialized:int
+@dataclass(frozen=True,slots=True)
+class LanguageUtteranceResult:
+    message_id:int;world_time:float;tokens:tuple[str,...];ordered_symbol_ids:tuple[int|None,...];token_results:tuple[LanguageProcessingResult,...];sequence_edges:tuple[tuple[int,int],...];composed_active_ids:frozenset[int];token_count:int
+@dataclass(slots=True)
+class LanguageUtteranceFrontier:
+    frame:LanguageUtteranceFrame;grounding_context:dict[int,float];next_token_index:int=0;processed_symbol_ids:list[int|None]=None;token_results:list[LanguageProcessingResult]=None;phase:str="TOKEN"
+    def __post_init__(self):
+        if self.processed_symbol_ids is None:self.processed_symbol_ids=[]
+        if self.token_results is None:self.token_results=[]
 
 def normalize_token(surface:str)->str:
     token=unicodedata.normalize("NFC",surface.strip())
@@ -67,7 +83,7 @@ class GroundingContextTracker:
 
 class LanguageLexicon:
     """Identity and bounded evidence only; Relations carry learned meaning."""
-    def __init__(self,core):self.core=core;self.symbols={};self.exposures={};self.grounded_trials={};self.evidence={};self.materialized={};self.total_exposures=0;self.grounding_relations_materialized=0;self.last_language_symbol_id=None;self.last_language_wave_active_ids=frozenset();self.outgoing_scans=0;self.native_relation_batch_calls=0
+    def __init__(self,core):self.core=core;self.symbols={};self.exposures={};self.grounded_trials={};self.evidence={};self.materialized={};self.sequence_support={};self.sequence_trials={};self.sequence_materialized={};self.total_exposures=0;self.grounding_relations_materialized=0;self.sequence_relations_materialized=0;self.last_language_symbol_id=None;self.last_language_wave_active_ids=frozenset();self.outgoing_scans=0;self.native_relation_batch_calls=0;self.native_sequence_batch_calls=0
     def symbol(self,surface):
         node_id=self.symbols.get(surface)
         if node_id is not None and node_id not in self.core.graph.nodes:self.symbols.pop(surface,None);self.exposures.pop(surface,None);self.grounded_trials.pop(surface,None);self.evidence.pop(surface,None);self.materialized.pop(surface,None);node_id=None
@@ -109,22 +125,54 @@ class LanguageLexicon:
             if row[0] in known:out.append(row)
             elif new_budget:out.append(row);new_budget-=1
         return out
+    def learn_sequence(self,symbol_ids):
+        pairs=[]
+        for source,target in zip(symbol_ids,symbol_ids[1:]):
+            if source is None or target is None:continue
+            pairs.append((source,target));self.sequence_trials[source]=self.sequence_trials.get(source,0)+1;rows=self.sequence_support.setdefault(source,{});rows[target]=rows.get(target,0)+1
+        touched=sorted(set(source for source,_ in pairs));all_updates=[]
+        for source in touched:
+            rows=self.sequence_support[source];known=self.sequence_materialized.setdefault(source,set());cap=self.core.settings.language_max_sequence_candidates_per_symbol
+            ranked=sorted((target for target in rows if target not in known),key=lambda target:(-rows[target],-(rows[target]/self.sequence_trials[source]),target))
+            for target in ranked[cap:]:rows.pop(target,None)
+            updates=[]
+            for target in sorted(rows):
+                support=rows[target];probability=support/max(1,self.sequence_trials[source]);confidence=support/(support+self.core.settings.language_sequence_confidence_k)
+                if target not in known and support<self.core.settings.language_sequence_min_support:continue
+                updates.append((target,2,0,probability*confidence,confidence,probability,support,1.))
+            if updates:all_updates.append((source,updates))
+        made=0
+        for source,updates in all_updates:
+            available=max(0,self.core.settings.max_new_relations_per_tick-made)
+            if not available and not any(row[0] in self.sequence_materialized[source] for row in updates):continue
+            self.core.backend.ffi_calls+=1;self.core.backend.language_relation_batch_calls+=1;self.native_relation_batch_calls+=1;self.native_sequence_batch_calls+=1
+            created={int(i)+1 for i in self.core.backend.engine.upsert_relation_states_batch(source-1,updates,available,self.core.settings.max_relations)};made+=len(created);self.sequence_materialized[source].update(created)
+        self.sequence_relations_materialized+=made
+        return tuple(pairs),made
     @property
     def language_symbol_count(self):return len(self.symbols)
     @property
     def language_exposures(self):return self.total_exposures
     @property
     def grounding_candidates(self):return sum(map(len,self.evidence.values()))
-    def to_dict(self):return {"symbols":dict(sorted(self.symbols.items())),"exposures":dict(sorted(self.exposures.items())),"grounded_trials":dict(sorted(self.grounded_trials.items())),"evidence":{k:[[i,n,m] for i,(n,m) in sorted(v.items())] for k,v in sorted(self.evidence.items())},"materialized":{k:sorted(v) for k,v in sorted(self.materialized.items())},"total_exposures":self.total_exposures,"grounding_relations_materialized":self.grounding_relations_materialized}
+    @property
+    def sequence_candidates(self):return sum(map(len,self.sequence_support.values()))
+    def to_dict(self):return {"symbols":dict(sorted(self.symbols.items())),"exposures":dict(sorted(self.exposures.items())),"grounded_trials":dict(sorted(self.grounded_trials.items())),"evidence":{k:[[i,n,m] for i,(n,m) in sorted(v.items())] for k,v in sorted(self.evidence.items())},"materialized":{k:sorted(v) for k,v in sorted(self.materialized.items())},"sequence_support":[[s,t,n] for s,rows in sorted(self.sequence_support.items()) for t,n in sorted(rows.items())],"sequence_trials":[[s,n] for s,n in sorted(self.sequence_trials.items())],"sequence_materialized":[[s,sorted(v)] for s,v in sorted(self.sequence_materialized.items())],"total_exposures":self.total_exposures,"grounding_relations_materialized":self.grounding_relations_materialized,"sequence_relations_materialized":self.sequence_relations_materialized}
     @classmethod
     def from_dict(cls,core,data):
         obj=cls(core);data=data or {};obj.symbols={str(k):int(v) for k,v in data.get("symbols",{}).items()};obj.exposures={str(k):int(v) for k,v in data.get("exposures",{}).items()};legacy="support" in data and "evidence" not in data
         obj.grounded_trials=({k:int(obj.exposures.get(k,0)) for k in obj.symbols} if legacy else {str(k):int(v) for k,v in data.get("grounded_trials",{}).items()})
         if legacy:obj.evidence={str(k):{int(i):(int(n),float(n)) for i,n in rows} for k,rows in data.get("support",{}).items()}
         else:obj.evidence={str(k):{int(i):(int(n),float(m)) for i,n,m in rows} for k,rows in data.get("evidence",{}).items()}
-        obj.materialized={str(k):set(map(int,v)) for k,v in data.get("materialized",{}).items()};obj.total_exposures=int(data.get("total_exposures",0));obj.grounding_relations_materialized=int(data.get("grounding_relations_materialized",0));obj._legacy_grounding=({"background_mass":[[int(i),float(n)] for i,n in data.get("background",[])],"total_experience_time":float(data.get("total_exposures",0))} if legacy else None)
+        obj.materialized={str(k):set(map(int,v)) for k,v in data.get("materialized",{}).items()};obj.sequence_support={};
+        for s,t,n in data.get("sequence_support",[]):obj.sequence_support.setdefault(int(s),{})[int(t)]=int(n)
+        obj.sequence_trials={int(s):int(n) for s,n in data.get("sequence_trials",[])};obj.sequence_materialized={int(s):set(map(int,v)) for s,v in data.get("sequence_materialized",[])};obj.total_exposures=int(data.get("total_exposures",0));obj.grounding_relations_materialized=int(data.get("grounding_relations_materialized",0));obj.sequence_relations_materialized=int(data.get("sequence_relations_materialized",0));obj._legacy_grounding=({"background_mass":[[int(i),float(n)] for i,n in data.get("background",[])],"total_experience_time":float(data.get("total_exposures",0))} if legacy else None)
         if legacy or "materialized" not in data:
             for token,source in obj.symbols.items():obj.materialized[token]={r.target_id for r in core.graph.outgoing(source) if r.relation_type.name=="ASSOCIATIVE"}
+        if "sequence_materialized" not in data:
+            for source in obj.symbols.values():
+                targets={r.target_id for r in core.graph.outgoing(source) if r.relation_type.name=="SEQUENTIAL" and r.target_id in obj.symbols.values()}
+                if targets:obj.sequence_materialized[source]=targets
         return obj
     def restore_legacy_grounding(self,tracker):
         if getattr(self,"_legacy_grounding",None) is not None:tracker.restore_durable(self._legacy_grounding)
