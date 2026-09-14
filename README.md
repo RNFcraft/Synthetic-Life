@@ -2,7 +2,7 @@
 
 Synthetic-Life is an experimental embodied cognitive architecture built around a sparse, continuously changing graph of Cognits (`κ`) and Relations (`ρ`). The project is not an LLM/Transformer inference wrapper and does not use a frozen policy network as its learned core. Learning, prediction, memory, goals and action selection evolve during interaction with the World.
 
-The current development line is **v0.5.7**.
+The current development line is **v0.6.0**.
 
 Current accepted gates:
 
@@ -13,6 +13,22 @@ Current accepted gates:
 - **NATIVE C++ SDL3/OPENGL OBSERVER — PASS**
 
 See [ARCHITECTURE.md](ARCHITECTURE.md) for the full architecture and [CURRENT_STATUS.md](CURRENT_STATUS.md) for the latest acceptance state.
+
+## v0.6.0 micro-neurodynamic substrate
+
+The native backend now owns an isolated `NeurodynamicSubstrate`: event-driven
+micro-κ nodes and fixed micro-ρ edges below the existing Cognit/Relation
+system. Micro-κ / micro-ρ are **not** existing Cognits/Relations, and there is
+no causal connection to cognition, language, Goals, World, or the observer in
+this version.
+
+It has float64 continuous neural time, deterministic `(time, sequence)` event
+ordering, delayed signed fixed-weight delivery, same-time aggregation, lazy
+membrane/adaptation decay, refractory handling, and snapshot/restore for
+research experiments. Its physiology constants are innate substrate physics,
+not learned knowledge. A normal runtime owns an empty substrate, so it does no
+periodic neural update or neural work when inactive. There is no plasticity,
+STDP, assembly detection, or Cognit coupling in v0.6.0.
 
 ## Current runtime model
 
@@ -154,9 +170,10 @@ ctest --test-dir cpp/build -C Release --output-on-failure
 python -m pytest -q
 ```
 
-Current repository-reported acceptance state for v0.5.7:
+Current repository-reported acceptance state for v0.6.0:
 
-- full pytest: **315 passed**
+- focused micro-neurodynamic suite: **8 passed**
+- full pytest: **323 passed**
 - CTest Release: **2/2 passed**
 - deterministic `PYTHONHASHSEED=1/77` trajectory digest: identical
 - `full_graph_sync_calls == 0`

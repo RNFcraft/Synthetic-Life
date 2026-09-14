@@ -1,4 +1,31 @@
-# Synthetic Entity v0.5.7 — Current Status
+# Synthetic Entity v0.6.0 — Current Status
+
+## v0.6.0 — NATIVE EVENT-DRIVEN MICRO-NEURODYNAMIC SUBSTRATE
+
+**PASS — isolated native substrate accepted.**
+
+- Native `NeurodynamicSubstrate` supplies SoA micro-κ state, stable monotonic
+  IDs, fixed delayed signed micro-ρ edges, float64 continuous neural time, and
+  a deterministic `(time, sequence)` native event queue. Same-time events are
+  deterministically aggregated per target; lazy leak/adaptation touches only
+  affected micro-κ; refractory deliveries are discarded and counted.
+- It is owned by `NativeBrainEngine` and is empty by default. It has no global
+  neural tick, Python per-event callback, Cognit/Relation coupling, plasticity,
+  STDP, assemblies, World, language, Goal, motor, or sensory integration.
+  Physiology constants are innate substrate physics. Snapshot/restore exactly
+  preserves neural continuation only; `.sebrain v6` and `.seworld v7` are
+  intentionally unchanged.
+- Focused native/Python micro-neurodynamic tests: **8 passed** — analytical lazy
+  leak, excitation, inhibition/same-time aggregation, delayed chain,
+  refractory, adaptation, deterministic replay, snapshot/restore, and silent
+  10,000 micro-κ / 50,000 micro-ρ zero-event-work check.
+- No-language deterministic baseline remains
+  `e334137aab48aac629c9ac0d4dbc77ea8ec7f51203acda0c970a9bb647c3d731`;
+  `full_graph_sync_calls == 0`.
+- Verification: full pytest **323 passed**; Release native build **PASS**;
+  CTest Release **2/2 passed**.
+
+Next: **v0.6.1 — LOCAL PLASTICITY + HOMEOSTASIS** (not started).
 
 ## LANGUAGE PASS 4 — GROUNDED REQUESTS / LANGUAGE -> GOALS
 

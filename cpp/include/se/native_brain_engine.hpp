@@ -3,6 +3,7 @@
 #include "activity_wave.hpp"
 #include "brain_snapshot.hpp"
 #include "dialogue_snapshot.hpp"
+#include "neurodynamic_substrate.hpp"
 #include <unordered_map>
 #include <deque>
 #include <unordered_set>
@@ -21,6 +22,7 @@ public:
   void publish_brain_snapshot(double world_time,std::uint64_t cognitive_tick,std::uint64_t generation,std::span<const std::uint32_t>active);
   std::shared_ptr<BrainSnapshotChannel> brain_snapshot_channel()const{return brain_channel_;}
   std::shared_ptr<DialogueSnapshotChannel> dialogue_snapshot_channel()const{return dialogue_channel_;}
+  NeurodynamicSubstrate& neurodynamic_substrate(){return neurodynamic_;}
   void publish_dialogue(double world_time,DialogueRole role,std::string text){dialogue_channel_->publish(world_time,role,std::move(text));}
   std::uint32_t add_cognit(double activity=0,double threshold=.25,double confidence=.5){auto id=graph_.add_cognit(activity,threshold,confidence);resize_scratch();return id;}
   std::uint32_t add_cognits(std::uint32_t count,double activity=0,double threshold=.25,double confidence=.5){auto first=(std::uint32_t)graph_.cognit_count();for(std::uint32_t i=0;i<count;++i)graph_.add_cognit(activity,threshold,confidence);resize_scratch();return first;}
@@ -83,6 +85,7 @@ public:
 private:
   std::shared_ptr<BrainSnapshotChannel> brain_channel_;
   std::shared_ptr<DialogueSnapshotChannel> dialogue_channel_;
+  NeurodynamicSubstrate neurodynamic_{};
   struct HomeostasisPolicy{std::uint64_t first;double lam,rate,tmin,tmax,activity_decay,utility_decay;};
   std::uint64_t homeostasis_tick_{};
   std::vector<HomeostasisPolicy>homeostasis_policies_;

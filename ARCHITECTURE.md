@@ -1,10 +1,11 @@
-# Synthetic Entity Architecture — v0.5.7
+# Synthetic Entity Architecture — v0.6.0
 
 Synthetic Entity is an experimental embodied cognitive architecture built around a sparse, continuously changing graph of Cognits (`κ`) and Relations (`ρ`). It is not a Transformer/LLM inference loop and does not depend on a frozen policy network. The current system learns through persistent predictive, causal, spatial, and goal-directed state that changes during interaction with the world.
 
 The v0.5.2 runtime remains the frozen compatibility oracle. v0.5.7 retains the
 v0.5.3 continuous float64/event-driven architecture and adds receptive embodied
-symbol grounding while preserving legacy differential oracles.
+symbol grounding while preserving legacy differential oracles. v0.6.0 adds an
+isolated native event-driven micro-neurodynamic substrate below that architecture.
 
 ## 1. Authority split
 
@@ -46,6 +47,34 @@ For `backend="native"`, C++ is the sole authoritative numeric Cognit/Relation su
 - native persistence payloads.
 
 There is no authoritative Python mirror of the native Cognit/Relation numeric state in normal native execution. `full_graph_sync_calls == 0` remains an invariant.
+
+### Isolated micro-neurodynamic substrate (v0.6.0)
+
+`NeurodynamicSubstrate` is owned by the native backend, but is a separate layer:
+
+```text
+existing Cognits / Relations
+          ^ future assemblies (not implemented)
+micro-κ / micro-ρ native event substrate
+```
+
+Micro-κ use flat SoA numeric state with stable monotonic IDs. Fixed micro-ρ
+edges carry source, target, nonnegative weight, positive delay, and excitatory
+or inhibitory polarity. A native priority queue ordered by float64 time then
+monotonic sequence propagates all events; same-time deliveries are grouped by
+target before a single threshold evaluation. Potential and adaptation decay only
+when a touched micro-κ is materialized. Refractory deliveries are discarded and
+counted. Thus an empty or silent substrate has no global neural tick and no
+periodic per-neuron update.
+
+The membrane/adaptation time constants, refractory period, reset potential, and
+adaptation increment are innate physiology, not learned knowledge. Python has a
+coarse experiment/control API only (construct, inject, advance, inspect bounded
+state/telemetry, snapshot/restore); it receives no callback per neural event or
+spike. v0.6.0 deliberately contains no plasticity, STDP, assembly detection,
+assembly-to-Cognit conversion, Cognit feedback, sensory/motor populations,
+language/Goal integration, or World integration. Normal v0.5.x life therefore
+owns an empty inactive substrate and retains its frozen trajectory.
 
 ## 2. Causal boundary
 
