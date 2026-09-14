@@ -156,7 +156,7 @@ python -m pytest -q
 
 Current repository-reported acceptance state for v0.5.6:
 
-- full pytest: **302 passed**
+- full pytest: **303 passed**
 - CTest Release: **2/2 passed**
 - deterministic `PYTHONHASHSEED=1/77` trajectory digest: identical
 - `full_graph_sync_calls == 0`
@@ -257,6 +257,15 @@ This composition is read-only retrieval. It does not create phrase Cognits,
 semantic Relations, Goals, ActionIntents, or World mutations. `BeliefScene`
 consumes the resulting structure through its existing binding API. Persistence
 schemas remain `.seworld v7` and `.sebrain v6`.
+
+The frozen acceptance proof uses two perceptually distinct objects in the real
+native World. Ordinary perception and memory create participant Cognits and
+ordinary relational cognition creates the relation anchor; standard Pass-1
+exposures ground nonce labels without injecting semantic IDs. The first unseen
+triple composes immediately, including under a permutation of every surface
+label. `source_cognits` contains only the two participants, canonical
+`relations` retain ordinary structural matching, and directed `role_edges`
+allow generic `BeliefScene` scoring to distinguish correct and reversed roles.
 
 ## Project status and roadmap
 

@@ -4,6 +4,8 @@
 
 LANGUAGE PASS 3 — RELATIONAL COMPOSITIONAL GROUNDING: PASS
 
+LANGUAGE PASS 3: FROZEN
+
 - Immutable `LanguageRelationalResult` exposes ordered symbol IDs, bounded
   semantic slots, a real `RelationalStructure` when supported, confidence,
   unresolved positions, and Cognit provenance.
@@ -18,13 +20,23 @@ LANGUAGE PASS 3 — RELATIONAL COMPOSITIONAL GROUNDING: PASS
 - Held-out first-occurrence triples compose immediately from constituent
   meanings, and reversing participant order reverses the participant binding.
   The result is directly consumable by `BeliefScene`.
+- The closure curriculum uses only real native World observations: two
+  perceptually distinct objects produce memory participants and ordinary
+  relational Cognits; normal Pass-1 exposures ground three nonce words. The
+  first unseen triple composes immediately, and a full surface-label
+  permutation preserves the learned semantics.
+- `RelationalStructure.source_cognits` contains participants only. Its
+  `relations` use the ordinary canonical representation, while `role_edges`
+  preserve direction. Generic `BeliefScene` binding respects explicit bound
+  participant IDs without changing free binding for unbound structures, so a
+  correct scene scores above a role-reversed scene.
 - Composition is read-only interpretation: it creates no phrase Cognit,
   ASSOCIATIVE meaning, Goal, ActionIntent, World mutation, or evidence refresh.
   Frozen Pass-2 sequence learning remains unchanged.
 - Persistence remains `.seworld v7` / `.sebrain v6`; an unfinished utterance
   resumes to the identical derived relational result.
-- Focused Pass-3 tests: **8 passed**; frozen Pass-1/2 plus Pass-3 tests:
-  **37 passed**; full pytest: **302 passed**; clean Release build: **PASS**;
+- Focused Pass-3 tests: **9 passed**; frozen Pass-1/2 plus Pass-3 tests:
+  **38 passed**; full pytest: **303 passed**; Release build: **PASS**;
   CTest: **2/2**; `full_graph_sync_calls == 0`; `PYTHONHASHSEED=1/77`: identical.
 
 NEXT PASS: GROUNDED REQUESTS / LANGUAGE -> GOALS

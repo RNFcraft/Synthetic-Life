@@ -160,7 +160,7 @@ class LanguageLexicon:
         """Resolve only meanings both learned by Pass 1 and retrieved by this token wave."""
         reverse_tokens={node_id:token for token,node_id in self.core.relational_nodes.items()}
         reverse_bound={relation.cognit_id:relation.token for relation in self.core.belief_scene.relations.values()}
-        slots=[];unresolved=[];provenance=[]
+        slots=[]
         for position,(token,symbol,result) in enumerate(zip(tokens,symbol_ids,token_results)):
             materialized=self.materialized.get(token,set());active=result.wave.active_ids
             candidates=[]
@@ -177,12 +177,24 @@ class LanguageLexicon:
                 if len(candidates)==1 or first[1:4]!=candidates[1][1:4]:resolved=first[0]
             ids=tuple(row[0] for row in candidates)
             slots.append(LanguageSemanticSlot(position,symbol,ids,resolved))
-            if resolved is None:unresolved.append(position)
-            else:provenance.append((position,resolved))
-        relation_slots=[]
+        relation_candidates=[]
         for slot in slots:
-            if slot.resolved_cognit_id in reverse_tokens:relation_slots.append((slot.token_position,slot.resolved_cognit_id,reverse_tokens[slot.resolved_cognit_id]))
-            elif slot.resolved_cognit_id in reverse_bound:relation_slots.append((slot.token_position,slot.resolved_cognit_id,reverse_bound[slot.resolved_cognit_id]))
+            for node_id in slot.retrieved_cognit_ids:
+                if node_id in reverse_tokens:relation_candidates.append((slot.token_position,node_id,reverse_tokens[node_id],0))
+                elif node_id in reverse_bound:relation_candidates.append((slot.token_position,node_id,reverse_bound[node_id],1))
+        relation_slots=[];tokens_found={row[2] for row in relation_candidates}
+        if len(tokens_found)==1:
+            token=next(iter(tokens_found));positions={row[0] for row in relation_candidates if row[2]==token}
+            if len(positions)==1:
+                chosen=min((row for row in relation_candidates if row[2]==token),key=lambda row:(row[3],row[1]));relation_slots=[chosen[:3]]
+                position,node_id,_=relation_slots[0];slot=slots[position];slots[position]=LanguageSemanticSlot(position,slot.symbol_id,slot.retrieved_cognit_ids,node_id)
+        participant_ids=set(self.core.belief_scene.participants)
+        for position,slot in enumerate(slots):
+            if relation_slots and position==relation_slots[0][0]:continue
+            embodied=tuple(i for i in slot.retrieved_cognit_ids if i in participant_ids)
+            if len(embodied)==1:slots[position]=LanguageSemanticSlot(position,slot.symbol_id,slot.retrieved_cognit_ids,embodied[0])
+        unresolved=[slot.token_position for slot in slots if slot.resolved_cognit_id is None]
+        provenance=[(slot.token_position,slot.resolved_cognit_id) for slot in slots if slot.resolved_cognit_id is not None]
         structure=None;confidence=0.
         if len(relation_slots)==1:
             relation_position,relation_id,relation_token=relation_slots[0]
@@ -191,7 +203,7 @@ class LanguageLexicon:
                 participants=participants[:2];participant_ids=tuple(slot.resolved_cognit_id for slot in participants)
                 values=[self.core.graph.nodes[i].confidence for i in participant_ids+(relation_id,)]
                 confidence=min(values)
-                structure=RelationalStructure(2,(relation_token,),confidence,participant_ids+(relation_id,),((0,1,relation_token),))
+                structure=RelationalStructure.from_role_edges(participant_ids,((0,1,relation_token),),confidence)
         return LanguageRelationalResult(tuple(symbol_ids),tuple(slots),structure,confidence,tuple(unresolved),tuple(provenance))
     @property
     def language_symbol_count(self):return len(self.symbols)

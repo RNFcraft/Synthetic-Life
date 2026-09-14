@@ -24,6 +24,11 @@ class RelationalStructure:
     def from_points(cls,points,confidence=1.,source_cognits=()):
         points=tuple(sorted(points));edges=tuple((i,j,_token(points[i],points[j])) for i,j in combinations(range(len(points)),2));return cls(len(points),_canonical(e[2] for e in edges),confidence,tuple(source_cognits),edges)
 
+    @classmethod
+    def from_role_edges(cls,source_cognits,role_edges,confidence=1.):
+        source_cognits=tuple(source_cognits);role_edges=tuple(role_edges)
+        return cls(len(source_cognits),_canonical(edge[2] for edge in role_edges),confidence,source_cognits,role_edges)
+
     def match(self,other:"RelationalStructure")->float:
         if not self.relations and not other.relations:return float(self.participant_count==other.participant_count)
         a=list(self.relations);b=list(other.relations);hits=0
@@ -102,14 +107,23 @@ class BeliefScene:
         relation=max(candidates,key=lambda r:(r.confidence,r.support,-r.contradictions,r.last_observed_world_tick));x,y,d=relation.token;return ((-x,-y,d) if reverse else relation.token),relation.confidence
     def best_binding(self,target:RelationalStructure,participant_ids=None,update_last=True)->RoleBinding:
         eligible={i for i,p in self.participants.items() if p.episode==self.episode};n=target.participant_count;participants=sorted((set(participant_ids)&eligible) if participant_ids is not None else eligible)
+        explicitly_bound=len(target.source_cognits)==n
+        if explicitly_bound:
+            assignment=tuple(target.source_cognits)
+            if any(i not in eligible for i in assignment):
+                binding=RoleBinding(tuple(i for i in assignment if i in eligible),0.,sum(i not in eligible for i in assignment))
+                if update_last:self.last_binding=binding
+                return binding
+            participants=list(assignment)
         if len(participants)<n:
             binding=RoleBinding(tuple(participants),0.,n-len(participants))
             if update_last:self.last_binding=binding
             return binding
         best=RoleBinding((),0.,n)
         edges=target.role_edges or tuple((i,j,t) for (i,j),t in zip(combinations(range(n),2),target.relations))
-        for assignment in permutations(participants,n):
-            for transform in range(8):
+        assignments=(tuple(participants),) if explicitly_bound else permutations(participants,n)
+        for assignment in assignments:
+            for transform in ((0,) if explicitly_bound else range(8)):
                 sat=viol=unknown=0
                 for ri,rj,wanted in edges:
                     known=self._known_edge(assignment[ri],assignment[rj])

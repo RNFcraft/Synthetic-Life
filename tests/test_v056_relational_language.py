@@ -26,12 +26,35 @@ def _say(runtime,words):
     return runtime.last_utterance_result.relational_result
 
 
+def _embodied_curriculum(words):
+    settings=replace(Settings(),object_count=0,max_objects=2,language_min_support=2,language_min_lift=0.,language_min_background_seconds=0.)
+    runtime=ContinuousRuntime(757,settings);runtime.run_to_quiescence();core=runtime.simulation.core;world=runtime.simulation.world
+    world.native.initialize_multi([(0,6,6,"N",1)],[(1,5,4,0),(2,7,4,1)]);world.native.configure_spawning(2,None,3);world._refresh()
+    now=runtime.world_time;generation=runtime.cognition_generation
+    def observe(position):
+        nonlocal now,generation
+        now+=1.;generation+=1;world.native.set_body_state(0,*position,"N");world._refresh();core.begin_continuous_observation(world.perceive(generation),now,generation)
+    neutral=(20,20)
+    for _ in range(3):
+        for position in ((5,5),(7,5),(6,6)):observe(position);observe(neutral);now+=2.
+    for _ in range(5):
+        for position,meaning in (((5,5),"left"),((7,5),"right"),((6,6),"relation")):
+            observe(position);core.process_language(LanguageFrame(generation,now,words[meaning]));observe(neutral);now+=2.
+    observe((5,5));left_visible=tuple(sorted(i for i,p in core.belief_scene.participants.items() if p.visible))
+    observe((7,5));right_visible=tuple(sorted(i for i,p in core.belief_scene.participants.items() if p.visible))
+    observe((6,6));relation_token=next(iter(core.relational_nodes))
+    core.grounding_context.accrue(now);core.grounding_context.latest=None;core.grounding_context.historical.clear();core.grounding_context.accounted_until=now;core.continuous_frontier=None
+    runtime.scheduler.restore(now,runtime.scheduler.next_id,[])
+    result=_say(runtime,(words["relation"],words["left"],words["right"]))
+    return runtime,result,left_visible,right_visible,relation_token
+
+
 def test_first_ever_grounded_triple_builds_existing_relational_structure():
     runtime,(left,right,relation),token=_prepared();before=dict(runtime.simulation.core.language.sequence_support)
     result=_say(runtime,("dax","wug","blicket"));structure=result.relational_structure
     assert before=={} and isinstance(structure,RelationalStructure)
-    assert structure.relations==(token,) and structure.role_edges==((0,1,token),)
-    assert structure.source_cognits==(left,right,relation)
+    assert structure.relations==RelationalStructure.from_role_edges((left,right),((0,1,token),)).relations and structure.role_edges==((0,1,token),)
+    assert structure.source_cognits==(left,right) and (0,relation) in result.provenance
     assert result.confidence==min(runtime.simulation.core.graph.nodes[i].confidence for i in (left,right,relation))
     assert runtime.simulation.core.backend.full_graph_sync_calls==0
 
@@ -73,7 +96,10 @@ def test_belief_scene_consumes_language_structure():
     core.belief_scene.participants[right]=ParticipantBelief(right,(1.,0.),1,.9,1,True,0)
     core.belief_scene.relations[(left,right,structure.relations[0])]=BoundSpatialRelation(999,left,right,structure.relations[0],.9,1)
     binding=core.belief_scene.best_binding(structure,(left,right),update_last=False)
-    assert binding.role_to_participant==(left,right) and binding.unresolved_roles==0
+    reversed_structure=RelationalStructure.from_role_edges((right,left),structure.role_edges,structure.confidence)
+    reversed_binding=core.belief_scene.best_binding(reversed_structure,(left,right),update_last=False)
+    assert binding.role_to_participant==(left,right) and binding.score>reversed_binding.score
+    assert core.belief_scene.mismatch(structure)<core.belief_scene.mismatch(reversed_structure)
 
 
 def test_mid_utterance_save_load_derives_identical_result(tmp_path):
@@ -90,3 +116,15 @@ def test_relational_composition_pythonhashseed_determinism():
     for seed in ("1","77"):
         env=os.environ.copy();env["PYTHONHASHSEED"]=seed;outputs.append(subprocess.check_output([sys.executable,"-c",code],env=env,text=True).strip())
     assert outputs[0]==outputs[1]
+
+
+def test_true_embodied_first_occurrence_and_surface_label_permutation():
+    first,result,left,right,token=_embodied_curriculum({"relation":"dax","left":"wug","right":"blicket"})
+    second,permuted,p_left,p_right,p_token=_embodied_curriculum({"relation":"blicket","left":"dax","right":"wug"})
+    assert len(left)==len(right)==len(p_left)==len(p_right)==1
+    assert result.relational_structure.source_cognits==(left[0],right[0])
+    assert permuted.relational_structure.source_cognits==(p_left[0],p_right[0])
+    assert result.relational_structure.role_edges==((0,1,token),)
+    assert permuted.relational_structure.role_edges==((0,1,p_token),)
+    assert result.relational_structure.relations==permuted.relational_structure.relations
+    assert first.simulation.core.backend.full_graph_sync_calls==second.simulation.core.backend.full_graph_sync_calls==0

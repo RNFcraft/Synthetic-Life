@@ -425,6 +425,20 @@ World mutation. The persisted Pass-2 frontier contains all information needed
 to derive the same result after mid-utterance `.seworld v7` continuation;
 `.sebrain` remains v6.
 
+`RelationalStructure.source_cognits` is strictly the ordered participant tuple;
+the relation Cognit's identity remains in result provenance. `relations` is
+canonicalized by the same constructor used for all relational structures, while
+`role_edges` retains the observed directed token. `BeliefScene.best_binding`
+uses the explicit participant assignment with no geometric transform when the
+structure carries exactly one Cognit per role; structures without bound
+participants retain the previous permutation/transform search.
+
+The closure experiment learns all three nonce meanings through the standard
+native `World -> SensoryFrame -> memory/relational Cognit -> Pass-1 grounding`
+path. No semantic Cognit ID is supplied to language grounding. Both the initial
+surface labels and a complete nonce-label permutation compose the same held-out
+first-occurrence structure.
+
 ## 17. Current roadmap
 
 ```text
