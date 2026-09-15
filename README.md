@@ -73,8 +73,10 @@ view from saved temporal evidence. v0.6.2 is frozen.
 
 The native engine now provides a one-way coarse assembly bridge. Consolidation
 births exactly one ordinary Cognit in the existing authoritative numeric graph;
-recognition activates that same Cognit through normal `receive()` semantics,
-using bounded match confidence as input energy. `NativeBrainEngine` owns the
+recognition activates that same Cognit through normal `receive()` semantics.
+Incremental observations in one native recognition episode contribute only the
+increase in peak confidence; after silence longer than the assembly window, a
+new episode may contribute its own bounded peak. `NativeBrainEngine` owns the
 stable AssemblyID-to-CognitID mapping and exactly-once cursor. Python only adopts
 the `NEURAL_ASSEMBLY` facade metadata at an explicit coarse drain—there is no
 per-spike callback or shadow numeric graph.
@@ -84,6 +86,12 @@ engine bridge snapshot. The optional micro-neuro runtime is not currently a
 `.sebrain v6` or `.seworld v7` section, so those schemas remain unchanged. No
 reverse Cognit-to-micro path, automatic Relations, semantics, or
 World/language/Goal/planner coupling is introduced. v0.6.3 is frozen.
+
+The existing continuous scheduler carries bounded `NEURAL_BRIDGE` events, so
+recognition can reach cognition between World observations. Births share the
+ordinary global Cognit capacity and per-transaction birth budget; deterministic
+suppression advances the cursor and is counted without creating a deferred
+queue.
 
 ## Current runtime model
 
@@ -227,8 +235,8 @@ python -m pytest -q
 
 Current repository-reported acceptance state for v0.6.0:
 
-- focused v0.6.0–v0.6.3 micro-neurodynamic suite: **37 passed**
-- full pytest: **345 passed**
+- focused v0.6.0–v0.6.3 micro-neurodynamic suite: **45 passed**
+- full pytest: **360 passed**
 - CTest Release: **2/2 passed**
 - deterministic `PYTHONHASHSEED=1/77` trajectory digest: identical
 - `full_graph_sync_calls == 0`

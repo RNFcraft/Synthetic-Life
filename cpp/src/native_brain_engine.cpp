@@ -5,6 +5,7 @@
 #include <cstring>
 #include <fstream>
 #include <queue>
+#include <set>
 #include <stdexcept>
 #include <tuple>
 namespace se {
@@ -46,12 +47,13 @@ void NativeBrainEngine::restore_assembly_bridge_state(std::uint64_t cursor, cons
   auto neural = neurodynamic_.snapshot();
   if (cursor >= neural.next_bridge_sequence)
     throw std::invalid_argument("invalid assembly bridge cursor");
-  std::map<std::uint64_t, std::uint32_t> checked;
+  std::map<std::uint64_t, std::uint32_t> checked;std::set<std::uint32_t> cognits;
   for (auto const &[assembly, cognit] : mapping) {
     auto row = std::find_if(neural.assemblies.begin(), neural.assemblies.end(), [&](auto const &a) { return a.id == assembly && a.consolidated; });
-    if (row == neural.assemblies.end() || !cognit_alive(cognit) || !checked.emplace(assembly, cognit).second)
+    if (row == neural.assemblies.end() || !cognit_alive(cognit) || !checked.emplace(assembly, cognit).second||!cognits.insert(cognit).second)
       throw std::invalid_argument("invalid assembly Cognit mapping");
   }
+  if((!checked.empty()&&!cursor)||births<checked.size())throw std::invalid_argument("invalid assembly bridge counters");
   assembly_bridge_cursor_ = cursor;
   assembly_cognits_ = std::move(checked);
   assembly_cognit_births_ = births;

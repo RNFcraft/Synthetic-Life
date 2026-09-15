@@ -11,16 +11,27 @@
   activity birth nothing. The engine owns the stable `AssemblyID -> CognitID`
   mapping; overlap/novelty produces distinct monotonic Cognit IDs and no
   Relations.
-- Recognition confidence is clamped to `[0, 1]` and passed as energy through
-  ordinary native `receive()`. The frozen order remains full > partial >
-  reversed. Python only adopts facade metadata `kind="NEURAL_ASSEMBLY"` at the
-  coarse boundary; it never processes individual spikes or owns numeric state.
+- Recognition has a native per-assembly episode identity. Incremental matches
+  inside `assembly_window` contribute only
+  `max(0, confidence - previous_peak)`, so cumulative Cognit input equals the
+  episode peak instead of the sum of partial observations. Silence longer than
+  the window starts a new episode. Actual Cognit activity now proves
+  full > partial > reversed. Event time and episode state are float64-native and
+  snapshot-restored; World ticks do not define recognition identity.
+- A `NEURAL_BRIDGE` event in the existing continuous scheduler performs one
+  bounded drain without requiring a new World observation. Python adopts only
+  facade metadata `kind="NEURAL_ASSEMBLY"`; it never processes individual
+  spikes or owns numeric state.
 - Exactly-once delivery uses persisted monotonic event identities and a native
   cursor. The event log is bounded to 256 and each drain to 64 by default; cursor
   overflow is a hard error. Consumed events do not replay and pending events
   deliver once after restore.
 - Cognit deletion immediately invalidates the mapping. Later recognition births
   a new monotonic ID; dead IDs are not reused.
+- Each drain respects both `max_cognits` and `max_new_cognits_per_tick`.
+  Overflow events are consumed deterministically and counted as suppressed;
+  later genuine recognition can birth the still-unmapped assembly after
+  capacity becomes available.
 - Substrate snapshot/restore preserves bridge events and their future timing;
   engine bridge state preserves mapping/cursor/counters alongside the matching
   graph snapshot. `.sebrain v6` and `.seworld v7` remain unchanged because they
@@ -29,7 +40,7 @@
 - No reverse Cognit→micro path, semantic assignment, automatic Relations,
   World/language/Goal/planner/action coupling, reward, classifier or backprop was
   added. Silent/default substrates emit zero bridge events.
-- Focused v0.6.0–v0.6.3: **37 passed**; full pytest: **352 passed**; Release
+- Focused v0.6.0–v0.6.3: **45 passed**; full pytest: **360 passed**; Release
   build: **PASS**; CTest Release: **2/2 passed**. No-language digest remains
   `e334137aab48aac629c9ac0d4dbc77ea8ec7f51203acda0c970a9bb647c3d731`;
   `full_graph_sync_calls == 0`.

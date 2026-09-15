@@ -37,7 +37,7 @@ def test_candidate_and_one_shot_do_not_birth_but_consolidation_births_once():
     assert engine.cognit_count == 0
     _episode(engine, nodes[:3], 20.)
     rows = engine.process_assembly_bridge(2)
-    assert len(rows) == 1 and rows[0][4:] == (0, True, False)
+    assert len(rows) == 1 and rows[0][4:7] == (0, True, False)
     assert engine.cognit_count == 1 and engine.assembly_cognit_mapping() == [(rows[0][1], rows[0][2])]
     assert engine.process_assembly_bridge(3) == []
 
@@ -47,19 +47,20 @@ def test_recognition_reuses_cognit_and_confidence_drives_ordinary_receive():
     engine.set_activity(cognit, 0.)
     _episode(engine, nodes[:2], 40.)
     partial = engine.process_assembly_bridge(10)
-    partial_energy = sum(row[3] for row in partial if row[4] == 1)
+    partial_energy = sum(row[9] for row in partial if row[4] == 1)
     partial_activity = engine.cognit_state([cognit])[0]
     assert partial and all(row[1] == assembly and row[2] == cognit and not row[5] for row in partial)
     assert partial_activity == min(1., partial_energy)
     engine.set_activity(cognit, 0.)
     _episode(engine, nodes[:3], 50.)
     full = engine.process_assembly_bridge(11)
-    full_energy = sum(row[3] for row in full if row[4] == 1)
+    full_energy = sum(row[9] for row in full if row[4] == 1)
     assert full_energy > partial_energy and engine.cognit_state([cognit])[0] == min(1., full_energy)
     engine.set_activity(cognit, 0.)
     _episode(engine, list(reversed(nodes[:3])), 60.)
     reversed_rows = engine.process_assembly_bridge(12)
     assert partial[-1][3] > reversed_rows[-1][3]
+    assert engine.cognit_state([cognit])[0] == sum(row[9] for row in reversed_rows)
 
 
 def test_overlap_and_novel_assemblies_get_distinct_cognits_without_relations():
@@ -115,6 +116,86 @@ def test_deleted_assembly_cognit_is_invalidated_and_recognition_rebirths_monoton
 def test_silent_scale_has_zero_bridge_work():
     engine = NativeBrainEngine(); substrate = engine.neurodynamic_substrate()
     for _ in range(10_000): substrate.add_micro_kappa()
+    from consciousness._native_brain import MicroPolarity
+    for index in range(50_000):substrate.add_micro_rho(index%10_000,(index+1)%10_000,.1,1.,MicroPolarity.EXCITATORY)
     substrate.advance_to(50_000.)
     assert engine.process_assembly_bridge(1) == []
-    assert engine.cognit_count == 0 and engine.assembly_bridge_state() == (0, [], 0, 0)
+    assert engine.cognit_count == 0 and engine.assembly_bridge_state() == (0, [], 0, 0, 0)
+
+
+def test_bridge_drain_does_not_change_upstream_neural_physics():
+    left,nodes=_engine();right,right_nodes=_engine();_episode(left,nodes[:3],0.,4);_episode(right,right_nodes[:3],0.,4)
+    before=left.neurodynamic_substrate().snapshot();assert before==right.neurodynamic_substrate().snapshot()
+    left.process_assembly_bridge(9)
+    assert left.neurodynamic_substrate().snapshot()==right.neurodynamic_substrate().snapshot()
+
+
+def test_production_bridge_log_remains_bounded():
+    engine,nodes=_engine();_consolidate(engine,nodes[:3])
+    for index in range(300):
+        time=40.+index*3.;engine.neurodynamic_substrate().inject(nodes[0],100.,time);engine.neurodynamic_substrate().advance_to(time)
+    snapshot=engine.neurodynamic_substrate().snapshot()
+    assert len(snapshot["assembly_bridge_events"])==256
+
+
+def _recognition_activity(order):
+    engine,nodes=_engine();_,cognit=_consolidate(engine,nodes[:3]);engine.set_activity(cognit,0.);_episode(engine,[nodes[i] for i in order],40.);rows=engine.process_assembly_bridge(9)
+    return engine.cognit_state([cognit])[0],sum(row[9] for row in rows),rows
+
+
+def test_actual_cognit_activity_is_full_then_partial_then_reversed_without_incremental_inflation():
+    full,full_energy,full_rows=_recognition_activity((0,1,2));partial,partial_energy,_=_recognition_activity((0,1));reversed_activity,reversed_energy,_=_recognition_activity((2,1,0))
+    assert full>partial>reversed_activity
+    assert (full,partial,reversed_activity)==(full_energy,partial_energy,reversed_energy)
+    assert full==max(row[3] for row in full_rows if row[4]==1)<=1.
+    episode_ids={row[8] for row in full_rows if row[4]==1};assert len(episode_ids)==1
+
+
+def test_separated_recurrences_each_contribute_one_bounded_recognition():
+    engine,nodes=_engine();_,cognit=_consolidate(engine,nodes[:3])
+    activities=[];episodes=[]
+    for start in (40.,50.):
+        engine.set_activity(cognit,0.);_episode(engine,nodes[:3],start);rows=engine.process_assembly_bridge(int(start));activities.append(engine.cognit_state([cognit])[0]);episodes.append({row[8] for row in rows})
+    assert activities[0]==activities[1] and activities[0]<=1. and episodes[0].isdisjoint(episodes[1])
+
+
+def test_global_cognit_capacity_and_per_drain_birth_budget_are_deterministic():
+    engine,nodes=_engine()
+    for members,start in ((nodes[:3],0.),(nodes[3:6],40.),(nodes[6:9],80.)):_episode(engine,members,start,3)
+    rows=engine.process_assembly_bridge(1,64,2,1)
+    assert engine.cognit_count==1 and sum(row[5] for row in rows)==1 and any(row[10] for row in rows)
+    assert engine.assembly_bridge_state()[4]>0 and engine.process_assembly_bridge(2,64,2,1)==[]
+    mapped_assembly=engine.assembly_cognit_mapping()[0][0];unmapped=next(row[0] for row in engine.neurodynamic_substrate().assemblies() if row[-1] and row[0]!=mapped_assembly)
+    old=engine.assembly_cognit_mapping()[0][1];engine.remove_cognit(old)
+    members=next(row[1] for row in engine.neurodynamic_substrate().assemblies() if row[0]==unmapped);_episode(engine,members,120.);rebirth=engine.process_assembly_bridge(3,64,2,1)
+    assert any(row[1]==unmapped and row[5] and row[2]>old for row in rebirth) and len(engine.assembly_cognit_mapping())==1
+
+
+def test_mid_recognition_snapshot_restore_preserves_peak_and_exact_continuation(tmp_path):
+    left,nodes=_engine();_,cognit=_consolidate(left,nodes[:3]);left.set_activity(cognit,0.);_episode(left,nodes[:2],40.);left.process_assembly_bridge(10)
+    graph=tmp_path/"mid.sebrain";left.save_graph(str(graph));neuro=left.neurodynamic_substrate().snapshot();bridge=left.assembly_bridge_state()
+    right=NativeBrainEngine();right.load_graph(str(graph));right.neurodynamic_substrate().restore(neuro);right.restore_assembly_bridge_state(*bridge)
+    for engine in (left,right):engine.neurodynamic_substrate().inject(nodes[2],3.,41.);engine.neurodynamic_substrate().advance_to(41.)
+    assert left.process_assembly_bridge(11)==right.process_assembly_bridge(11)
+    assert left.cognit_state([cognit])==right.cognit_state([cognit]) and left.neurodynamic_substrate().snapshot()==right.neurodynamic_substrate().snapshot()
+
+
+def test_restore_rejects_bridge_overflow_and_invalid_episode_state():
+    import pytest
+    engine,nodes=_engine();_consolidate(engine,nodes[:3]);snapshot=engine.neurodynamic_substrate().snapshot()
+    bad=dict(snapshot);bad["assembly_bridge_events"]=snapshot["assembly_bridge_events"]*257
+    with pytest.raises(ValueError):NeurodynamicSubstrate().restore(bad)
+    bad=dict(snapshot);bad["next_recognition_episode_id"]=0
+    with pytest.raises(ValueError):NeurodynamicSubstrate().restore(bad)
+
+
+def test_continuous_bridge_delivery_needs_no_new_world_observation():
+    from simulation.continuous import ContinuousRuntime
+    from consciousness.native_engine import RuntimeEvent,RuntimeEventType
+    runtime=ContinuousRuntime(901);runtime.run_to_quiescence();observations=runtime.observation_ordinal;engine=runtime.simulation.core.backend.engine
+    configured=NeurodynamicSubstrate(assembly_tracking_enabled=True,assembly_window=2.,assembly_consolidation_support=3);nodes=[configured.add_micro_kappa() for _ in range(3)];engine.neurodynamic_substrate().restore(configured.snapshot())
+    _episode(engine,nodes,10.,3);runtime._process(RuntimeEvent(31.,9001,RuntimeEventType.NEURAL_BRIDGE,0));mapping=engine.assembly_cognit_mapping();assert len(mapping)==1
+    for index,start in enumerate((40.,50.),1):_episode(engine,nodes,start);runtime._process(RuntimeEvent(start+1.,9001+index,RuntimeEventType.NEURAL_BRIDGE,0))
+    recognized=[row for row in runtime.neural_bridge_deliveries if row[4]==1 and row[9]>0]
+    assert len({row[8] for row in recognized})==2 and {row[2] for row in recognized}=={mapping[0][1]} and runtime.observation_ordinal==observations
+    assert [(row[7],row[0]) for row in recognized]==sorted((row[7],row[0]) for row in recognized)

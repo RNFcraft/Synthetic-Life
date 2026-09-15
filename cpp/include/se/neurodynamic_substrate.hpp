@@ -70,6 +70,7 @@ struct NeuroSnapshot {
 };
 class NeurodynamicSubstrate {
 public:
+  static constexpr std::size_t bridge_event_capacity=256;
   // All parameters are innate substrate physiology, not learned knowledge.
   explicit NeurodynamicSubstrate(double tau_membrane = 10., double tau_adaptation = 100., double refractory_period = 1., double reset_potential = 0., double adaptation_increment = .1, std::uint64_t event_guard = 1'000'000, double tau_pre = 20., double tau_post = 20., double a_plus = .1, double a_minus = .1, double weight_min = 0., double weight_max = 10., double tau_homeostasis = 1'000., double homeostasis_spike_increment = 0., bool assembly_tracking_enabled = false, double assembly_window = 5., std::uint32_t assembly_min_support = 2, std::uint32_t assembly_min_members = 3, std::uint32_t assembly_max_members = 8, std::uint32_t assembly_consolidation_support = 3, double assembly_decay_tau = 1000., double assembly_member_ratio_threshold = .6, double assembly_candidate_similarity_threshold = .6, double assembly_temporal_similarity_threshold = .5, std::uint32_t max_assembly_candidates = 64, std::uint32_t max_consolidated_assemblies = 64, std::uint32_t max_temporal_edges = 64, std::uint32_t max_recent_spikes = 64);
   std::uint32_t add_micro_kappa(double base_threshold = 1.);

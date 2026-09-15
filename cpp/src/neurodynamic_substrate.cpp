@@ -126,9 +126,8 @@ void NeurodynamicSubstrate::emit_bridge_event(std::uint64_t assembly_id, double 
     episode->last_time=time;episode_id=episode->episode_id;contribution=std::max(0.,confidence-episode->peak_confidence);episode->peak_confidence=std::max(episode->peak_confidence,confidence);
   }
   bridge_events_.push_back({next_bridge_sequence_++, assembly_id, episode_id, time, confidence, contribution, kind});
-  constexpr std::size_t capacity = 256;
-  if (bridge_events_.size() > capacity)
-    bridge_events_.erase(bridge_events_.begin(), bridge_events_.begin() + (bridge_events_.size() - capacity));
+  if (bridge_events_.size() > bridge_event_capacity)
+    bridge_events_.erase(bridge_events_.begin(), bridge_events_.begin() + (bridge_events_.size() - bridge_event_capacity));
 }
 std::vector<AssemblyBridgeEvent> NeurodynamicSubstrate::assembly_bridge_events_after(std::uint64_t cursor, std::size_t limit) const {
   if (!limit)
@@ -452,13 +451,13 @@ void NeurodynamicSubstrate::restore(const NeuroSnapshot &s) {
       if (id >= s.potential.size())
         throw std::invalid_argument("invalid assembly member");
   }
-  if(!s.next_bridge_sequence||!s.next_recognition_episode_id||s.bridge_events.size()>256||s.recognition_episodes.size()>s.max_consolidated_assemblies)throw std::invalid_argument("invalid assembly bridge bounds");
-  std::uint64_t previous_bridge{};
+  if(!s.next_bridge_sequence||!s.next_recognition_episode_id||s.bridge_events.size()>bridge_event_capacity||s.recognition_episodes.size()>s.max_consolidated_assemblies)throw std::invalid_argument("invalid assembly bridge bounds");
+  std::uint64_t previous_bridge{};double previous_bridge_time=-INFINITY;
   for (auto const &event : s.bridge_events) {
     auto assembly = std::find_if(s.assemblies.begin(), s.assemblies.end(), [&](auto const &a) { return a.id == event.assembly_id; });
-    if (!event.sequence || event.sequence <= previous_bridge || event.sequence >= s.next_bridge_sequence || assembly == s.assemblies.end() || !assembly->consolidated || !std::isfinite(event.time) || event.time > s.now || !std::isfinite(event.confidence) || event.confidence < 0. || event.confidence > 1. || !std::isfinite(event.contribution)||event.contribution<0.||event.contribution>event.confidence || (event.kind != AssemblyBridgeEventKind::Consolidated && event.kind != AssemblyBridgeEventKind::Recognized)|| (event.kind==AssemblyBridgeEventKind::Consolidated&&(event.recognition_episode_id||event.contribution))||(event.kind==AssemblyBridgeEventKind::Recognized&&!event.recognition_episode_id))
+    if (!event.sequence || event.sequence <= previous_bridge || event.sequence >= s.next_bridge_sequence || assembly == s.assemblies.end() || !assembly->consolidated || !std::isfinite(event.time) || event.time<previous_bridge_time || event.time > s.now || !std::isfinite(event.confidence) || event.confidence < 0. || event.confidence > 1. || !std::isfinite(event.contribution)||event.contribution<0.||event.contribution>event.confidence || (event.kind != AssemblyBridgeEventKind::Consolidated && event.kind != AssemblyBridgeEventKind::Recognized)|| (event.kind==AssemblyBridgeEventKind::Consolidated&&(event.recognition_episode_id||event.contribution))||(event.kind==AssemblyBridgeEventKind::Recognized&&(!event.recognition_episode_id||event.recognition_episode_id>=s.next_recognition_episode_id)))
       throw std::invalid_argument("invalid assembly bridge event");
-    previous_bridge = event.sequence;
+    previous_bridge = event.sequence;previous_bridge_time=event.time;
   }
   std::set<std::uint64_t> episode_assemblies,episode_ids;
   for(auto const&episode:s.recognition_episodes){auto assembly=std::find_if(s.assemblies.begin(),s.assemblies.end(),[&](auto const&a){return a.id==episode.assembly_id;});if(assembly==s.assemblies.end()||!assembly->consolidated||!episode.episode_id||episode.episode_id>=s.next_recognition_episode_id||!episode_assemblies.insert(episode.assembly_id).second||!episode_ids.insert(episode.episode_id).second||!std::isfinite(episode.last_time)||episode.last_time>s.now||!std::isfinite(episode.peak_confidence)||episode.peak_confidence<0.||episode.peak_confidence>1.)throw std::invalid_argument("invalid recognition episode state");}

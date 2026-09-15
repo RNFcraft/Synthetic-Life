@@ -136,8 +136,10 @@ or pending deliveries.
 The first upward bridge is native and one-way. Consolidation and recognition
 produce bounded coarse events with monotonic identities. `NativeBrainEngine`
 owns both the authoritative Cognit graph and the stable AssemblyID-to-CognitID
-mapping: consolidation allocates one ordinary Cognit, while recognition applies
-`clamp(match.confidence, 0, 1)` as energy through the existing `receive()` rule.
+mapping: consolidation allocates one ordinary Cognit. Recognition episodes are
+identified by assembly ID and float64 neural time. Within one assembly window,
+only `max(0, confidence - previous_peak)` enters the existing `receive()` rule;
+silence longer than that window resets the peak under a new monotonic episode ID.
 An explicit bounded drain advances the native cursor exactly once. Python may
 adopt `NEURAL_ASSEMBLY` facade metadata at that boundary, but does not inspect or
 process individual spikes and does not own numeric bridge state.
@@ -149,6 +151,12 @@ matching engine graph snapshot. The optional micro-neuro runtime is still
 outside `.sebrain v6` / `.seworld v7`, avoiding an invalid mapping-only
 persistence section. There is no Cognit-to-micro feedback, semantic assignment,
 World/language/Goal/planner/action coupling, reward, classifier, or backprop.
+
+The existing continuous event scheduler adds a coarse `NEURAL_BRIDGE` boundary,
+independent of World observation. One drain is event-bounded and shares global
+`max_cognits` plus the ordinary per-transaction birth limit. Suppressed births
+are consumed and counted; a later real recognition may retry after capacity is
+freed. Event sequence orders a drain and event time preserves neural causality.
 
 ## 2. Causal boundary
 
