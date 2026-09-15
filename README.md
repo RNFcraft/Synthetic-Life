@@ -27,8 +27,9 @@ the encoder.
 This milestone does **not** provide object understanding or neural control of
 behavior. A resulting Assembly is an experience-derived representation with no
 innate semantic meaning. The feature is disabled by default to preserve the
-frozen baseline; v0.6.4 focused tests are 9/9, v0.6.0–v0.6.4 focused tests are
-59/59, and the full suite is 374/374.
+frozen baseline. All receptors from one frame share its exact timestamp, so
+Python cell order cannot create temporal evidence. v0.6.4 focused tests are
+13/13, v0.6.0–v0.6.4 focused tests are 63/63, and the full suite is 378/378.
 
 ## v0.6.0 micro-neurodynamic substrate
 

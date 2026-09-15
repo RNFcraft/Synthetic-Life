@@ -200,7 +200,7 @@ void NeurodynamicSubstrate::observe_assemblies(double time, const std::vector<st
       if (matched.empty())
         continue;
       double completeness = double(matched.size()) / a.members.size();
-      double temporal = a.temporal_edges.empty() ? 0. : double(intersections(edges, a.temporal_edges)) / a.temporal_edges.size();
+      double temporal = a.temporal_edges.empty() ? (edges.empty() ? 1. : 0.) : double(intersections(edges, a.temporal_edges)) / a.temporal_edges.size();
       double confidence = .25 * completeness + .75 * temporal;
       recent_matches_.push_back({a.id, confidence, completeness, temporal, time, matched});
       emit_bridge_event(a.id, time, confidence, AssemblyBridgeEventKind::Recognized);
@@ -213,7 +213,7 @@ void NeurodynamicSubstrate::observe_assemblies(double time, const std::vector<st
     double best_score{};
     for (auto &a : assemblies_) {
       double mi = intersections(members, a.members), mu = members.size() + a.members.size() - mi, member_score = mu ? mi / mu : 0.;
-      double ei = intersections(edges, a.temporal_edges), eu = edges.size() + a.temporal_edges.size() - ei, edge_score = eu ? ei / eu : 0.;
+      double ei = intersections(edges, a.temporal_edges), eu = edges.size() + a.temporal_edges.size() - ei, edge_score = eu ? ei / eu : 1.;
       if (member_score >= assembly_candidate_similarity_threshold_ && edge_score >= assembly_temporal_similarity_threshold_) {
         double score = member_score + edge_score;
         if (!best || score > best_score || (score == best_score && a.id < best->id)) {

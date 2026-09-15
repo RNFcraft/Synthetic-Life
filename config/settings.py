@@ -15,9 +15,8 @@ class Settings:
     sensory_neural_enabled: bool = False
     sensory_neural_channel_bins: int = 16
     sensory_neural_max_receptors: int = 8192
-    sensory_neural_max_injections_per_frame: int = 64
+    sensory_neural_max_injections_per_frame: int = 512
     sensory_neural_input_amplitude: float = 3.0
-    sensory_neural_receptor_delay: float = 0.001
     world_tick_interval: int = 1
     # Absolute simulated-time maintenance cadence for ContinuousRuntime only.
     continuous_maintenance_interval_seconds: float = 1.0

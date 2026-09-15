@@ -18,7 +18,9 @@ class NeuralSensoryTransducer:
         if self.radius<0 or self.bins<2:raise ValueError("invalid sensory receptor physiology")
         self.cell_stride=self.BOOLEAN_CHANNELS+2*self.bins;self.cell_count=(2*self.radius+1)**2
         self.receptor_count=self.cell_count*self.cell_stride+self.BODY_CHANNELS
+        self.maximum_frame_injections=self.cell_count*(self.BOOLEAN_CHANNELS+2)+self.BODY_CHANNELS
         if self.receptor_count>settings.sensory_neural_max_receptors:raise ValueError("sensory receptor bank exceeds configured bound")
+        if self.maximum_frame_injections>settings.sensory_neural_max_injections_per_frame:raise ValueError("sensory injection bound cannot encode every valid frame")
         if substrate.micro_kappa_count:
             if substrate.micro_kappa_count!=self.receptor_count:raise ValueError("neural substrate does not match sensory receptor topology")
         else:
@@ -49,9 +51,9 @@ class NeuralSensoryTransducer:
         if len(active)>self.settings.sensory_neural_max_injections_per_frame:raise ValueError("sensory frame exceeds injection bound")
         return tuple(active)
     def transduce(self,frame:SensoryFrame,time:float):
-        active=self.receptor_ids(frame);amplitude=self.settings.sensory_neural_input_amplitude;delay=self.settings.sensory_neural_receptor_delay
-        if amplitude<=0. or delay<=0.:raise ValueError("invalid sensory stimulation physiology")
-        ids=[row[0] for row in active];energies=[amplitude*row[1] for row in active];times=[float(time)+index*delay for index in range(len(active))]
+        active=self.receptor_ids(frame);amplitude=self.settings.sensory_neural_input_amplitude
+        if amplitude<=0.:raise ValueError("invalid sensory stimulation physiology")
+        ids=[row[0] for row in active];energies=[amplitude*row[1] for row in active];times=[float(time)]*len(active)
         if ids:self.substrate.inject_batch(ids,energies,times)
         self.telemetry.sensory_frames_transduced+=1;self.telemetry.sensory_receptor_events+=len(ids);self.telemetry.active_receptors=len(ids)
-        return tuple(ids), (float(time) if not times else times[-1])
+        return tuple(ids),float(time)

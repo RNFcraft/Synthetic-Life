@@ -64,6 +64,15 @@ def test_raw_channel_permutation_and_retinotopy_only_permute_receptors():
     assert set(a)!=set(b) and set(a).isdisjoint(set(moved))
 
 
+def test_same_frame_cell_permutation_is_exact_and_creates_no_fake_temporal_edges():
+    cells=(SensoryCell(-1,0,True,1,False,False,2),SensoryCell(1,0,True,2,False,False,1))
+    left,right=_runtime(),_runtime();a=SensoryFrame(0,4,cells);b=SensoryFrame(0,4,tuple(reversed(cells)))
+    for runtime,frame in ((left,a),(right,b)):
+        runtime.scheduler=EventScheduler();_,frontier=runtime.neural_sensory.transduce(frame,2.5);runtime.advance_neural_to(frontier);runtime.run_until(frontier)
+    assert left.simulation.core.backend.engine.neurodynamic_substrate().snapshot()==right.simulation.core.backend.engine.neurodynamic_substrate().snapshot()
+    assert all(not row[2] for row in left.simulation.core.backend.engine.neurodynamic_substrate().assemblies())
+
+
 def test_body_channels_are_bounded_nonsemantic_receptors():
     runtime=_runtime();t=runtime.neural_sensory;frame=SensoryFrame(0,4,(),BodySense(True,False,True,False,True,.5));active=dict(t.receptor_ids(frame));base=t.cell_count*t.cell_stride
     assert active=={base:1.,base+2:1.,base+4:1.,base+5:.5}
@@ -75,19 +84,45 @@ def test_receptor_bank_is_bounded_stable_and_rejects_malformed_inputs():
     with pytest.raises(ValueError):t.receptor_ids(SensoryFrame(0,4,(SensoryCell(0,0,True,t.bins,False,False,0),)))
     with pytest.raises(ValueError):t.receptor_ids(SensoryFrame(0,4,(SensoryCell(9,0,True,0,False,False,0),)))
     with pytest.raises(ValueError):ContinuousRuntime(1,replace(Settings(),sensory_neural_enabled=True,sensory_neural_max_receptors=10))
+    with pytest.raises(ValueError):ContinuousRuntime(1,replace(Settings(),sensory_neural_enabled=True,sensory_neural_max_injections_per_frame=410))
+
+
+def test_saturated_bounded_frame_encodes_every_expected_receptor_without_truncation():
+    runtime=_runtime();t=runtime.neural_sensory;r=t.radius
+    cells=tuple(SensoryCell(x,y,True,t.bins-1,True,True,t.bins-1) for y in range(-r,r+1) for x in range(-r,r+1))
+    frame=SensoryFrame(0,r,cells,BodySense(True,True,True,True,True,1.));active=t.receptor_ids(frame)
+    assert len(active)==t.maximum_frame_injections==411
+    assert len({row[0] for row in active})==len(active)<=t.settings.sensory_neural_max_injections_per_frame
 
 
 def test_sensory_snapshot_restore_preserves_topology_pending_events_and_continuation(tmp_path):
     runtime=_runtime();frame=_place_relative(runtime,1,-1);_experience(runtime,frame,repeats=2)
     _,frontier=runtime.neural_sensory.transduce(frame,.4);runtime.advance_neural_to(frontier);path=tmp_path/"sensory.seworld";runtime.save_world(path)
-    restored=ContinuousRuntime.load_world(path,Settings(sensory_neural_enabled=True));runtime.run_until(frontier);restored.run_until(frontier)
+    restored=ContinuousRuntime.load_world(path);runtime.run_until(frontier);restored.run_until(frontier)
+    with pytest.raises(ValueError,match="incompatible"):ContinuousRuntime.load_world(path,Settings())
     le,re=runtime.simulation.core.backend.engine,restored.simulation.core.backend.engine
     assert runtime.neural_sensory.receptor_ids(frame)==restored.neural_sensory.receptor_ids(frame)
     assert le.neurodynamic_substrate().snapshot()==re.neurodynamic_substrate().snapshot()
     assert le.assembly_bridge_state()==re.assembly_bridge_state() and runtime.scheduler_state()==restored.scheduler_state()
 
 
+def test_production_world_recurrence_forms_and_reuses_one_assembly_cognit():
+    runtime=_runtime();_place_relative(runtime,1,-1);runtime.scheduler=EventScheduler();runtime.simulation.core.begin_continuous_cognition=lambda generation:False
+    for index in range(5):runtime.scheduler.schedule(index*1.1,RuntimeEventType.SENSORY_CHANGE)
+    runtime.run_until(4.5);engine=runtime.simulation.core.backend.engine;mapping=engine.assembly_cognit_mapping()
+    assert len(mapping)==1;identity=mapping[0]
+    for index in range(5,8):runtime.scheduler.schedule(index*1.1,RuntimeEventType.SENSORY_CHANGE)
+    runtime.run_until(8.)
+    assert engine.assembly_cognit_mapping()==[identity]
+    assert sum(node.kind=="NEURAL_ASSEMBLY" for node in runtime.simulation.core.graph.nodes.values())==1
+
+
 def test_disabled_and_silent_paths_do_zero_sensory_work():
     disabled=ContinuousRuntime(6402);disabled.run_until(.2);assert disabled.neural_sensory is None and disabled.simulation.core.backend.engine.neurodynamic_substrate().micro_kappa_count==0
     enabled=_runtime();before=enabled.neural_sensory.telemetry.sensory_frames_transduced;enabled.scheduler=EventScheduler();enabled.run_until(10.)
     assert enabled.neural_sensory.telemetry.sensory_frames_transduced==before
+
+
+def test_disabled_seworld_without_sensory_config_loads_backward_compatibly(tmp_path):
+    runtime=ContinuousRuntime(6403);path=tmp_path/"legacy-compatible.seworld";runtime.save_world(path);restored=ContinuousRuntime.load_world(path)
+    assert restored.neural_sensory is None

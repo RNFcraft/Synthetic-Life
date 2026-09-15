@@ -18,11 +18,14 @@ configured perception radius and raw-channel bound. Cell identity is
 retinotopic: `(relative_x, relative_y, raw channel, bounded value)` selects a
 stable micro-κ. Six additional receptors carry directional contact, holding and
 resistance. A radius-4, 16-bin configuration contains 2,841 receptors, bounded
-by 8,192, with at most 64 active injections per frame.
+by 8,192. The conservative radius-4 maximum is 411 injections per frame and
+the configured bound is 512; startup rejects a configuration unable to encode
+every possible bounded frame rather than truncating input.
 
 One Python coarse call supplies all active receptor IDs and amplitudes to native
 `inject_batch`; spikes, micro-ρ work, plasticity, homeostasis and Assembly
-detection remain native. Input timestamps are float64 WorldTime. A deferred
+detection remain native. Every receptor in one frame receives exactly the same
+float64 WorldTime; input iteration order creates no temporal edges. A deferred
 same-time scheduler boundary prevents sensory neural progression from crossing
 other equal-time runtime events, while v0.6.3 continues to deliver only coarse
 Assembly boundaries.

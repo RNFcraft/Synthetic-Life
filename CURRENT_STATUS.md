@@ -13,20 +13,23 @@
 - A radius-4 bank has 2,841 stable receptors: each retinotopic cell has raw
   occupied/boundary/self receptors and 16-bin state/appearance banks; six more
   receptors carry touch directions, holding and resistance. Hard limits are
-  8,192 receptors and 64 active injections per frame.
+  8,192 receptors. The conservative maximum is 411 injections for radius 4;
+  the configured bound is 512 and incompatible Settings fail at startup.
 - No object ID/type/name, Goal, evaluator label, action meaning, pattern label,
   Assembly ID or Cognit ID crosses the transducer. Channel values and positions
   only select receptor coordinates.
 - One-shot World experience spikes receptors but creates no consolidated
   Assembly/Cognit. Recurrent real frames form one stable Assembly/Cognit; repeat
   reuses both IDs, while left/right retinotopic evidence can form distinct IDs.
-- `.seworld v7` preserves enabled receptor neural state, telemetry, pending
-  sensory-caused events and frontier exactly. Topology is reconstructed from
-  Settings; `.sebrain v6` and persistence schema versions are unchanged.
+- All receptors from one frame use its exact float64 WorldTime. Cell iteration
+  order cannot create temporal edges. `.seworld v7` preserves the minimal
+  sensory physiology, neural state, telemetry, pending events and frontier;
+  production load needs no Settings override. Older files remain disabled and
+  compatible, while incompatible explicit topology overrides are rejected.
 - This is not object understanding and adds no behavioral policy. An Assembly
   is only an experience-derived internal representation with no innate meaning.
-- v0.6.4 focused: **9 passed**; focused v0.6.0–v0.6.4: **59 passed**; full
-  pytest: **374 passed**; Release build: **PASS**; CTest Release: **2/2**.
+- v0.6.4 focused: **13 passed**; focused v0.6.0–v0.6.4: **63 passed**; full
+  pytest: **378 passed**; Release build: **PASS**; CTest Release: **2/2**.
   Disabled `PYTHONHASHSEED=1/77` digest remains
   `c54f1fe0d1b5df9f2b1db6a778cc421e4aa206c295119a689c0828fbf1b1c6f6`;
   `full_graph_sync_calls == 0`.

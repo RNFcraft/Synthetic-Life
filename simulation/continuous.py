@@ -1,5 +1,5 @@
 """Deterministic event-driven v0.5.3 runtime foundation."""
-from dataclasses import asdict,dataclass
+from dataclasses import asdict,dataclass,replace
 import base64,math,os,tempfile
 from config import Settings
 from consciousness.native_engine import EventScheduler,RuntimeEvent,RuntimeEventType
@@ -119,7 +119,7 @@ class ContinuousRuntime:
             substrate.advance_to_bridge_boundary(self._neural_target_time,1);pending=substrate.assembly_bridge_events_after(cursor,1)
         if pending:
             event_time=pending[0][2]
-            if event_time<self.world_time:raise RuntimeError("neural bridge event precedes runtime frontier")
+            if event_time<self.world_time and math.nextafter(event_time,math.inf)!=self.world_time:raise RuntimeError("neural bridge event precedes runtime frontier")
             self.scheduler.schedule(max(event_time,self.world_time),RuntimeEventType.NEURAL_BRIDGE)
         elif substrate.current_time>=self._neural_target_time:self._neural_target_time=None
         else:self.scheduler.schedule(math.nextafter(max(substrate.current_time,self.world_time),math.inf),RuntimeEventType.NEURAL_BRIDGE,1)
@@ -171,6 +171,7 @@ class ContinuousRuntime:
     def scheduler_state(self):
         state={"now":self.world_time,"next_id":self.scheduler.next_id,"events":[[e.time,e.id,e.type.name,e.payload] for e in self.scheduler.snapshot()],"neural_target_time":self._neural_target_time,"neurodynamic":self.simulation.core.backend.engine.neurodynamic_substrate().snapshot()}
         if self.neural_sensory is not None:state["neural_sensory_telemetry"]=[self.neural_sensory.telemetry.sensory_frames_transduced,self.neural_sensory.telemetry.sensory_receptor_events,self.neural_sensory.telemetry.active_receptors]
+        if self.neural_sensory is not None:state["neural_sensory_config"]={name:getattr(self.simulation.settings,name) for name in ("sensory_neural_enabled","perception_radius","sensory_neural_channel_bins","sensory_neural_max_receptors","sensory_neural_max_injections_per_frame","sensory_neural_input_amplitude")}
         return state
     @staticmethod
     def _language_result_dict(result):return {"symbol_id":result.symbol_id,"wave":[sorted(result.wave.active_ids),result.wave.energy,result.wave.steps,result.wave.transmitted_energy],"candidates":result.grounding_candidates_updated,"created":result.grounding_relations_materialized}
@@ -212,7 +213,12 @@ class ContinuousRuntime:
         save_container(path,"world",{"META":{"schema":"synthetic-entity-continuous-world","version":7},"STATE":state,"CONT":{"scheduler":self.scheduler_state(),"observation_ordinal":self.observation_ordinal,"actions_completed":self.actions_completed,"cognition_wakes":self.cognition_wakes,"cognition_continuations":self.cognition_continuations,"cognition_generation":self.cognition_generation,"maintenance_ordinal":self.maintenance_ordinal,"legacy_monolithic_frontier":self._legacy_monolithic_frontier,"transition_history":history,"homeostasis":homeostasis,"elapsed_cognits":elapsed,"elapsed_relations":elapsed_relations,"dirty_relations":dirty,"frontier":self._frontier_state(),"language":{"lexicon":self.simulation.core.language.to_dict(),"grounding":self.simulation.core.grounding_context.durable_dict(),"context":self.simulation.core.grounding_context.episode_dict(),"next_message_id":self.next_language_message_id,"inbox":inbox,"active_frontier":self._language_frontier_state(),"last_utterance_result":self._utterance_result_state(),"utterances_processed":self.language_utterances_processed,"tokens_processed":self.language_tokens_processed}},"NBRN":{"encoding":"base64","data":native}},{"NBRN"})
     @classmethod
     def load_world(cls,path,settings=None):
-        data=load_container(path,"world",{"META","STATE","CONT","NBRN"});fd,tmp=tempfile.mkstemp(suffix=".json");os.close(fd)
+        data=load_container(path,"world",{"META","STATE","CONT","NBRN"});saved_sensory=data["CONT"]["scheduler"].get("neural_sensory_config")
+        if saved_sensory is not None:
+            if settings is None:settings=replace(Settings(),**saved_sensory)
+            elif any(getattr(settings,name)!=value for name,value in saved_sensory.items()):raise ValueError("explicit Settings are incompatible with saved sensory-neural topology")
+        elif settings is not None and settings.sensory_neural_enabled:raise ValueError("legacy .seworld has no enabled sensory-neural configuration")
+        fd,tmp=tempfile.mkstemp(suffix=".json");os.close(fd)
         try:save_snapshot(data["STATE"],tmp);sim=Simulation.load(tmp,settings,"native")
         finally:os.unlink(tmp)
         fd,tmp=tempfile.mkstemp(suffix=".native");os.close(fd)
