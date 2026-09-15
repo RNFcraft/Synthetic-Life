@@ -4,10 +4,16 @@
 
 **PASS — native evidence-derived assemblies accepted.**
 
+**v0.6.2: FROZEN**
+
 - Assembly membership is inferred only from recurring emitted micro-κ spikes.
   Per-assembly member participation, normalized individual activity, occurrence
   support, and directed temporal support determine stable core membership; no
   membership lists, labels, classifiers, or semantic hints enter the detector.
+- Final temporal identity is membership-closed: temporal support is filtered
+  only after stable membership normalization, and every persisted/exposed edge
+  has both endpoints in the final member set. Restore rebuilds this derived edge
+  view from authoritative support, so stale excluded-node edges cannot return.
 - Activity episodes preserve timestamp groups. Spikes at the same float64 time
   contribute unordered coactivation but never a directed edge; temporal support
   requires strictly earlier/later groups and tolerates timing jitter.
@@ -30,7 +36,11 @@
 - Tracking enabled/disabled runs have exact neural-state parity. There is no
   Python per-spike processing, Cognit creation, assembly↔Cognit bridge, World,
   language, Goal, planner, action, or motor coupling.
-- Focused v0.6.0–v0.6.2 tests: **29 passed**; full pytest: **344 passed**;
+- The adversarial closure makes frequent X fire globally and inside three
+  A→X→B→C windows. Raw X temporal support reaches at least 3, yet specificity
+  excludes X from membership and membership-closed filtering removes every X
+  edge while preserving A/B/C temporal structure.
+- Focused v0.6.0–v0.6.2 tests: **30 passed**; full pytest: **345 passed**;
   Release build: **PASS**; CTest Release: **2/2 passed**. Silent 10,000 micro-κ /
   50,000 micro-ρ assembly work: **0**. No-language digest remains
   `e334137aab48aac629c9ac0d4dbc77ea8ec7f51203acda0c970a9bb647c3d731`;

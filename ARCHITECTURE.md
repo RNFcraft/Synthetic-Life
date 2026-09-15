@@ -120,6 +120,12 @@ records for partial/full recognition. Candidate/recent/temporal/match state is
 bounded; lazy elapsed-time decay guides deterministic weak-candidate eviction.
 All state and telemetry round-trip through the coarse snapshot API.
 
+Temporal identity is structurally closed over normalized membership. The system
+first derives stable members from recurrence and node specificity, then exposes
+only supported temporal edges whose source and target are both in that final
+set. Restore deterministically rebuilds this derived edge set from authoritative
+saved support, preventing stale distractor edges from being resurrected.
+
 Assembly observation occurs after the complete spike transaction and cannot
 alter potential, refractory state, STDP, homeostasis, weights, event ordering,
 or pending deliveries. There is still no assembly↔Cognit, World, language,

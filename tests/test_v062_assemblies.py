@@ -111,3 +111,30 @@ def test_candidate_snapshot_restore_has_exact_assembly_continuation_and_telemetr
     assert uninterrupted.assemblies() == restored.assemblies()
     telemetry = uninterrupted.telemetry()
     assert telemetry[14] >= 1 and telemetry[15] == 1 and telemetry[17] >= 1
+
+
+def test_temporal_identity_is_closed_over_normalized_members_with_real_distractor_evidence():
+    substrate = _substrate(); a, b, c, x = [substrate.add_micro_kappa() for _ in range(4)]
+    # X is globally frequent, then also occurs inside three genuine ABC windows.
+    for index in range(12):
+        time = index * 5.
+        substrate.inject(x, 3., time); substrate.advance_to(time)
+    _train(substrate, [a, b, c], 70., 3)
+    for repeat in range(3):
+        base = 110. + repeat * 10.
+        for node, offset in ((a, 0.), (x, .25), (b, .5), (c, 1.)):
+            substrate.inject(node, 3., base + offset); substrate.advance_to(base + offset)
+
+    assembly = next(row for row in substrate.assemblies() if row[1] == [a, b, c])
+    assert x not in assembly[1]
+    assert {(a, b), (a, c), (b, c)}.issubset(set(assembly[2]))
+    assert all(x not in edge for edge in assembly[2])
+
+    snapshot = substrate.snapshot()
+    raw = next(row for row in snapshot["assembly_records"] if row[0] == assembly[0])
+    x_temporal_evidence = [row for row in raw[4] if int(row[0]) == x or int(row[1]) == x]
+    assert x_temporal_evidence and max(row[2] for row in x_temporal_evidence) >= 3
+
+    restored = NeurodynamicSubstrate(); restored.restore(snapshot)
+    restored_assembly = next(row for row in restored.assemblies() if row[0] == assembly[0])
+    assert restored_assembly == assembly and all(x not in edge for edge in restored_assembly[2])

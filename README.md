@@ -65,6 +65,9 @@ lazy elapsed-time decay during capacity pressure, and snapshot/restore preserves
 exact continuation. The detector is observational: it does not alter spikes,
 STDP weights, homeostasis, or pending events. An assembly is not a Cognit, and
 no assembly-to-Cognit, World, language, Goal, or action bridge exists yet.
+Final temporal edges are derived after stable membership normalization, so both
+edge endpoints must be stable members. Snapshot restore rebuilds this derived
+view from saved temporal evidence. v0.6.2 is frozen.
 
 ## Current runtime model
 
@@ -208,8 +211,8 @@ python -m pytest -q
 
 Current repository-reported acceptance state for v0.6.0:
 
-- focused v0.6.0–v0.6.2 micro-neurodynamic suite: **29 passed**
-- full pytest: **344 passed**
+- focused v0.6.0–v0.6.2 micro-neurodynamic suite: **30 passed**
+- full pytest: **345 passed**
 - CTest Release: **2/2 passed**
 - deterministic `PYTHONHASHSEED=1/77` trajectory digest: identical
 - `full_graph_sync_calls == 0`
