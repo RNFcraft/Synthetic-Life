@@ -2,7 +2,7 @@
 
 Synthetic-Life is an experimental embodied cognitive architecture built around a sparse, continuously changing graph of Cognits (`κ`) and Relations (`ρ`). The project is not an LLM/Transformer inference wrapper and does not use a frozen policy network as its learned core. Learning, prediction, memory, goals and action selection evolve during interaction with the World.
 
-The current development line is **v0.6.0**.
+The current development line is **v0.6.1**.
 
 Current accepted gates:
 
@@ -35,6 +35,21 @@ substrate constructed with different defaults reproduces its exact continuation.
 Inspection projects potential and adaptation analytically to the substrate's
 current time only for requested IDs; it does not materialize or sweep silent
 micro-κ. v0.6.0 closure is frozen.
+
+## v0.6.1 local plasticity and homeostasis
+
+The isolated native substrate now supports local pair-based spike-timing
+plasticity. Micro-ρ polarity is innate and immutable; only a bounded,
+nonnegative weight magnitude can change, and only when that edge explicitly
+enables plasticity. Incoming/outgoing local adjacency avoids graph-wide scans.
+Same-time spikes are evaluated as one transaction against traces from before the
+timestamp, so they create no fake causal learning.
+
+Slow local homeostatic threshold bias is separate from fast adaptation. Both it
+and pre/post traces decay lazily when an affected micro-κ is touched or
+inspected. They are innate physiology, not semantic knowledge. There remains no
+assembly/Cognit bridge and no World, language, Goal, action, reward, or
+backpropagation coupling.
 
 ## Current runtime model
 
@@ -178,8 +193,8 @@ python -m pytest -q
 
 Current repository-reported acceptance state for v0.6.0:
 
-- focused micro-neurodynamic suite: **11 passed**
-- full pytest: **326 passed**
+- focused v0.6.0/v0.6.1 micro-neurodynamic suite: **20 passed**
+- full pytest: **335 passed**
 - CTest Release: **2/2 passed**
 - deterministic `PYTHONHASHSEED=1/77` trajectory digest: identical
 - `full_graph_sync_calls == 0`

@@ -1,11 +1,12 @@
-# Synthetic Entity Architecture — v0.6.0
+# Synthetic Entity Architecture — v0.6.1
 
 Synthetic Entity is an experimental embodied cognitive architecture built around a sparse, continuously changing graph of Cognits (`κ`) and Relations (`ρ`). It is not a Transformer/LLM inference loop and does not depend on a frozen policy network. The current system learns through persistent predictive, causal, spatial, and goal-directed state that changes during interaction with the world.
 
 The v0.5.2 runtime remains the frozen compatibility oracle. v0.5.7 retains the
 v0.5.3 continuous float64/event-driven architecture and adds receptive embodied
 symbol grounding while preserving legacy differential oracles. v0.6.0 adds an
-isolated native event-driven micro-neurodynamic substrate below that architecture.
+isolated native event-driven micro-neurodynamic substrate below that architecture;
+v0.6.1 adds only local plasticity and homeostasis within that substrate.
 
 ## 1. Authority split
 
@@ -82,6 +83,25 @@ micro-κ state, micro-ρ topology/polarity, and pending event targets, times, an
 sequences before replacing native state. Requested state inspection reports
 analytically projected potential/adaptation at current neural time without
 mutating storage or sweeping silent micro-κ. The v0.6.0 substrate is frozen.
+
+### Local plasticity and homeostasis (v0.6.1)
+
+Micro-ρ polarity is fixed innate topology. Its magnitude remains nonnegative and
+is bounded by innate weight limits; `plasticity_enabled` explicitly controls
+whether a relation participates. Native incoming/outgoing adjacency supports
+pair-based local timing updates without a global graph scan. A source trace read
+before a target spike gives causal potentiation; a target trace read before a
+source spike gives anti-causal depression. The same-time transaction determines
+all spikes before applying any trace increments, preventing ID, relation, or
+insertion order from fabricating causality.
+
+Pre/post traces and a slow homeostatic threshold bias are lazy per-micro-κ
+state. Homeostatic bias rises on spikes and decays analytically toward zero;
+effective threshold is base threshold plus fast adaptation plus slow bias.
+These are innate physiology, not learned semantic knowledge. Snapshot/restore
+preserves physiology, traces, weights, flags, bias, telemetry, and pending
+events. This remains entirely below cognition: no assemblies, Cognit bridge,
+World/language/Goal/action coupling, reward, optimizer, or backpropagation.
 
 ## 2. Causal boundary
 

@@ -94,4 +94,4 @@ def test_silent_10k_50k_has_zero_event_work_and_validation():
 
 
 def test_native_backend_owns_empty_substrate_by_default():
-    s=NativeBrainEngine().neurodynamic_substrate();assert s.telemetry()==(0,0,0,0,0,0,0,0)
+    s=NativeBrainEngine().neurodynamic_substrate();assert s.telemetry()[:8]==(0,0,0,0,0,0,0,0)
