@@ -31,6 +31,10 @@ struct AssemblyCognitBridgeResult {
   double confidence{};
   std::uint8_t kind{};
   bool born{}, activated{};
+  double event_time{};
+  std::uint64_t recognition_episode_id{};
+  double contribution{};
+  bool birth_suppressed{};
 };
 class NativeBrainEngine {
 public:
@@ -39,10 +43,10 @@ public:
   std::shared_ptr<BrainSnapshotChannel> brain_snapshot_channel() const { return brain_channel_; }
   std::shared_ptr<DialogueSnapshotChannel> dialogue_snapshot_channel() const { return dialogue_channel_; }
   NeurodynamicSubstrate &neurodynamic_substrate() { return neurodynamic_; }
-  std::vector<AssemblyCognitBridgeResult> process_assembly_bridge(std::uint64_t cognitive_tick, std::size_t max_events = 64);
+  std::vector<AssemblyCognitBridgeResult> process_assembly_bridge(std::uint64_t cognitive_tick, std::size_t max_events = 64, std::size_t max_cognits = 2048, std::size_t max_births = 4);
   std::vector<std::pair<std::uint64_t, std::uint32_t>> assembly_cognit_mapping() const;
-  std::tuple<std::uint64_t, std::vector<std::pair<std::uint64_t, std::uint32_t>>, std::uint64_t, std::uint64_t> assembly_bridge_state() const;
-  void restore_assembly_bridge_state(std::uint64_t cursor, const std::vector<std::pair<std::uint64_t, std::uint32_t>> &mapping, std::uint64_t births, std::uint64_t activations);
+  std::tuple<std::uint64_t, std::vector<std::pair<std::uint64_t, std::uint32_t>>, std::uint64_t, std::uint64_t, std::uint64_t> assembly_bridge_state() const;
+  void restore_assembly_bridge_state(std::uint64_t cursor, const std::vector<std::pair<std::uint64_t, std::uint32_t>> &mapping, std::uint64_t births, std::uint64_t activations, std::uint64_t suppressed = 0);
   void publish_dialogue(double world_time, DialogueRole role, std::string text) { dialogue_channel_->publish(world_time, role, std::move(text)); }
   std::uint32_t add_cognit(double activity = 0, double threshold = .25, double confidence = .5) {
     auto id = graph_.add_cognit(activity, threshold, confidence);
@@ -137,7 +141,7 @@ private:
   std::shared_ptr<DialogueSnapshotChannel> dialogue_channel_;
   NeurodynamicSubstrate neurodynamic_{};
   std::map<std::uint64_t, std::uint32_t> assembly_cognits_;
-  std::uint64_t assembly_bridge_cursor_{}, assembly_cognit_births_{}, assembly_cognit_activations_{};
+  std::uint64_t assembly_bridge_cursor_{}, assembly_cognit_births_{}, assembly_cognit_activations_{}, assembly_cognit_births_suppressed_{};
   struct HomeostasisPolicy {
     std::uint64_t first;
     double lam, rate, tmin, tmax, activity_decay, utility_decay;

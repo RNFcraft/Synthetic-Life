@@ -86,7 +86,7 @@ class SyntheticEntityCore:
         self.world_time_seconds=world_time;self.memory.set_world_time(world_time)
         if world_time is not None and self.backend:self.backend.begin_continuous_time(world_time)
         self.events=[];self.cognitive_tick+=1;cognitive_tick=self.cognitive_tick
-        bridge_active=self.backend.process_assembly_bridge(self.graph,cognitive_tick) if self.backend and hasattr(self.backend,"process_assembly_bridge") else set()
+        bridge_active=set()
         observation,protos=self.patterns.observe(frame,self.state.representation_coverage,self.state.predictions)
         tracks=self.perception.update(self.patterns.last_events,frame.tick,self.previous_action)
         self.current_structure=observed_structure(observation);self.previous_target_mismatch=self.target_mismatch
@@ -196,6 +196,17 @@ class SyntheticEntityCore:
         quiet=self.planner.continue_continuous(self,f.session)
         if quiet:f.phase="QUIESCENT"
         return quiet
+
+    def process_continuous_assembly_bridge(self,world_time:float)->tuple:
+        """One bounded neural-to-cognitive transaction, independent of World observation."""
+        if not self.backend:return ()
+        self.world_time_seconds=float(world_time);self.memory.set_world_time(world_time);self.backend.begin_continuous_time(world_time)
+        next_tick=self.cognitive_tick+1;active=self.backend.process_assembly_bridge(self.graph,next_tick);rows=tuple(getattr(self.backend,"last_assembly_bridge_rows",()))
+        if not rows:return ()
+        self.cognitive_tick=next_tick
+        if active:
+            wave=self._propagate(active,self.cognitive_tick);self.last_wave=wave;self.dirty_cognits.update(wave.active_ids);self.previous_active=set(wave.active_ids);self.previous_context=wave.active_ids
+        return rows
 
     def commit_continuous_action(self,generation:int)->Action|None:
         f=self.continuous_frontier

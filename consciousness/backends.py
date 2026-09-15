@@ -93,7 +93,7 @@ class NativeGraphBackend:
         result=self.engine.receive_batch([node_id-1 for node_id,_ in operations],[energy for _,energy in operations],tick,wave_step,settings.refractory_attenuation,settings.refractory_wave_steps)
         self.invalidate_state([node_id for node_id,_ in operations]);return result
     def process_assembly_bridge(self,graph,cognitive_tick):
-        self.ffi_calls+=1;rows=self.engine.process_assembly_bridge(cognitive_tick)
+        self.ffi_calls+=1;rows=self.engine.process_assembly_bridge(cognitive_tick,64,self.settings.max_cognits,self.settings.max_new_cognits_per_tick);self.last_assembly_bridge_rows=rows
         for row in rows:
             if row[5]:graph.adopt_native_cognit(row[2],"NEURAL_ASSEMBLY")
         self.invalidate_state([row[2]+1 for row in rows])

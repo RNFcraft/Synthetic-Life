@@ -13,7 +13,7 @@ namespace py = pybind11;
 using namespace se;
 PYBIND11_MODULE(_native_brain, m) {
   py::class_<RuntimeEvent>(m, "RuntimeEvent").def(py::init([](double t, std::uint64_t id, RuntimeEventType type, std::uint64_t payload) { return RuntimeEvent{t, id, type, payload}; })).def_readonly("time", &RuntimeEvent::time).def_readonly("id", &RuntimeEvent::id).def_readonly("type", &RuntimeEvent::type).def_readonly("payload", &RuntimeEvent::payload);
-  py::enum_<RuntimeEventType>(m, "RuntimeEventType").value("WORLD_ACTION_COMPLETE", RuntimeEventType::WorldActionComplete).value("WORLD_SPAWN", RuntimeEventType::WorldSpawn).value("SENSORY_CHANGE", RuntimeEventType::SensoryChange).value("COGNITION_WAKE", RuntimeEventType::CognitionWake).value("COGNITION_CONTINUE", RuntimeEventType::CognitionContinue).value("MEMORY_TIMER", RuntimeEventType::MemoryTimer).value("RELATION_TIMER", RuntimeEventType::RelationTimer).value("MAINTENANCE", RuntimeEventType::Maintenance).value("EXTERNAL_INPUT", RuntimeEventType::ExternalInput).value("LANGUAGE_INPUT", RuntimeEventType::LanguageInput).value("LANGUAGE_CONTINUE", RuntimeEventType::LanguageContinue);
+  py::enum_<RuntimeEventType>(m, "RuntimeEventType").value("WORLD_ACTION_COMPLETE", RuntimeEventType::WorldActionComplete).value("WORLD_SPAWN", RuntimeEventType::WorldSpawn).value("SENSORY_CHANGE", RuntimeEventType::SensoryChange).value("COGNITION_WAKE", RuntimeEventType::CognitionWake).value("COGNITION_CONTINUE", RuntimeEventType::CognitionContinue).value("MEMORY_TIMER", RuntimeEventType::MemoryTimer).value("RELATION_TIMER", RuntimeEventType::RelationTimer).value("MAINTENANCE", RuntimeEventType::Maintenance).value("EXTERNAL_INPUT", RuntimeEventType::ExternalInput).value("LANGUAGE_INPUT", RuntimeEventType::LanguageInput).value("LANGUAGE_CONTINUE", RuntimeEventType::LanguageContinue).value("NEURAL_BRIDGE",RuntimeEventType::NeuralBridge);
   py::class_<EventScheduler>(m, "EventScheduler").def(py::init<>()).def("schedule", &EventScheduler::schedule, py::arg("time"), py::arg("event_type"), py::arg("payload") = 0).def("pop_ready", &EventScheduler::pop_ready).def("snapshot", &EventScheduler::snapshot).def("restore", &EventScheduler::restore).def_property_readonly("now", &EventScheduler::now).def_property_readonly("next_id", &EventScheduler::next_id).def_property_readonly("size", &EventScheduler::size);
   py::enum_<MicroPolarity>(m, "MicroPolarity").value("EXCITATORY", MicroPolarity::Excitatory).value("INHIBITORY", MicroPolarity::Inhibitory);
   py::class_<NeurodynamicSubstrate>(m, "NeurodynamicSubstrate")
@@ -96,7 +96,9 @@ PYBIND11_MODULE(_native_brain, m) {
                  s.assembly_bridge_events_after(cursor, limit))
               out.append(py::make_tuple(event.sequence, event.assembly_id,
                                         event.time, event.confidence,
-                                        (std::uint8_t)event.kind));
+                                        (std::uint8_t)event.kind,
+                                        event.recognition_episode_id,
+                                        event.contribution));
             return out;
           },
           py::arg("cursor"), py::arg("limit") = 64)
@@ -214,8 +216,11 @@ PYBIND11_MODULE(_native_brain, m) {
              for (auto const &event : x.bridge_events)
                bridge_events.append(
                    py::make_tuple(event.sequence, event.assembly_id, event.time,
-                                  event.confidence, (std::uint8_t)event.kind));
+                                  event.confidence, (std::uint8_t)event.kind,
+                                  event.recognition_episode_id,event.contribution));
              d["assembly_bridge_events"] = bridge_events;
+             d["next_recognition_episode_id"]=x.next_recognition_episode_id;
+             py::list episodes;for(auto const&episode:x.recognition_episodes)episodes.append(py::make_tuple(episode.assembly_id,episode.episode_id,episode.last_time,episode.peak_confidence));d["recognition_episodes"]=episodes;
              return d;
            })
       .def("restore", [](NeurodynamicSubstrate &s, py::dict d) {
@@ -339,11 +344,9 @@ PYBIND11_MODULE(_native_brain, m) {
                 d["next_bridge_sequence"].cast<std::uint64_t>();
             for (auto raw : d["assembly_bridge_events"].cast<py::list>()) {
               auto t = raw.cast<py::tuple>();
-              x.bridge_events.push_back(
-                  {t[0].cast<std::uint64_t>(), t[1].cast<std::uint64_t>(),
-                   t[2].cast<double>(), t[3].cast<double>(),
-                   (AssemblyBridgeEventKind)t[4].cast<std::uint8_t>()});
+              AssemblyBridgeEvent event;event.sequence=t[0].cast<std::uint64_t>();event.assembly_id=t[1].cast<std::uint64_t>();event.time=t[2].cast<double>();event.confidence=t[3].cast<double>();event.kind=(AssemblyBridgeEventKind)t[4].cast<std::uint8_t>();if(t.size()>5){event.recognition_episode_id=t[5].cast<std::uint64_t>();event.contribution=t[6].cast<double>();}x.bridge_events.push_back(event);
             }
+            if(d.contains("next_recognition_episode_id")){x.next_recognition_episode_id=d["next_recognition_episode_id"].cast<std::uint64_t>();for(auto raw:d["recognition_episodes"].cast<py::list>()){auto t=raw.cast<py::tuple>();x.recognition_episodes.push_back({t[0].cast<std::uint64_t>(),t[1].cast<std::uint64_t>(),t[2].cast<double>(),t[3].cast<double>()});}}
           }
         } else {
           x.assembly_window = 5.;
@@ -783,15 +786,16 @@ PYBIND11_MODULE(_native_brain, m) {
            py::return_value_policy::reference_internal)
       .def(
           "process_assembly_bridge",
-          [](NativeBrainEngine &e, std::uint64_t tick, std::size_t limit) {
+          [](NativeBrainEngine &e, std::uint64_t tick, std::size_t limit,std::size_t max_cognits,std::size_t max_births) {
             py::list out;
-            for (auto const &row : e.process_assembly_bridge(tick, limit))
+            for (auto const &row : e.process_assembly_bridge(tick, limit,max_cognits,max_births))
               out.append(py::make_tuple(row.event_sequence, row.assembly_id,
                                         row.cognit_id, row.confidence, row.kind,
-                                        row.born, row.activated));
+                                        row.born, row.activated,row.event_time,
+                                        row.recognition_episode_id,row.contribution,row.birth_suppressed));
             return out;
           },
-          py::arg("cognitive_tick"), py::arg("max_events") = 64)
+          py::arg("cognitive_tick"), py::arg("max_events") = 64,py::arg("max_cognits")=2048,py::arg("max_births")=4)
       .def("assembly_cognit_mapping",
            &NativeBrainEngine::assembly_cognit_mapping)
       .def("assembly_bridge_state", &NativeBrainEngine::assembly_bridge_state)

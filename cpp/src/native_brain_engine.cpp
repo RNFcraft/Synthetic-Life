@@ -8,8 +8,9 @@
 #include <stdexcept>
 #include <tuple>
 namespace se {
-std::vector<AssemblyCognitBridgeResult> NativeBrainEngine::process_assembly_bridge(std::uint64_t tick, std::size_t max_events) {
+std::vector<AssemblyCognitBridgeResult> NativeBrainEngine::process_assembly_bridge(std::uint64_t tick, std::size_t max_events,std::size_t max_cognits,std::size_t max_births) {
   std::vector<AssemblyCognitBridgeResult> out;
+  std::size_t births_this_drain{};
   for (auto const &event : neurodynamic_.assembly_bridge_events_after(assembly_bridge_cursor_, max_events)) {
     auto found = assembly_cognits_.find(event.assembly_id);
     bool born = false;
@@ -18,19 +19,18 @@ std::vector<AssemblyCognitBridgeResult> NativeBrainEngine::process_assembly_brid
       found = assembly_cognits_.end();
     }
     if (found == assembly_cognits_.end()) {
-      auto id = add_cognit(0., .25, .5);
-      found = assembly_cognits_.emplace(event.assembly_id, id).first;
-      born = true;
-      ++assembly_cognit_births_;
+      if(live_cognit_count()<max_cognits&&births_this_drain<max_births){auto id = add_cognit(0., .25, .5);found = assembly_cognits_.emplace(event.assembly_id, id).first;born = true;++births_this_drain;++assembly_cognit_births_;}
     }
     bool activated = false;
-    if (event.kind == AssemblyBridgeEventKind::Recognized) {
-      auto energy = std::clamp(event.confidence, 0., 1.);
+    bool suppressed=found==assembly_cognits_.end();
+    if(suppressed)++assembly_cognit_births_suppressed_;
+    if (!suppressed&&event.kind == AssemblyBridgeEventKind::Recognized&&event.contribution>0.) {
+      auto energy = std::clamp(event.contribution, 0., 1.);
       activated = receive(found->second, energy, tick, false, .2, 2);
       ++assembly_cognit_activations_;
     }
     assembly_bridge_cursor_ = event.sequence;
-    out.push_back({event.sequence, event.assembly_id, found->second, event.confidence, (std::uint8_t)event.kind, born, activated});
+    out.push_back({event.sequence, event.assembly_id, suppressed?std::numeric_limits<std::uint32_t>::max():found->second, event.confidence, (std::uint8_t)event.kind, born, activated,event.time,event.recognition_episode_id,event.contribution,suppressed});
   }
   return out;
 }
@@ -41,8 +41,8 @@ std::vector<std::pair<std::uint64_t, std::uint32_t>> NativeBrainEngine::assembly
       out.push_back(row);
   return out;
 }
-std::tuple<std::uint64_t, std::vector<std::pair<std::uint64_t, std::uint32_t>>, std::uint64_t, std::uint64_t> NativeBrainEngine::assembly_bridge_state() const { return {assembly_bridge_cursor_, assembly_cognit_mapping(), assembly_cognit_births_, assembly_cognit_activations_}; }
-void NativeBrainEngine::restore_assembly_bridge_state(std::uint64_t cursor, const std::vector<std::pair<std::uint64_t, std::uint32_t>> &mapping, std::uint64_t births, std::uint64_t activations) {
+std::tuple<std::uint64_t, std::vector<std::pair<std::uint64_t, std::uint32_t>>, std::uint64_t, std::uint64_t,std::uint64_t> NativeBrainEngine::assembly_bridge_state() const { return {assembly_bridge_cursor_, assembly_cognit_mapping(), assembly_cognit_births_, assembly_cognit_activations_,assembly_cognit_births_suppressed_}; }
+void NativeBrainEngine::restore_assembly_bridge_state(std::uint64_t cursor, const std::vector<std::pair<std::uint64_t, std::uint32_t>> &mapping, std::uint64_t births, std::uint64_t activations,std::uint64_t suppressed) {
   auto neural = neurodynamic_.snapshot();
   if (cursor >= neural.next_bridge_sequence)
     throw std::invalid_argument("invalid assembly bridge cursor");
@@ -56,6 +56,7 @@ void NativeBrainEngine::restore_assembly_bridge_state(std::uint64_t cursor, cons
   assembly_cognits_ = std::move(checked);
   assembly_cognit_births_ = births;
   assembly_cognit_activations_ = activations;
+  assembly_cognit_births_suppressed_=suppressed;
 }
 void NativeBrainEngine::publish_brain_snapshot(double world_time, std::uint64_t cognitive_tick, std::uint64_t generation, std::span<const std::uint32_t> active) {
   BrainSnapshot out;
@@ -1441,7 +1442,7 @@ void NativeBrainEngine::load_graph(const std::string &path) {
   homeostasis_policies_.clear();
   homeostasis_applied_.clear();
   assembly_cognits_.clear();
-  assembly_bridge_cursor_ = assembly_cognit_births_ = assembly_cognit_activations_ = 0;
+  assembly_bridge_cursor_ = assembly_cognit_births_ = assembly_cognit_activations_ = assembly_cognit_births_suppressed_ = 0;
   resize_scratch();
 }
 } // namespace se

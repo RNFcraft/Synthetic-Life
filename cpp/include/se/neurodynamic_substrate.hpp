@@ -31,9 +31,11 @@ struct AssemblyMatch {
 enum class AssemblyBridgeEventKind : std::uint8_t { Consolidated = 0, Recognized = 1 };
 struct AssemblyBridgeEvent {
   std::uint64_t sequence{}, assembly_id{};
-  double time{}, confidence{};
+  std::uint64_t recognition_episode_id{};
+  double time{}, confidence{}, contribution{};
   AssemblyBridgeEventKind kind{};
 };
+struct AssemblyRecognitionEpisode { std::uint64_t assembly_id{},episode_id{};double last_time{},peak_confidence{}; };
 struct NeuroTelemetry {
   std::uint64_t total_events_processed{}, total_spikes{}, refractory_discards{}, max_queue_depth{}, last_advance_events_processed{};
   std::uint64_t plasticity_updates{}, potentiation_updates{}, depression_updates{}, homeostatic_updates{};
@@ -61,6 +63,8 @@ struct NeuroSnapshot {
   std::vector<std::uint64_t> node_activity_support;
   std::uint64_t next_bridge_sequence{1};
   std::vector<AssemblyBridgeEvent> bridge_events;
+  std::uint64_t next_recognition_episode_id{1};
+  std::vector<AssemblyRecognitionEpisode> recognition_episodes;
   std::vector<NeuralEvent> pending;
   NeuroTelemetry telemetry;
 };
@@ -113,6 +117,8 @@ private:
   std::vector<std::uint64_t> node_activity_support_;
   std::uint64_t next_bridge_sequence_{1};
   std::vector<AssemblyBridgeEvent> bridge_events_;
+  std::uint64_t next_recognition_episode_id_{1};
+  std::vector<AssemblyRecognitionEpisode> recognition_episodes_;
   void validate_time(double time) const;
   void touch(std::uint32_t id, double time);
   void touch_traces(std::uint32_t id, double time);

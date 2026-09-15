@@ -4,7 +4,7 @@
 #include <vector>
 
 namespace se {
-enum class RuntimeEventType:std::uint8_t { WorldActionComplete=1,WorldSpawn,SensoryChange,CognitionWake,CognitionContinue,MemoryTimer,RelationTimer,Maintenance,ExternalInput,LanguageInput,LanguageContinue };
+enum class RuntimeEventType:std::uint8_t { WorldActionComplete=1,WorldSpawn,SensoryChange,CognitionWake,CognitionContinue,MemoryTimer,RelationTimer,Maintenance,ExternalInput,LanguageInput,LanguageContinue,NeuralBridge };
 struct RuntimeEvent { double time{};std::uint64_t id{};RuntimeEventType type{};std::uint64_t payload{}; };
 class EventScheduler {
  public:

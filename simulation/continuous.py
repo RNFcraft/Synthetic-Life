@@ -24,7 +24,7 @@ class RenderSnapshot:world_time:float;bodies:tuple[RenderBody,...];objects:tuple
 class ContinuousRuntime:
     ACTION_DURATION=.15
     def __init__(self,seed=12345,settings:Settings|None=None):
-        self.simulation=Simulation(seed,settings,backend="native");self.scheduler=EventScheduler();self.observation_ordinal=0;self.last_frame=None;self.actions_completed=0;self.cognition_wakes=0;self.cognition_continuations=0;self.cognition_generation=0;self.maintenance_ordinal=0;self._legacy_monolithic_frontier=False;self.language_inbox={};self.next_language_message_id=1;self.language_frontier=None;self.last_utterance_result=None;self.language_utterances_processed=0;self.language_tokens_processed=0
+        self.simulation=Simulation(seed,settings,backend="native");self.scheduler=EventScheduler();self.observation_ordinal=0;self.last_frame=None;self.actions_completed=0;self.cognition_wakes=0;self.cognition_continuations=0;self.cognition_generation=0;self.maintenance_ordinal=0;self._legacy_monolithic_frontier=False;self.language_inbox={};self.next_language_message_id=1;self.language_frontier=None;self.last_utterance_result=None;self.language_utterances_processed=0;self.language_tokens_processed=0;self.neural_bridge_deliveries=[]
         world=self.simulation.world;first=world.next_spawn_tick;world.disable_legacy_spawning()
         if first is not None:self.scheduler.schedule(float(first),RuntimeEventType.WORLD_SPAWN)
         interval=self.simulation.settings.continuous_maintenance_interval_seconds
@@ -49,6 +49,8 @@ class ContinuousRuntime:
                 action=self.simulation.core.commit_continuous_action(event.payload)
                 if action is not None:self.scheduler.schedule(now+self.ACTION_DURATION,RuntimeEventType.WORLD_ACTION_COMPLETE,action.kind.value)
             elif quiet is False:self.scheduler.schedule(now,RuntimeEventType.COGNITION_CONTINUE,event.payload)
+        elif kind==RuntimeEventType.NEURAL_BRIDGE:
+            rows=self.simulation.core.process_continuous_assembly_bridge(now);self.neural_bridge_deliveries.extend(rows)
         elif kind==RuntimeEventType.WORLD_ACTION_COMPLETE:
             action=Action(ActionType(event.payload));physical_sequence=self.simulation.event_sequence.next();intent=ActionIntent(action,WorldTime(now),physical_sequence);self.simulation.world.apply_intent(intent);self.simulation.last_action=action;self.actions_completed+=1;self.scheduler.schedule(now,RuntimeEventType.SENSORY_CHANGE)
         elif kind==RuntimeEventType.WORLD_SPAWN:
@@ -88,6 +90,11 @@ class ContinuousRuntime:
         if when<self.world_time:raise ValueError("language input cannot precede current WorldTime")
         message_id=self.next_language_message_id;frame=LanguageFrame(message_id,when,surface)
         self.next_language_message_id+=1;self.language_inbox[message_id]=frame;self.scheduler.schedule(when,RuntimeEventType.LANGUAGE_INPUT,message_id);return message_id
+    def advance_neural_to(self,time):
+        """Advance native neural time and enqueue one coarse cognition-boundary drain."""
+        when=float(time)
+        if when<self.world_time:raise ValueError("neural time cannot precede continuous runtime time")
+        self.simulation.core.backend.engine.neurodynamic_substrate().advance_to(when);self.scheduler.schedule(when,RuntimeEventType.NEURAL_BRIDGE);return when
     def inject_utterance(self,tokens,at_time=None,request_target=None):
         if isinstance(tokens,str):raise TypeError("utterance token boundaries must be supplied explicitly")
         tokens=tuple(tokens)
@@ -110,7 +117,7 @@ class ContinuousRuntime:
             if first.time>until:break
             for event in self.scheduler.pop_ready(first.time):
                 self._process(event)
-                if event.type in (RuntimeEventType.SENSORY_CHANGE,RuntimeEventType.COGNITION_WAKE,RuntimeEventType.COGNITION_CONTINUE,RuntimeEventType.MAINTENANCE,RuntimeEventType.LANGUAGE_INPUT,RuntimeEventType.LANGUAGE_CONTINUE):self.publish_brain_snapshot(self.simulation.core.last_language_result.wave.active_ids if event.type in (RuntimeEventType.LANGUAGE_INPUT,RuntimeEventType.LANGUAGE_CONTINUE) and self.simulation.core.last_language_result else None)
+                if event.type in (RuntimeEventType.SENSORY_CHANGE,RuntimeEventType.COGNITION_WAKE,RuntimeEventType.COGNITION_CONTINUE,RuntimeEventType.MAINTENANCE,RuntimeEventType.LANGUAGE_INPUT,RuntimeEventType.LANGUAGE_CONTINUE,RuntimeEventType.NEURAL_BRIDGE):self.publish_brain_snapshot(self.simulation.core.last_language_result.wave.active_ids if event.type in (RuntimeEventType.LANGUAGE_INPUT,RuntimeEventType.LANGUAGE_CONTINUE) and self.simulation.core.last_language_result else None)
                 processed+=1
                 if processed>guard:raise self._runaway_error()
         self.scheduler.pop_ready(float(until));self.simulation.world.advance_world_time(float(until));self.simulation.world_time=WorldTime(float(until));return processed
@@ -119,7 +126,7 @@ class ContinuousRuntime:
         while self.scheduler.size and self.scheduler.snapshot()[0].time<=now:
             for event in self.scheduler.pop_ready(now):
                 self._process(event)
-                if event.type in (RuntimeEventType.SENSORY_CHANGE,RuntimeEventType.COGNITION_WAKE,RuntimeEventType.COGNITION_CONTINUE,RuntimeEventType.MAINTENANCE,RuntimeEventType.LANGUAGE_INPUT,RuntimeEventType.LANGUAGE_CONTINUE):self.publish_brain_snapshot(self.simulation.core.last_language_result.wave.active_ids if event.type in (RuntimeEventType.LANGUAGE_INPUT,RuntimeEventType.LANGUAGE_CONTINUE) and self.simulation.core.last_language_result else None)
+                if event.type in (RuntimeEventType.SENSORY_CHANGE,RuntimeEventType.COGNITION_WAKE,RuntimeEventType.COGNITION_CONTINUE,RuntimeEventType.MAINTENANCE,RuntimeEventType.LANGUAGE_INPUT,RuntimeEventType.LANGUAGE_CONTINUE,RuntimeEventType.NEURAL_BRIDGE):self.publish_brain_snapshot(self.simulation.core.last_language_result.wave.active_ids if event.type in (RuntimeEventType.LANGUAGE_INPUT,RuntimeEventType.LANGUAGE_CONTINUE) and self.simulation.core.last_language_result else None)
                 processed+=1
             if processed>guard:raise self._runaway_error()
         return processed
@@ -182,7 +189,7 @@ class ContinuousRuntime:
             with open(tmp,"wb") as stream:stream.write(base64.b64decode(data["NBRN"]["data"]))
             engine=sim.core.backend.engine;engine.load_graph(tmp);engine.restore_transition_history(data["CONT"].get("transition_history",[]));engine.restore_homeostasis_runtime_state(*data["CONT"]["homeostasis"]);engine.restore_continuous_time_state(*data["CONT"].get("elapsed_cognits",[False,0.0,0.0,[-1.0]*engine.cognit_count,[-1.0]*engine.cognit_count,[.25]*engine.cognit_count,0]));engine.restore_continuous_relation_time_state(*data["CONT"].get("elapsed_relations",[[],0]));engine.restore_dirty_relation_state(data["CONT"]["dirty_relations"]);sim.core.backend.invalidate_state()
         finally:os.unlink(tmp)
-        obj=cls.__new__(cls);obj.simulation=sim;obj.scheduler=EventScheduler();cont=data["CONT"];s=cont["scheduler"];events=[RuntimeEvent(t,i,getattr(RuntimeEventType,name),p) for t,i,name,p in s["events"]];obj.scheduler.restore(s["now"],s["next_id"],events);obj.observation_ordinal=cont["observation_ordinal"];obj.actions_completed=cont["actions_completed"];obj.cognition_wakes=cont["cognition_wakes"];obj.cognition_continuations=cont.get("cognition_continuations",0);obj.cognition_generation=cont.get("cognition_generation",0);obj.maintenance_ordinal=cont.get("maintenance_ordinal",0);obj._legacy_monolithic_frontier=cont.get("legacy_monolithic_frontier",data["META"].get("version",1)<2 and any(e.type==RuntimeEventType.COGNITION_WAKE for e in events));language=cont.get("language",{});from consciousness.language import LanguageLexicon;sim.core.language=LanguageLexicon.from_dict(sim.core,language.get("lexicon",{}));sim.core.grounding_context.restore_durable(language.get("grounding",{}));sim.core.language.restore_legacy_grounding(sim.core.grounding_context);sim.core.grounding_context.restore_episode(language.get("context",{}));obj.next_language_message_id=int(language.get("next_message_id",1));obj.language_inbox=obj._inbox_load(language.get("inbox",[]));obj.language_utterances_processed=int(language.get("utterances_processed",0));obj.language_tokens_processed=int(language.get("tokens_processed",0));obj.language_frontier=None;obj.last_utterance_result=None
+        obj=cls.__new__(cls);obj.simulation=sim;obj.scheduler=EventScheduler();cont=data["CONT"];s=cont["scheduler"];events=[RuntimeEvent(t,i,getattr(RuntimeEventType,name),p) for t,i,name,p in s["events"]];obj.scheduler.restore(s["now"],s["next_id"],events);obj.observation_ordinal=cont["observation_ordinal"];obj.actions_completed=cont["actions_completed"];obj.cognition_wakes=cont["cognition_wakes"];obj.cognition_continuations=cont.get("cognition_continuations",0);obj.cognition_generation=cont.get("cognition_generation",0);obj.maintenance_ordinal=cont.get("maintenance_ordinal",0);obj._legacy_monolithic_frontier=cont.get("legacy_monolithic_frontier",data["META"].get("version",1)<2 and any(e.type==RuntimeEventType.COGNITION_WAKE for e in events));language=cont.get("language",{});from consciousness.language import LanguageLexicon;sim.core.language=LanguageLexicon.from_dict(sim.core,language.get("lexicon",{}));sim.core.grounding_context.restore_durable(language.get("grounding",{}));sim.core.language.restore_legacy_grounding(sim.core.grounding_context);sim.core.grounding_context.restore_episode(language.get("context",{}));obj.next_language_message_id=int(language.get("next_message_id",1));obj.language_inbox=obj._inbox_load(language.get("inbox",[]));obj.language_utterances_processed=int(language.get("utterances_processed",0));obj.language_tokens_processed=int(language.get("tokens_processed",0));obj.language_frontier=None;obj.last_utterance_result=None;obj.neural_bridge_deliveries=[]
         active=language.get("active_frontier")
         if active is not None:
             frame=active["frame"];i,t,tokens=frame[:3];target=obj._structure_load(frame[3]) if len(frame)>3 else None;obj.language_frontier=LanguageUtteranceFrontier(LanguageUtteranceFrame(int(i),float(t),tuple(tokens),target),{int(k):float(v) for k,v in active["grounding_context"]},int(active["next_token_index"]),list(active["processed_symbol_ids"]),[obj._language_result_load(x) for x in active["token_results"]],active["phase"])
