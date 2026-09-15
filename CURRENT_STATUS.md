@@ -18,10 +18,11 @@
   the window starts a new episode. Actual Cognit activity now proves
   full > partial > reversed. Event time and episode state are float64-native and
   snapshot-restored; World ticks do not define recognition identity.
-- A `NEURAL_BRIDGE` event in the existing continuous scheduler performs one
-  bounded drain without requiring a new World observation. Python adopts only
-  facade metadata `kind="NEURAL_ASSEMBLY"`; it never processes individual
-  spikes or owns numeric state.
+- `advance_neural_to()` advances independent neural physics only to the next
+  coarse boundary, then enqueues one `NEURAL_BRIDGE` at its native float64 time
+  in the existing scheduler. World, language, maintenance, actions, cognition
+  and bridge delivery therefore share one time/sequence ordering. Each
+  recognition performs ordinary receive and downstream wave at its event time.
 - Exactly-once delivery uses persisted monotonic event identities and a native
   cursor. The event log is bounded to 256 and each drain to 64 by default; cursor
   overflow is a hard error. Consumed events do not replay and pending events
@@ -34,15 +35,16 @@
   capacity becomes available.
 - Substrate snapshot/restore preserves bridge events and their future timing;
   engine bridge state preserves mapping/cursor/counters alongside the matching
-  graph snapshot. `.sebrain v6` and `.seworld v7` remain unchanged because they
-  do not own the optional micro-neuro runtime; persisting its mapping alone would
-  be invalid half-state.
+  graph snapshot. `.seworld v7` includes optional pending neural state and its
+  requested frontier in the scheduler snapshot, so a queued bridge resumes
+  exactly once. The schema version and `.sebrain v6` remain unchanged.
 - No reverse Cognit→micro path, semantic assignment, automatic Relations,
   World/language/Goal/planner/action coupling, reward, classifier or backprop was
   added. Silent/default substrates emit zero bridge events.
-- Focused v0.6.0–v0.6.3: **45 passed**; full pytest: **360 passed**; Release
-  build: **PASS**; CTest Release: **2/2 passed**. No-language digest remains
-  `e334137aab48aac629c9ac0d4dbc77ea8ec7f51203acda0c970a9bb647c3d731`;
+- Focused v0.6.0–v0.6.3: **50 passed**; full pytest: **365 passed**; Release
+  build: **PASS**; CTest Release: **2/2 passed**. Current canonical no-language
+  digest is identical for `PYTHONHASHSEED=1/77`:
+  `c54f1fe0d1b5df9f2b1db6a778cc421e4aa206c295119a689c0828fbf1b1c6f6`;
   `full_graph_sync_calls == 0`.
 
 Next: not started.

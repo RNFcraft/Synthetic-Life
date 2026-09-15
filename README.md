@@ -82,13 +82,16 @@ the `NEURAL_ASSEMBLY` facade metadata at an explicit coarse drain—there is no
 per-spike callback or shadow numeric graph.
 
 Bridge events live in the substrate snapshot; mapping/cursor live in the matching
-engine bridge snapshot. The optional micro-neuro runtime is not currently a
-`.sebrain v6` or `.seworld v7` section, so those schemas remain unchanged. No
+engine bridge snapshot. A `.seworld v7` scheduler snapshot also retains optional
+pending neural state and its requested frontier for exact causal continuation;
+the schema version and `.sebrain v6` remain unchanged. No
 reverse Cognit-to-micro path, automatic Relations, semantics, or
 World/language/Goal/planner coupling is introduced. v0.6.3 is frozen.
 
-The existing continuous scheduler carries bounded `NEURAL_BRIDGE` events, so
-recognition can reach cognition between World observations. Births share the
+The existing continuous scheduler carries one bounded `NEURAL_BRIDGE` boundary
+at a time, ordered with World/language/cognitive events by time then sequence.
+Each recognition performs ordinary receive and propagation at its event time,
+so it can reach cognition between World observations. Births share the
 ordinary global Cognit capacity and per-transaction birth budget; deterministic
 suppression advances the cursor and is counted without creating a deferred
 queue.
@@ -235,8 +238,8 @@ python -m pytest -q
 
 Current repository-reported acceptance state for v0.6.0:
 
-- focused v0.6.0–v0.6.3 micro-neurodynamic suite: **45 passed**
-- full pytest: **360 passed**
+- focused v0.6.0–v0.6.3 micro-neurodynamic suite: **50 passed**
+- full pytest: **365 passed**
 - CTest Release: **2/2 passed**
 - deterministic `PYTHONHASHSEED=1/77` trajectory digest: identical
 - `full_graph_sync_calls == 0`

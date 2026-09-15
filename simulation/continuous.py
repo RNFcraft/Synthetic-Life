@@ -24,7 +24,7 @@ class RenderSnapshot:world_time:float;bodies:tuple[RenderBody,...];objects:tuple
 class ContinuousRuntime:
     ACTION_DURATION=.15
     def __init__(self,seed=12345,settings:Settings|None=None):
-        self.simulation=Simulation(seed,settings,backend="native");self.scheduler=EventScheduler();self.observation_ordinal=0;self.last_frame=None;self.actions_completed=0;self.cognition_wakes=0;self.cognition_continuations=0;self.cognition_generation=0;self.maintenance_ordinal=0;self._legacy_monolithic_frontier=False;self.language_inbox={};self.next_language_message_id=1;self.language_frontier=None;self.last_utterance_result=None;self.language_utterances_processed=0;self.language_tokens_processed=0;self.neural_bridge_deliveries=[]
+        self.simulation=Simulation(seed,settings,backend="native");self.scheduler=EventScheduler();self.observation_ordinal=0;self.last_frame=None;self.actions_completed=0;self.cognition_wakes=0;self.cognition_continuations=0;self.cognition_generation=0;self.maintenance_ordinal=0;self._legacy_monolithic_frontier=False;self.language_inbox={};self.next_language_message_id=1;self.language_frontier=None;self.last_utterance_result=None;self.language_utterances_processed=0;self.language_tokens_processed=0;self.neural_bridge_deliveries=[];self._neural_target_time=None
         world=self.simulation.world;first=world.next_spawn_tick;world.disable_legacy_spawning()
         if first is not None:self.scheduler.schedule(float(first),RuntimeEventType.WORLD_SPAWN)
         interval=self.simulation.settings.continuous_maintenance_interval_seconds
@@ -50,7 +50,7 @@ class ContinuousRuntime:
                 if action is not None:self.scheduler.schedule(now+self.ACTION_DURATION,RuntimeEventType.WORLD_ACTION_COMPLETE,action.kind.value)
             elif quiet is False:self.scheduler.schedule(now,RuntimeEventType.COGNITION_CONTINUE,event.payload)
         elif kind==RuntimeEventType.NEURAL_BRIDGE:
-            rows=self.simulation.core.process_continuous_assembly_bridge(now);self.neural_bridge_deliveries.extend(rows)
+            rows=self.simulation.core.process_continuous_assembly_bridge(now);self.neural_bridge_deliveries.extend(rows);self._schedule_next_neural_bridge()
         elif kind==RuntimeEventType.WORLD_ACTION_COMPLETE:
             action=Action(ActionType(event.payload));physical_sequence=self.simulation.event_sequence.next();intent=ActionIntent(action,WorldTime(now),physical_sequence);self.simulation.world.apply_intent(intent);self.simulation.last_action=action;self.actions_completed+=1;self.scheduler.schedule(now,RuntimeEventType.SENSORY_CHANGE)
         elif kind==RuntimeEventType.WORLD_SPAWN:
@@ -91,21 +91,24 @@ class ContinuousRuntime:
         message_id=self.next_language_message_id;frame=LanguageFrame(message_id,when,surface)
         self.next_language_message_id+=1;self.language_inbox[message_id]=frame;self.scheduler.schedule(when,RuntimeEventType.LANGUAGE_INPUT,message_id);return message_id
     def advance_neural_to(self,time):
-        """Advance neural time with bounded coarse Assembly handoffs."""
+        """Request neural progress on the authoritative runtime timeline."""
         when=float(time)
         if when<self.world_time:raise ValueError("neural time cannot precede continuous runtime time")
-        substrate=self.simulation.core.backend.engine.neurodynamic_substrate()
-        while True:
-            while True:
-                pending=self.simulation.core.process_continuous_assembly_bridge(substrate.current_time);self.neural_bridge_deliveries.extend(pending)
-                if len(pending)<64:break
-            reached=substrate.advance_to_bridge_boundary(when,64)
-            if reached:
-                while True:
-                    pending=self.simulation.core.process_continuous_assembly_bridge(substrate.current_time);self.neural_bridge_deliveries.extend(pending)
-                    if len(pending)<64:break
-                break
+        if self._neural_target_time is not None and when<self._neural_target_time:raise ValueError("neural target time must be monotonic")
+        self._neural_target_time=when;self._schedule_next_neural_bridge()
         return when
+    def _schedule_next_neural_bridge(self):
+        if self._neural_target_time is None:return
+        if any(e.type==RuntimeEventType.NEURAL_BRIDGE for e in self.scheduler.snapshot()):return
+        engine=self.simulation.core.backend.engine;substrate=engine.neurodynamic_substrate();cursor=engine.assembly_bridge_state()[0]
+        pending=substrate.assembly_bridge_events_after(cursor,1)
+        if not pending and substrate.current_time<self._neural_target_time:
+            substrate.advance_to_bridge_boundary(self._neural_target_time,1);pending=substrate.assembly_bridge_events_after(cursor,1)
+        if pending:
+            event_time=pending[0][2]
+            if event_time<self.world_time:raise RuntimeError("neural bridge event precedes runtime frontier")
+            self.scheduler.schedule(event_time,RuntimeEventType.NEURAL_BRIDGE)
+        elif substrate.current_time>=self._neural_target_time:self._neural_target_time=None
     def inject_utterance(self,tokens,at_time=None,request_target=None):
         if isinstance(tokens,str):raise TypeError("utterance token boundaries must be supplied explicitly")
         tokens=tuple(tokens)
@@ -151,7 +154,7 @@ class ContinuousRuntime:
         return RuntimeError(f"continuous runtime event guard exceeded: generation={self.cognition_generation} world_time={self.world_time} pending={pending} recent={history} goal_id={None if goal is None else goal.id}")
     def render_snapshot(self):
         w=self.simulation.world;w._refresh();return RenderSnapshot(self.world_time,tuple(RenderBody(b.id,b.x,b.y,b.orientation,b.held_object_id) for b in w.bodies.values()),tuple(RenderObject(o.id,o.x,o.y,o.state) for o in w.objects))
-    def scheduler_state(self):return {"now":self.world_time,"next_id":self.scheduler.next_id,"events":[[e.time,e.id,e.type.name,e.payload] for e in self.scheduler.snapshot()]}
+    def scheduler_state(self):return {"now":self.world_time,"next_id":self.scheduler.next_id,"events":[[e.time,e.id,e.type.name,e.payload] for e in self.scheduler.snapshot()],"neural_target_time":self._neural_target_time,"neurodynamic":self.simulation.core.backend.engine.neurodynamic_substrate().snapshot()}
     @staticmethod
     def _language_result_dict(result):return {"symbol_id":result.symbol_id,"wave":[sorted(result.wave.active_ids),result.wave.energy,result.wave.steps,result.wave.transmitted_energy],"candidates":result.grounding_candidates_updated,"created":result.grounding_relations_materialized}
     @staticmethod
@@ -201,6 +204,8 @@ class ContinuousRuntime:
             engine=sim.core.backend.engine;engine.load_graph(tmp);engine.restore_transition_history(data["CONT"].get("transition_history",[]));engine.restore_homeostasis_runtime_state(*data["CONT"]["homeostasis"]);engine.restore_continuous_time_state(*data["CONT"].get("elapsed_cognits",[False,0.0,0.0,[-1.0]*engine.cognit_count,[-1.0]*engine.cognit_count,[.25]*engine.cognit_count,0]));engine.restore_continuous_relation_time_state(*data["CONT"].get("elapsed_relations",[[],0]));engine.restore_dirty_relation_state(data["CONT"]["dirty_relations"]);sim.core.backend.invalidate_state()
         finally:os.unlink(tmp)
         obj=cls.__new__(cls);obj.simulation=sim;obj.scheduler=EventScheduler();cont=data["CONT"];s=cont["scheduler"];events=[RuntimeEvent(t,i,getattr(RuntimeEventType,name),p) for t,i,name,p in s["events"]];obj.scheduler.restore(s["now"],s["next_id"],events);obj.observation_ordinal=cont["observation_ordinal"];obj.actions_completed=cont["actions_completed"];obj.cognition_wakes=cont["cognition_wakes"];obj.cognition_continuations=cont.get("cognition_continuations",0);obj.cognition_generation=cont.get("cognition_generation",0);obj.maintenance_ordinal=cont.get("maintenance_ordinal",0);obj._legacy_monolithic_frontier=cont.get("legacy_monolithic_frontier",data["META"].get("version",1)<2 and any(e.type==RuntimeEventType.COGNITION_WAKE for e in events));language=cont.get("language",{});from consciousness.language import LanguageLexicon;sim.core.language=LanguageLexicon.from_dict(sim.core,language.get("lexicon",{}));sim.core.grounding_context.restore_durable(language.get("grounding",{}));sim.core.language.restore_legacy_grounding(sim.core.grounding_context);sim.core.grounding_context.restore_episode(language.get("context",{}));obj.next_language_message_id=int(language.get("next_message_id",1));obj.language_inbox=obj._inbox_load(language.get("inbox",[]));obj.language_utterances_processed=int(language.get("utterances_processed",0));obj.language_tokens_processed=int(language.get("tokens_processed",0));obj.language_frontier=None;obj.last_utterance_result=None;obj.neural_bridge_deliveries=[]
+        obj._neural_target_time=s.get("neural_target_time")
+        if "neurodynamic" in s:engine.neurodynamic_substrate().restore(s["neurodynamic"])
         active=language.get("active_frontier")
         if active is not None:
             frame=active["frame"];i,t,tokens=frame[:3];target=obj._structure_load(frame[3]) if len(frame)>3 else None;obj.language_frontier=LanguageUtteranceFrontier(LanguageUtteranceFrame(int(i),float(t),tuple(tokens),target),{int(k):float(v) for k,v in active["grounding_context"]},int(active["next_token_index"]),list(active["processed_symbol_ids"]),[obj._language_result_load(x) for x in active["token_results"]],active["phase"])

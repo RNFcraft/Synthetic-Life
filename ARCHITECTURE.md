@@ -147,13 +147,17 @@ process individual spikes and does not own numeric bridge state.
 Deleting the Cognit invalidates its mapping; later recognition may allocate a
 new monotonic Cognit ID. The bridge never creates Relations. Bridge events are
 part of the substrate snapshot and mapping/cursor/counters are restored with the
-matching engine graph snapshot. The optional micro-neuro runtime is still
-outside `.sebrain v6` / `.seworld v7`, avoiding an invalid mapping-only
-persistence section. There is no Cognit-to-micro feedback, semantic assignment,
+matching engine graph snapshot. Existing `.seworld v7` scheduler state retains
+optional pending neural state and its requested frontier, preventing a queued
+bridge from being lost or replayed; `.sebrain v6` remains unchanged. There is no Cognit-to-micro feedback, semantic assignment,
 World/language/Goal/planner/action coupling, reward, classifier, or backprop.
 
-The existing continuous event scheduler adds a coarse `NEURAL_BRIDGE` boundary,
-independent of World observation. One drain is event-bounded and shares global
+`advance_neural_to()` stops independent neural progression at the next coarse
+boundary and adds one `NEURAL_BRIDGE` to the existing scheduler at native event
+time. Its handler performs an ordinary receive/wave for each due event before
+requesting the next boundary. World, language, maintenance, actions and neural
+cognition therefore use one chronological queue without per-spike callbacks or
+an unbounded scheduler backlog. One drain is event-bounded and shares global
 `max_cognits` plus the ordinary per-transaction birth limit. Suppressed births
 are consumed and counted; a later real recognition may retry after capacity is
 freed. Event sequence orders a drain and event time preserves neural causality.

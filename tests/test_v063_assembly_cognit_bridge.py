@@ -214,8 +214,8 @@ def _continuous_runtime_with_scheduled_history(event_count=2):
 
 def test_event_time_is_causal_and_neural_advance_batching_has_exact_parity():
     left,_=_continuous_runtime_with_scheduled_history(2);right,_=_continuous_runtime_with_scheduled_history(2)
-    left.advance_neural_to(41.);left.advance_neural_to(50.)
-    right.advance_neural_to(50.)
+    left.advance_neural_to(41.);left.run_until(41.);left.advance_neural_to(50.);left.run_until(50.)
+    right.advance_neural_to(50.);right.run_until(50.)
     le, re=left.simulation.core.backend.engine,right.simulation.core.backend.engine
     assert left.neural_bridge_deliveries==right.neural_bridge_deliveries
     assert le.assembly_bridge_state()==re.assembly_bridge_state()
@@ -232,7 +232,8 @@ def test_event_time_is_causal_and_neural_advance_batching_has_exact_parity():
 
 def test_single_long_neural_advance_streams_more_than_bounded_log_exactly_once():
     runtime,_=_continuous_runtime_with_scheduled_history(520);observations=runtime.observation_ordinal
-    runtime.advance_neural_to(1_600.)
+    from consciousness._native_brain import EventScheduler
+    runtime.scheduler=EventScheduler();runtime.advance_neural_to(1_600.);runtime.run_until(1_600.)
     engine=runtime.simulation.core.backend.engine;rows=runtime.neural_bridge_deliveries
     sequences=[row[0] for row in rows]
     assert len(rows)>500 and sequences==list(range(1,sequences[-1]+1))
@@ -240,3 +241,53 @@ def test_single_long_neural_advance_streams_more_than_bounded_log_exactly_once()
     assert engine.assembly_bridge_state()[0]==sequences[-1]
     assert len(engine.neurodynamic_substrate().snapshot()["assembly_bridge_events"])<=256
     assert len(engine.assembly_cognit_mapping())==1 and runtime.observation_ordinal==observations
+
+
+def test_neural_bridge_shares_global_scheduler_chronology():
+    runtime,_=_continuous_runtime_with_scheduled_history(1);order=[];original=runtime._process
+    runtime.inject_language("before-five",5.);runtime.inject_language("before-ten",10.)
+    def recorded(event):
+        if event.type.name in {"LANGUAGE_INPUT","NEURAL_BRIDGE"}:order.append((event.time,event.type.name,event.id))
+        original(event)
+    runtime._process=recorded;runtime.advance_neural_to(50.);runtime.run_until(50.)
+    assert [row[:2] for row in order[:3]]==[(5.,"LANGUAGE_INPUT"),(10.,"LANGUAGE_INPUT"),(21.,"NEURAL_BRIDGE")]
+    assert runtime.simulation.core.backend.engine.continuous_time_state()[2]==50.
+
+
+def _runtime_with_downstream_relation():
+    from consciousness._native_brain import EventScheduler
+    from consciousness.relation import RelationStatus
+    runtime,nodes=_continuous_runtime_with_scheduled_history(0);runtime.scheduler=EventScheduler();runtime.advance_neural_to(31.);runtime.run_until(31.)
+    engine=runtime.simulation.core.backend.engine;assembly=engine.assembly_cognit_mapping()[0][1]+1;runtime.simulation.core.graph.nodes[assembly].threshold=runtime.simulation.core.graph.nodes[assembly].homeostatic_threshold=.01;target=runtime.simulation.core.graph.add_cognit();target.threshold=target.homeostatic_threshold=.01
+    relation,_=runtime.simulation.core.graph.connect(assembly,target.id);relation.strength=relation.confidence=1.;relation.status=RelationStatus.CONSOLIDATED
+    substrate=engine.neurodynamic_substrate()
+    for start in (40.,70.):
+        for index,node in enumerate(nodes):substrate.inject(node,100.,start+index*.5)
+    return runtime,assembly,target.id
+
+
+def _bridge_causal_state(runtime,source,target):
+    engine=runtime.simulation.core.backend.engine;relation=runtime.simulation.core.graph.outgoing(source)[0]
+    return (engine.cognit_state_full([source-1,target-1]),relation.strength,relation.confidence,relation.last_used_cognitive_tick,engine.continuous_time_state(),engine.assembly_bridge_state(),runtime.scheduler_state())
+
+
+def test_downstream_wave_occurs_at_event_time_and_batching_is_invariant():
+    left,source,target=_runtime_with_downstream_relation();right,right_source,right_target=_runtime_with_downstream_relation()
+    left.advance_neural_to(45.);left.run_until(45.)
+    assert left.simulation.core.graph.nodes[target].last_activated_cognitive_tick is not None and left.simulation.core.graph.nodes[target].activity>0.
+    left.advance_neural_to(80.);left.run_until(80.)
+    right.advance_neural_to(80.);right.run_until(80.)
+    assert _bridge_causal_state(left,source,target)==_bridge_causal_state(right,right_source,right_target)
+    assert left.simulation.core.graph.nodes[target].last_activated_cognitive_tick is not None
+    recognized=[row for row in left.neural_bridge_deliveries if row[4]==1 and row[9]>0]
+    assert recognized and left.simulation.core.graph.nodes[target].last_activated_cognitive_tick==left.simulation.core.graph.nodes[source].last_activated_cognitive_tick
+
+
+def test_snapshot_with_scheduled_bridge_resumes_once(tmp_path):
+    runtime,_=_continuous_runtime_with_scheduled_history(3);runtime.advance_neural_to(60.)
+    assert any(row[2]=="NEURAL_BRIDGE" for row in runtime.scheduler_state()["events"])
+    path=tmp_path/"pending-bridge.seworld";runtime.save_world(path);restored=runtime.load_world(path)
+    runtime.run_until(60.);restored.run_until(60.)
+    assert runtime.neural_bridge_deliveries==restored.neural_bridge_deliveries
+    assert runtime.simulation.core.backend.engine.assembly_bridge_state()==restored.simulation.core.backend.engine.assembly_bridge_state()
+    assert runtime.scheduler_state()==restored.scheduler_state()
