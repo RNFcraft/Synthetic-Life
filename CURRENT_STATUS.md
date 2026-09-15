@@ -1,4 +1,40 @@
-# Synthetic Entity v0.6.2 — Current Status
+# Synthetic Entity v0.6.3 — Current Status
+
+## v0.6.3 — ASSEMBLY -> COGNIT
+
+**PASS — the one-way native assembly-to-Cognit bridge is accepted.**
+
+**v0.6.3: FROZEN**
+
+- Consolidation emits one monotonic coarse event and births one ordinary Cognit
+  in the authoritative `NativeBrainEngine` graph. Candidates and one-shot
+  activity birth nothing. The engine owns the stable `AssemblyID -> CognitID`
+  mapping; overlap/novelty produces distinct monotonic Cognit IDs and no
+  Relations.
+- Recognition confidence is clamped to `[0, 1]` and passed as energy through
+  ordinary native `receive()`. The frozen order remains full > partial >
+  reversed. Python only adopts facade metadata `kind="NEURAL_ASSEMBLY"` at the
+  coarse boundary; it never processes individual spikes or owns numeric state.
+- Exactly-once delivery uses persisted monotonic event identities and a native
+  cursor. The event log is bounded to 256 and each drain to 64 by default; cursor
+  overflow is a hard error. Consumed events do not replay and pending events
+  deliver once after restore.
+- Cognit deletion immediately invalidates the mapping. Later recognition births
+  a new monotonic ID; dead IDs are not reused.
+- Substrate snapshot/restore preserves bridge events and their future timing;
+  engine bridge state preserves mapping/cursor/counters alongside the matching
+  graph snapshot. `.sebrain v6` and `.seworld v7` remain unchanged because they
+  do not own the optional micro-neuro runtime; persisting its mapping alone would
+  be invalid half-state.
+- No reverse Cognit→micro path, semantic assignment, automatic Relations,
+  World/language/Goal/planner/action coupling, reward, classifier or backprop was
+  added. Silent/default substrates emit zero bridge events.
+- Focused v0.6.0–v0.6.3: **37 passed**; full pytest: **352 passed**; Release
+  build: **PASS**; CTest Release: **2/2 passed**. No-language digest remains
+  `e334137aab48aac629c9ac0d4dbc77ea8ec7f51203acda0c970a9bb647c3d731`;
+  `full_graph_sync_calls == 0`.
+
+Next: not started.
 
 ## v0.6.2 — EMERGENT ASSEMBLIES
 
@@ -46,7 +82,7 @@
   `e334137aab48aac629c9ac0d4dbc77ea8ec7f51203acda0c970a9bb647c3d731`;
   `full_graph_sync_calls == 0`.
 
-Next: **v0.6.3 — ASSEMBLY -> COGNIT** (not started).
+v0.6.2 remains frozen beneath the accepted v0.6.3 bridge.
 
 ## v0.6.1 — LOCAL PLASTICITY + HOMEOSTASIS
 

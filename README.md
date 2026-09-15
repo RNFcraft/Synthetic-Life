@@ -2,7 +2,7 @@
 
 Synthetic-Life is an experimental embodied cognitive architecture built around a sparse, continuously changing graph of Cognits (`κ`) and Relations (`ρ`). The project is not an LLM/Transformer inference wrapper and does not use a frozen policy network as its learned core. Learning, prediction, memory, goals and action selection evolve during interaction with the World.
 
-The current development line is **v0.6.2**.
+The current development line is **v0.6.3**.
 
 Current accepted gates:
 
@@ -63,11 +63,27 @@ Consolidated records emit bounded native `AssemblyMatch` summaries for full and
 partial recurrence. Candidate/recent/match state is bounded, weak candidates use
 lazy elapsed-time decay during capacity pressure, and snapshot/restore preserves
 exact continuation. The detector is observational: it does not alter spikes,
-STDP weights, homeostasis, or pending events. An assembly is not a Cognit, and
-no assembly-to-Cognit, World, language, Goal, or action bridge exists yet.
+STDP weights, homeostasis, or pending events. An assembly is not itself a
+Cognit; v0.6.3 supplies the separate one-way consolidation/recognition bridge.
 Final temporal edges are derived after stable membership normalization, so both
 edge endpoints must be stable members. Snapshot restore rebuilds this derived
 view from saved temporal evidence. v0.6.2 is frozen.
+
+## v0.6.3 assembly-to-Cognit bridge
+
+The native engine now provides a one-way coarse assembly bridge. Consolidation
+births exactly one ordinary Cognit in the existing authoritative numeric graph;
+recognition activates that same Cognit through normal `receive()` semantics,
+using bounded match confidence as input energy. `NativeBrainEngine` owns the
+stable AssemblyID-to-CognitID mapping and exactly-once cursor. Python only adopts
+the `NEURAL_ASSEMBLY` facade metadata at an explicit coarse drain—there is no
+per-spike callback or shadow numeric graph.
+
+Bridge events live in the substrate snapshot; mapping/cursor live in the matching
+engine bridge snapshot. The optional micro-neuro runtime is not currently a
+`.sebrain v6` or `.seworld v7` section, so those schemas remain unchanged. No
+reverse Cognit-to-micro path, automatic Relations, semantics, or
+World/language/Goal/planner coupling is introduced. v0.6.3 is frozen.
 
 ## Current runtime model
 
@@ -211,7 +227,7 @@ python -m pytest -q
 
 Current repository-reported acceptance state for v0.6.0:
 
-- focused v0.6.0–v0.6.2 micro-neurodynamic suite: **30 passed**
+- focused v0.6.0–v0.6.3 micro-neurodynamic suite: **37 passed**
 - full pytest: **345 passed**
 - CTest Release: **2/2 passed**
 - deterministic `PYTHONHASHSEED=1/77` trajectory digest: identical

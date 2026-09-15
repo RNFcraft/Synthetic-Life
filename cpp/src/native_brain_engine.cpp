@@ -2,233 +2,1446 @@
 #include <algorithm>
 #include <bit>
 #include <cmath>
-#include <tuple>
-#include <fstream>
-#include <stdexcept>
 #include <cstring>
+#include <fstream>
 #include <queue>
+#include <stdexcept>
+#include <tuple>
 namespace se {
-void NativeBrainEngine::publish_brain_snapshot(double world_time,std::uint64_t cognitive_tick,std::uint64_t generation,std::span<const std::uint32_t>active){
-  BrainSnapshot out;out.world_time=world_time;out.cognitive_tick=cognitive_tick;out.cognition_generation=generation;
-  out.total_cognits=live_cognit_count();out.total_relations=relation_count();
-  std::unordered_set<std::uint32_t> active_set;for(auto id:active)if(cognit_alive(id))active_set.insert(id);out.active_cognits=static_cast<std::uint32_t>(active_set.size());
-  std::unordered_set<std::uint32_t> active_neighbors;for(auto id:active_set)graph_.for_each_outgoing(id,[&](Edge const&e,RelationHandle){if(cognit_alive(e.target))active_neighbors.insert(e.target);});
-  struct Candidate{std::uint32_t id;bool active,connected;std::uint64_t recent;double activity,confidence;};std::vector<Candidate> candidates;candidates.reserve(graph_.cognit_count());
-  for(std::uint32_t id=0;id<graph_.cognit_count();++id)if(cognit_alive(id))candidates.push_back({id,active_set.contains(id),active_neighbors.contains(id),graph_.last_active_cognitive_tick[id],graph_.activity[id],graph_.confidence[id]});
-  auto better=[](auto const&a,auto const&b){if(a.active!=b.active)return a.active>b.active;if(a.active&&a.activity!=b.activity)return a.activity>b.activity;if(a.recent!=b.recent)return a.recent>b.recent;if(a.connected!=b.connected)return a.connected>b.connected;if(a.id!=b.id)return a.id>b.id;if(a.activity!=b.activity)return a.activity>b.activity;return a.confidence>b.confidence;};
-  if(candidates.size()>kMaxBrainSnapshotNodes){std::partial_sort(candidates.begin(),candidates.begin()+kMaxBrainSnapshotNodes,candidates.end(),better);candidates.resize(kMaxBrainSnapshotNodes);out.truncated=true;}else std::sort(candidates.begin(),candidates.end(),better);
-  std::unordered_set<std::uint32_t> visible;visible.reserve(candidates.size()*2);out.nodes.reserve(candidates.size());for(auto const&c:candidates){visible.insert(c.id);out.nodes.push_back({c.id,c.activity,graph_.threshold[c.id],c.confidence,false,true,c.recent});}
-  struct RankedEdge{BrainEdgeState edge;double score;};auto worse=[](RankedEdge const&a,RankedEdge const&b){if(a.score!=b.score)return a.score>b.score;if(a.edge.source!=b.edge.source)return a.edge.source>b.edge.source;return a.edge.target>b.edge.target;};std::priority_queue<RankedEdge,std::vector<RankedEdge>,decltype(worse)> best(worse);
-  for(auto const&c:candidates)graph_.for_each_outgoing(c.id,[&](Edge const&e,RelationHandle){if(!visible.contains(e.target))return;double used=(e.last_used_cognitive_tick==cognitive_tick&&cognitive_tick)?1.:0.;if(active_set.contains(c.id)&&active_set.contains(e.target))used=std::max(used,.65);double score=used*1000.+e.strength*10.+e.confidence;RankedEdge row{{c.id,e.target,static_cast<std::uint8_t>(e.type),e.strength,e.confidence,used},score};if(best.size()<kMaxBrainSnapshotEdges)best.push(row);else if(score>best.top().score){best.pop();best.push(row);}});
-  out.edges.reserve(best.size());while(!best.empty()){out.edges.push_back(best.top().edge);best.pop();}std::sort(out.edges.begin(),out.edges.end(),[](auto const&a,auto const&b){if(a.activation!=b.activation)return a.activation>b.activation;if(a.strength!=b.strength)return a.strength>b.strength;if(a.confidence!=b.confidence)return a.confidence>b.confidence;if(a.source!=b.source)return a.source<b.source;return a.target<b.target;});out.truncated=out.truncated||out.edges.size()<out.total_relations;
+std::vector<AssemblyCognitBridgeResult> NativeBrainEngine::process_assembly_bridge(std::uint64_t tick, std::size_t max_events) {
+  std::vector<AssemblyCognitBridgeResult> out;
+  for (auto const &event : neurodynamic_.assembly_bridge_events_after(assembly_bridge_cursor_, max_events)) {
+    auto found = assembly_cognits_.find(event.assembly_id);
+    bool born = false;
+    if (found != assembly_cognits_.end() && !cognit_alive(found->second)) {
+      assembly_cognits_.erase(found);
+      found = assembly_cognits_.end();
+    }
+    if (found == assembly_cognits_.end()) {
+      auto id = add_cognit(0., .25, .5);
+      found = assembly_cognits_.emplace(event.assembly_id, id).first;
+      born = true;
+      ++assembly_cognit_births_;
+    }
+    bool activated = false;
+    if (event.kind == AssemblyBridgeEventKind::Recognized) {
+      auto energy = std::clamp(event.confidence, 0., 1.);
+      activated = receive(found->second, energy, tick, false, .2, 2);
+      ++assembly_cognit_activations_;
+    }
+    assembly_bridge_cursor_ = event.sequence;
+    out.push_back({event.sequence, event.assembly_id, found->second, event.confidence, (std::uint8_t)event.kind, born, activated});
+  }
+  return out;
+}
+std::vector<std::pair<std::uint64_t, std::uint32_t>> NativeBrainEngine::assembly_cognit_mapping() const {
+  std::vector<std::pair<std::uint64_t, std::uint32_t>> out;
+  for (auto const &row : assembly_cognits_)
+    if (cognit_alive(row.second))
+      out.push_back(row);
+  return out;
+}
+std::tuple<std::uint64_t, std::vector<std::pair<std::uint64_t, std::uint32_t>>, std::uint64_t, std::uint64_t> NativeBrainEngine::assembly_bridge_state() const { return {assembly_bridge_cursor_, assembly_cognit_mapping(), assembly_cognit_births_, assembly_cognit_activations_}; }
+void NativeBrainEngine::restore_assembly_bridge_state(std::uint64_t cursor, const std::vector<std::pair<std::uint64_t, std::uint32_t>> &mapping, std::uint64_t births, std::uint64_t activations) {
+  auto neural = neurodynamic_.snapshot();
+  if (cursor >= neural.next_bridge_sequence)
+    throw std::invalid_argument("invalid assembly bridge cursor");
+  std::map<std::uint64_t, std::uint32_t> checked;
+  for (auto const &[assembly, cognit] : mapping) {
+    auto row = std::find_if(neural.assemblies.begin(), neural.assemblies.end(), [&](auto const &a) { return a.id == assembly && a.consolidated; });
+    if (row == neural.assemblies.end() || !cognit_alive(cognit) || !checked.emplace(assembly, cognit).second)
+      throw std::invalid_argument("invalid assembly Cognit mapping");
+  }
+  assembly_bridge_cursor_ = cursor;
+  assembly_cognits_ = std::move(checked);
+  assembly_cognit_births_ = births;
+  assembly_cognit_activations_ = activations;
+}
+void NativeBrainEngine::publish_brain_snapshot(double world_time, std::uint64_t cognitive_tick, std::uint64_t generation, std::span<const std::uint32_t> active) {
+  BrainSnapshot out;
+  out.world_time = world_time;
+  out.cognitive_tick = cognitive_tick;
+  out.cognition_generation = generation;
+  out.total_cognits = live_cognit_count();
+  out.total_relations = relation_count();
+  std::unordered_set<std::uint32_t> active_set;
+  for (auto id : active)
+    if (cognit_alive(id))
+      active_set.insert(id);
+  out.active_cognits = static_cast<std::uint32_t>(active_set.size());
+  std::unordered_set<std::uint32_t> active_neighbors;
+  for (auto id : active_set)
+    graph_.for_each_outgoing(id, [&](Edge const &e, RelationHandle) {
+      if (cognit_alive(e.target))
+        active_neighbors.insert(e.target);
+    });
+  struct Candidate {
+    std::uint32_t id;
+    bool active, connected;
+    std::uint64_t recent;
+    double activity, confidence;
+  };
+  std::vector<Candidate> candidates;
+  candidates.reserve(graph_.cognit_count());
+  for (std::uint32_t id = 0; id < graph_.cognit_count(); ++id)
+    if (cognit_alive(id))
+      candidates.push_back({id, active_set.contains(id), active_neighbors.contains(id), graph_.last_active_cognitive_tick[id], graph_.activity[id], graph_.confidence[id]});
+  auto better = [](auto const &a, auto const &b) {
+    if (a.active != b.active)
+      return a.active > b.active;
+    if (a.active && a.activity != b.activity)
+      return a.activity > b.activity;
+    if (a.recent != b.recent)
+      return a.recent > b.recent;
+    if (a.connected != b.connected)
+      return a.connected > b.connected;
+    if (a.id != b.id)
+      return a.id > b.id;
+    if (a.activity != b.activity)
+      return a.activity > b.activity;
+    return a.confidence > b.confidence;
+  };
+  if (candidates.size() > kMaxBrainSnapshotNodes) {
+    std::partial_sort(candidates.begin(), candidates.begin() + kMaxBrainSnapshotNodes, candidates.end(), better);
+    candidates.resize(kMaxBrainSnapshotNodes);
+    out.truncated = true;
+  } else
+    std::sort(candidates.begin(), candidates.end(), better);
+  std::unordered_set<std::uint32_t> visible;
+  visible.reserve(candidates.size() * 2);
+  out.nodes.reserve(candidates.size());
+  for (auto const &c : candidates) {
+    visible.insert(c.id);
+    out.nodes.push_back({c.id, c.activity, graph_.threshold[c.id], c.confidence, false, true, c.recent});
+  }
+  struct RankedEdge {
+    BrainEdgeState edge;
+    double score;
+  };
+  auto worse = [](RankedEdge const &a, RankedEdge const &b) {
+    if (a.score != b.score)
+      return a.score > b.score;
+    if (a.edge.source != b.edge.source)
+      return a.edge.source > b.edge.source;
+    return a.edge.target > b.edge.target;
+  };
+  std::priority_queue<RankedEdge, std::vector<RankedEdge>, decltype(worse)> best(worse);
+  for (auto const &c : candidates)
+    graph_.for_each_outgoing(c.id, [&](Edge const &e, RelationHandle) {
+      if (!visible.contains(e.target))
+        return;
+      double used = (e.last_used_cognitive_tick == cognitive_tick && cognitive_tick) ? 1. : 0.;
+      if (active_set.contains(c.id) && active_set.contains(e.target))
+        used = std::max(used, .65);
+      double score = used * 1000. + e.strength * 10. + e.confidence;
+      RankedEdge row{{c.id, e.target, static_cast<std::uint8_t>(e.type), e.strength, e.confidence, used}, score};
+      if (best.size() < kMaxBrainSnapshotEdges)
+        best.push(row);
+      else if (score > best.top().score) {
+        best.pop();
+        best.push(row);
+      }
+    });
+  out.edges.reserve(best.size());
+  while (!best.empty()) {
+    out.edges.push_back(best.top().edge);
+    best.pop();
+  }
+  std::sort(out.edges.begin(), out.edges.end(), [](auto const &a, auto const &b) {
+    if (a.activation != b.activation)
+      return a.activation > b.activation;
+    if (a.strength != b.strength)
+      return a.strength > b.strength;
+    if (a.confidence != b.confidence)
+      return a.confidence > b.confidence;
+    if (a.source != b.source)
+      return a.source < b.source;
+    return a.target < b.target;
+  });
+  out.truncated = out.truncated || out.edges.size() < out.total_relations;
   brain_channel_->publish(std::move(out));
 }
-void NativeBrainEngine::update_outcomes(std::span<const std::uint32_t>before,std::span<const std::uint32_t>current,int action,std::uint64_t tick,double confirmation,double contradiction,double utility,double consolidated_confidence){
- auto gen=next_generation();for(auto id:current)if(cognit_alive(id))candidate_gen_[id]=gen;
- for(auto s:before){if(!cognit_alive(s))continue;
-  graph_.for_each_outgoing(s,[&](Edge&e,RelationHandle h){
-   if(e.type==RelationType::SelfAction && e.action!=action)return;
-   effective_relation_confidence(e,h,continuous_relation_decay_);auto r=graph_.relations.state(s,h);bool confirmed=candidate_gen_[e.target]==gen;
-   if(confirmed){++r.confirmations;r.confidence=double(r.confidence+confirmation*(1.-r.confidence));r.contradiction=double(r.contradiction*(1.-contradiction));}
-   else{r.contradiction=double(r.contradiction+contradiction*(1.-r.contradiction));r.confidence=double(r.confidence*(1.-contradiction));}
-   r.confidence=std::clamp(r.confidence,0.,1.);r.usefulness=double(std::clamp(r.usefulness+utility*((confirmed?1.:0.)-r.strength),0.,1.));r.last_evidence_world_tick=tick;if(continuous_time_enabled_)relation_last_evidence_time_[relation_time_key(h)]={h.generation,continuous_now_};
-   if(e.status==RelationStatus::Consolidated&&r.confidence<consolidated_confidence*.6){graph_.relations.make_provisional(h);r.status=(std::uint8_t)RelationStatus::Provisional;}
-   graph_.relations.update(h,r);
-  });
- }
-}
-bool NativeBrainEngine::remove_cognit(std::uint32_t id){
- if(!cognit_alive(id))return false;
- std::vector<RelationHandle> incident;
- for(std::uint32_t source=0;source<graph_.cognit_count();++source)
-  graph_.relations.for_each(source,[&](const Edge&e,RelationHandle h){if(source==id||e.target==id)incident.push_back(h);});
- for(auto h:incident)graph_.relations.erase(h);
- ++state_revision_;graph_.flags[id]|=1;graph_.activity[id]=0;graph_.refractory[id]=0;++dead_cognits_;return true;
-}
-namespace{struct FileHeader{char magic[8];std::uint32_t version;std::uint64_t payload_size,checksum;};std::uint64_t checksum(std::span<const char>b){std::uint64_t h=1469598103934665603ull;for(auto c:b){h^=(unsigned char)c;h*=1099511628211ull;}return h;}template<class T>void append(std::vector<char>&b,const T&v){auto p=(const char*)&v;b.insert(b.end(),p,p+sizeof(T));}template<class T>void append_vector(std::vector<char>&b,const std::vector<T>&v){std::uint64_t n=v.size();append(b,n);auto p=(const char*)v.data();b.insert(b.end(),p,p+n*sizeof(T));}template<class T>T read(std::span<const char>b,std::size_t&o){if(o+sizeof(T)>b.size())throw std::runtime_error("truncated graph section");T v;std::memcpy(&v,b.data()+o,sizeof(T));o+=sizeof(T);return v;}template<class T>std::vector<T>read_vector(std::span<const char>b,std::size_t&o){auto n=read<std::uint64_t>(b,o);if(n>(b.size()-o)/sizeof(T))throw std::runtime_error("invalid graph section bounds");std::vector<T>v((std::size_t)n);std::memcpy(v.data(),b.data()+o,v.size()*sizeof(T));o+=v.size()*sizeof(T);return v;}}
-void NativeBrainEngine::resize_scratch(){auto n=graph_.cognit_count();homeostasis_applied_.resize(n,homeostasis_tick_);cognit_last_touch_time_.resize(n,continuous_time_enabled_?continuous_now_:-1.);cognit_last_active_time_.resize(n,continuous_time_enabled_?continuous_now_:-1.);cognit_latent_threshold_.resize(n,std::numeric_limits<double>::quiet_NaN());incoming_.resize(n);absence_.resize(n);frontier_energy_.reserve(n);next_energy_.reserve(n);incoming_gen_.resize(n);absence_gen_.resize(n);visited_gen_.resize(n);candidate_gen_.resize(n);frontier_ids_.reserve(n);next_ids_.reserve(n);touched_.reserve(n);candidate_targets_.reserve(n);}
-std::uint32_t NativeBrainEngine::next_generation(){if(++generation_==0){std::fill(incoming_gen_.begin(),incoming_gen_.end(),0);std::fill(absence_gen_.begin(),absence_gen_.end(),0);std::fill(visited_gen_.begin(),visited_gen_.end(),0);generation_=1;}return generation_;}
-RelationHandle NativeBrainEngine::add_relation(std::uint32_t s,std::uint32_t t,RelationType type,std::uint32_t action,double strength,double confidence,double probability){if(!cognit_alive(s)||!cognit_alive(t))throw std::out_of_range("dead or invalid Cognit");const auto count=graph_.relations.size();auto pair=graph_.relations.connect(s,t,type,action);if(graph_.relations.size()!=count){pair.first.strength=strength;pair.first.confidence=confidence;pair.first.prediction=probability;dirty_relations_.push_back(pair.second);auto time=continuous_time_enabled_?continuous_now_:-1.;relation_last_touch_time_[relation_time_key(pair.second)]={pair.second.generation,time};relation_last_evidence_time_[relation_time_key(pair.second)]={pair.second.generation,time};}return pair.second;}
-void NativeBrainEngine::update_relation(RelationHandle h,const PersistedRelation&r){graph_.relations.update(h,r);auto time=continuous_time_enabled_?continuous_now_:-1.;relation_last_touch_time_[relation_time_key(h)]={h.generation,time};relation_last_evidence_time_[relation_time_key(h)]={h.generation,time};}
-std::vector<std::uint32_t> NativeBrainEngine::upsert_relation_states_batch(std::uint32_t source,const std::vector<PersistedRelation>&rows,std::uint32_t max_new,std::uint32_t max_total){
- if(!cognit_alive(source))throw std::out_of_range("dead or invalid source Cognit");struct Key{std::uint32_t target,action;std::uint8_t type;bool operator==(Key const&)const=default;};struct Hash{std::size_t operator()(Key const&k)const{return(std::size_t(k.target)<<16)^(std::size_t(k.action)<<8)^k.type;}};std::unordered_map<Key,RelationHandle,Hash>existing;graph_.for_each_outgoing(source,[&](Edge const&e,RelationHandle h){existing[{e.target,e.action,(std::uint8_t)e.type}]=h;});std::uint32_t made=0;
- std::vector<std::uint32_t>created;
- for(auto row:rows){if(!cognit_alive(row.target))continue;Key key{row.target,row.action,row.type};auto it=existing.find(key);RelationHandle h;if(it==existing.end()){if(made>=max_new||graph_.relation_count()>=max_total)continue;h=add_relation(source,row.target,(RelationType)row.type,row.action,row.strength,row.confidence,row.prediction);existing[key]=h;++made;created.push_back(row.target);}else h=it->second;auto current=graph_.relations.state(source,h);current.strength=row.strength;current.confidence=row.confidence;current.prediction=row.prediction;current.support=row.support;current.lift=row.lift;update_relation(h,current);}return created;
-}
-double NativeBrainEngine::effective_relation_confidence(Edge&e,RelationHandle h,double decay)const{
- if(!continuous_time_enabled_)return e.confidence;auto key=relation_time_key(h);auto it=relation_last_touch_time_.find(key);auto last=it==relation_last_touch_time_.end()||it->second.first!=h.generation||it->second.second<0.?continuous_epoch_:it->second.second;if(continuous_now_<last)throw std::invalid_argument("Relation time moved backwards");auto dt=continuous_now_-last;if(dt){e.confidence*=std::pow(decay,dt);relation_last_touch_time_[key]={h.generation,continuous_now_};++relation_materialization_work_;}return e.confidence;
-}
-std::tuple<std::vector<std::array<double,6>>,std::uint64_t> NativeBrainEngine::continuous_relation_time_state()const{std::vector<std::array<double,6>>out;out.reserve(relation_last_touch_time_.size());for(std::uint32_t source=0;source<graph_.cognit_count();++source)graph_.for_each_outgoing(source,[&](const Edge&e,RelationHandle h){auto key=relation_time_key(h);auto touch=relation_last_touch_time_.find(key);auto evidence=relation_last_evidence_time_.find(key);if(touch!=relation_last_touch_time_.end()&&touch->second.first==h.generation){auto touch_time=touch->second.second<0.?continuous_epoch_:touch->second.second;auto evidence_time=evidence!=relation_last_evidence_time_.end()&&evidence->second.first==h.generation?(evidence->second.second<0.?continuous_epoch_:evidence->second.second):continuous_epoch_;out.push_back({double(source),double(e.target),double((std::uint8_t)e.type),double(e.action),touch_time,evidence_time});}});std::sort(out.begin(),out.end());return{out,relation_materialization_work_};}
-void NativeBrainEngine::restore_continuous_relation_time_state(const std::vector<std::array<double,6>>&rows,std::uint64_t work){relation_last_touch_time_.clear();relation_last_evidence_time_.clear();for(auto&r:rows){if(!std::isfinite(r[4])||!std::isfinite(r[5])||r[4]>continuous_now_||r[5]>continuous_now_)throw std::invalid_argument("invalid Relation time frontier");auto h=graph_.relations.connect((std::uint32_t)r[0],(std::uint32_t)r[1],(RelationType)(std::uint8_t)r[2],(std::uint32_t)r[3]).second;auto key=relation_time_key(h);relation_last_touch_time_[key]={h.generation,r[4]};relation_last_evidence_time_[key]={h.generation,r[5]};}relation_materialization_work_=work;}
-bool NativeBrainEngine::receive(std::uint32_t id,double energy,std::uint64_t tick,bool wave_step,double attenuation,std::uint16_t refractory_steps){catch_up_homeostasis(id);if(!cognit_alive(id))throw std::out_of_range("dead or invalid Cognit");if(wave_step&&graph_.refractory[id]>0)energy*=attenuation;graph_.activity[id]=(double)std::clamp((double)graph_.activity[id]+energy,0.,1.);auto active=graph_.activity[id]>=std::max(graph_.threshold[id],graph_.homeostatic_threshold[id]);if(active){graph_.last_active_cognitive_tick[id]=tick;if(continuous_time_enabled_)cognit_last_active_time_[id]=continuous_now_;graph_.utility[id]=(double)std::min(1.,(double)graph_.utility[id]+.01);graph_.confidence[id]=(double)std::min(1.,(double)graph_.confidence[id]+.002);if(graph_.activity[id]>=.75)graph_.refractory[id]=refractory_steps;}++state_revision_;return active;}
-std::vector<std::uint8_t> NativeBrainEngine::receive_batch(std::span<const std::uint32_t>ids,std::span<const double>energies,std::uint64_t tick,bool wave_step,double attenuation,std::uint16_t refractory_steps){if(ids.size()!=energies.size())throw std::invalid_argument("receive batch size mismatch");std::vector<std::uint8_t>out;out.reserve(ids.size());for(std::size_t i=0;i<ids.size();++i)out.push_back(receive(ids[i],energies[i],tick,wave_step,attenuation,refractory_steps));return out;}
-std::vector<std::pair<RelationHandle,PersistedRelation>> NativeBrainEngine::outgoing(std::span<const std::uint32_t>sources)const{std::vector<std::pair<RelationHandle,PersistedRelation>>out;for(auto source:sources)graph_.for_each_outgoing(source,[&](const Edge&,RelationHandle h){out.push_back({h,graph_.relations.state(source,h)});});return out;}
-std::vector<std::uint32_t> NativeBrainEngine::outgoing_targets(std::span<const std::uint32_t>sources)const{std::vector<std::uint32_t>out;for(auto source:sources)graph_.for_each_outgoing(source,[&](const Edge&e,RelationHandle){out.push_back(e.target);});std::sort(out.begin(),out.end());out.erase(std::unique(out.begin(),out.end()),out.end());return out;}
-std::vector<double> NativeBrainEngine::cognit_state(std::span<const std::uint32_t>ids)const{std::vector<double>out;out.reserve(ids.size()*5);for(auto id:ids){catch_up_homeostasis(id);if(!cognit_alive(id))throw std::out_of_range("dead or invalid Cognit");out.insert(out.end(),{graph_.activity.at(id),graph_.threshold.at(id),graph_.confidence.at(id),graph_.utility.at(id),double(graph_.last_active_cognitive_tick.at(id))});}return out;}
-std::vector<double> NativeBrainEngine::cognit_state_full(std::span<const std::uint32_t>ids)const{std::vector<double>out;out.reserve(ids.size()*12);for(auto id:ids){catch_up_homeostasis(id);if(!cognit_alive(id))throw std::out_of_range("dead or invalid Cognit");out.insert(out.end(),{graph_.activity.at(id),graph_.threshold.at(id),graph_.confidence.at(id),graph_.utility.at(id),double(graph_.last_active_cognitive_tick.at(id)),double(graph_.refractory.at(id)),graph_.homeostatic_threshold.at(id),graph_.activity_trace.at(id),graph_.target_activity.at(id),double(graph_.age.at(id)),graph_.predictive_contribution.at(id),double(graph_.low_retention_ticks.at(id))});}return out;}
-void NativeBrainEngine::set_cognit_states(std::span<const std::uint32_t>ids,std::span<const double>v){++state_revision_;if(v.size()!=ids.size()*12)throw std::invalid_argument("twelve values required per cognit");for(std::size_t i=0;i<ids.size();++i){std::uint32_t id=ids[i];catch_up_homeostasis(id);if(!cognit_alive(id))throw std::out_of_range("dead or invalid Cognit");std::size_t o=i*12;graph_.activity.at(id)=v[o];graph_.threshold.at(id)=v[o+1];graph_.confidence.at(id)=v[o+2];graph_.utility.at(id)=v[o+3];graph_.last_active_cognitive_tick.at(id)=(std::uint64_t)v[o+4];graph_.refractory.at(id)=(std::uint16_t)v[o+5];graph_.homeostatic_threshold.at(id)=v[o+6];graph_.activity_trace.at(id)=v[o+7];graph_.target_activity.at(id)=v[o+8];graph_.age.at(id)=(std::uint32_t)v[o+9];graph_.predictive_contribution.at(id)=v[o+10];graph_.low_retention_ticks.at(id)=(std::uint32_t)v[o+11];}}
-void NativeBrainEngine::set_cognit_fields(std::span<const std::uint32_t>ids,std::span<const std::uint8_t>fields,std::span<const double>values){if(ids.size()!=fields.size()||ids.size()!=values.size())throw std::invalid_argument("field batch size mismatch");++state_revision_;for(std::size_t i=0;i<ids.size();++i){auto id=ids[i];catch_up_homeostasis(id);if(!cognit_alive(id))throw std::out_of_range("dead or invalid Cognit");switch(fields[i]){case 0:graph_.activity[id]=values[i];break;case 1:graph_.threshold[id]=values[i];break;case 2:graph_.confidence[id]=values[i];break;case 3:graph_.utility[id]=values[i];break;case 4:graph_.last_active_cognitive_tick[id]=(std::uint64_t)values[i];break;case 5:graph_.refractory[id]=(std::uint16_t)values[i];break;case 6:graph_.homeostatic_threshold[id]=values[i];break;case 7:graph_.activity_trace[id]=values[i];break;case 8:graph_.target_activity[id]=values[i];break;case 9:graph_.age[id]=(std::uint32_t)values[i];break;case 10:graph_.predictive_contribution[id]=values[i];break;case 11:graph_.low_retention_ticks[id]=(std::uint32_t)values[i];break;default:throw std::out_of_range("invalid Cognit field");}}}
-std::vector<double> NativeBrainEngine::cognit_state_masked(std::span<const std::uint32_t>ids,std::uint16_t mask)const{std::vector<double>out;for(auto id:ids){auto row=cognit_state_full(std::span<const std::uint32_t>(&id,1));for(std::uint8_t field=0;field<12;++field)if(mask&(1u<<field))out.push_back(row[field]);}return out;}
-void NativeBrainEngine::evolve_homeostasis(std::uint32_t id,bool active,const HomeostasisPolicy&p)const{
- ++graph_.age[id];graph_.activity_trace[id]=p.lam*graph_.activity_trace[id]+(1-p.lam)*(active?1.:0.);
- graph_.homeostatic_threshold[id]=std::clamp(graph_.homeostatic_threshold[id]+p.rate*(graph_.activity_trace[id]-graph_.target_activity[id]),p.tmin,p.tmax);
- graph_.activity[id]*=p.activity_decay;graph_.utility[id]*=p.utility_decay;if(graph_.refractory[id])--graph_.refractory[id];
-}
-void NativeBrainEngine::catch_up_homeostasis(std::uint32_t id)const{
- if(!cognit_alive(id))return;
- if(continuous_time_enabled_){materialize_continuous_cognit(id,continuous_now_);return;}
- auto&applied=homeostasis_applied_.at(id);
- while(applied<homeostasis_tick_){
-  auto step=applied+1;auto it=std::upper_bound(homeostasis_policies_.begin(),homeostasis_policies_.end(),step,[](auto t,const auto&p){return t<p.first;});
-  evolve_homeostasis(id,false,*std::prev(it));++applied;
- }
-}
-void NativeBrainEngine::materialize_continuous_cognit(std::uint32_t id,double now)const{
- if(!cognit_alive(id))return;
- auto stored=cognit_last_touch_time_.at(id);auto last=stored<0.?continuous_epoch_:stored;if(!std::isfinite(now)||now<last)throw std::invalid_argument("continuous time must be finite and monotonic");
- auto dt=now-last;if(dt==0){cognit_last_touch_time_[id]=now;return;}
- const auto&p=continuous_policy_;auto trace0=graph_.activity_trace[id];auto factor=std::pow(p.lam,dt);graph_.activity_trace[id]=trace0*factor;
- double sum=p.lam==1.?trace0*dt:trace0*p.lam*(1.-factor)/(1.-p.lam);
- auto&latent=cognit_latent_threshold_[id];if(std::isnan(latent))latent=graph_.homeostatic_threshold[id];latent+=p.rate*(sum-graph_.target_activity[id]*dt);graph_.homeostatic_threshold[id]=std::clamp(latent,p.tmin,p.tmax);
- graph_.activity[id]*=std::pow(p.activity_decay,dt);graph_.utility[id]*=std::pow(p.utility_decay,dt);cognit_last_touch_time_[id]=now;++continuous_materialization_work_;
-}
-void NativeBrainEngine::begin_continuous_time(double now,double lam,double rate,double tmin,double tmax,double activity_decay,double utility_decay,double relation_decay){
- if(!std::isfinite(now)||now<continuous_now_)throw std::invalid_argument("continuous time must be finite and monotonic");
- if(!continuous_time_enabled_)continuous_epoch_=now;continuous_time_enabled_=true;continuous_now_=now;continuous_policy_={0,lam,rate,tmin,tmax,activity_decay,utility_decay};continuous_relation_decay_=relation_decay;
-}
-void NativeBrainEngine::materialize_cognits_at(std::span<const std::uint32_t>ids,double now){
- if(!continuous_time_enabled_)throw std::logic_error("continuous time is not enabled");if(now<continuous_now_)throw std::invalid_argument("continuous time moved backwards");continuous_now_=now;for(auto id:ids){if(!cognit_alive(id))throw std::out_of_range("dead or invalid Cognit");materialize_continuous_cognit(id,now);}++state_revision_;
-}
-std::tuple<bool,double,double,std::vector<double>,std::vector<double>,std::vector<double>,std::uint64_t> NativeBrainEngine::continuous_time_state()const{auto latent=cognit_latent_threshold_;for(std::size_t i=0;i<latent.size();++i)if(std::isnan(latent[i]))latent[i]=graph_.homeostatic_threshold[i];return{continuous_time_enabled_,continuous_epoch_,continuous_now_,cognit_last_touch_time_,cognit_last_active_time_,std::move(latent),continuous_materialization_work_};}
-void NativeBrainEngine::restore_continuous_time_state(bool enabled,double epoch,double now,const std::vector<double>&last_touch,const std::vector<double>&last_active,const std::vector<double>&latent_threshold,std::uint64_t work){
- if(!std::isfinite(epoch)||!std::isfinite(now)||epoch>now||last_touch.size()!=graph_.cognit_count()||last_active.size()!=graph_.cognit_count()||latent_threshold.size()!=graph_.cognit_count())throw std::invalid_argument("continuous time state size");for(auto value:last_touch)if(!std::isfinite(value)||value>now)throw std::invalid_argument("invalid Cognit time frontier");for(auto value:last_active)if(!std::isfinite(value)||value>now)throw std::invalid_argument("invalid Cognit active frontier");for(auto value:latent_threshold)if(!std::isfinite(value))throw std::invalid_argument("invalid latent threshold");continuous_time_enabled_=enabled;continuous_epoch_=epoch;continuous_now_=now;cognit_last_touch_time_=last_touch;cognit_last_active_time_=last_active;cognit_latent_threshold_=latent_threshold;continuous_materialization_work_=work;
-}
-std::vector<double> NativeBrainEngine::cognit_elapsed_times(std::span<const std::uint32_t>ids)const{if(!continuous_time_enabled_)return{};std::vector<double>out;out.reserve(ids.size()*2);for(auto id:ids){if(!cognit_alive(id))throw std::out_of_range("dead or invalid Cognit");out.push_back(continuous_now_);out.push_back(cognit_last_active_time_[id]<0.?continuous_epoch_:cognit_last_active_time_[id]);}return out;}
-void NativeBrainEngine::homeostatic_step(std::span<const std::uint32_t>active,double lam,double rate,double tmin,double tmax,double activity_decay,double utility_decay){
- if(continuous_time_enabled_){HomeostasisPolicy p{0,lam,rate,tmin,tmax,activity_decay,utility_decay};continuous_policy_=p;for(auto id:active){materialize_continuous_cognit(id,continuous_now_);cognit_last_active_time_[id]=continuous_now_;graph_.activity_trace[id]=lam*graph_.activity_trace[id]+(1-lam);auto&latent=cognit_latent_threshold_[id];if(std::isnan(latent))latent=graph_.homeostatic_threshold[id];latent+=rate*(graph_.activity_trace[id]-graph_.target_activity[id]);graph_.homeostatic_threshold[id]=std::clamp(latent,tmin,tmax);}++state_revision_;return;}
- HomeostasisPolicy p{homeostasis_tick_+1,lam,rate,tmin,tmax,activity_decay,utility_decay};
- if(homeostasis_policies_.empty()||[&]{auto&x=homeostasis_policies_.back();return x.lam!=lam||x.rate!=rate||x.tmin!=tmin||x.tmax!=tmax||x.activity_decay!=activity_decay||x.utility_decay!=utility_decay;}())homeostasis_policies_.push_back(p);
- for(auto id:active)catch_up_homeostasis(id);
- ++homeostasis_tick_;++state_revision_;
- for(auto id:active)if(cognit_alive(id)&&homeostasis_applied_[id]<homeostasis_tick_){evolve_homeostasis(id,true,p);homeostasis_applied_[id]=homeostasis_tick_;}
-}
-std::vector<std::pair<std::uint32_t,double>> NativeBrainEngine::predict(std::span<const std::uint32_t>active,std::uint8_t action){for(auto id:active)catch_up_homeostasis(id);auto gen=next_generation();touched_.clear();for(auto s:active)graph_.for_each_outgoing(s,[&](const Edge&e,RelationHandle){if(e.type==RelationType::SelfAction&&e.action!=action)return;double probability=e.prediction>0?e.prediction:e.strength;double q=std::clamp(graph_.activity[s]*probability*e.confidence,0.,1.);if(absence_gen_[e.target]!=gen){absence_gen_[e.target]=gen;absence_[e.target]=1;touched_.push_back(e.target);}absence_[e.target]*=1-q;});std::sort(touched_.begin(),touched_.end());std::vector<std::pair<std::uint32_t,double>>out;out.reserve(touched_.size());for(auto id:touched_)out.push_back({id,1-absence_[id]});return out;}
-std::vector<std::vector<std::pair<std::uint32_t,double>>> NativeBrainEngine::predict_actions_batch(std::span<const std::uint32_t>active,std::span<const std::uint8_t>actions){for(auto id:active)catch_up_homeostasis(id);for(auto action:actions)conditioned_scratch_[action].clear();auto common_generation=next_generation();touched_.clear();for(auto source:active)graph_.for_each_outgoing(source,[&](const Edge&e,RelationHandle){double probability=e.prediction>0?e.prediction:e.strength;double q=std::clamp(graph_.activity[source]*probability*e.confidence,0.,1.);if(e.type==RelationType::SelfAction){conditioned_scratch_[e.action].push_back({e.target,q});return;}if(absence_gen_[e.target]!=common_generation){absence_gen_[e.target]=common_generation;absence_[e.target]=1;touched_.push_back(e.target);}absence_[e.target]*=1-q;});std::vector<std::vector<std::pair<std::uint32_t,double>>>out;out.reserve(actions.size());for(auto action:actions){auto generation=next_generation();std::vector<std::uint32_t>ids=touched_;for(auto id:touched_){incoming_gen_[id]=generation;incoming_[id]=absence_[id];}for(auto[target,q]:conditioned_scratch_[action]){if(incoming_gen_[target]!=generation){incoming_gen_[target]=generation;incoming_[target]=1;ids.push_back(target);}incoming_[target]*=1-q;}std::sort(ids.begin(),ids.end());ids.erase(std::unique(ids.begin(),ids.end()),ids.end());auto&result=out.emplace_back();result.reserve(ids.size());for(auto id:ids)result.push_back({id,1-incoming_[id]});}return out;}
-std::vector<std::vector<std::pair<std::uint32_t,double>>> NativeBrainEngine::predict_actions_batch_at(std::span<const std::uint32_t>active,std::span<const std::uint8_t>actions,std::uint64_t tick,double decay){
- for(auto action:actions)conditioned_scratch_[action].clear();auto common_generation=next_generation();touched_.clear();
- for(auto source:active)graph_.for_each_outgoing(source,[&](Edge&e,RelationHandle h){double confidence;if(continuous_time_enabled_)confidence=effective_relation_confidence(e,h,decay);else{auto index=std::size_t(h.page)*256+h.slot;if(index>=relation_confidence_cache_tick_.size()){relation_confidence_cache_tick_.resize(index+1,std::numeric_limits<std::uint64_t>::max());relation_confidence_cache_base_.resize(index+1);relation_confidence_cache_decay_.resize(index+1);relation_confidence_cache_value_.resize(index+1);}if(relation_confidence_cache_tick_[index]==tick&&relation_confidence_cache_base_[index]==e.confidence&&relation_confidence_cache_decay_[index]==decay)confidence=relation_confidence_cache_value_[index];else{auto last=graph_.relations.last_evidence(e);auto age=tick>=last?tick-last:0;confidence=e.confidence*std::pow(decay,double(age));relation_confidence_cache_tick_[index]=tick;relation_confidence_cache_base_[index]=e.confidence;relation_confidence_cache_decay_[index]=decay;relation_confidence_cache_value_[index]=confidence;}}double probability=e.prediction>0?e.prediction:e.strength;double q=std::clamp(graph_.activity[source]*probability*confidence,0.,1.);if(e.type==RelationType::SelfAction){conditioned_scratch_[e.action].push_back({e.target,q});return;}if(absence_gen_[e.target]!=common_generation){absence_gen_[e.target]=common_generation;absence_[e.target]=1;touched_.push_back(e.target);}absence_[e.target]*=1-q;});
- std::vector<std::vector<std::pair<std::uint32_t,double>>>out;out.reserve(actions.size());for(auto action:actions){auto generation=next_generation();std::vector<std::uint32_t>ids=touched_;for(auto id:touched_){incoming_gen_[id]=generation;incoming_[id]=absence_[id];}for(auto[target,q]:conditioned_scratch_[action]){if(incoming_gen_[target]!=generation){incoming_gen_[target]=generation;incoming_[target]=1;ids.push_back(target);}incoming_[target]*=1-q;}std::sort(ids.begin(),ids.end());ids.erase(std::unique(ids.begin(),ids.end()),ids.end());auto&result=out.emplace_back();result.reserve(ids.size());for(auto id:ids)result.push_back({id,1-incoming_[id]});}return out;
-}
-std::vector<std::pair<std::uint32_t,double>> NativeBrainEngine::action_effects(std::span<const std::uint32_t>active,std::uint8_t action,double floor){
- auto generation=next_generation();touched_.clear();
- for(auto source:active)graph_.for_each_outgoing(source,[&](Edge&e,RelationHandle h){
-  if(e.type!=RelationType::SelfAction||e.action!=action)return;auto q=e.prediction*effective_relation_confidence(e,h,continuous_relation_decay_);if(q<floor)return;
-  if(absence_gen_[e.target]!=generation){absence_gen_[e.target]=generation;absence_[e.target]=1;touched_.push_back(e.target);}absence_[e.target]*=1-q;
- });
- std::sort(touched_.begin(),touched_.end());std::vector<std::pair<std::uint32_t,double>>out;out.reserve(touched_.size());for(auto id:touched_)out.push_back({id,1-absence_[id]});return out;
-}
-std::vector<std::vector<std::pair<std::uint32_t,double>>> NativeBrainEngine::action_effects_batch(std::span<const std::uint32_t>active,std::span<const std::uint8_t>actions,double floor){
- for(auto action:actions)conditioned_scratch_[action].clear();
- for(auto source:active)graph_.for_each_outgoing(source,[&](Edge&e,RelationHandle h){if(e.type!=RelationType::SelfAction)return;auto q=e.prediction*effective_relation_confidence(e,h,continuous_relation_decay_);if(q>=floor)conditioned_scratch_[e.action].push_back({e.target,q});});
- std::vector<std::vector<std::pair<std::uint32_t,double>>>out;out.reserve(actions.size());
- for(auto action:actions){auto generation=next_generation();touched_.clear();for(auto[target,q]:conditioned_scratch_[action]){if(absence_gen_[target]!=generation){absence_gen_[target]=generation;absence_[target]=1;touched_.push_back(target);}absence_[target]*=1-q;}std::sort(touched_.begin(),touched_.end());auto&row=out.emplace_back();row.reserve(touched_.size());for(auto id:touched_)row.push_back({id,1-absence_[id]});}
- return out;
-}
-std::vector<PlannerTransition> NativeBrainEngine::planner_transition_batch(const std::vector<std::vector<std::uint32_t>>&states,std::span<const std::uint8_t>actions,std::uint64_t tick,double decay,double floor){
- std::vector<PlannerTransition>out;out.reserve(states.size());
- for(const auto&state:states)out.push_back({predict_actions_batch_at(state,actions,tick,decay),action_effects_batch(state,actions,floor)});
- return out;
-}
-WaveResult NativeBrainEngine::propagate(std::span<const std::uint32_t>seeds,std::uint64_t tick,std::uint32_t cap,double retention,double attenuation,std::uint16_t refractory_steps){++state_revision_;
- auto visit=next_generation();frontier_ids_.clear();for(auto id:seeds)if(cognit_alive(id))frontier_ids_.push_back(id);frontier_energy_.clear();WaveResult out;out.active=frontier_ids_;
- for(auto id:frontier_ids_){catch_up_homeostasis(id);frontier_energy_.push_back(graph_.activity[id]);visited_gen_[id]=visit;out.energy+=graph_.activity[id];}
- for(;!frontier_ids_.empty()&&out.steps<cap;++out.steps){auto incoming_generation=next_generation();touched_.clear();
-  for(std::size_t k=0;k<frontier_ids_.size();++k){auto source=frontier_ids_[k];double excitation=0,inhibition=0;
-   graph_.for_each_outgoing(source,[&](Edge&e,RelationHandle h){++out.relations_traversed;double raw=std::max(0.,e.strength*effective_relation_confidence(e,h,continuous_relation_decay_));(e.type==RelationType::Inhibitory?inhibition:excitation)+=raw;});
-   auto budget=std::max(0.,frontier_energy_[k])*retention;
-   graph_.for_each_outgoing(source,[&](Edge&e,RelationHandle h){++out.relations_traversed;double raw=std::max(0.,e.strength*effective_relation_confidence(e,h,continuous_relation_decay_));double value=0;if(e.type==RelationType::Inhibitory&&inhibition)value=-budget*raw/inhibition;else if(e.type!=RelationType::Inhibitory&&excitation){value=budget*raw/excitation;out.transmitted_energy+=value;}else return;if(incoming_gen_[e.target]!=incoming_generation){incoming_gen_[e.target]=incoming_generation;incoming_[e.target]=0;touched_.push_back(e.target);}incoming_[e.target]+=value;e.last_used_cognitive_tick=tick;});
+void NativeBrainEngine::update_outcomes(std::span<const std::uint32_t> before, std::span<const std::uint32_t> current, int action, std::uint64_t tick, double confirmation, double contradiction, double utility, double consolidated_confidence) {
+  auto gen = next_generation();
+  for (auto id : current)
+    if (cognit_alive(id))
+      candidate_gen_[id] = gen;
+  for (auto s : before) {
+    if (!cognit_alive(s))
+      continue;
+    graph_.for_each_outgoing(s, [&](Edge &e, RelationHandle h) {
+      if (e.type == RelationType::SelfAction && e.action != action)
+        return;
+      effective_relation_confidence(e, h, continuous_relation_decay_);
+      auto r = graph_.relations.state(s, h);
+      bool confirmed = candidate_gen_[e.target] == gen;
+      if (confirmed) {
+        ++r.confirmations;
+        r.confidence = double(r.confidence + confirmation * (1. - r.confidence));
+        r.contradiction = double(r.contradiction * (1. - contradiction));
+      } else {
+        r.contradiction = double(r.contradiction + contradiction * (1. - r.contradiction));
+        r.confidence = double(r.confidence * (1. - contradiction));
+      }
+      r.confidence = std::clamp(r.confidence, 0., 1.);
+      r.usefulness = double(std::clamp(r.usefulness + utility * ((confirmed ? 1. : 0.) - r.strength), 0., 1.));
+      r.last_evidence_world_tick = tick;
+      if (continuous_time_enabled_)
+        relation_last_evidence_time_[relation_time_key(h)] = {h.generation, continuous_now_};
+      if (e.status == RelationStatus::Consolidated && r.confidence < consolidated_confidence * .6) {
+        graph_.relations.make_provisional(h);
+        r.status = (std::uint8_t)RelationStatus::Provisional;
+      }
+      graph_.relations.update(h, r);
+    });
   }
-  next_ids_.clear();next_energy_.clear();
-  for(auto id:touched_)if(visited_gen_[id]!=visit){catch_up_homeostasis(id);double received=incoming_[id]*(graph_.refractory[id]?attenuation:1.);graph_.activity[id]=std::clamp(graph_.activity[id]+received,0.,1.);if(graph_.activity[id]>=std::max(graph_.threshold[id],graph_.homeostatic_threshold[id])){graph_.last_active_cognitive_tick[id]=tick;if(continuous_time_enabled_)cognit_last_active_time_[id]=continuous_now_;graph_.utility[id]=std::min(1.,graph_.utility[id]+.01);graph_.confidence[id]=std::min(1.,graph_.confidence[id]+.002);if(graph_.activity[id]>=.75)graph_.refractory[id]=refractory_steps;visited_gen_[id]=visit;next_ids_.push_back(id);next_energy_.push_back(std::clamp(incoming_[id],0.,256.));out.active.push_back(id);out.energy+=std::max(0.,incoming_[id]);}}
-  frontier_ids_.swap(next_ids_);frontier_energy_.swap(next_energy_);
- }
- std::sort(out.active.begin(),out.active.end());return out;
 }
-bool NativeBrainEngine::mask_empty(const SlotMask&m){return std::all_of(m.begin(),m.end(),[](auto x){return x==0;});}
-void NativeBrainEngine::evict_slot(std::size_t slot){auto&item=evidence_slots_[slot];if(!item.occupied)return;auto word=slot>>6;auto bit=~(std::uint64_t(1)<<(slot&63));auto decrement=[](auto&map,const auto&key){auto it=map.find(key);if(it!=map.end()&&--it->second==0)map.erase(it);};for(auto t:item.after){decrement(target_counts_,t);auto it=after_slots_.find(t);if(it!=after_slots_.end()){it->second[word]&=bit;if(mask_empty(it->second))after_slots_.erase(it);}}for(auto s:item.before){decrement(source_counts_,s);decrement(action_source_counts_,ActionSourceKey{s,item.action});auto it=before_slots_.find(s);if(it!=before_slots_.end()){it->second[word]&=bit;if(mask_empty(it->second))before_slots_.erase(it);}auto ai=before_action_slots_.find({s,item.action});if(ai!=before_action_slots_.end()){ai->second[word]&=bit;if(mask_empty(ai->second))before_action_slots_.erase(ai);}}item=Experience{};--evidence_steps_;}
-void NativeBrainEngine::update_transition_evidence(std::span<const std::uint32_t>b,std::uint8_t a,std::span<const std::uint32_t>after){if(evidence_slots_.size()!=evidence_window_)evidence_slots_.resize(evidence_window_);auto unique=[](auto values){std::vector<std::uint32_t>v(values.begin(),values.end());std::sort(v.begin(),v.end());v.erase(std::unique(v.begin(),v.end()),v.end());return v;};auto before=unique(b),targets=unique(after);auto slot=evidence_cursor_;evict_slot(slot);auto words=(evidence_window_+63)/64,word=slot>>6;auto bit=std::uint64_t(1)<<(slot&63);for(auto t:targets){++target_counts_[t];auto&m=after_slots_[t];if(m.empty())m.resize(words);m[word]|=bit;}for(auto s:before){++source_counts_[s];++action_source_counts_[{s,a}];auto&m=before_slots_[s];if(m.empty())m.resize(words);m[word]|=bit;auto&am=before_action_slots_[{s,a}];if(am.empty())am.resize(words);am[word]|=bit;}evidence_slots_[slot]={std::move(before),std::move(targets),a,true};evidence_cursor_=(slot+1)%evidence_window_;++evidence_steps_;source_events_+=evidence_slots_[slot].before.size();target_events_+=evidence_slots_[slot].after.size();candidate_pair_updates_+=evidence_slots_[slot].before.size()*evidence_slots_[slot].after.size();}
-std::uint32_t NativeBrainEngine::support(std::uint32_t s,std::uint32_t t)const{auto a=before_slots_.find(s);auto b=after_slots_.find(t);if(a==before_slots_.end()||b==after_slots_.end())return 0;std::uint32_t n=0;for(std::size_t i=0;i<a->second.size();++i)n+=std::popcount(a->second[i]&b->second[i]);return n;}
-std::uint32_t NativeBrainEngine::action_support(std::uint32_t s,std::uint8_t action,std::uint32_t t)const{auto a=before_action_slots_.find({s,action});auto b=after_slots_.find(t);if(a==before_action_slots_.end()||b==after_slots_.end())return 0;std::uint32_t n=0;for(std::size_t i=0;i<a->second.size();++i)n+=std::popcount(a->second[i]&b->second[i]);return n;}
-void NativeBrainEngine::discover_targets(const SlotMask&mask,std::vector<std::uint32_t>&out)const{out.clear();std::unordered_set<std::uint32_t>seen;for(std::size_t w=0;w<mask.size();++w){auto bits=mask[w];while(bits){auto bit=std::countr_zero(bits);auto slot=w*64+bit;if(slot<evidence_slots_.size())for(auto t:evidence_slots_[slot].after)if(seen.insert(t).second)out.push_back(t);bits&=bits-1;}}std::sort(out.begin(),out.end());}
-std::size_t NativeBrainEngine::evidence_reserved_bytes()const{std::size_t bytes=evidence_slots_.capacity()*sizeof(Experience);for(auto&x:evidence_slots_)bytes+=x.before.capacity()*sizeof(std::uint32_t)+x.after.capacity()*sizeof(std::uint32_t);auto masks=[](const auto&m){std::size_t n=0;for(auto&kv:m)n+=sizeof(kv)+kv.second.capacity()*sizeof(std::uint64_t)+sizeof(void*)*2;return n;};bytes+=masks(before_slots_)+masks(after_slots_)+masks(before_action_slots_);bytes+=(source_counts_.size()+target_counts_.size())*(sizeof(std::uint32_t)*2+sizeof(void*)*2);bytes+=action_source_counts_.size()*(sizeof(ActionSourceKey)+sizeof(std::uint32_t)+sizeof(void*)*2);return bytes;}
-std::tuple<std::uint32_t,double,double,double,double,std::uint32_t> NativeBrainEngine::transition_metrics(std::uint32_t s,std::uint32_t t,std::uint8_t a)const{auto get=[](const auto&map,const auto&key){auto it=map.find(key);return it==map.end()?0u:it->second;};auto pairs=support(s,t),sources=get(source_counts_,s),targets=get(target_counts_,t),trials=get(action_source_counts_,ActionSourceKey{s,a}),action_pairs=action_support(s,a,t);double conditional=double(pairs)/std::max(1u,sources),baseline=double(targets)/std::max<std::uint64_t>(1,evidence_steps_),lift=conditional/std::max(baseline,1e-9),action_probability=double(action_pairs)/std::max(1u,trials);return{pairs,conditional,baseline,lift,action_probability,trials};}
-std::vector<std::uint32_t> NativeBrainEngine::action_trials(std::span<const std::uint32_t>sources,std::span<const std::uint8_t>actions)const{std::vector<std::uint32_t>out(actions.size());for(std::size_t i=0;i<actions.size();++i)for(auto source:sources){auto it=action_source_counts_.find({source,actions[i]});if(it!=action_source_counts_.end())out[i]+=it->second;}return out;}
-std::pair<std::uint32_t,std::uint32_t> NativeBrainEngine::lifecycle_step(std::uint64_t tick,std::uint64_t max_idle,double death,double decay){std::uint32_t removed=0,kept=0;std::vector<RelationHandle>next;next.reserve(dirty_relations_.size());for(auto handle:dirty_relations_){auto*edge=graph_.relations.get(handle);if(!edge)continue;double age,effective;if(continuous_time_enabled_){auto key=relation_time_key(handle);auto it=relation_last_evidence_time_.find(key);auto last=it==relation_last_evidence_time_.end()||it->second.first!=handle.generation||it->second.second<0.?continuous_epoch_:it->second.second;age=continuous_now_-last;effective=effective_relation_confidence(*edge,handle,decay);}else{auto last=graph_.relations.last_evidence(*edge);age=double(tick>=last?tick-last:0);effective=edge->confidence*std::pow(decay,age);}if(age>double(max_idle)&&effective<death){removed+=graph_.relations.erase(handle);relation_last_touch_time_.erase(relation_time_key(handle));relation_last_evidence_time_.erase(relation_time_key(handle));continue;}next.push_back(handle);++kept;}dirty_relations_.swap(next);return{removed,kept};}
-std::vector<MaterializedRelation> NativeBrainEngine::materialize_relations(const EvidenceConfig&c,std::uint64_t tick){std::vector<MaterializedRelation>out;std::vector<std::uint32_t>targets;for(auto&[s,mask]:before_slots_){discover_targets(mask,targets);for(auto t:targets){if(s==t||!cognit_alive(s)||!cognit_alive(t))continue;auto n=support(s,t);double conditional=double(n)/std::max(1u,source_counts_.at(s)),baseline=double(target_counts_.at(t))/std::max<std::uint64_t>(1,evidence_steps_),lift=conditional/std::max(baseline,1e-9);if(n<c.minimum_support||lift<c.minimum_lift)continue;auto pair=graph_.relations.connect(s,t,RelationType::Sequential);auto&e=pair.first;e.strength=e.prediction=conditional;e.confidence=double(n)/(n+c.confidence_k);auto&p=graph_.relations.provisional(e);p.support=n;p.lift=lift;p.last_evidence_world_tick=tick;dirty_relations_.push_back(pair.second);}}for(auto&[key,mask]:before_action_slots_){auto trials=action_source_counts_.at(key);discover_targets(mask,targets);for(auto t:targets){if(key.s==t||!cognit_alive(key.s)||!cognit_alive(t))continue;auto pairs=action_support(key.s,key.a,t);double probability=double(pairs)/trials,conditional=double(support(key.s,t))/std::max(1u,source_counts_.at(key.s));double lift=probability/std::max(conditional,1e-9);if(trials<c.minimum_support||lift<c.minimum_lift)continue;auto pair=graph_.relations.connect(key.s,t,RelationType::SelfAction,key.a);auto&e=pair.first;e.strength=e.prediction=probability;e.confidence=double(trials)/(trials+c.confidence_k);auto&p=graph_.relations.provisional(e);p.support=trials;p.lift=lift;p.last_evidence_world_tick=tick;dirty_relations_.push_back(pair.second);out.push_back({key.s,t,trials,key.a,probability,e.confidence,lift});}}std::sort(out.begin(),out.end(),[](auto&a,auto&b){return std::tie(a.source,a.target,a.action)<std::tie(b.source,b.target,b.action);});return out;}
-std::vector<MaterializedRelation> NativeBrainEngine::materialize_current(const EvidenceConfig&c,std::uint64_t tick,std::span<const std::uint32_t>before,std::uint8_t action,std::span<const std::uint32_t>after,std::uint32_t max_new,std::uint32_t max_relations,double decay){
- std::vector<MaterializedRelation>out;
- std::vector<std::uint32_t>sources(before.begin(),before.end()),targets;
- std::sort(sources.begin(),sources.end());
- std::unordered_map<std::uint32_t,std::size_t>current;
- for(std::size_t i=0;i<after.size();++i)if(cognit_alive(after[i]))current.emplace(after[i],i);
- std::uint32_t created=0;
- auto process=[&](std::uint32_t s,RelationType type){
-  if(!cognit_alive(s))return;
-  bool conditioned=type==RelationType::SelfAction;
-  auto sc=source_counts_.find(s);if(sc==source_counts_.end())return;
-  auto ac=action_source_counts_.find({s,action});
-  auto trials=conditioned?(ac==action_source_counts_.end()?0u:ac->second):sc->second;
-  if(trials<c.minimum_support)return; // exact upper bound on support
-  auto quota=conditioned?max_new:std::min(max_new,std::max(1u,max_new/2));
-  std::unordered_map<std::uint32_t,RelationHandle>existing;
-  graph_.for_each_outgoing(s,[&](const Edge&e,RelationHandle h){if(e.type==type&&e.action==(conditioned?action:0))existing.emplace(e.target,h);});
-  targets.clear();
-  if(created>=quota||graph_.relation_count()>=max_relations){
-   for(auto&[t,h]:existing)if(current.contains(t))targets.push_back(t);
-  }else{
-   auto m=before_slots_.find(s);if(m==before_slots_.end())return;
-   discover_targets(m->second,targets);
-   std::erase_if(targets,[&](auto t){return !current.contains(t)||!cognit_alive(t);});
+bool NativeBrainEngine::remove_cognit(std::uint32_t id) {
+  if (!cognit_alive(id))
+    return false;
+  std::vector<RelationHandle> incident;
+  for (std::uint32_t source = 0; source < graph_.cognit_count(); ++source)
+    graph_.relations.for_each(source, [&](const Edge &e, RelationHandle h) {
+      if (source == id || e.target == id)
+        incident.push_back(h);
+    });
+  for (auto h : incident) graph_.relations.erase(h);
+  ++state_revision_;
+  graph_.flags[id] |= 1;
+  graph_.activity[id] = 0;
+  graph_.refractory[id] = 0;
+  ++dead_cognits_;
+  for (auto it = assembly_cognits_.begin(); it != assembly_cognits_.end();)
+    if (it->second == id)
+      it = assembly_cognits_.erase(it);
+    else
+      ++it;
+  return true;
+}
+namespace {
+struct FileHeader {
+  char magic[8];
+  std::uint32_t version;
+  std::uint64_t payload_size, checksum;
+};
+std::uint64_t checksum(std::span<const char> b) {
+  std::uint64_t h = 1469598103934665603ull;
+  for (auto c : b) {
+    h ^= (unsigned char)c;
+    h *= 1099511628211ull;
   }
-  if(conditioned)std::sort(targets.begin(),targets.end(),[&](auto a,auto b){return current.at(a)<current.at(b);});
-  else std::sort(targets.begin(),targets.end());
-  for(auto t:targets){
-   if(s==t)continue;
-   auto found=existing.find(t);bool fresh=found==existing.end();
-   if(fresh&&(created>=quota||graph_.relation_count()>=max_relations))continue;
-   auto count=support(s,t);
-   double conditional=double(count)/std::max(1u,sc->second);
-   double probability=conditioned?double(action_support(s,action,t))/std::max(1u,trials):conditional;
-   double baseline=conditioned?conditional:double(target_counts_.at(t))/std::max<std::uint64_t>(1,evidence_steps_);
-   double lift=probability/std::max(baseline,1e-9);
-   auto support_count=conditioned?trials:count;
-   if(support_count<c.minimum_support||lift<c.minimum_lift)continue;
-   RelationHandle h;
-   if(fresh){h=graph_.relations.connect(s,t,type,conditioned?action:0).second;existing.emplace(t,h);++created;dirty_relations_.push_back(h);auto time=continuous_time_enabled_?continuous_now_:-1.;relation_last_touch_time_[relation_time_key(h)]={h.generation,time};relation_last_evidence_time_[relation_time_key(h)]={h.generation,time};}
-   else h=found->second;
-   auto r=graph_.relations.state(s,h);
-   if(!conditioned&&tick<r.last_evidence_world_tick)throw std::runtime_error("world clock moved backwards");
-   r.strength=r.prediction=double(probability);r.confidence=double(double(support_count)/(support_count+c.confidence_k));
-   r.support=support_count;r.lift=double(lift);r.last_evidence_world_tick=tick;
-   if(support_count>=c.consolidated_support&&r.confidence>=c.consolidated_confidence)r.status=(std::uint8_t)RelationStatus::Consolidated;
-   graph_.relations.update(h,r);
-   if(continuous_time_enabled_){auto key=relation_time_key(h);relation_last_touch_time_[key]={h.generation,continuous_now_};relation_last_evidence_time_[key]={h.generation,continuous_now_};}
-   out.push_back({s,t,support_count,std::uint8_t(conditioned?action:0),r.prediction,r.confidence,r.lift});
+  return h;
+}
+template <class T> void append(std::vector<char> &b, const T &v) {
+  auto p = (const char *)&v;
+  b.insert(b.end(), p, p + sizeof(T));
+}
+template <class T> void append_vector(std::vector<char> &b, const std::vector<T> &v) {
+  std::uint64_t n = v.size();
+  append(b, n);
+  auto p = (const char *)v.data();
+  b.insert(b.end(), p, p + n * sizeof(T));
+}
+template <class T> T read(std::span<const char> b, std::size_t &o) {
+  if (o + sizeof(T) > b.size())
+    throw std::runtime_error("truncated graph section");
+  T v;
+  std::memcpy(&v, b.data() + o, sizeof(T));
+  o += sizeof(T);
+  return v;
+}
+template <class T> std::vector<T> read_vector(std::span<const char> b, std::size_t &o) {
+  auto n = read<std::uint64_t>(b, o);
+  if (n > (b.size() - o) / sizeof(T))
+    throw std::runtime_error("invalid graph section bounds");
+  std::vector<T> v((std::size_t)n);
+  std::memcpy(v.data(), b.data() + o, v.size() * sizeof(T));
+  o += v.size() * sizeof(T);
+  return v;
+}
+} // namespace
+void NativeBrainEngine::resize_scratch() {
+  auto n = graph_.cognit_count();
+  homeostasis_applied_.resize(n, homeostasis_tick_);
+  cognit_last_touch_time_.resize(n, continuous_time_enabled_ ? continuous_now_ : -1.);
+  cognit_last_active_time_.resize(n, continuous_time_enabled_ ? continuous_now_ : -1.);
+  cognit_latent_threshold_.resize(n, std::numeric_limits<double>::quiet_NaN());
+  incoming_.resize(n);
+  absence_.resize(n);
+  frontier_energy_.reserve(n);
+  next_energy_.reserve(n);
+  incoming_gen_.resize(n);
+  absence_gen_.resize(n);
+  visited_gen_.resize(n);
+  candidate_gen_.resize(n);
+  frontier_ids_.reserve(n);
+  next_ids_.reserve(n);
+  touched_.reserve(n);
+  candidate_targets_.reserve(n);
+}
+std::uint32_t NativeBrainEngine::next_generation() {
+  if (++generation_ == 0) {
+    std::fill(incoming_gen_.begin(), incoming_gen_.end(), 0);
+    std::fill(absence_gen_.begin(), absence_gen_.end(), 0);
+    std::fill(visited_gen_.begin(), visited_gen_.end(), 0);
+    generation_ = 1;
   }
- };
- for(auto s:sources)process(s,RelationType::Sequential);
- for(auto s:before)process(s,RelationType::SelfAction);
- return out;
+  return generation_;
 }
-void NativeBrainEngine::clear_transition_evidence(){evidence_steps_=0;evidence_cursor_=0;evidence_slots_.clear();source_counts_.clear();target_counts_.clear();action_source_counts_.clear();before_slots_.clear();after_slots_.clear();before_action_slots_.clear();}
-std::vector<std::tuple<std::vector<std::uint32_t>,std::uint8_t,std::vector<std::uint32_t>>> NativeBrainEngine::transition_history()const{std::vector<std::tuple<std::vector<std::uint32_t>,std::uint8_t,std::vector<std::uint32_t>>>out;out.reserve(evidence_steps_);for(std::size_t k=0;k<evidence_steps_;++k){auto slot=(evidence_cursor_+evidence_window_-evidence_steps_+k)%evidence_window_;auto&x=evidence_slots_[slot];if(x.occupied)out.push_back({x.before,x.action,x.after});}return out;}
-void NativeBrainEngine::restore_transition_history(const std::vector<std::tuple<std::vector<std::uint32_t>,std::uint8_t,std::vector<std::uint32_t>>>&rows){clear_transition_evidence();for(auto&[before,action,after]:rows)update_transition_evidence(before,action,after);}
-std::tuple<std::uint64_t,std::vector<std::array<double,7>>,std::vector<std::uint64_t>> NativeBrainEngine::homeostasis_runtime_state()const{std::vector<std::array<double,7>>rows;for(auto&p:homeostasis_policies_)rows.push_back({double(p.first),p.lam,p.rate,p.tmin,p.tmax,p.activity_decay,p.utility_decay});return{homeostasis_tick_,rows,homeostasis_applied_};}
-void NativeBrainEngine::restore_homeostasis_runtime_state(std::uint64_t tick,const std::vector<std::array<double,7>>&rows,const std::vector<std::uint64_t>&applied){if(applied.size()!=graph_.cognit_count())throw std::invalid_argument("homeostasis state size");homeostasis_tick_=tick;homeostasis_policies_.clear();for(auto&r:rows)homeostasis_policies_.push_back({(std::uint64_t)r[0],r[1],r[2],r[3],r[4],r[5],r[6]});homeostasis_applied_=applied;}
-std::vector<std::array<std::uint32_t,4>> NativeBrainEngine::dirty_relation_state()const{std::vector<std::array<std::uint32_t,4>>out;auto handles=graph_.relations.handles();auto rows=graph_.relations.snapshot();for(auto dirty:dirty_relations_)for(std::size_t i=0;i<handles.size();++i)if(handles[i].page==dirty.page&&handles[i].slot==dirty.slot&&handles[i].generation==dirty.generation){auto&r=rows[i];out.push_back({r.source,r.target,r.type,r.action});break;}return out;}
-void NativeBrainEngine::restore_dirty_relation_state(const std::vector<std::array<std::uint32_t,4>>&rows){dirty_relations_.clear();for(auto&r:rows)dirty_relations_.push_back(graph_.relations.connect(r[0],r[1],(RelationType)r[2],r[3]).second);}
-void NativeBrainEngine::set_evidence_window(std::size_t n){n=std::max<std::size_t>(1,n);if(n==evidence_window_)return;std::vector<Experience>kept;kept.reserve(std::min<std::size_t>(n,evidence_steps_));for(std::size_t k=0;k<evidence_steps_;++k){auto slot=(evidence_cursor_+evidence_window_-evidence_steps_+k)%evidence_window_;if(evidence_slots_[slot].occupied)kept.push_back(evidence_slots_[slot]);}if(kept.size()>n)kept.erase(kept.begin(),kept.end()-n);clear_transition_evidence();evidence_window_=n;for(auto&x:kept)update_transition_evidence(x.before,x.action,x.after);}
-std::size_t NativeBrainEngine::reserved_bytes()const{return graph_.relations.reserved_bytes()+graph_.activity.capacity()*5*sizeof(double)+graph_.last_active_cognitive_tick.capacity()*sizeof(std::uint64_t)+graph_.refractory.capacity()*sizeof(std::uint16_t)+graph_.flags.capacity()+incoming_.capacity()*2*sizeof(double)+(incoming_gen_.capacity()+absence_gen_.capacity()+visited_gen_.capacity())*sizeof(std::uint32_t);}
-void NativeBrainEngine::save_graph(const std::string&path)const{if(!continuous_time_enabled_)for(std::uint32_t id=0;id<cognit_count();++id)catch_up_homeostasis(id);std::vector<char>b;append_vector(b,graph_.activity);append_vector(b,graph_.threshold);append_vector(b,graph_.confidence);append_vector(b,graph_.utility);append_vector(b,graph_.activity_trace);append_vector(b,graph_.last_active_cognitive_tick);append_vector(b,graph_.refractory);append_vector(b,graph_.flags);append_vector(b,graph_.homeostatic_threshold);append_vector(b,graph_.target_activity);append_vector(b,graph_.predictive_contribution);append_vector(b,graph_.age);append_vector(b,graph_.low_retention_ticks);auto relations=graph_.relations.snapshot();append_vector(b,relations);FileHeader h{{'S','E','B','R','A','I','N','\0'},3,b.size(),checksum(b)};std::ofstream f(path,std::ios::binary|std::ios::trunc);if(!f)throw std::runtime_error("cannot open graph for writing");f.write((char*)&h,sizeof(h));f.write(b.data(),b.size());if(!f)throw std::runtime_error("failed writing graph");}
-void NativeBrainEngine::load_graph(const std::string&path){std::ifstream f(path,std::ios::binary|std::ios::ate);if(!f)throw std::runtime_error("cannot open graph for reading");auto size=f.tellg();if(size<(std::streamoff)sizeof(FileHeader))throw std::runtime_error("truncated graph header");f.seekg(0);FileHeader h;f.read((char*)&h,sizeof(h));if(std::memcmp(h.magic,"SEBRAIN",7)||h.version!=3||h.payload_size!=(std::uint64_t)(size-(std::streamoff)sizeof(h)))throw std::runtime_error("invalid graph header");std::vector<char>b((std::size_t)h.payload_size);f.read(b.data(),b.size());if(!f||checksum(b)!=h.checksum)throw std::runtime_error("graph checksum mismatch");std::size_t o=0;auto activity=read_vector<double>(b,o),threshold=read_vector<double>(b,o),confidence=read_vector<double>(b,o),utility=read_vector<double>(b,o),trace=read_vector<double>(b,o);auto last=read_vector<std::uint64_t>(b,o);auto refractory=read_vector<std::uint16_t>(b,o);auto flags=read_vector<std::uint8_t>(b,o);auto homeostatic=read_vector<double>(b,o);auto target=read_vector<double>(b,o);auto contribution=read_vector<double>(b,o);auto ages=read_vector<std::uint32_t>(b,o);auto low=read_vector<std::uint32_t>(b,o);auto relations=read_vector<PersistedRelation>(b,o);auto n=activity.size();if(o!=b.size()||threshold.size()!=n||confidence.size()!=n||utility.size()!=n||trace.size()!=n||last.size()!=n||refractory.size()!=n||flags.size()!=n||homeostatic.size()!=n||target.size()!=n||contribution.size()!=n||ages.size()!=n||low.size()!=n)throw std::runtime_error("inconsistent graph arrays");for(const auto&r:relations)if(r.source>=n||r.target>=n||(flags[r.source]&1)||(flags[r.target]&1))throw std::runtime_error("invalid live relation endpoint");graph_.homeostatic_threshold=std::move(homeostatic);graph_.target_activity=std::move(target);graph_.predictive_contribution=std::move(contribution);graph_.age=std::move(ages);graph_.low_retention_ticks=std::move(low);graph_.activity=std::move(activity);graph_.threshold=std::move(threshold);graph_.confidence=std::move(confidence);graph_.utility=std::move(utility);graph_.activity_trace=std::move(trace);graph_.last_active_cognitive_tick=std::move(last);graph_.refractory=std::move(refractory);graph_.flags=std::move(flags);++state_revision_;dead_cognits_=std::count_if(graph_.flags.begin(),graph_.flags.end(),[](auto x){return x&1;});graph_.relations.restore(n,relations);dirty_relations_=graph_.relations.handles();relation_confidence_cache_tick_.clear();relation_confidence_cache_base_.clear();relation_confidence_cache_decay_.clear();relation_confidence_cache_value_.clear();clear_transition_evidence();homeostasis_tick_=0;homeostasis_policies_.clear();homeostasis_applied_.clear();resize_scratch();}
+RelationHandle NativeBrainEngine::add_relation(std::uint32_t s, std::uint32_t t, RelationType type, std::uint32_t action, double strength, double confidence, double probability) {
+  if (!cognit_alive(s) || !cognit_alive(t))
+    throw std::out_of_range("dead or invalid Cognit");
+  const auto count = graph_.relations.size();
+  auto pair = graph_.relations.connect(s, t, type, action);
+  if (graph_.relations.size() != count) {
+    pair.first.strength = strength;
+    pair.first.confidence = confidence;
+    pair.first.prediction = probability;
+    dirty_relations_.push_back(pair.second);
+    auto time = continuous_time_enabled_ ? continuous_now_ : -1.;
+    relation_last_touch_time_[relation_time_key(pair.second)] = {pair.second.generation, time};
+    relation_last_evidence_time_[relation_time_key(pair.second)] = {pair.second.generation, time};
+  }
+  return pair.second;
 }
+void NativeBrainEngine::update_relation(RelationHandle h, const PersistedRelation &r) {
+  graph_.relations.update(h, r);
+  auto time = continuous_time_enabled_ ? continuous_now_ : -1.;
+  relation_last_touch_time_[relation_time_key(h)] = {h.generation, time};
+  relation_last_evidence_time_[relation_time_key(h)] = {h.generation, time};
+}
+std::vector<std::uint32_t> NativeBrainEngine::upsert_relation_states_batch(std::uint32_t source, const std::vector<PersistedRelation> &rows, std::uint32_t max_new, std::uint32_t max_total) {
+  if (!cognit_alive(source))
+    throw std::out_of_range("dead or invalid source Cognit");
+  struct Key {
+    std::uint32_t target, action;
+    std::uint8_t type;
+    bool operator==(Key const &) const = default;
+  };
+  struct Hash {
+    std::size_t operator()(Key const &k) const { return (std::size_t(k.target) << 16) ^ (std::size_t(k.action) << 8) ^ k.type; }
+  };
+  std::unordered_map<Key, RelationHandle, Hash> existing;
+  graph_.for_each_outgoing(source, [&](Edge const &e, RelationHandle h) { existing[{e.target, e.action, (std::uint8_t)e.type}] = h; });
+  std::uint32_t made = 0;
+  std::vector<std::uint32_t> created;
+  for (auto row : rows) {
+    if (!cognit_alive(row.target))
+      continue;
+    Key key{row.target, row.action, row.type};
+    auto it = existing.find(key);
+    RelationHandle h;
+    if (it == existing.end()) {
+      if (made >= max_new || graph_.relation_count() >= max_total)
+        continue;
+      h = add_relation(source, row.target, (RelationType)row.type, row.action, row.strength, row.confidence, row.prediction);
+      existing[key] = h;
+      ++made;
+      created.push_back(row.target);
+    } else
+      h = it->second;
+    auto current = graph_.relations.state(source, h);
+    current.strength = row.strength;
+    current.confidence = row.confidence;
+    current.prediction = row.prediction;
+    current.support = row.support;
+    current.lift = row.lift;
+    update_relation(h, current);
+  }
+  return created;
+}
+double NativeBrainEngine::effective_relation_confidence(Edge &e, RelationHandle h, double decay) const {
+  if (!continuous_time_enabled_)
+    return e.confidence;
+  auto key = relation_time_key(h);
+  auto it = relation_last_touch_time_.find(key);
+  auto last = it == relation_last_touch_time_.end() || it->second.first != h.generation || it->second.second < 0. ? continuous_epoch_ : it->second.second;
+  if (continuous_now_ < last)
+    throw std::invalid_argument("Relation time moved backwards");
+  auto dt = continuous_now_ - last;
+  if (dt) {
+    e.confidence *= std::pow(decay, dt);
+    relation_last_touch_time_[key] = {h.generation, continuous_now_};
+    ++relation_materialization_work_;
+  }
+  return e.confidence;
+}
+std::tuple<std::vector<std::array<double, 6>>, std::uint64_t> NativeBrainEngine::continuous_relation_time_state() const {
+  std::vector<std::array<double, 6>> out;
+  out.reserve(relation_last_touch_time_.size());
+  for (std::uint32_t source = 0; source < graph_.cognit_count(); ++source)
+    graph_.for_each_outgoing(source, [&](const Edge &e, RelationHandle h) {
+      auto key = relation_time_key(h);
+      auto touch = relation_last_touch_time_.find(key);
+      auto evidence = relation_last_evidence_time_.find(key);
+      if (touch != relation_last_touch_time_.end() && touch->second.first == h.generation) {
+        auto touch_time = touch->second.second < 0. ? continuous_epoch_ : touch->second.second;
+        auto evidence_time = evidence != relation_last_evidence_time_.end() && evidence->second.first == h.generation ? (evidence->second.second < 0. ? continuous_epoch_ : evidence->second.second) : continuous_epoch_;
+        out.push_back({double(source), double(e.target), double((std::uint8_t)e.type), double(e.action), touch_time, evidence_time});
+      }
+    });
+  std::sort(out.begin(), out.end());
+  return {out, relation_materialization_work_};
+}
+void NativeBrainEngine::restore_continuous_relation_time_state(const std::vector<std::array<double, 6>> &rows, std::uint64_t work) {
+  relation_last_touch_time_.clear();
+  relation_last_evidence_time_.clear();
+  for (auto &r : rows) {
+    if (!std::isfinite(r[4]) || !std::isfinite(r[5]) || r[4] > continuous_now_ || r[5] > continuous_now_)
+      throw std::invalid_argument("invalid Relation time frontier");
+    auto h = graph_.relations.connect((std::uint32_t)r[0], (std::uint32_t)r[1], (RelationType)(std::uint8_t)r[2], (std::uint32_t)r[3]).second;
+    auto key = relation_time_key(h);
+    relation_last_touch_time_[key] = {h.generation, r[4]};
+    relation_last_evidence_time_[key] = {h.generation, r[5]};
+  }
+  relation_materialization_work_ = work;
+}
+bool NativeBrainEngine::receive(std::uint32_t id, double energy, std::uint64_t tick, bool wave_step, double attenuation, std::uint16_t refractory_steps) {
+  catch_up_homeostasis(id);
+  if (!cognit_alive(id))
+    throw std::out_of_range("dead or invalid Cognit");
+  if (wave_step && graph_.refractory[id] > 0)
+    energy *= attenuation;
+  graph_.activity[id] = (double)std::clamp((double)graph_.activity[id] + energy, 0., 1.);
+  auto active = graph_.activity[id] >= std::max(graph_.threshold[id], graph_.homeostatic_threshold[id]);
+  if (active) {
+    graph_.last_active_cognitive_tick[id] = tick;
+    if (continuous_time_enabled_)
+      cognit_last_active_time_[id] = continuous_now_;
+    graph_.utility[id] = (double)std::min(1., (double)graph_.utility[id] + .01);
+    graph_.confidence[id] = (double)std::min(1., (double)graph_.confidence[id] + .002);
+    if (graph_.activity[id] >= .75)
+      graph_.refractory[id] = refractory_steps;
+  }
+  ++state_revision_;
+  return active;
+}
+std::vector<std::uint8_t> NativeBrainEngine::receive_batch(std::span<const std::uint32_t> ids, std::span<const double> energies, std::uint64_t tick, bool wave_step, double attenuation, std::uint16_t refractory_steps) {
+  if (ids.size() != energies.size())
+    throw std::invalid_argument("receive batch size mismatch");
+  std::vector<std::uint8_t> out;
+  out.reserve(ids.size());
+  for (std::size_t i = 0; i < ids.size(); ++i) out.push_back(receive(ids[i], energies[i], tick, wave_step, attenuation, refractory_steps));
+  return out;
+}
+std::vector<std::pair<RelationHandle, PersistedRelation>> NativeBrainEngine::outgoing(std::span<const std::uint32_t> sources) const {
+  std::vector<std::pair<RelationHandle, PersistedRelation>> out;
+  for (auto source : sources) graph_.for_each_outgoing(source, [&](const Edge &, RelationHandle h) { out.push_back({h, graph_.relations.state(source, h)}); });
+  return out;
+}
+std::vector<std::uint32_t> NativeBrainEngine::outgoing_targets(std::span<const std::uint32_t> sources) const {
+  std::vector<std::uint32_t> out;
+  for (auto source : sources) graph_.for_each_outgoing(source, [&](const Edge &e, RelationHandle) { out.push_back(e.target); });
+  std::sort(out.begin(), out.end());
+  out.erase(std::unique(out.begin(), out.end()), out.end());
+  return out;
+}
+std::vector<double> NativeBrainEngine::cognit_state(std::span<const std::uint32_t> ids) const {
+  std::vector<double> out;
+  out.reserve(ids.size() * 5);
+  for (auto id : ids) {
+    catch_up_homeostasis(id);
+    if (!cognit_alive(id))
+      throw std::out_of_range("dead or invalid Cognit");
+    out.insert(out.end(), {graph_.activity.at(id), graph_.threshold.at(id), graph_.confidence.at(id), graph_.utility.at(id), double(graph_.last_active_cognitive_tick.at(id))});
+  }
+  return out;
+}
+std::vector<double> NativeBrainEngine::cognit_state_full(std::span<const std::uint32_t> ids) const {
+  std::vector<double> out;
+  out.reserve(ids.size() * 12);
+  for (auto id : ids) {
+    catch_up_homeostasis(id);
+    if (!cognit_alive(id))
+      throw std::out_of_range("dead or invalid Cognit");
+    out.insert(out.end(), {graph_.activity.at(id), graph_.threshold.at(id), graph_.confidence.at(id), graph_.utility.at(id), double(graph_.last_active_cognitive_tick.at(id)), double(graph_.refractory.at(id)), graph_.homeostatic_threshold.at(id), graph_.activity_trace.at(id), graph_.target_activity.at(id), double(graph_.age.at(id)), graph_.predictive_contribution.at(id), double(graph_.low_retention_ticks.at(id))});
+  }
+  return out;
+}
+void NativeBrainEngine::set_cognit_states(std::span<const std::uint32_t> ids, std::span<const double> v) {
+  ++state_revision_;
+  if (v.size() != ids.size() * 12)
+    throw std::invalid_argument("twelve values required per cognit");
+  for (std::size_t i = 0; i < ids.size(); ++i) {
+    std::uint32_t id = ids[i];
+    catch_up_homeostasis(id);
+    if (!cognit_alive(id))
+      throw std::out_of_range("dead or invalid Cognit");
+    std::size_t o = i * 12;
+    graph_.activity.at(id) = v[o];
+    graph_.threshold.at(id) = v[o + 1];
+    graph_.confidence.at(id) = v[o + 2];
+    graph_.utility.at(id) = v[o + 3];
+    graph_.last_active_cognitive_tick.at(id) = (std::uint64_t)v[o + 4];
+    graph_.refractory.at(id) = (std::uint16_t)v[o + 5];
+    graph_.homeostatic_threshold.at(id) = v[o + 6];
+    graph_.activity_trace.at(id) = v[o + 7];
+    graph_.target_activity.at(id) = v[o + 8];
+    graph_.age.at(id) = (std::uint32_t)v[o + 9];
+    graph_.predictive_contribution.at(id) = v[o + 10];
+    graph_.low_retention_ticks.at(id) = (std::uint32_t)v[o + 11];
+  }
+}
+void NativeBrainEngine::set_cognit_fields(std::span<const std::uint32_t> ids, std::span<const std::uint8_t> fields, std::span<const double> values) {
+  if (ids.size() != fields.size() || ids.size() != values.size())
+    throw std::invalid_argument("field batch size mismatch");
+  ++state_revision_;
+  for (std::size_t i = 0; i < ids.size(); ++i) {
+    auto id = ids[i];
+    catch_up_homeostasis(id);
+    if (!cognit_alive(id))
+      throw std::out_of_range("dead or invalid Cognit");
+    switch (fields[i]) {
+    case 0:
+      graph_.activity[id] = values[i];
+      break;
+    case 1:
+      graph_.threshold[id] = values[i];
+      break;
+    case 2:
+      graph_.confidence[id] = values[i];
+      break;
+    case 3:
+      graph_.utility[id] = values[i];
+      break;
+    case 4:
+      graph_.last_active_cognitive_tick[id] = (std::uint64_t)values[i];
+      break;
+    case 5:
+      graph_.refractory[id] = (std::uint16_t)values[i];
+      break;
+    case 6:
+      graph_.homeostatic_threshold[id] = values[i];
+      break;
+    case 7:
+      graph_.activity_trace[id] = values[i];
+      break;
+    case 8:
+      graph_.target_activity[id] = values[i];
+      break;
+    case 9:
+      graph_.age[id] = (std::uint32_t)values[i];
+      break;
+    case 10:
+      graph_.predictive_contribution[id] = values[i];
+      break;
+    case 11:
+      graph_.low_retention_ticks[id] = (std::uint32_t)values[i];
+      break;
+    default:
+      throw std::out_of_range("invalid Cognit field");
+    }
+  }
+}
+std::vector<double> NativeBrainEngine::cognit_state_masked(std::span<const std::uint32_t> ids, std::uint16_t mask) const {
+  std::vector<double> out;
+  for (auto id : ids) {
+    auto row = cognit_state_full(std::span<const std::uint32_t>(&id, 1));
+    for (std::uint8_t field = 0; field < 12; ++field)
+      if (mask & (1u << field))
+        out.push_back(row[field]);
+  }
+  return out;
+}
+void NativeBrainEngine::evolve_homeostasis(std::uint32_t id, bool active, const HomeostasisPolicy &p) const {
+  ++graph_.age[id];
+  graph_.activity_trace[id] = p.lam * graph_.activity_trace[id] + (1 - p.lam) * (active ? 1. : 0.);
+  graph_.homeostatic_threshold[id] = std::clamp(graph_.homeostatic_threshold[id] + p.rate * (graph_.activity_trace[id] - graph_.target_activity[id]), p.tmin, p.tmax);
+  graph_.activity[id] *= p.activity_decay;
+  graph_.utility[id] *= p.utility_decay;
+  if (graph_.refractory[id])
+    --graph_.refractory[id];
+}
+void NativeBrainEngine::catch_up_homeostasis(std::uint32_t id) const {
+  if (!cognit_alive(id))
+    return;
+  if (continuous_time_enabled_) {
+    materialize_continuous_cognit(id, continuous_now_);
+    return;
+  }
+  auto &applied = homeostasis_applied_.at(id);
+  while (applied < homeostasis_tick_) {
+    auto step = applied + 1;
+    auto it = std::upper_bound(homeostasis_policies_.begin(), homeostasis_policies_.end(), step, [](auto t, const auto &p) { return t < p.first; });
+    evolve_homeostasis(id, false, *std::prev(it));
+    ++applied;
+  }
+}
+void NativeBrainEngine::materialize_continuous_cognit(std::uint32_t id, double now) const {
+  if (!cognit_alive(id))
+    return;
+  auto stored = cognit_last_touch_time_.at(id);
+  auto last = stored < 0. ? continuous_epoch_ : stored;
+  if (!std::isfinite(now) || now < last)
+    throw std::invalid_argument("continuous time must be finite and monotonic");
+  auto dt = now - last;
+  if (dt == 0) {
+    cognit_last_touch_time_[id] = now;
+    return;
+  }
+  const auto &p = continuous_policy_;
+  auto trace0 = graph_.activity_trace[id];
+  auto factor = std::pow(p.lam, dt);
+  graph_.activity_trace[id] = trace0 * factor;
+  double sum = p.lam == 1. ? trace0 * dt : trace0 * p.lam * (1. - factor) / (1. - p.lam);
+  auto &latent = cognit_latent_threshold_[id];
+  if (std::isnan(latent))
+    latent = graph_.homeostatic_threshold[id];
+  latent += p.rate * (sum - graph_.target_activity[id] * dt);
+  graph_.homeostatic_threshold[id] = std::clamp(latent, p.tmin, p.tmax);
+  graph_.activity[id] *= std::pow(p.activity_decay, dt);
+  graph_.utility[id] *= std::pow(p.utility_decay, dt);
+  cognit_last_touch_time_[id] = now;
+  ++continuous_materialization_work_;
+}
+void NativeBrainEngine::begin_continuous_time(double now, double lam, double rate, double tmin, double tmax, double activity_decay, double utility_decay, double relation_decay) {
+  if (!std::isfinite(now) || now < continuous_now_)
+    throw std::invalid_argument("continuous time must be finite and monotonic");
+  if (!continuous_time_enabled_)
+    continuous_epoch_ = now;
+  continuous_time_enabled_ = true;
+  continuous_now_ = now;
+  continuous_policy_ = {0, lam, rate, tmin, tmax, activity_decay, utility_decay};
+  continuous_relation_decay_ = relation_decay;
+}
+void NativeBrainEngine::materialize_cognits_at(std::span<const std::uint32_t> ids, double now) {
+  if (!continuous_time_enabled_)
+    throw std::logic_error("continuous time is not enabled");
+  if (now < continuous_now_)
+    throw std::invalid_argument("continuous time moved backwards");
+  continuous_now_ = now;
+  for (auto id : ids) {
+    if (!cognit_alive(id))
+      throw std::out_of_range("dead or invalid Cognit");
+    materialize_continuous_cognit(id, now);
+  }
+  ++state_revision_;
+}
+std::tuple<bool, double, double, std::vector<double>, std::vector<double>, std::vector<double>, std::uint64_t> NativeBrainEngine::continuous_time_state() const {
+  auto latent = cognit_latent_threshold_;
+  for (std::size_t i = 0; i < latent.size(); ++i)
+    if (std::isnan(latent[i]))
+      latent[i] = graph_.homeostatic_threshold[i];
+  return {continuous_time_enabled_, continuous_epoch_, continuous_now_, cognit_last_touch_time_, cognit_last_active_time_, std::move(latent), continuous_materialization_work_};
+}
+void NativeBrainEngine::restore_continuous_time_state(bool enabled, double epoch, double now, const std::vector<double> &last_touch, const std::vector<double> &last_active, const std::vector<double> &latent_threshold, std::uint64_t work) {
+  if (!std::isfinite(epoch) || !std::isfinite(now) || epoch > now || last_touch.size() != graph_.cognit_count() || last_active.size() != graph_.cognit_count() || latent_threshold.size() != graph_.cognit_count())
+    throw std::invalid_argument("continuous time state size");
+  for (auto value : last_touch)
+    if (!std::isfinite(value) || value > now)
+      throw std::invalid_argument("invalid Cognit time frontier");
+  for (auto value : last_active)
+    if (!std::isfinite(value) || value > now)
+      throw std::invalid_argument("invalid Cognit active frontier");
+  for (auto value : latent_threshold)
+    if (!std::isfinite(value))
+      throw std::invalid_argument("invalid latent threshold");
+  continuous_time_enabled_ = enabled;
+  continuous_epoch_ = epoch;
+  continuous_now_ = now;
+  cognit_last_touch_time_ = last_touch;
+  cognit_last_active_time_ = last_active;
+  cognit_latent_threshold_ = latent_threshold;
+  continuous_materialization_work_ = work;
+}
+std::vector<double> NativeBrainEngine::cognit_elapsed_times(std::span<const std::uint32_t> ids) const {
+  if (!continuous_time_enabled_)
+    return {};
+  std::vector<double> out;
+  out.reserve(ids.size() * 2);
+  for (auto id : ids) {
+    if (!cognit_alive(id))
+      throw std::out_of_range("dead or invalid Cognit");
+    out.push_back(continuous_now_);
+    out.push_back(cognit_last_active_time_[id] < 0. ? continuous_epoch_ : cognit_last_active_time_[id]);
+  }
+  return out;
+}
+void NativeBrainEngine::homeostatic_step(std::span<const std::uint32_t> active, double lam, double rate, double tmin, double tmax, double activity_decay, double utility_decay) {
+  if (continuous_time_enabled_) {
+    HomeostasisPolicy p{0, lam, rate, tmin, tmax, activity_decay, utility_decay};
+    continuous_policy_ = p;
+    for (auto id : active) {
+      materialize_continuous_cognit(id, continuous_now_);
+      cognit_last_active_time_[id] = continuous_now_;
+      graph_.activity_trace[id] = lam * graph_.activity_trace[id] + (1 - lam);
+      auto &latent = cognit_latent_threshold_[id];
+      if (std::isnan(latent))
+        latent = graph_.homeostatic_threshold[id];
+      latent += rate * (graph_.activity_trace[id] - graph_.target_activity[id]);
+      graph_.homeostatic_threshold[id] = std::clamp(latent, tmin, tmax);
+    }
+    ++state_revision_;
+    return;
+  }
+  HomeostasisPolicy p{homeostasis_tick_ + 1, lam, rate, tmin, tmax, activity_decay, utility_decay};
+  if (homeostasis_policies_.empty() || [&] {
+        auto &x = homeostasis_policies_.back();
+        return x.lam != lam || x.rate != rate || x.tmin != tmin || x.tmax != tmax || x.activity_decay != activity_decay || x.utility_decay != utility_decay;
+      }())
+    homeostasis_policies_.push_back(p);
+  for (auto id : active) catch_up_homeostasis(id);
+  ++homeostasis_tick_;
+  ++state_revision_;
+  for (auto id : active)
+    if (cognit_alive(id) && homeostasis_applied_[id] < homeostasis_tick_) {
+      evolve_homeostasis(id, true, p);
+      homeostasis_applied_[id] = homeostasis_tick_;
+    }
+}
+std::vector<std::pair<std::uint32_t, double>> NativeBrainEngine::predict(std::span<const std::uint32_t> active, std::uint8_t action) {
+  for (auto id : active) catch_up_homeostasis(id);
+  auto gen = next_generation();
+  touched_.clear();
+  for (auto s : active)
+    graph_.for_each_outgoing(s, [&](const Edge &e, RelationHandle) {
+      if (e.type == RelationType::SelfAction && e.action != action)
+        return;
+      double probability = e.prediction > 0 ? e.prediction : e.strength;
+      double q = std::clamp(graph_.activity[s] * probability * e.confidence, 0., 1.);
+      if (absence_gen_[e.target] != gen) {
+        absence_gen_[e.target] = gen;
+        absence_[e.target] = 1;
+        touched_.push_back(e.target);
+      }
+      absence_[e.target] *= 1 - q;
+    });
+  std::sort(touched_.begin(), touched_.end());
+  std::vector<std::pair<std::uint32_t, double>> out;
+  out.reserve(touched_.size());
+  for (auto id : touched_) out.push_back({id, 1 - absence_[id]});
+  return out;
+}
+std::vector<std::vector<std::pair<std::uint32_t, double>>> NativeBrainEngine::predict_actions_batch(std::span<const std::uint32_t> active, std::span<const std::uint8_t> actions) {
+  for (auto id : active) catch_up_homeostasis(id);
+  for (auto action : actions) conditioned_scratch_[action].clear();
+  auto common_generation = next_generation();
+  touched_.clear();
+  for (auto source : active)
+    graph_.for_each_outgoing(source, [&](const Edge &e, RelationHandle) {
+      double probability = e.prediction > 0 ? e.prediction : e.strength;
+      double q = std::clamp(graph_.activity[source] * probability * e.confidence, 0., 1.);
+      if (e.type == RelationType::SelfAction) {
+        conditioned_scratch_[e.action].push_back({e.target, q});
+        return;
+      }
+      if (absence_gen_[e.target] != common_generation) {
+        absence_gen_[e.target] = common_generation;
+        absence_[e.target] = 1;
+        touched_.push_back(e.target);
+      }
+      absence_[e.target] *= 1 - q;
+    });
+  std::vector<std::vector<std::pair<std::uint32_t, double>>> out;
+  out.reserve(actions.size());
+  for (auto action : actions) {
+    auto generation = next_generation();
+    std::vector<std::uint32_t> ids = touched_;
+    for (auto id : touched_) {
+      incoming_gen_[id] = generation;
+      incoming_[id] = absence_[id];
+    }
+    for (auto [target, q] : conditioned_scratch_[action]) {
+      if (incoming_gen_[target] != generation) {
+        incoming_gen_[target] = generation;
+        incoming_[target] = 1;
+        ids.push_back(target);
+      }
+      incoming_[target] *= 1 - q;
+    }
+    std::sort(ids.begin(), ids.end());
+    ids.erase(std::unique(ids.begin(), ids.end()), ids.end());
+    auto &result = out.emplace_back();
+    result.reserve(ids.size());
+    for (auto id : ids) result.push_back({id, 1 - incoming_[id]});
+  }
+  return out;
+}
+std::vector<std::vector<std::pair<std::uint32_t, double>>> NativeBrainEngine::predict_actions_batch_at(std::span<const std::uint32_t> active, std::span<const std::uint8_t> actions, std::uint64_t tick, double decay) {
+  for (auto action : actions) conditioned_scratch_[action].clear();
+  auto common_generation = next_generation();
+  touched_.clear();
+  for (auto source : active)
+    graph_.for_each_outgoing(source, [&](Edge &e, RelationHandle h) {
+      double confidence;
+      if (continuous_time_enabled_)
+        confidence = effective_relation_confidence(e, h, decay);
+      else {
+        auto index = std::size_t(h.page) * 256 + h.slot;
+        if (index >= relation_confidence_cache_tick_.size()) {
+          relation_confidence_cache_tick_.resize(index + 1, std::numeric_limits<std::uint64_t>::max());
+          relation_confidence_cache_base_.resize(index + 1);
+          relation_confidence_cache_decay_.resize(index + 1);
+          relation_confidence_cache_value_.resize(index + 1);
+        }
+        if (relation_confidence_cache_tick_[index] == tick && relation_confidence_cache_base_[index] == e.confidence && relation_confidence_cache_decay_[index] == decay)
+          confidence = relation_confidence_cache_value_[index];
+        else {
+          auto last = graph_.relations.last_evidence(e);
+          auto age = tick >= last ? tick - last : 0;
+          confidence = e.confidence * std::pow(decay, double(age));
+          relation_confidence_cache_tick_[index] = tick;
+          relation_confidence_cache_base_[index] = e.confidence;
+          relation_confidence_cache_decay_[index] = decay;
+          relation_confidence_cache_value_[index] = confidence;
+        }
+      }
+      double probability = e.prediction > 0 ? e.prediction : e.strength;
+      double q = std::clamp(graph_.activity[source] * probability * confidence, 0., 1.);
+      if (e.type == RelationType::SelfAction) {
+        conditioned_scratch_[e.action].push_back({e.target, q});
+        return;
+      }
+      if (absence_gen_[e.target] != common_generation) {
+        absence_gen_[e.target] = common_generation;
+        absence_[e.target] = 1;
+        touched_.push_back(e.target);
+      }
+      absence_[e.target] *= 1 - q;
+    });
+  std::vector<std::vector<std::pair<std::uint32_t, double>>> out;
+  out.reserve(actions.size());
+  for (auto action : actions) {
+    auto generation = next_generation();
+    std::vector<std::uint32_t> ids = touched_;
+    for (auto id : touched_) {
+      incoming_gen_[id] = generation;
+      incoming_[id] = absence_[id];
+    }
+    for (auto [target, q] : conditioned_scratch_[action]) {
+      if (incoming_gen_[target] != generation) {
+        incoming_gen_[target] = generation;
+        incoming_[target] = 1;
+        ids.push_back(target);
+      }
+      incoming_[target] *= 1 - q;
+    }
+    std::sort(ids.begin(), ids.end());
+    ids.erase(std::unique(ids.begin(), ids.end()), ids.end());
+    auto &result = out.emplace_back();
+    result.reserve(ids.size());
+    for (auto id : ids) result.push_back({id, 1 - incoming_[id]});
+  }
+  return out;
+}
+std::vector<std::pair<std::uint32_t, double>> NativeBrainEngine::action_effects(std::span<const std::uint32_t> active, std::uint8_t action, double floor) {
+  auto generation = next_generation();
+  touched_.clear();
+  for (auto source : active)
+    graph_.for_each_outgoing(source, [&](Edge &e, RelationHandle h) {
+      if (e.type != RelationType::SelfAction || e.action != action)
+        return;
+      auto q = e.prediction * effective_relation_confidence(e, h, continuous_relation_decay_);
+      if (q < floor)
+        return;
+      if (absence_gen_[e.target] != generation) {
+        absence_gen_[e.target] = generation;
+        absence_[e.target] = 1;
+        touched_.push_back(e.target);
+      }
+      absence_[e.target] *= 1 - q;
+    });
+  std::sort(touched_.begin(), touched_.end());
+  std::vector<std::pair<std::uint32_t, double>> out;
+  out.reserve(touched_.size());
+  for (auto id : touched_) out.push_back({id, 1 - absence_[id]});
+  return out;
+}
+std::vector<std::vector<std::pair<std::uint32_t, double>>> NativeBrainEngine::action_effects_batch(std::span<const std::uint32_t> active, std::span<const std::uint8_t> actions, double floor) {
+  for (auto action : actions) conditioned_scratch_[action].clear();
+  for (auto source : active)
+    graph_.for_each_outgoing(source, [&](Edge &e, RelationHandle h) {
+      if (e.type != RelationType::SelfAction)
+        return;
+      auto q = e.prediction * effective_relation_confidence(e, h, continuous_relation_decay_);
+      if (q >= floor)
+        conditioned_scratch_[e.action].push_back({e.target, q});
+    });
+  std::vector<std::vector<std::pair<std::uint32_t, double>>> out;
+  out.reserve(actions.size());
+  for (auto action : actions) {
+    auto generation = next_generation();
+    touched_.clear();
+    for (auto [target, q] : conditioned_scratch_[action]) {
+      if (absence_gen_[target] != generation) {
+        absence_gen_[target] = generation;
+        absence_[target] = 1;
+        touched_.push_back(target);
+      }
+      absence_[target] *= 1 - q;
+    }
+    std::sort(touched_.begin(), touched_.end());
+    auto &row = out.emplace_back();
+    row.reserve(touched_.size());
+    for (auto id : touched_) row.push_back({id, 1 - absence_[id]});
+  }
+  return out;
+}
+std::vector<PlannerTransition> NativeBrainEngine::planner_transition_batch(const std::vector<std::vector<std::uint32_t>> &states, std::span<const std::uint8_t> actions, std::uint64_t tick, double decay, double floor) {
+  std::vector<PlannerTransition> out;
+  out.reserve(states.size());
+  for (const auto &state : states) out.push_back({predict_actions_batch_at(state, actions, tick, decay), action_effects_batch(state, actions, floor)});
+  return out;
+}
+WaveResult NativeBrainEngine::propagate(std::span<const std::uint32_t> seeds, std::uint64_t tick, std::uint32_t cap, double retention, double attenuation, std::uint16_t refractory_steps) {
+  ++state_revision_;
+  auto visit = next_generation();
+  frontier_ids_.clear();
+  for (auto id : seeds)
+    if (cognit_alive(id))
+      frontier_ids_.push_back(id);
+  frontier_energy_.clear();
+  WaveResult out;
+  out.active = frontier_ids_;
+  for (auto id : frontier_ids_) {
+    catch_up_homeostasis(id);
+    frontier_energy_.push_back(graph_.activity[id]);
+    visited_gen_[id] = visit;
+    out.energy += graph_.activity[id];
+  }
+  for (; !frontier_ids_.empty() && out.steps < cap; ++out.steps) {
+    auto incoming_generation = next_generation();
+    touched_.clear();
+    for (std::size_t k = 0; k < frontier_ids_.size(); ++k) {
+      auto source = frontier_ids_[k];
+      double excitation = 0, inhibition = 0;
+      graph_.for_each_outgoing(source, [&](Edge &e, RelationHandle h) {
+        ++out.relations_traversed;
+        double raw = std::max(0., e.strength * effective_relation_confidence(e, h, continuous_relation_decay_));
+        (e.type == RelationType::Inhibitory ? inhibition : excitation) += raw;
+      });
+      auto budget = std::max(0., frontier_energy_[k]) * retention;
+      graph_.for_each_outgoing(source, [&](Edge &e, RelationHandle h) {
+        ++out.relations_traversed;
+        double raw = std::max(0., e.strength * effective_relation_confidence(e, h, continuous_relation_decay_));
+        double value = 0;
+        if (e.type == RelationType::Inhibitory && inhibition)
+          value = -budget * raw / inhibition;
+        else if (e.type != RelationType::Inhibitory && excitation) {
+          value = budget * raw / excitation;
+          out.transmitted_energy += value;
+        } else
+          return;
+        if (incoming_gen_[e.target] != incoming_generation) {
+          incoming_gen_[e.target] = incoming_generation;
+          incoming_[e.target] = 0;
+          touched_.push_back(e.target);
+        }
+        incoming_[e.target] += value;
+        e.last_used_cognitive_tick = tick;
+      });
+    }
+    next_ids_.clear();
+    next_energy_.clear();
+    for (auto id : touched_)
+      if (visited_gen_[id] != visit) {
+        catch_up_homeostasis(id);
+        double received = incoming_[id] * (graph_.refractory[id] ? attenuation : 1.);
+        graph_.activity[id] = std::clamp(graph_.activity[id] + received, 0., 1.);
+        if (graph_.activity[id] >= std::max(graph_.threshold[id], graph_.homeostatic_threshold[id])) {
+          graph_.last_active_cognitive_tick[id] = tick;
+          if (continuous_time_enabled_)
+            cognit_last_active_time_[id] = continuous_now_;
+          graph_.utility[id] = std::min(1., graph_.utility[id] + .01);
+          graph_.confidence[id] = std::min(1., graph_.confidence[id] + .002);
+          if (graph_.activity[id] >= .75)
+            graph_.refractory[id] = refractory_steps;
+          visited_gen_[id] = visit;
+          next_ids_.push_back(id);
+          next_energy_.push_back(std::clamp(incoming_[id], 0., 256.));
+          out.active.push_back(id);
+          out.energy += std::max(0., incoming_[id]);
+        }
+      }
+    frontier_ids_.swap(next_ids_);
+    frontier_energy_.swap(next_energy_);
+  }
+  std::sort(out.active.begin(), out.active.end());
+  return out;
+}
+bool NativeBrainEngine::mask_empty(const SlotMask &m) {
+  return std::all_of(m.begin(), m.end(), [](auto x) { return x == 0; });
+}
+void NativeBrainEngine::evict_slot(std::size_t slot) {
+  auto &item = evidence_slots_[slot];
+  if (!item.occupied)
+    return;
+  auto word = slot >> 6;
+  auto bit = ~(std::uint64_t(1) << (slot & 63));
+  auto decrement = [](auto &map, const auto &key) {
+    auto it = map.find(key);
+    if (it != map.end() && --it->second == 0)
+      map.erase(it);
+  };
+  for (auto t : item.after) {
+    decrement(target_counts_, t);
+    auto it = after_slots_.find(t);
+    if (it != after_slots_.end()) {
+      it->second[word] &= bit;
+      if (mask_empty(it->second))
+        after_slots_.erase(it);
+    }
+  }
+  for (auto s : item.before) {
+    decrement(source_counts_, s);
+    decrement(action_source_counts_, ActionSourceKey{s, item.action});
+    auto it = before_slots_.find(s);
+    if (it != before_slots_.end()) {
+      it->second[word] &= bit;
+      if (mask_empty(it->second))
+        before_slots_.erase(it);
+    }
+    auto ai = before_action_slots_.find({s, item.action});
+    if (ai != before_action_slots_.end()) {
+      ai->second[word] &= bit;
+      if (mask_empty(ai->second))
+        before_action_slots_.erase(ai);
+    }
+  }
+  item = Experience{};
+  --evidence_steps_;
+}
+void NativeBrainEngine::update_transition_evidence(std::span<const std::uint32_t> b, std::uint8_t a, std::span<const std::uint32_t> after) {
+  if (evidence_slots_.size() != evidence_window_)
+    evidence_slots_.resize(evidence_window_);
+  auto unique = [](auto values) {
+    std::vector<std::uint32_t> v(values.begin(), values.end());
+    std::sort(v.begin(), v.end());
+    v.erase(std::unique(v.begin(), v.end()), v.end());
+    return v;
+  };
+  auto before = unique(b), targets = unique(after);
+  auto slot = evidence_cursor_;
+  evict_slot(slot);
+  auto words = (evidence_window_ + 63) / 64, word = slot >> 6;
+  auto bit = std::uint64_t(1) << (slot & 63);
+  for (auto t : targets) {
+    ++target_counts_[t];
+    auto &m = after_slots_[t];
+    if (m.empty())
+      m.resize(words);
+    m[word] |= bit;
+  }
+  for (auto s : before) {
+    ++source_counts_[s];
+    ++action_source_counts_[{s, a}];
+    auto &m = before_slots_[s];
+    if (m.empty())
+      m.resize(words);
+    m[word] |= bit;
+    auto &am = before_action_slots_[{s, a}];
+    if (am.empty())
+      am.resize(words);
+    am[word] |= bit;
+  }
+  evidence_slots_[slot] = {std::move(before), std::move(targets), a, true};
+  evidence_cursor_ = (slot + 1) % evidence_window_;
+  ++evidence_steps_;
+  source_events_ += evidence_slots_[slot].before.size();
+  target_events_ += evidence_slots_[slot].after.size();
+  candidate_pair_updates_ += evidence_slots_[slot].before.size() * evidence_slots_[slot].after.size();
+}
+std::uint32_t NativeBrainEngine::support(std::uint32_t s, std::uint32_t t) const {
+  auto a = before_slots_.find(s);
+  auto b = after_slots_.find(t);
+  if (a == before_slots_.end() || b == after_slots_.end())
+    return 0;
+  std::uint32_t n = 0;
+  for (std::size_t i = 0; i < a->second.size(); ++i) n += std::popcount(a->second[i] & b->second[i]);
+  return n;
+}
+std::uint32_t NativeBrainEngine::action_support(std::uint32_t s, std::uint8_t action, std::uint32_t t) const {
+  auto a = before_action_slots_.find({s, action});
+  auto b = after_slots_.find(t);
+  if (a == before_action_slots_.end() || b == after_slots_.end())
+    return 0;
+  std::uint32_t n = 0;
+  for (std::size_t i = 0; i < a->second.size(); ++i) n += std::popcount(a->second[i] & b->second[i]);
+  return n;
+}
+void NativeBrainEngine::discover_targets(const SlotMask &mask, std::vector<std::uint32_t> &out) const {
+  out.clear();
+  std::unordered_set<std::uint32_t> seen;
+  for (std::size_t w = 0; w < mask.size(); ++w) {
+    auto bits = mask[w];
+    while (bits) {
+      auto bit = std::countr_zero(bits);
+      auto slot = w * 64 + bit;
+      if (slot < evidence_slots_.size())
+        for (auto t : evidence_slots_[slot].after)
+          if (seen.insert(t).second)
+            out.push_back(t);
+      bits &= bits - 1;
+    }
+  }
+  std::sort(out.begin(), out.end());
+}
+std::size_t NativeBrainEngine::evidence_reserved_bytes() const {
+  std::size_t bytes = evidence_slots_.capacity() * sizeof(Experience);
+  for (auto &x : evidence_slots_) bytes += x.before.capacity() * sizeof(std::uint32_t) + x.after.capacity() * sizeof(std::uint32_t);
+  auto masks = [](const auto &m) {
+    std::size_t n = 0;
+    for (auto &kv : m) n += sizeof(kv) + kv.second.capacity() * sizeof(std::uint64_t) + sizeof(void *) * 2;
+    return n;
+  };
+  bytes += masks(before_slots_) + masks(after_slots_) + masks(before_action_slots_);
+  bytes += (source_counts_.size() + target_counts_.size()) * (sizeof(std::uint32_t) * 2 + sizeof(void *) * 2);
+  bytes += action_source_counts_.size() * (sizeof(ActionSourceKey) + sizeof(std::uint32_t) + sizeof(void *) * 2);
+  return bytes;
+}
+std::tuple<std::uint32_t, double, double, double, double, std::uint32_t> NativeBrainEngine::transition_metrics(std::uint32_t s, std::uint32_t t, std::uint8_t a) const {
+  auto get = [](const auto &map, const auto &key) {
+    auto it = map.find(key);
+    return it == map.end() ? 0u : it->second;
+  };
+  auto pairs = support(s, t), sources = get(source_counts_, s), targets = get(target_counts_, t), trials = get(action_source_counts_, ActionSourceKey{s, a}), action_pairs = action_support(s, a, t);
+  double conditional = double(pairs) / std::max(1u, sources), baseline = double(targets) / std::max<std::uint64_t>(1, evidence_steps_), lift = conditional / std::max(baseline, 1e-9), action_probability = double(action_pairs) / std::max(1u, trials);
+  return {pairs, conditional, baseline, lift, action_probability, trials};
+}
+std::vector<std::uint32_t> NativeBrainEngine::action_trials(std::span<const std::uint32_t> sources, std::span<const std::uint8_t> actions) const {
+  std::vector<std::uint32_t> out(actions.size());
+  for (std::size_t i = 0; i < actions.size(); ++i)
+    for (auto source : sources) {
+      auto it = action_source_counts_.find({source, actions[i]});
+      if (it != action_source_counts_.end())
+        out[i] += it->second;
+    }
+  return out;
+}
+std::pair<std::uint32_t, std::uint32_t> NativeBrainEngine::lifecycle_step(std::uint64_t tick, std::uint64_t max_idle, double death, double decay) {
+  std::uint32_t removed = 0, kept = 0;
+  std::vector<RelationHandle> next;
+  next.reserve(dirty_relations_.size());
+  for (auto handle : dirty_relations_) {
+    auto *edge = graph_.relations.get(handle);
+    if (!edge)
+      continue;
+    double age, effective;
+    if (continuous_time_enabled_) {
+      auto key = relation_time_key(handle);
+      auto it = relation_last_evidence_time_.find(key);
+      auto last = it == relation_last_evidence_time_.end() || it->second.first != handle.generation || it->second.second < 0. ? continuous_epoch_ : it->second.second;
+      age = continuous_now_ - last;
+      effective = effective_relation_confidence(*edge, handle, decay);
+    } else {
+      auto last = graph_.relations.last_evidence(*edge);
+      age = double(tick >= last ? tick - last : 0);
+      effective = edge->confidence * std::pow(decay, age);
+    }
+    if (age > double(max_idle) && effective < death) {
+      removed += graph_.relations.erase(handle);
+      relation_last_touch_time_.erase(relation_time_key(handle));
+      relation_last_evidence_time_.erase(relation_time_key(handle));
+      continue;
+    }
+    next.push_back(handle);
+    ++kept;
+  }
+  dirty_relations_.swap(next);
+  return {removed, kept};
+}
+std::vector<MaterializedRelation> NativeBrainEngine::materialize_relations(const EvidenceConfig &c, std::uint64_t tick) {
+  std::vector<MaterializedRelation> out;
+  std::vector<std::uint32_t> targets;
+  for (auto &[s, mask] : before_slots_) {
+    discover_targets(mask, targets);
+    for (auto t : targets) {
+      if (s == t || !cognit_alive(s) || !cognit_alive(t))
+        continue;
+      auto n = support(s, t);
+      double conditional = double(n) / std::max(1u, source_counts_.at(s)), baseline = double(target_counts_.at(t)) / std::max<std::uint64_t>(1, evidence_steps_), lift = conditional / std::max(baseline, 1e-9);
+      if (n < c.minimum_support || lift < c.minimum_lift)
+        continue;
+      auto pair = graph_.relations.connect(s, t, RelationType::Sequential);
+      auto &e = pair.first;
+      e.strength = e.prediction = conditional;
+      e.confidence = double(n) / (n + c.confidence_k);
+      auto &p = graph_.relations.provisional(e);
+      p.support = n;
+      p.lift = lift;
+      p.last_evidence_world_tick = tick;
+      dirty_relations_.push_back(pair.second);
+    }
+  }
+  for (auto &[key, mask] : before_action_slots_) {
+    auto trials = action_source_counts_.at(key);
+    discover_targets(mask, targets);
+    for (auto t : targets) {
+      if (key.s == t || !cognit_alive(key.s) || !cognit_alive(t))
+        continue;
+      auto pairs = action_support(key.s, key.a, t);
+      double probability = double(pairs) / trials, conditional = double(support(key.s, t)) / std::max(1u, source_counts_.at(key.s));
+      double lift = probability / std::max(conditional, 1e-9);
+      if (trials < c.minimum_support || lift < c.minimum_lift)
+        continue;
+      auto pair = graph_.relations.connect(key.s, t, RelationType::SelfAction, key.a);
+      auto &e = pair.first;
+      e.strength = e.prediction = probability;
+      e.confidence = double(trials) / (trials + c.confidence_k);
+      auto &p = graph_.relations.provisional(e);
+      p.support = trials;
+      p.lift = lift;
+      p.last_evidence_world_tick = tick;
+      dirty_relations_.push_back(pair.second);
+      out.push_back({key.s, t, trials, key.a, probability, e.confidence, lift});
+    }
+  }
+  std::sort(out.begin(), out.end(), [](auto &a, auto &b) { return std::tie(a.source, a.target, a.action) < std::tie(b.source, b.target, b.action); });
+  return out;
+}
+std::vector<MaterializedRelation> NativeBrainEngine::materialize_current(const EvidenceConfig &c, std::uint64_t tick, std::span<const std::uint32_t> before, std::uint8_t action, std::span<const std::uint32_t> after, std::uint32_t max_new, std::uint32_t max_relations, double decay) {
+  std::vector<MaterializedRelation> out;
+  std::vector<std::uint32_t> sources(before.begin(), before.end()), targets;
+  std::sort(sources.begin(), sources.end());
+  std::unordered_map<std::uint32_t, std::size_t> current;
+  for (std::size_t i = 0; i < after.size(); ++i)
+    if (cognit_alive(after[i]))
+      current.emplace(after[i], i);
+  std::uint32_t created = 0;
+  auto process = [&](std::uint32_t s, RelationType type) {
+    if (!cognit_alive(s))
+      return;
+    bool conditioned = type == RelationType::SelfAction;
+    auto sc = source_counts_.find(s);
+    if (sc == source_counts_.end())
+      return;
+    auto ac = action_source_counts_.find({s, action});
+    auto trials = conditioned ? (ac == action_source_counts_.end() ? 0u : ac->second) : sc->second;
+    if (trials < c.minimum_support)
+      return; // exact upper bound on support
+    auto quota = conditioned ? max_new : std::min(max_new, std::max(1u, max_new / 2));
+    std::unordered_map<std::uint32_t, RelationHandle> existing;
+    graph_.for_each_outgoing(s, [&](const Edge &e, RelationHandle h) {
+      if (e.type == type && e.action == (conditioned ? action : 0))
+        existing.emplace(e.target, h);
+    });
+    targets.clear();
+    if (created >= quota || graph_.relation_count() >= max_relations) {
+      for (auto &[t, h] : existing)
+        if (current.contains(t))
+          targets.push_back(t);
+    } else {
+      auto m = before_slots_.find(s);
+      if (m == before_slots_.end())
+        return;
+      discover_targets(m->second, targets);
+      std::erase_if(targets, [&](auto t) { return !current.contains(t) || !cognit_alive(t); });
+    }
+    if (conditioned)
+      std::sort(targets.begin(), targets.end(), [&](auto a, auto b) { return current.at(a) < current.at(b); });
+    else
+      std::sort(targets.begin(), targets.end());
+    for (auto t : targets) {
+      if (s == t)
+        continue;
+      auto found = existing.find(t);
+      bool fresh = found == existing.end();
+      if (fresh && (created >= quota || graph_.relation_count() >= max_relations))
+        continue;
+      auto count = support(s, t);
+      double conditional = double(count) / std::max(1u, sc->second);
+      double probability = conditioned ? double(action_support(s, action, t)) / std::max(1u, trials) : conditional;
+      double baseline = conditioned ? conditional : double(target_counts_.at(t)) / std::max<std::uint64_t>(1, evidence_steps_);
+      double lift = probability / std::max(baseline, 1e-9);
+      auto support_count = conditioned ? trials : count;
+      if (support_count < c.minimum_support || lift < c.minimum_lift)
+        continue;
+      RelationHandle h;
+      if (fresh) {
+        h = graph_.relations.connect(s, t, type, conditioned ? action : 0).second;
+        existing.emplace(t, h);
+        ++created;
+        dirty_relations_.push_back(h);
+        auto time = continuous_time_enabled_ ? continuous_now_ : -1.;
+        relation_last_touch_time_[relation_time_key(h)] = {h.generation, time};
+        relation_last_evidence_time_[relation_time_key(h)] = {h.generation, time};
+      } else
+        h = found->second;
+      auto r = graph_.relations.state(s, h);
+      if (!conditioned && tick < r.last_evidence_world_tick)
+        throw std::runtime_error("world clock moved backwards");
+      r.strength = r.prediction = double(probability);
+      r.confidence = double(double(support_count) / (support_count + c.confidence_k));
+      r.support = support_count;
+      r.lift = double(lift);
+      r.last_evidence_world_tick = tick;
+      if (support_count >= c.consolidated_support && r.confidence >= c.consolidated_confidence)
+        r.status = (std::uint8_t)RelationStatus::Consolidated;
+      graph_.relations.update(h, r);
+      if (continuous_time_enabled_) {
+        auto key = relation_time_key(h);
+        relation_last_touch_time_[key] = {h.generation, continuous_now_};
+        relation_last_evidence_time_[key] = {h.generation, continuous_now_};
+      }
+      out.push_back({s, t, support_count, std::uint8_t(conditioned ? action : 0), r.prediction, r.confidence, r.lift});
+    }
+  };
+  for (auto s : sources) process(s, RelationType::Sequential);
+  for (auto s : before) process(s, RelationType::SelfAction);
+  return out;
+}
+void NativeBrainEngine::clear_transition_evidence() {
+  evidence_steps_ = 0;
+  evidence_cursor_ = 0;
+  evidence_slots_.clear();
+  source_counts_.clear();
+  target_counts_.clear();
+  action_source_counts_.clear();
+  before_slots_.clear();
+  after_slots_.clear();
+  before_action_slots_.clear();
+}
+std::vector<std::tuple<std::vector<std::uint32_t>, std::uint8_t, std::vector<std::uint32_t>>> NativeBrainEngine::transition_history() const {
+  std::vector<std::tuple<std::vector<std::uint32_t>, std::uint8_t, std::vector<std::uint32_t>>> out;
+  out.reserve(evidence_steps_);
+  for (std::size_t k = 0; k < evidence_steps_; ++k) {
+    auto slot = (evidence_cursor_ + evidence_window_ - evidence_steps_ + k) % evidence_window_;
+    auto &x = evidence_slots_[slot];
+    if (x.occupied)
+      out.push_back({x.before, x.action, x.after});
+  }
+  return out;
+}
+void NativeBrainEngine::restore_transition_history(const std::vector<std::tuple<std::vector<std::uint32_t>, std::uint8_t, std::vector<std::uint32_t>>> &rows) {
+  clear_transition_evidence();
+  for (auto &[before, action, after] : rows) update_transition_evidence(before, action, after);
+}
+std::tuple<std::uint64_t, std::vector<std::array<double, 7>>, std::vector<std::uint64_t>> NativeBrainEngine::homeostasis_runtime_state() const {
+  std::vector<std::array<double, 7>> rows;
+  for (auto &p : homeostasis_policies_) rows.push_back({double(p.first), p.lam, p.rate, p.tmin, p.tmax, p.activity_decay, p.utility_decay});
+  return {homeostasis_tick_, rows, homeostasis_applied_};
+}
+void NativeBrainEngine::restore_homeostasis_runtime_state(std::uint64_t tick, const std::vector<std::array<double, 7>> &rows, const std::vector<std::uint64_t> &applied) {
+  if (applied.size() != graph_.cognit_count())
+    throw std::invalid_argument("homeostasis state size");
+  homeostasis_tick_ = tick;
+  homeostasis_policies_.clear();
+  for (auto &r : rows) homeostasis_policies_.push_back({(std::uint64_t)r[0], r[1], r[2], r[3], r[4], r[5], r[6]});
+  homeostasis_applied_ = applied;
+}
+std::vector<std::array<std::uint32_t, 4>> NativeBrainEngine::dirty_relation_state() const {
+  std::vector<std::array<std::uint32_t, 4>> out;
+  auto handles = graph_.relations.handles();
+  auto rows = graph_.relations.snapshot();
+  for (auto dirty : dirty_relations_)
+    for (std::size_t i = 0; i < handles.size(); ++i)
+      if (handles[i].page == dirty.page && handles[i].slot == dirty.slot && handles[i].generation == dirty.generation) {
+        auto &r = rows[i];
+        out.push_back({r.source, r.target, r.type, r.action});
+        break;
+      }
+  return out;
+}
+void NativeBrainEngine::restore_dirty_relation_state(const std::vector<std::array<std::uint32_t, 4>> &rows) {
+  dirty_relations_.clear();
+  for (auto &r : rows) dirty_relations_.push_back(graph_.relations.connect(r[0], r[1], (RelationType)r[2], r[3]).second);
+}
+void NativeBrainEngine::set_evidence_window(std::size_t n) {
+  n = std::max<std::size_t>(1, n);
+  if (n == evidence_window_)
+    return;
+  std::vector<Experience> kept;
+  kept.reserve(std::min<std::size_t>(n, evidence_steps_));
+  for (std::size_t k = 0; k < evidence_steps_; ++k) {
+    auto slot = (evidence_cursor_ + evidence_window_ - evidence_steps_ + k) % evidence_window_;
+    if (evidence_slots_[slot].occupied)
+      kept.push_back(evidence_slots_[slot]);
+  }
+  if (kept.size() > n)
+    kept.erase(kept.begin(), kept.end() - n);
+  clear_transition_evidence();
+  evidence_window_ = n;
+  for (auto &x : kept) update_transition_evidence(x.before, x.action, x.after);
+}
+std::size_t NativeBrainEngine::reserved_bytes() const { return graph_.relations.reserved_bytes() + graph_.activity.capacity() * 5 * sizeof(double) + graph_.last_active_cognitive_tick.capacity() * sizeof(std::uint64_t) + graph_.refractory.capacity() * sizeof(std::uint16_t) + graph_.flags.capacity() + incoming_.capacity() * 2 * sizeof(double) + (incoming_gen_.capacity() + absence_gen_.capacity() + visited_gen_.capacity()) * sizeof(std::uint32_t); }
+void NativeBrainEngine::save_graph(const std::string &path) const {
+  if (!continuous_time_enabled_)
+    for (std::uint32_t id = 0; id < cognit_count(); ++id) catch_up_homeostasis(id);
+  std::vector<char> b;
+  append_vector(b, graph_.activity);
+  append_vector(b, graph_.threshold);
+  append_vector(b, graph_.confidence);
+  append_vector(b, graph_.utility);
+  append_vector(b, graph_.activity_trace);
+  append_vector(b, graph_.last_active_cognitive_tick);
+  append_vector(b, graph_.refractory);
+  append_vector(b, graph_.flags);
+  append_vector(b, graph_.homeostatic_threshold);
+  append_vector(b, graph_.target_activity);
+  append_vector(b, graph_.predictive_contribution);
+  append_vector(b, graph_.age);
+  append_vector(b, graph_.low_retention_ticks);
+  auto relations = graph_.relations.snapshot();
+  append_vector(b, relations);
+  FileHeader h{{'S', 'E', 'B', 'R', 'A', 'I', 'N', '\0'}, 3, b.size(), checksum(b)};
+  std::ofstream f(path, std::ios::binary | std::ios::trunc);
+  if (!f)
+    throw std::runtime_error("cannot open graph for writing");
+  f.write((char *)&h, sizeof(h));
+  f.write(b.data(), b.size());
+  if (!f)
+    throw std::runtime_error("failed writing graph");
+}
+void NativeBrainEngine::load_graph(const std::string &path) {
+  std::ifstream f(path, std::ios::binary | std::ios::ate);
+  if (!f)
+    throw std::runtime_error("cannot open graph for reading");
+  auto size = f.tellg();
+  if (size < (std::streamoff)sizeof(FileHeader))
+    throw std::runtime_error("truncated graph header");
+  f.seekg(0);
+  FileHeader h;
+  f.read((char *)&h, sizeof(h));
+  if (std::memcmp(h.magic, "SEBRAIN", 7) || h.version != 3 || h.payload_size != (std::uint64_t)(size - (std::streamoff)sizeof(h)))
+    throw std::runtime_error("invalid graph header");
+  std::vector<char> b((std::size_t)h.payload_size);
+  f.read(b.data(), b.size());
+  if (!f || checksum(b) != h.checksum)
+    throw std::runtime_error("graph checksum mismatch");
+  std::size_t o = 0;
+  auto activity = read_vector<double>(b, o), threshold = read_vector<double>(b, o), confidence = read_vector<double>(b, o), utility = read_vector<double>(b, o), trace = read_vector<double>(b, o);
+  auto last = read_vector<std::uint64_t>(b, o);
+  auto refractory = read_vector<std::uint16_t>(b, o);
+  auto flags = read_vector<std::uint8_t>(b, o);
+  auto homeostatic = read_vector<double>(b, o);
+  auto target = read_vector<double>(b, o);
+  auto contribution = read_vector<double>(b, o);
+  auto ages = read_vector<std::uint32_t>(b, o);
+  auto low = read_vector<std::uint32_t>(b, o);
+  auto relations = read_vector<PersistedRelation>(b, o);
+  auto n = activity.size();
+  if (o != b.size() || threshold.size() != n || confidence.size() != n || utility.size() != n || trace.size() != n || last.size() != n || refractory.size() != n || flags.size() != n || homeostatic.size() != n || target.size() != n || contribution.size() != n || ages.size() != n || low.size() != n)
+    throw std::runtime_error("inconsistent graph arrays");
+  for (const auto &r : relations)
+    if (r.source >= n || r.target >= n || (flags[r.source] & 1) || (flags[r.target] & 1))
+      throw std::runtime_error("invalid live relation endpoint");
+  graph_.homeostatic_threshold = std::move(homeostatic);
+  graph_.target_activity = std::move(target);
+  graph_.predictive_contribution = std::move(contribution);
+  graph_.age = std::move(ages);
+  graph_.low_retention_ticks = std::move(low);
+  graph_.activity = std::move(activity);
+  graph_.threshold = std::move(threshold);
+  graph_.confidence = std::move(confidence);
+  graph_.utility = std::move(utility);
+  graph_.activity_trace = std::move(trace);
+  graph_.last_active_cognitive_tick = std::move(last);
+  graph_.refractory = std::move(refractory);
+  graph_.flags = std::move(flags);
+  ++state_revision_;
+  dead_cognits_ = std::count_if(graph_.flags.begin(), graph_.flags.end(), [](auto x) { return x & 1; });
+  graph_.relations.restore(n, relations);
+  dirty_relations_ = graph_.relations.handles();
+  relation_confidence_cache_tick_.clear();
+  relation_confidence_cache_base_.clear();
+  relation_confidence_cache_decay_.clear();
+  relation_confidence_cache_value_.clear();
+  clear_transition_evidence();
+  homeostasis_tick_ = 0;
+  homeostasis_policies_.clear();
+  homeostasis_applied_.clear();
+  assembly_cognits_.clear();
+  assembly_bridge_cursor_ = assembly_cognit_births_ = assembly_cognit_activations_ = 0;
+  resize_scratch();
+}
+} // namespace se

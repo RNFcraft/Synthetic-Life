@@ -1,4 +1,4 @@
-# Synthetic Entity Architecture — v0.6.2
+# Synthetic Entity Architecture — v0.6.3
 
 Synthetic Entity is an experimental embodied cognitive architecture built around a sparse, continuously changing graph of Cognits (`κ`) and Relations (`ρ`). It is not a Transformer/LLM inference loop and does not depend on a frozen policy network. The current system learns through persistent predictive, causal, spatial, and goal-directed state that changes during interaction with the world.
 
@@ -7,7 +7,8 @@ v0.5.3 continuous float64/event-driven architecture and adds receptive embodied
 symbol grounding while preserving legacy differential oracles. v0.6.0 adds an
 isolated native event-driven micro-neurodynamic substrate below that architecture;
 v0.6.1 adds only local plasticity and homeostasis within that substrate;
-v0.6.2 adds an observational native assembly-evidence layer.
+v0.6.2 adds an observational native assembly-evidence layer; v0.6.3 adds its
+first one-way coarse bridge into the existing native Cognit graph.
 
 ## 1. Authority split
 
@@ -128,8 +129,26 @@ saved support, preventing stale distractor edges from being resurrected.
 
 Assembly observation occurs after the complete spike transaction and cannot
 alter potential, refractory state, STDP, homeostasis, weights, event ordering,
-or pending deliveries. There is still no assembly↔Cognit, World, language,
-Goal, planner, action, or motor coupling.
+or pending deliveries.
+
+### Assembly-to-Cognit bridge (v0.6.3)
+
+The first upward bridge is native and one-way. Consolidation and recognition
+produce bounded coarse events with monotonic identities. `NativeBrainEngine`
+owns both the authoritative Cognit graph and the stable AssemblyID-to-CognitID
+mapping: consolidation allocates one ordinary Cognit, while recognition applies
+`clamp(match.confidence, 0, 1)` as energy through the existing `receive()` rule.
+An explicit bounded drain advances the native cursor exactly once. Python may
+adopt `NEURAL_ASSEMBLY` facade metadata at that boundary, but does not inspect or
+process individual spikes and does not own numeric bridge state.
+
+Deleting the Cognit invalidates its mapping; later recognition may allocate a
+new monotonic Cognit ID. The bridge never creates Relations. Bridge events are
+part of the substrate snapshot and mapping/cursor/counters are restored with the
+matching engine graph snapshot. The optional micro-neuro runtime is still
+outside `.sebrain v6` / `.seworld v7`, avoiding an invalid mapping-only
+persistence section. There is no Cognit-to-micro feedback, semantic assignment,
+World/language/Goal/planner/action coupling, reward, classifier, or backprop.
 
 ## 2. Causal boundary
 

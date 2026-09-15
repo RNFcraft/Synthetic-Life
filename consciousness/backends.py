@@ -10,7 +10,7 @@ from .native_engine import NativeBrainEngine,EvidenceConfig
 
 class _ObservedEngine:
     """Expose the native API while invalidating Python's observational cache on mutation."""
-    _mutators=frozenset({'add_cognit','add_cognits','set_activity','set_refractory','set_cognit_states','set_cognit_fields','receive','receive_batch','remove_cognit','propagate','homeostatic_step','begin_continuous_time','materialize_cognits_at','load_graph'})
+    _mutators=frozenset({'add_cognit','add_cognits','set_activity','set_refractory','set_cognit_states','set_cognit_fields','receive','receive_batch','remove_cognit','propagate','homeostatic_step','begin_continuous_time','materialize_cognits_at','load_graph','process_assembly_bridge'})
     def __init__(self,inner,on_mutation):self._inner=inner;self._on_mutation=on_mutation;self._wrapped={}
     def __getattr__(self,name):
         value=getattr(self._inner,name)
@@ -92,6 +92,12 @@ class NativeGraphBackend:
         self.ffi_calls+=1;self.receive_calls+=1
         result=self.engine.receive_batch([node_id-1 for node_id,_ in operations],[energy for _,energy in operations],tick,wave_step,settings.refractory_attenuation,settings.refractory_wave_steps)
         self.invalidate_state([node_id for node_id,_ in operations]);return result
+    def process_assembly_bridge(self,graph,cognitive_tick):
+        self.ffi_calls+=1;rows=self.engine.process_assembly_bridge(cognitive_tick)
+        for row in rows:
+            if row[5]:graph.adopt_native_cognit(row[2],"NEURAL_ASSEMBLY")
+        self.invalidate_state([row[2]+1 for row in rows])
+        return {row[2]+1 for row in rows if row[6]}
     def propagate_graph(self,graph,seeds,cognitive_tick):
         from .wave import WaveResult
         self.ffi_calls+=1;active,energy,steps,transmitted=self.engine.propagate([i-1 for i in seeds],cognitive_tick)

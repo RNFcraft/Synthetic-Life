@@ -89,6 +89,14 @@ class NativeGraphFacade:
         values=(template.activity,template.threshold,template.confidence,template.utility,template.last_activated_cognitive_tick or 0,template.refractory_ticks,template.homeostatic_threshold,template.activity_trace,template.target_activity,template.age,template.predictive_contribution,template.low_retention_ticks)
         self.backend.ffi_calls+=1;self.backend.field_write_calls+=1;self.backend.engine.set_cognit_states([native_id-1],values)
         return node
+    def adopt_native_cognit(self,native_id,kind="NEURAL_ASSEMBLY"):
+        """Attach semantic metadata to a Cognit already born in the native authority."""
+        from .cognit import Cognit
+        node_id=native_id+1
+        node=self.nodes.get(node_id)
+        if node is None:
+            node=NativeCognit(node_id,self.backend,Cognit(node_id,kind=kind));self.nodes[node_id]=node
+        return node
     def connect(self,source,target,relation_type=RelationType.ASSOCIATIVE,context_id=None):
         before=self.relation_count;self.backend.ffi_calls+=1;handle=self.backend.engine.add_relation(source-1,target-1,relation_type.value,context_id or 0,.2,.3,0.)
         self.backend.ffi_calls+=1;row=self.backend.engine.relation_state(source-1,handle)

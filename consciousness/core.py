@@ -86,6 +86,7 @@ class SyntheticEntityCore:
         self.world_time_seconds=world_time;self.memory.set_world_time(world_time)
         if world_time is not None and self.backend:self.backend.begin_continuous_time(world_time)
         self.events=[];self.cognitive_tick+=1;cognitive_tick=self.cognitive_tick
+        bridge_active=self.backend.process_assembly_bridge(self.graph,cognitive_tick) if self.backend and hasattr(self.backend,"process_assembly_bridge") else set()
         observation,protos=self.patterns.observe(frame,self.state.representation_coverage,self.state.predictions)
         tracks=self.perception.update(self.patterns.last_events,frame.tick,self.previous_action)
         self.current_structure=observed_structure(observation);self.previous_target_mismatch=self.target_mismatch
@@ -101,7 +102,7 @@ class SyntheticEntityCore:
         for node_id,salience in matched.items():embodied[node_id]=max(embodied.get(node_id,0.),max(0.,min(1.,salience)))
         context=GroundingContextSnapshot(float(world_time if world_time is not None else frame.tick),generation or frame.tick,tuple(GroundingContextEntry(i,embodied[i]) for i in sorted(embodied)))
         self.grounding_context.observe(context)
-        recalled=self.memory.recall(self.state.goal.target_cognit_ids if self.state.goal else (),self.graph,frame.tick,self.target_structure);seeds=set(memory_active)|set(recalled)|relational_active
+        recalled=self.memory.recall(self.state.goal.target_cognit_ids if self.state.goal else (),self.graph,frame.tick,self.target_structure);seeds=set(memory_active)|set(recalled)|relational_active|bridge_active
         if self.is_relational_goal(self.state.goal):seeds.update(self.state.goal.target_cognit_ids)
         if self.backend:self.backend.receive_batch([(node_id,self.settings.sensory_activation*.5) for node_id in seeds if node_id in self.graph.nodes],cognitive_tick,self.settings)
         else:
