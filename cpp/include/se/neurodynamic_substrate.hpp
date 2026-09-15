@@ -77,6 +77,7 @@ public:
   std::uint32_t add_micro_rho(std::uint32_t source, std::uint32_t target, double weight, double delay, MicroPolarity polarity, bool plasticity_enabled = false);
   void inject(std::uint32_t target, double amplitude, double time);
   void advance_to(double time);
+  bool advance_to_bridge_boundary(double time, std::size_t max_new_bridge_events);
   NeuroSnapshot snapshot() const;
   void restore(const NeuroSnapshot &);
   // Rows retain the v0.6.0 seven fields, then projected pre/post trace and slow

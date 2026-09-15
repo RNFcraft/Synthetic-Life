@@ -55,6 +55,11 @@ PYBIND11_MODULE(_native_brain, m) {
              py::gil_scoped_release release;
              s.advance_to(t);
            })
+      .def("advance_to_bridge_boundary",
+           [](NeurodynamicSubstrate &s, double t, std::size_t limit) {
+             py::gil_scoped_release release;
+             return s.advance_to_bridge_boundary(t, limit);
+           }, py::arg("time"), py::arg("max_new_bridge_events") = 64)
       .def("states", &NeurodynamicSubstrate::states)
       .def_property_readonly("micro_kappa_count",
                              &NeurodynamicSubstrate::micro_kappa_count)

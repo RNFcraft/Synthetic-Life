@@ -199,3 +199,44 @@ def test_continuous_bridge_delivery_needs_no_new_world_observation():
     recognized=[row for row in runtime.neural_bridge_deliveries if row[4]==1 and row[9]>0]
     assert len({row[8] for row in recognized})==2 and {row[2] for row in recognized}=={mapping[0][1]} and runtime.observation_ordinal==observations
     assert [(row[7],row[0]) for row in recognized]==sorted((row[7],row[0]) for row in recognized)
+
+
+def _continuous_runtime_with_scheduled_history(event_count=2):
+    from simulation.continuous import ContinuousRuntime
+    runtime=ContinuousRuntime(902);runtime.run_to_quiescence();engine=runtime.simulation.core.backend.engine
+    configured=NeurodynamicSubstrate(assembly_tracking_enabled=True,assembly_window=2.,assembly_consolidation_support=3);nodes=[configured.add_micro_kappa() for _ in range(3)];engine.neurodynamic_substrate().restore(configured.snapshot())
+    substrate=engine.neurodynamic_substrate()
+    for repeat in range(3):
+        for index,node in enumerate(nodes):substrate.inject(node,3.,repeat*10.+index*.5)
+    for index in range(event_count):substrate.inject(nodes[0],100.,40.+index*3.)
+    return runtime,nodes
+
+
+def test_event_time_is_causal_and_neural_advance_batching_has_exact_parity():
+    left,_=_continuous_runtime_with_scheduled_history(2);right,_=_continuous_runtime_with_scheduled_history(2)
+    left.advance_neural_to(41.);left.advance_neural_to(50.)
+    right.advance_neural_to(50.)
+    le, re=left.simulation.core.backend.engine,right.simulation.core.backend.engine
+    assert left.neural_bridge_deliveries==right.neural_bridge_deliveries
+    assert le.assembly_bridge_state()==re.assembly_bridge_state()
+    assert le.assembly_cognit_mapping()==re.assembly_cognit_mapping()
+    cognit=le.assembly_cognit_mapping()[0][1]
+    assert le.cognit_state_full([cognit])==re.cognit_state_full([cognit])
+    assert le.continuous_time_state()==re.continuous_time_state()
+    recognized=[row for row in left.neural_bridge_deliveries if row[4]==1 and row[9]>0]
+    assert len(recognized)>=2 and recognized[-1][7]>recognized[-2][7]
+    # The first activation decays before the second one arrives; treating both
+    # as simultaneous at t=50 would leave their undiminished energy sum.
+    assert le.cognit_state([cognit])[0]<sum(row[9] for row in recognized)
+
+
+def test_single_long_neural_advance_streams_more_than_bounded_log_exactly_once():
+    runtime,_=_continuous_runtime_with_scheduled_history(520);observations=runtime.observation_ordinal
+    runtime.advance_neural_to(1_600.)
+    engine=runtime.simulation.core.backend.engine;rows=runtime.neural_bridge_deliveries
+    sequences=[row[0] for row in rows]
+    assert len(rows)>500 and sequences==list(range(1,sequences[-1]+1))
+    assert len(sequences)==len(set(sequences))
+    assert engine.assembly_bridge_state()[0]==sequences[-1]
+    assert len(engine.neurodynamic_substrate().snapshot()["assembly_bridge_events"])<=256
+    assert len(engine.assembly_cognit_mapping())==1 and runtime.observation_ordinal==observations

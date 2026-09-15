@@ -346,6 +346,30 @@ void NeurodynamicSubstrate::advance_to(double time) {
   }
   now_ = time;
 }
+bool NeurodynamicSubstrate::advance_to_bridge_boundary(double time, std::size_t max_new_bridge_events) {
+  validate_time(time);
+  if (!max_new_bridge_events)
+    throw std::invalid_argument("bridge advance limit must be positive");
+  telemetry_.last_advance_events_processed = 0;
+  auto first_bridge_sequence = next_bridge_sequence_;
+  while (!queue_.empty() && queue_.top().time <= time) {
+    auto stamp = queue_.top().time;
+    std::vector<NeuralEvent> batch;
+    while (!queue_.empty() && queue_.top().time == stamp) {
+      batch.push_back(queue_.top());
+      queue_.pop();
+      if (++telemetry_.last_advance_events_processed > event_guard_)
+        throw std::runtime_error("neural event safety guard exceeded");
+    }
+    telemetry_.total_events_processed += batch.size();
+    deliver(stamp, batch);
+    now_ = stamp;
+    if (next_bridge_sequence_ - first_bridge_sequence >= max_new_bridge_events)
+      return false;
+  }
+  now_ = time;
+  return true;
+}
 std::vector<std::array<double, 10>> NeurodynamicSubstrate::states(const std::vector<std::uint32_t> &ids) const {
   std::vector<std::array<double, 10>> out;
   out.reserve(ids.size());

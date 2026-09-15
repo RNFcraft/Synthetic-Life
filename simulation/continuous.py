@@ -91,10 +91,21 @@ class ContinuousRuntime:
         message_id=self.next_language_message_id;frame=LanguageFrame(message_id,when,surface)
         self.next_language_message_id+=1;self.language_inbox[message_id]=frame;self.scheduler.schedule(when,RuntimeEventType.LANGUAGE_INPUT,message_id);return message_id
     def advance_neural_to(self,time):
-        """Advance native neural time and enqueue one coarse cognition-boundary drain."""
+        """Advance neural time with bounded coarse Assembly handoffs."""
         when=float(time)
         if when<self.world_time:raise ValueError("neural time cannot precede continuous runtime time")
-        self.simulation.core.backend.engine.neurodynamic_substrate().advance_to(when);self.scheduler.schedule(when,RuntimeEventType.NEURAL_BRIDGE);return when
+        substrate=self.simulation.core.backend.engine.neurodynamic_substrate()
+        while True:
+            while True:
+                pending=self.simulation.core.process_continuous_assembly_bridge(substrate.current_time);self.neural_bridge_deliveries.extend(pending)
+                if len(pending)<64:break
+            reached=substrate.advance_to_bridge_boundary(when,64)
+            if reached:
+                while True:
+                    pending=self.simulation.core.process_continuous_assembly_bridge(substrate.current_time);self.neural_bridge_deliveries.extend(pending)
+                    if len(pending)<64:break
+                break
+        return when
     def inject_utterance(self,tokens,at_time=None,request_target=None):
         if isinstance(tokens,str):raise TypeError("utterance token boundaries must be supplied explicitly")
         tokens=tuple(tokens)

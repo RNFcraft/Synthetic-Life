@@ -93,7 +93,18 @@ class NativeGraphBackend:
         result=self.engine.receive_batch([node_id-1 for node_id,_ in operations],[energy for _,energy in operations],tick,wave_step,settings.refractory_attenuation,settings.refractory_wave_steps)
         self.invalidate_state([node_id for node_id,_ in operations]);return result
     def process_assembly_bridge(self,graph,cognitive_tick):
-        self.ffi_calls+=1;rows=self.engine.process_assembly_bridge(cognitive_tick,64,self.settings.max_cognits,self.settings.max_new_cognits_per_tick);self.last_assembly_bridge_rows=rows
+        rows=[]
+        # Python is crossed only for coarse Assembly events. Each event enters
+        # ordinary receive at its native causal time, independently of drains.
+        while len(rows)<64:
+            cursor=self.engine.assembly_bridge_state()[0];pending=self.engine.neurodynamic_substrate().assembly_bridge_events_after(cursor,1)
+            if not pending:break
+            self.begin_continuous_time(pending[0][2]);self.ffi_calls+=1
+            births=sum(row[5] for row in rows);remaining=max(0,self.settings.max_new_cognits_per_tick-births)
+            row=self.engine.process_assembly_bridge(cognitive_tick+len(rows),1,self.settings.max_cognits,remaining)
+            if not row:break
+            rows.extend(row)
+        self.last_assembly_bridge_rows=rows
         for row in rows:
             if row[5]:graph.adopt_native_cognit(row[2],"NEURAL_ASSEMBLY")
         self.invalidate_state([row[2]+1 for row in rows])

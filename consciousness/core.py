@@ -200,10 +200,13 @@ class SyntheticEntityCore:
     def process_continuous_assembly_bridge(self,world_time:float)->tuple:
         """One bounded neural-to-cognitive transaction, independent of World observation."""
         if not self.backend:return ()
-        self.world_time_seconds=float(world_time);self.memory.set_world_time(world_time);self.backend.begin_continuous_time(world_time)
+        self.world_time_seconds=float(world_time);self.memory.set_world_time(world_time)
         next_tick=self.cognitive_tick+1;active=self.backend.process_assembly_bridge(self.graph,next_tick);rows=tuple(getattr(self.backend,"last_assembly_bridge_rows",()))
+        # A full drain may have more older events behind it. Defer the final
+        # catch-up until a short/empty drain proves this frontier is exhausted.
+        if len(rows)<64:self.backend.begin_continuous_time(world_time)
         if not rows:return ()
-        self.cognitive_tick=next_tick
+        self.cognitive_tick+=len(rows)
         if active:
             wave=self._propagate(active,self.cognitive_tick);self.last_wave=wave;self.dirty_cognits.update(wave.active_ids);self.previous_active=set(wave.active_ids);self.previous_context=wave.active_ids
         return rows
