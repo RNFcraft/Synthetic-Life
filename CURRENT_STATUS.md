@@ -4,6 +4,10 @@
 
 **PASS — isolated native substrate accepted.**
 
+**v0.6.0 CLOSURE: PASS**
+
+**v0.6.0 — NATIVE EVENT-DRIVEN MICRO-NEURODYNAMIC SUBSTRATE: FROZEN**
+
 - Native `NeurodynamicSubstrate` supplies SoA micro-κ state, stable monotonic
   IDs, fixed delayed signed micro-ρ edges, float64 continuous neural time, and
   a deterministic `(time, sequence)` native event queue. Same-time events are
@@ -13,19 +17,25 @@
   neural tick, Python per-event callback, Cognit/Relation coupling, plasticity,
   STDP, assemblies, World, language, Goal, motor, or sensory integration.
   Physiology constants are innate substrate physics. Snapshot/restore exactly
-  preserves neural continuation only; `.sebrain v6` and `.seworld v7` are
+  preserves neural continuation, including all innate physiology and event guard,
+  even when restored into an instance built with different defaults. Snapshot
+  validation rejects invalid physiology, state, micro-ρ topology/polarity, and
+  pending event targets/times/sequences. `.sebrain v6` and `.seworld v7` are
   intentionally unchanged.
-- Focused native/Python micro-neurodynamic tests: **8 passed** — analytical lazy
+- `states(ids)` projects potential and adaptation analytically at current neural
+  time for requested IDs without mutating lazy storage or sweeping the network.
+- Focused native/Python micro-neurodynamic tests: **11 passed** — analytical lazy
   leak, excitation, inhibition/same-time aggregation, delayed chain,
-  refractory, adaptation, deterministic replay, snapshot/restore, and silent
-  10,000 micro-κ / 50,000 micro-ρ zero-event-work check.
+  refractory, adaptation, deterministic replay, physiology-safe
+  snapshot/restore, invalid snapshot validation, and silent 10,000 micro-κ /
+  50,000 micro-ρ zero-event-work check.
 - No-language deterministic baseline remains
   `e334137aab48aac629c9ac0d4dbc77ea8ec7f51203acda0c970a9bb647c3d731`;
   `full_graph_sync_calls == 0`.
-- Verification: full pytest **323 passed**; Release native build **PASS**;
+- Verification: full pytest **326 passed**; Release native build **PASS**;
   CTest Release **2/2 passed**.
 
-Next: **v0.6.1 — LOCAL PLASTICITY + HOMEOSTASIS** (not started).
+No v0.6.1 work has started.
 
 ## LANGUAGE PASS 4 — GROUNDED REQUESTS / LANGUAGE -> GOALS
 

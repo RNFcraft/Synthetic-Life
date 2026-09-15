@@ -76,6 +76,13 @@ assembly-to-Cognit conversion, Cognit feedback, sensory/motor populations,
 language/Goal integration, or World integration. Normal v0.5.x life therefore
 owns an empty inactive substrate and retains its frozen trajectory.
 
+Neural snapshots preserve both dynamic state and the complete innate physiology
+configuration, including the event safety guard. Restore validates physiology,
+micro-κ state, micro-ρ topology/polarity, and pending event targets, times, and
+sequences before replacing native state. Requested state inspection reports
+analytically projected potential/adaptation at current neural time without
+mutating storage or sweeping silent micro-κ. The v0.6.0 substrate is frozen.
+
 ## 2. Causal boundary
 
 The core boundary remains:

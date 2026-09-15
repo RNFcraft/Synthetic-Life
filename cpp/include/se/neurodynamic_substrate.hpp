@@ -10,7 +10,7 @@ enum class MicroPolarity : std::uint8_t { Excitatory=0, Inhibitory=1 };
 struct NeuralEvent { double time{}; std::uint64_t sequence{}; std::uint32_t target{}; double amplitude{}; };
 struct NeuroTelemetry { std::uint64_t total_events_processed{},total_spikes{},refractory_discards{},max_queue_depth{},last_advance_events_processed{}; };
 struct NeuroSnapshot {
-  double now{};std::uint64_t next_sequence{};
+  double tau_membrane{},tau_adaptation{},refractory_period{},reset_potential{},adaptation_increment{},now{};std::uint64_t next_sequence{},event_guard{};
   std::vector<double> potential,base_threshold,last_update,refractory_until,adaptation,last_spike;
   std::vector<std::uint64_t> spike_count;
   std::vector<std::uint32_t> source,target;std::vector<double> weight,delay;std::vector<std::uint8_t> polarity;

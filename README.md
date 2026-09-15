@@ -30,6 +30,12 @@ not learned knowledge. A normal runtime owns an empty substrate, so it does no
 periodic neural update or neural work when inactive. There is no plasticity,
 STDP, assembly detection, or Cognit coupling in v0.6.0.
 
+Snapshots contain both dynamic state and innate physiology, so restoring into a
+substrate constructed with different defaults reproduces its exact continuation.
+Inspection projects potential and adaptation analytically to the substrate's
+current time only for requested IDs; it does not materialize or sweep silent
+micro-κ. v0.6.0 closure is frozen.
+
 ## Current runtime model
 
 The system is hybrid by design.
@@ -172,8 +178,8 @@ python -m pytest -q
 
 Current repository-reported acceptance state for v0.6.0:
 
-- focused micro-neurodynamic suite: **8 passed**
-- full pytest: **323 passed**
+- focused micro-neurodynamic suite: **11 passed**
+- full pytest: **326 passed**
 - CTest Release: **2/2 passed**
 - deterministic `PYTHONHASHSEED=1/77` trajectory digest: identical
 - `full_graph_sync_calls == 0`
