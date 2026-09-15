@@ -1,4 +1,4 @@
-# Synthetic Entity Architecture — v0.6.1
+# Synthetic Entity Architecture — v0.6.2
 
 Synthetic Entity is an experimental embodied cognitive architecture built around a sparse, continuously changing graph of Cognits (`κ`) and Relations (`ρ`). It is not a Transformer/LLM inference loop and does not depend on a frozen policy network. The current system learns through persistent predictive, causal, spatial, and goal-directed state that changes during interaction with the world.
 
@@ -6,7 +6,8 @@ The v0.5.2 runtime remains the frozen compatibility oracle. v0.5.7 retains the
 v0.5.3 continuous float64/event-driven architecture and adds receptive embodied
 symbol grounding while preserving legacy differential oracles. v0.6.0 adds an
 isolated native event-driven micro-neurodynamic substrate below that architecture;
-v0.6.1 adds only local plasticity and homeostasis within that substrate.
+v0.6.1 adds only local plasticity and homeostasis within that substrate;
+v0.6.2 adds an observational native assembly-evidence layer.
 
 ## 1. Authority split
 
@@ -102,6 +103,27 @@ These are innate physiology, not learned semantic knowledge. Snapshot/restore
 preserves physiology, traces, weights, flags, bias, telemetry, and pending
 events. This remains entirely below cognition: no assemblies, Cognit bridge,
 World/language/Goal/action coupling, reward, optimizer, or backpropagation.
+
+### Emergent assemblies (v0.6.2)
+
+An assembly is a native evidence record inferred from recurrent real micro-κ
+spikes, not a Cognit, semantic class, externally registered group, or connected
+component. Bounded timestamp-group episodes accumulate per-assembly member,
+normalized activity, occurrence, and directed temporal support. Equal-time
+spikes remain unordered; temporal identity uses only strict earlier/later
+evidence and therefore tolerates timing jitter without erasing sequence order.
+
+Similarity updates recurrent candidates, evidence ratios reject rare noise and
+frequent distractors, and separate records permit overlapping membership and
+novel patterns. Consolidated assemblies yield bounded read-only `AssemblyMatch`
+records for partial/full recognition. Candidate/recent/temporal/match state is
+bounded; lazy elapsed-time decay guides deterministic weak-candidate eviction.
+All state and telemetry round-trip through the coarse snapshot API.
+
+Assembly observation occurs after the complete spike transaction and cannot
+alter potential, refractory state, STDP, homeostasis, weights, event ordering,
+or pending deliveries. There is still no assembly↔Cognit, World, language,
+Goal, planner, action, or motor coupling.
 
 ## 2. Causal boundary
 

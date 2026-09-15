@@ -1,4 +1,42 @@
-# Synthetic Entity v0.6.1 — Current Status
+# Synthetic Entity v0.6.2 — Current Status
+
+## v0.6.2 — EMERGENT ASSEMBLIES
+
+**PASS — native evidence-derived assemblies accepted.**
+
+- Assembly membership is inferred only from recurring emitted micro-κ spikes.
+  Per-assembly member participation, normalized individual activity, occurrence
+  support, and directed temporal support determine stable core membership; no
+  membership lists, labels, classifiers, or semantic hints enter the detector.
+- Activity episodes preserve timestamp groups. Spikes at the same float64 time
+  contribute unordered coactivation but never a directed edge; temporal support
+  requires strictly earlier/later groups and tolerates timing jitter.
+- Deterministic similarity updates compatible candidates instead of creating an
+  exact-timestamp record per occurrence. One-shot records cannot consolidate;
+  recurrent evidence crosses candidate and consolidation thresholds. Rare noise
+  and frequent distractors do not enter the stable core. Overlapping and novel
+  assemblies remain independent.
+- Consolidated assemblies produce bounded native `AssemblyMatch` summaries.
+  Correct full recurrence scores above correct partial recurrence, which scores
+  above reversed order. Recognition does not edit synapses or neural physics.
+- Recent activity, members, temporal edges, candidate count, consolidated count,
+  and recent matches are bounded. Weak/old candidates use lazy elapsed-time
+  decay for deterministic capacity eviction; silent time performs no assembly
+  work.
+- Ordinary Python `snapshot()/restore()` now preserves assembly physiology,
+  IDs, recent spikes, candidate/consolidated evidence, normalized node support,
+  recent matches, and telemetry for exact continuation. `.sebrain v6` and
+  `.seworld v7` remain unchanged.
+- Tracking enabled/disabled runs have exact neural-state parity. There is no
+  Python per-spike processing, Cognit creation, assembly↔Cognit bridge, World,
+  language, Goal, planner, action, or motor coupling.
+- Focused v0.6.0–v0.6.2 tests: **29 passed**; full pytest: **344 passed**;
+  Release build: **PASS**; CTest Release: **2/2 passed**. Silent 10,000 micro-κ /
+  50,000 micro-ρ assembly work: **0**. No-language digest remains
+  `e334137aab48aac629c9ac0d4dbc77ea8ec7f51203acda0c970a9bb647c3d731`;
+  `full_graph_sync_calls == 0`.
+
+Next: **v0.6.3 — ASSEMBLY -> COGNIT** (not started).
 
 ## v0.6.1 — LOCAL PLASTICITY + HOMEOSTASIS
 
@@ -32,7 +70,7 @@
   remains `e334137aab48aac629c9ac0d4dbc77ea8ec7f51203acda0c970a9bb647c3d731`;
   `full_graph_sync_calls == 0`.
 
-No v0.6.2 work has started.
+v0.6.1 remains frozen under the accepted v0.6.2 observational assembly layer.
 
 ## v0.6.0 — NATIVE EVENT-DRIVEN MICRO-NEURODYNAMIC SUBSTRATE
 

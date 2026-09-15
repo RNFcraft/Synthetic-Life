@@ -2,7 +2,7 @@
 
 Synthetic-Life is an experimental embodied cognitive architecture built around a sparse, continuously changing graph of Cognits (`κ`) and Relations (`ρ`). The project is not an LLM/Transformer inference wrapper and does not use a frozen policy network as its learned core. Learning, prediction, memory, goals and action selection evolve during interaction with the World.
 
-The current development line is **v0.6.1**.
+The current development line is **v0.6.2**.
 
 Current accepted gates:
 
@@ -50,6 +50,21 @@ and pre/post traces decay lazily when an affected micro-κ is touched or
 inspected. They are innate physiology, not semantic knowledge. There remains no
 assembly/Cognit bridge and no World, language, Goal, action, reward, or
 backpropagation coupling.
+
+## v0.6.2 emergent assemblies
+
+The native micro-substrate can now infer persistent distributed assemblies from
+recurrent emitted spikes. Membership is evidence-derived and normalized by
+individual activity; directed temporal evidence is part of identity. Same-time
+spikes are unordered, while jittered earlier/later activity reinforces the same
+temporal structure. Assemblies may overlap and carry no semantic label.
+
+Consolidated records emit bounded native `AssemblyMatch` summaries for full and
+partial recurrence. Candidate/recent/match state is bounded, weak candidates use
+lazy elapsed-time decay during capacity pressure, and snapshot/restore preserves
+exact continuation. The detector is observational: it does not alter spikes,
+STDP weights, homeostasis, or pending events. An assembly is not a Cognit, and
+no assembly-to-Cognit, World, language, Goal, or action bridge exists yet.
 
 ## Current runtime model
 
@@ -193,8 +208,8 @@ python -m pytest -q
 
 Current repository-reported acceptance state for v0.6.0:
 
-- focused v0.6.0/v0.6.1 micro-neurodynamic suite: **20 passed**
-- full pytest: **335 passed**
+- focused v0.6.0–v0.6.2 micro-neurodynamic suite: **29 passed**
+- full pytest: **344 passed**
 - CTest Release: **2/2 passed**
 - deterministic `PYTHONHASHSEED=1/77` trajectory digest: identical
 - `full_graph_sync_calls == 0`
