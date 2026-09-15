@@ -47,6 +47,18 @@ def test_unrelated_synapse_is_unchanged_and_weights_are_bounded():
     assert _weight(substrate, 1) == .5
 
 
+def test_fixed_edge_weights_keep_v060_nonnegative_range_while_plastic_edges_are_bounded():
+    substrate = NeurodynamicSubstrate(weight_min=.2, weight_max=.8)
+    a = substrate.add_micro_kappa(); b = substrate.add_micro_kappa()
+    assert substrate.add_micro_rho(a, b, 2., 1., MicroPolarity.EXCITATORY, False) == 0
+    assert substrate.add_micro_rho(a, b, 2., 1., MicroPolarity.INHIBITORY, False) == 1
+    assert substrate.add_micro_rho(a, b, .1, 1., MicroPolarity.EXCITATORY, False) == 2
+    with pytest.raises(ValueError): substrate.add_micro_rho(a, b, 2., 1., MicroPolarity.EXCITATORY, True)
+    with pytest.raises(ValueError): substrate.add_micro_rho(a, b, .1, 1., MicroPolarity.INHIBITORY, True)
+    restored = NeurodynamicSubstrate(); restored.restore(substrate.snapshot())
+    assert restored.snapshot()["weight"] == [2., 2., .1]
+
+
 def test_same_time_spikes_cause_no_fake_stdp_regardless_of_order():
     def run(reverse):
         substrate = NeurodynamicSubstrate(a_plus=.9, a_minus=.9)

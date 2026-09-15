@@ -4,9 +4,15 @@
 
 **PASS — local native plasticity and homeostasis accepted.**
 
+**v0.6.1 — LOCAL PLASTICITY + HOMEOSTASIS: FROZEN**
+
 - Micro-ρ has an immutable innate polarity, bounded mutable nonnegative weight
   magnitude, and explicit `plasticity_enabled` control. Native incoming and
   outgoing adjacency limits learning work to a spiking node's local degree.
+- Frozen v0.6.0 fixed edges preserve their original domain: every finite
+  nonnegative magnitude is valid when `plasticity_enabled == false`, including
+  values outside v0.6.1 learning bounds. Bounds apply only to plastic edges in
+  both creation and snapshot validation; STDP still clamps every plastic update.
 - A native two-phase same-time spike transaction applies pair-based STDP from
   traces strictly before the timestamp. Pre→post pairs potentiate, post→pre
   pairs depress, and simultaneous spikes create no artificial causal learning.
@@ -21,12 +27,12 @@
   `.seworld v7` remain deliberately unchanged.
 - The substrate remains isolated: no assembly detection, micro↔Cognit bridge,
   World, language, Goal, action, reinforcement, or backpropagation coupling.
-- Focused v0.6.0/v0.6.1 tests: **20 passed**; full pytest: **335 passed**;
+- Focused v0.6.0/v0.6.1 tests: **21 passed**; full pytest: **336 passed**;
   Release build: **PASS**; CTest Release: **2/2 passed**. No-language digest
   remains `e334137aab48aac629c9ac0d4dbc77ea8ec7f51203acda0c970a9bb647c3d731`;
   `full_graph_sync_calls == 0`.
 
-Next: **v0.6.2 — EMERGENT ASSEMBLIES** (not started).
+No v0.6.2 work has started.
 
 ## v0.6.0 — NATIVE EVENT-DRIVEN MICRO-NEURODYNAMIC SUBSTRATE
 
