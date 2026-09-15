@@ -3,6 +3,7 @@
 #include <cstdint>
 #include <map>
 #include <queue>
+#include <span>
 #include <vector>
 
 namespace se {
@@ -76,6 +77,7 @@ public:
   std::uint32_t add_micro_kappa(double base_threshold = 1.);
   std::uint32_t add_micro_rho(std::uint32_t source, std::uint32_t target, double weight, double delay, MicroPolarity polarity, bool plasticity_enabled = false);
   void inject(std::uint32_t target, double amplitude, double time);
+  void inject_batch(std::span<const std::uint32_t> targets, std::span<const double> amplitudes, std::span<const double> times);
   void advance_to(double time);
   bool advance_to_bridge_boundary(double time, std::size_t max_new_bridge_events);
   NeuroSnapshot snapshot() const;

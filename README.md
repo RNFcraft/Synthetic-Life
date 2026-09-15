@@ -2,7 +2,7 @@
 
 Synthetic-Life is an experimental embodied cognitive architecture built around a sparse, continuously changing graph of Cognits (`κ`) and Relations (`ρ`). The project is not an LLM/Transformer inference wrapper and does not use a frozen policy network as its learned core. Learning, prediction, memory, goals and action selection evolve during interaction with the World.
 
-The current development line is **v0.6.3**.
+The current development line is **v0.6.4**.
 
 Current accepted gates:
 
@@ -13,6 +13,22 @@ Current accepted gates:
 - **NATIVE C++ SDL3/OPENGL OBSERVER — PASS**
 
 See [ARCHITECTURE.md](ARCHITECTURE.md) for the full architecture and [CURRENT_STATUS.md](CURRENT_STATUS.md) for the latest acceptance state.
+
+## v0.6.4 embodied sensory transduction
+
+With `sensory_neural_enabled=True`, each real `SensoryFrame` is encoded by a
+fixed bounded retinotopic/body receptor bank and submitted through one native
+batch injection. Raw position, occupied/boundary/self signals, bounded
+state/appearance channel numbers, touch, holding and resistance are the only
+inputs. Ordinary micro-neural dynamics and the existing Assembly/Cognit bridge
+do the remaining work. No object identity, label, Goal or action meaning enters
+the encoder.
+
+This milestone does **not** provide object understanding or neural control of
+behavior. A resulting Assembly is an experience-derived representation with no
+innate semantic meaning. The feature is disabled by default to preserve the
+frozen baseline; v0.6.4 focused tests are 9/9, v0.6.0–v0.6.4 focused tests are
+59/59, and the full suite is 374/374.
 
 ## v0.6.0 micro-neurodynamic substrate
 

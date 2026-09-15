@@ -1,4 +1,4 @@
-# Synthetic Entity Architecture — v0.6.3
+# Synthetic Entity Architecture — v0.6.4
 
 Synthetic Entity is an experimental embodied cognitive architecture built around a sparse, continuously changing graph of Cognits (`κ`) and Relations (`ρ`). It is not a Transformer/LLM inference loop and does not depend on a frozen policy network. The current system learns through persistent predictive, causal, spatial, and goal-directed state that changes during interaction with the world.
 
@@ -8,7 +8,29 @@ symbol grounding while preserving legacy differential oracles. v0.6.0 adds an
 isolated native event-driven micro-neurodynamic substrate below that architecture;
 v0.6.1 adds only local plasticity and homeostasis within that substrate;
 v0.6.2 adds an observational native assembly-evidence layer; v0.6.3 adds its
-first one-way coarse bridge into the existing native Cognit graph.
+first one-way coarse bridge into the existing native Cognit graph; v0.6.4 adds
+bounded non-semantic embodied sensory transduction into that substrate.
+
+### Embodied sensory transduction (v0.6.4)
+
+When explicitly enabled, a deterministic receptor bank is constructed from the
+configured perception radius and raw-channel bound. Cell identity is
+retinotopic: `(relative_x, relative_y, raw channel, bounded value)` selects a
+stable micro-κ. Six additional receptors carry directional contact, holding and
+resistance. A radius-4, 16-bin configuration contains 2,841 receptors, bounded
+by 8,192, with at most 64 active injections per frame.
+
+One Python coarse call supplies all active receptor IDs and amplitudes to native
+`inject_batch`; spikes, micro-ρ work, plasticity, homeostasis and Assembly
+detection remain native. Input timestamps are float64 WorldTime. A deferred
+same-time scheduler boundary prevents sensory neural progression from crossing
+other equal-time runtime events, while v0.6.3 continues to deliver only coarse
+Assembly boundaries.
+
+The old perception/cognition pipeline remains in parallel and behavior is not
+trained or steered by this path. Channel numbers have no predefined meaning,
+spatial translation invariance is not encoded, and resulting Assemblies are not
+object concepts. The feature is off by default for frozen baseline parity.
 
 ## 1. Authority split
 

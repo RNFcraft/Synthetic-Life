@@ -63,6 +63,17 @@ void NeurodynamicSubstrate::inject(std::uint32_t target, double amplitude, doubl
     throw std::invalid_argument("invalid neural injection");
   schedule(target, amplitude, time);
 }
+void NeurodynamicSubstrate::inject_batch(std::span<const std::uint32_t> targets, std::span<const double> amplitudes, std::span<const double> times) {
+  if (targets.size() != amplitudes.size() || targets.size() != times.size())
+    throw std::invalid_argument("sensory injection batch size mismatch");
+  for (std::size_t i = 0; i < targets.size(); ++i) {
+    validate_time(times[i]);
+    if (targets[i] >= potential_.size() || !std::isfinite(amplitudes[i]))
+      throw std::invalid_argument("invalid sensory injection");
+  }
+  for (std::size_t i = 0; i < targets.size(); ++i)
+    schedule(targets[i], amplitudes[i], times[i]);
+}
 double NeurodynamicSubstrate::pre_trace_at(std::uint32_t id, double time) const { return pre_trace_[id] * std::exp(-(time - trace_last_update_[id]) / tau_pre_); }
 double NeurodynamicSubstrate::post_trace_at(std::uint32_t id, double time) const { return post_trace_[id] * std::exp(-(time - trace_last_update_[id]) / tau_post_); }
 double NeurodynamicSubstrate::homeostatic_bias_at(std::uint32_t id, double time) const { return homeostatic_threshold_bias_[id] * std::exp(-(time - homeostasis_last_update_[id]) / tau_homeostasis_); }

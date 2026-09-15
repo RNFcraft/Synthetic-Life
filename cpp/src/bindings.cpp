@@ -50,6 +50,12 @@ PYBIND11_MODULE(_native_brain, m) {
            py::arg("delay"), py::arg("polarity"),
            py::arg("plasticity_enabled") = false)
       .def("inject", &NeurodynamicSubstrate::inject)
+      .def("inject_batch",
+           [](NeurodynamicSubstrate &s, const std::vector<std::uint32_t> &targets,
+              const std::vector<double> &amplitudes, const std::vector<double> &times) {
+             py::gil_scoped_release release;
+             s.inject_batch(targets, amplitudes, times);
+           })
       .def("advance_to",
            [](NeurodynamicSubstrate &s, double t) {
              py::gil_scoped_release release;

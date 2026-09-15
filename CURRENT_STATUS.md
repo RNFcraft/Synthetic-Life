@@ -1,4 +1,37 @@
-# Synthetic Entity v0.6.3 — Current Status
+# Synthetic Entity v0.6.4 — Current Status
+
+## v0.6.4 — EMBODIED SENSORY TRANSDUCTION
+
+**PASS — bounded non-semantic World/SensoryFrame input reaches the native neural substrate.**
+
+**v0.6.4: FROZEN**
+
+- The optional production path is `SensoryFrame -> deterministic receptor bank
+  -> one native inject_batch -> ordinary micro dynamics/STDP/homeostasis ->
+  existing Assembly detector -> v0.6.3 Assembly/Cognit bridge`. It is disabled
+  by default so the frozen no-language behavior remains byte-for-byte stable.
+- A radius-4 bank has 2,841 stable receptors: each retinotopic cell has raw
+  occupied/boundary/self receptors and 16-bin state/appearance banks; six more
+  receptors carry touch directions, holding and resistance. Hard limits are
+  8,192 receptors and 64 active injections per frame.
+- No object ID/type/name, Goal, evaluator label, action meaning, pattern label,
+  Assembly ID or Cognit ID crosses the transducer. Channel values and positions
+  only select receptor coordinates.
+- One-shot World experience spikes receptors but creates no consolidated
+  Assembly/Cognit. Recurrent real frames form one stable Assembly/Cognit; repeat
+  reuses both IDs, while left/right retinotopic evidence can form distinct IDs.
+- `.seworld v7` preserves enabled receptor neural state, telemetry, pending
+  sensory-caused events and frontier exactly. Topology is reconstructed from
+  Settings; `.sebrain v6` and persistence schema versions are unchanged.
+- This is not object understanding and adds no behavioral policy. An Assembly
+  is only an experience-derived internal representation with no innate meaning.
+- v0.6.4 focused: **9 passed**; focused v0.6.0–v0.6.4: **59 passed**; full
+  pytest: **374 passed**; Release build: **PASS**; CTest Release: **2/2**.
+  Disabled `PYTHONHASHSEED=1/77` digest remains
+  `c54f1fe0d1b5df9f2b1db6a778cc421e4aa206c295119a689c0828fbf1b1c6f6`;
+  `full_graph_sync_calls == 0`.
+
+Next: not started.
 
 ## v0.6.3 — ASSEMBLY -> COGNIT
 
