@@ -5,6 +5,10 @@ Synthetic-Life — экспериментальная embodied cognitive archite
 Этот документ фиксирует развитие проекта по версиям.  
 Статусы будущих этапов будут добавляться по мере планирования.
 
+### Язык кода и документации
+
+Новые и существенно обновляемые комментарии в коде, архитектурные пояснения и внутренняя документация проекта по возможности пишутся на русском языке. Английский сохраняется там, где он является частью программного интерфейса, имени типа/функции/протокола, внешнего формата, стандартного технического термина или где перевод ухудшает однозначность. Исторические документы не переписываются только ради смены языка.
+
 ---
 
 ## v0.1 — Initial κ/ρ Prototype
@@ -753,3 +757,297 @@ default-workload performance NOT YET CLOSED
 Расширенный `50,000 simulated seconds / 10,000 actions` soak пока не является закрытым acceptance gate.
 
 После устранения performance blocker и финальной endurance-проверки v0.6.6 должна быть переведена из `IN PROGRESS / PROVISIONAL` в `DONE / FROZEN`.
+
+---
+
+# v0.7 — Architecture Stabilization and Repository Refactor
+
+**Status: PLANNED**
+
+v0.7 не является этапом добавления новой интеллектуальной способности. Это отдельная инженерная ветка между исследовательскими этапами, предназначенная для приведения накопившейся архитектуры к состоянию, в котором её можно безопасно развивать дальше.
+
+К началу v0.7 в репозитории одновременно существуют несколько исторических слоёв:
+
+```text
+historical / reference implementation
++
+Python semantic cognition
++
+native C++ authoritative runtime
++
+v0.6 neurodynamic substrate
+```
+
+Само это разделение является допустимым и во многих местах намеренным, но его границы недостаточно очевидны из текущей структуры файлов. Основная цель v0.7 — сделать ownership, responsibility, production/reference/legacy status и архитектурные invariants видимыми непосредственно из структуры проекта и документации.
+
+Главное ограничение ветки:
+
+> Если изменение делает Synthetic-Life функционально способнее, намеренно меняет learned behavior, вводит новый cognitive mechanism, меняет World model, расширяет language capabilities или добавляет neural capability, оно не относится к v0.7.
+
+В пределах v0.7 разрешены только изменения структуры, читаемости, документации, tooling, тестовой организации, repository hygiene и доказанное удаление dead code при сохранении существующей семантики.
+
+Дополнительное правило для всей ветки: новые и существенно обновляемые комментарии в Python/C++ и внутренняя документация должны по возможности объяснять архитектуру на русском языке. Английский остаётся для имён API, типов, протоколов, внешних форматов и общепринятых терминов, где перевод ухудшает точность.
+
+---
+
+## v0.7.0 — Baseline and Full Audit Freeze
+
+**Status: PLANNED**
+
+Цель — зафиксировать исходное состояние перед любым крупным структурным refactor.
+
+Необходимо:
+
+- классифицировать каждый subsystem и существенный файл как `production`, `semantic`, `native authority`, `facade`, `reference/oracle`, `legacy`, `historical`, `fixture` или `generated artifact`;
+- зафиксировать Python ↔ C++ ownership boundary;
+- описать ID domains и преобразования между Python и native слоями;
+- определить public, compatibility и internal APIs;
+- зафиксировать persistence contracts `.sebrain` и `.seworld`;
+- зафиксировать event-ordering, same-time и continuous-time invariants;
+- зафиксировать frozen v0.5.2 compatibility contracts;
+- зафиксировать v0.5.x language contracts;
+- зафиксировать v0.6.x neural contracts;
+- снять performance baselines;
+- сохранить deterministic/hash-seed baselines;
+- сохранить существующие full-suite acceptance results;
+- составить карту dependency directions;
+- составить список monoliths, duplicated responsibilities, legacy paths и потенциального dead code.
+
+На этом этапе не выполняется архитектурное перемещение логики. Его результат — документированный refactor contract, относительно которого проверяются все последующие этапы.
+
+---
+
+## v0.7.1 — Readability and Documentation Foundation
+
+**Status: PLANNED**
+
+Цель — сделать существующий код читаемым до его физического перемещения.
+
+Основные задачи:
+
+- нормализовать форматирование Python и C++;
+- убрать чрезмерно плотные однострочные конструкции там, где это не меняет порядок вычислений;
+- улучшить naming локальных переменных и внутренних helper-функций без изменения public API;
+- добавить type hints там, где они не меняют runtime semantics;
+- добавить docstrings;
+- добавить комментарии к сложным причинным, временным и ownership invariants;
+- в новых комментариях объяснять прежде всего причину ограничения, а не очевидное действие строки;
+- комментарии и внутренняя документация преимущественно пишутся на русском;
+- сохранить английские имена symbols/API и стандартные технические термины там, где это необходимо для точности;
+- не выполнять алгоритмическое «упрощение» одновременно с readability cleanup.
+
+Документация должна быть разведена по ролям:
+
+```text
+README              — короткий вход в проект
+ARCHITECTURE         — актуальная архитектура
+DEVELOPER GUIDE      — структура кода, ownership и правила разработки
+CURRENT STATUS       — текущий acceptance state
+ROADMAP              — история и будущие этапы
+docs/history         — исторические планы и решения
+experiment reports   — неизменяемые научные артефакты
+```
+
+Исторические experiment reports не переписываются под текущую архитектуру и не переводятся только ради единообразия.
+
+---
+
+## v0.7.2 — Python Structural Refactor
+
+**Status: PLANNED**
+
+Цель — декомпозировать крупные Python-файлы по существующим responsibilities без изменения cognitive behavior.
+
+Основные кандидаты:
+
+- `consciousness/core.py`;
+- `consciousness/memory.py`;
+- `consciousness/language.py`;
+- `consciousness/planning.py`;
+- `simulation/continuous.py`;
+- `simulation/simulation.py`.
+
+`SyntheticEntityCore` может остаться верхнеуровневым facade, но внутренние responsibilities должны стать отдельными компонентами.
+
+Предпочтительное направление разделения:
+
+```text
+SyntheticEntityCore
+├── perception
+├── cognition
+├── memory
+├── learning
+├── planning
+├── language
+└── lifecycle
+```
+
+Для language subsystem должны быть физически различимы уже существующие области ответственности: frames, grounding, lexicon, sequence learning, composition, relational composition, requests и persistence.
+
+Для memory subsystem должны быть различимы Place memory, structure memory, indexes, matching/re-identification, recall и graph materialization.
+
+Критическое правило: `extract != rewrite algorithm`.
+
+В частности нельзя потерять:
+
+- incremental memory indexes;
+- conservative candidate admission;
+- deterministic iteration/order contracts;
+- existing continuous frontier ordering;
+- frozen reference paths;
+- zero full-graph synchronization.
+
+Python reference/oracle code должен быть явно отделён от production semantic runtime, но сохраняться до тех пор, пока он участвует в differential/regression validation.
+
+---
+
+## v0.7.3 — C++ Structural Refactor
+
+**Status: PLANNED**
+
+Цель — разделить крупные native translation units и headers на внутренние компоненты, сохранив authoritative native semantics.
+
+Главные кандидаты:
+
+- `native_brain_engine.cpp`;
+- `bindings.cpp`;
+- `neurodynamic_substrate.cpp`;
+- `observer.cpp`;
+- соответствующие крупные headers.
+
+`NativeBrainEngine` остаётся стабильным внешним facade, но его внутренние responsibilities должны быть физически разделены, например на области graph storage, prediction, transition evidence, lifecycle, elapsed-time state, neural bridge, persistence и snapshot publication.
+
+`NeurodynamicSubstrate` также остаётся внешним facade, при этом внутри должны быть различимы:
+
+```text
+micro-neural physics
+plasticity / STDP
+homeostasis
+assembly evidence
+recognition
+bridge events
+snapshot / validation
+```
+
+Observer architecture сохраняется причинно изолированной, но presentation internals могут быть разделены на snapshot consumption, layout/LOD, GPU/OpenGL resources, SDL lifecycle и rendering UI.
+
+При refactor запрещено незаметно менять:
+
+- порядок floating-point accumulation;
+- same-time transaction semantics;
+- event sequence ordering;
+- generation-safe Relation handles;
+- SoA authoritative ownership;
+- persistence binary contracts;
+- tuple/wire layout между Python и C++, если для него не добавлена совместимая адаптация;
+- AssemblyID/CognitID lifecycle;
+- bounded logs/queues/candidate policies.
+
+---
+
+## v0.7.4 — Repository, Tests and Developer Tooling
+
+**Status: PLANNED**
+
+Цель — сделать структуру репозитория самодокументируемой и не позволить техническому долгу быстро вернуться после уборки.
+
+Необходимо разделить:
+
+```text
+production code
+reference/oracle code
+legacy/debug code
+acceptance tests
+reference/parity tests
+historical experiments
+canonical fixtures
+canonical research artifacts
+generated local artifacts
+```
+
+`runs/` и исторические benchmark/profile/results не удаляются автоматически: они являются частью воспроизводимости проекта. Для них должен появиться явный статус и правило, какие результаты являются каноническими и должны храниться в Git, а какие являются локальным generated output.
+
+Тесты должны быть классифицированы минимум на:
+
+- unit;
+- reference/oracle parity;
+- production integration;
+- architecture boundary;
+- persistence/migration;
+- version acceptance;
+- long-life/performance.
+
+Существующие frozen tests сначала сохраняются как regression contract и только после завершения production refactor могут подвергаться чисто структурной/стилистической уборке.
+
+Особенно важно усилить source-boundary guards. Текущие проверки, которые сканируют конкретный файл или только `consciousness/*.py`, после появления подпакетов должны рекурсивно проверять всё соответствующее дерево. Нельзя допустить, чтобы рефакторинг случайно ослабил запреты на World leakage, hardcoded language semantics или action-policy tokens в neural layer.
+
+Developer tooling должен включать единый reproducible verification path и автоматические проверки форматирования/структуры там, где они не меняют runtime behavior.
+
+---
+
+## v0.7.5 — Full Regression and Performance Audit
+
+**Status: PLANNED**
+
+Цель — доказать, что новая структура проекта сохранила поведение старой.
+
+После завершения Python и C++ decomposition необходимо повторить полный аудит уже по новой структуре и прогнать как минимум:
+
+- полный pytest;
+- CTest Release;
+- v0.5.2 frozen Python/native parity;
+- tombstone/generation-safe Relation tests;
+- `full_graph_sync_calls == 0`;
+- continuous event-order tests;
+- same-time isolation tests;
+- save/load frontier parity;
+- `.sebrain` migrations;
+- `.seworld` migrations;
+- language grounding/sequence/composition/request gates;
+- v0.6.0–v0.6.6 neural acceptance suites;
+- observer causal-inertness tests;
+- deterministic `PYTHONHASHSEED` trajectories;
+- long-life validation;
+- historical performance baselines, где они всё ещё воспроизводимы.
+
+Сравнение before/after должно отдельно фиксировать:
+
+- semantic output;
+- causal ordering;
+- persistence continuation;
+- graph identities;
+- neural identities;
+- memory retrieval;
+- selected Actions;
+- performance;
+- FFI behavior;
+- memory/resource growth.
+
+Regression исправляется как regression. Новая способность не добавляется под видом исправления.
+
+---
+
+## v0.7.6 — Architecture Freeze and Future-Proofing
+
+**Status: PLANNED**
+
+Финальный этап v0.7.
+
+После второго полного аудита необходимо:
+
+- удалить только доказанный dead code;
+- закрыть временные compatibility adapters, которые больше не нужны;
+- оставить reference/oracle paths, которые продолжают давать независимую проверку;
+- проверить отсутствие скрытого duplicate ownership;
+- проверить dependency directions между subsystems;
+- проверить public/private API boundaries;
+- проверить consistency между кодом, README, ARCHITECTURE, CURRENT_STATUS и ROADMAP;
+- проверить clean-clone build на поддерживаемой системе;
+- проверить, что комментарии к новым архитектурным ограничениям и developer docs преимущественно написаны на русском;
+- закрепить правила размещения новой логики, чтобы будущая разработка не превращала `core.py`, `native_brain_engine.cpp` или другие facades обратно в God Objects;
+- выполнить финальный regression/performance pass;
+- заморозить архитектурный baseline v0.7.
+
+После `v0.7.6` ветка считается завершённой, если дальнейшие обнаруженные задачи являются уже развитием возможностей Synthetic-Life, а не продолжением накопленного structural debt.
+
+Номера `v0.7.7–v0.7.9` намеренно не резервируются под фиктивные обязательные этапы. Они остаются свободными и используются только если во время реального refactor будет обнаружен самостоятельный класс технического долга, который нельзя корректно закрыть внутри `v0.7.0–v0.7.6`.
