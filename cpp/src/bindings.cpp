@@ -12,6 +12,9 @@
 namespace py = pybind11;
 using namespace se;
 PYBIND11_MODULE(_native_brain, m) {
+  // RuntimeEvent — causal wire record: [time: WorldTime float64,
+  // id: scheduler uint64 sequence, type: RuntimeEventType, payload: opaque
+  // uint64]. Python может читать поля, но порядок (time, id) задаёт native queue.
   py::class_<RuntimeEvent>(m, "RuntimeEvent").def(py::init([](double t, std::uint64_t id, RuntimeEventType type, std::uint64_t payload) { return RuntimeEvent{t, id, type, payload}; })).def_readonly("time", &RuntimeEvent::time).def_readonly("id", &RuntimeEvent::id).def_readonly("type", &RuntimeEvent::type).def_readonly("payload", &RuntimeEvent::payload);
   py::enum_<RuntimeEventType>(m, "RuntimeEventType").value("WORLD_ACTION_COMPLETE", RuntimeEventType::WorldActionComplete).value("WORLD_SPAWN", RuntimeEventType::WorldSpawn).value("SENSORY_CHANGE", RuntimeEventType::SensoryChange).value("COGNITION_WAKE", RuntimeEventType::CognitionWake).value("COGNITION_CONTINUE", RuntimeEventType::CognitionContinue).value("MEMORY_TIMER", RuntimeEventType::MemoryTimer).value("RELATION_TIMER", RuntimeEventType::RelationTimer).value("MAINTENANCE", RuntimeEventType::Maintenance).value("EXTERNAL_INPUT", RuntimeEventType::ExternalInput).value("LANGUAGE_INPUT", RuntimeEventType::LanguageInput).value("LANGUAGE_CONTINUE", RuntimeEventType::LanguageContinue).value("NEURAL_BRIDGE",RuntimeEventType::NeuralBridge);
   py::class_<EventScheduler>(m, "EventScheduler").def(py::init<>()).def("schedule", &EventScheduler::schedule, py::arg("time"), py::arg("event_type"), py::arg("payload") = 0).def("pop_ready", &EventScheduler::pop_ready).def("snapshot", &EventScheduler::snapshot).def("restore", &EventScheduler::restore,py::arg("now"),py::arg("next_id"),py::arg("events"),py::arg("peak_size")=0).def_property_readonly("now", &EventScheduler::now).def_property_readonly("next_id", &EventScheduler::next_id).def_property_readonly("size", &EventScheduler::size).def_property_readonly("peak_size",&EventScheduler::peak_size);
@@ -78,6 +81,10 @@ PYBIND11_MODULE(_native_brain, m) {
                              &NeurodynamicSubstrate::next_sequence)
       .def("assemblies",
            [](const NeurodynamicSubstrate &s) {
+             // Positional read-only row:
+             // 0 AssemblyID (native uint64), 1 micro-kappa member IDs,
+             // 2 directed temporal micro-kappa pairs, 3 support,
+             // 4/5 first/last neural time, 6 consolidated flag.
              py::list out;
              for (auto const &a : s.assemblies()) {
                py::list edges;
@@ -102,6 +109,8 @@ PYBIND11_MODULE(_native_brain, m) {
           "assembly_bridge_events_after",
           [](const NeurodynamicSubstrate &s, std::uint64_t cursor,
              std::size_t limit) {
+            // Positional bridge event (native ownership): sequence, AssemblyID,
+            // neural time, confidence, kind, recognition episode, contribution.
             py::list out;
             for (auto const &event :
                  s.assembly_bridge_events_after(cursor, limit))
@@ -800,6 +809,11 @@ PYBIND11_MODULE(_native_brain, m) {
       .def(
           "process_assembly_bridge",
           [](NativeBrainEngine &e, std::uint64_t tick, std::size_t limit,std::size_t max_cognits,std::size_t max_births) {
+            // Positional result consumed by NativeGraphBackend:
+            // 0 event sequence; 1 AssemblyID; 2 native 0-based Cognit index;
+            // 3 confidence; 4 kind; 5 born; 6 activated; 7 neural time;
+            // 8 recognition episode; 9 contribution; 10 birth suppressed.
+            // Это INTERNAL wire ABI: tuple shape не менять как formatting cleanup.
             py::list out;
             for (auto const &row : e.process_assembly_bridge(tick, limit,max_cognits,max_births))
               out.append(py::make_tuple(row.event_sequence, row.assembly_id,

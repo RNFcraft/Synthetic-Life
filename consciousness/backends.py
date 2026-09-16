@@ -31,7 +31,12 @@ class BrainGraphBackend(Protocol):
     def materialize(self,world_tick:int):...
 
 class NativeGraphBackend:
-    """ID-only coarse facade; NativeBrainEngine is the sole graph authority."""
+    """Coarse ID facade; ``NativeBrainEngine`` — единственный numeric owner.
+
+    Public semantic code передаёт 1-based Cognit IDs. Все ``-1``/``+1`` здесь
+    являются явным wire conversion к 0-based native index, а не арифметикой над
+    identity. Наблюдательный cache инвалидируется при каждой native mutation.
+    """
     def __init__(self,settings):
         self.settings=settings;self.full_graph_sync_calls=0;self.ffi_calls=0;self.receive_calls=0;self.field_write_calls=0;self.state_read_calls=0;self.relation_proxy_objects_created=0;self.language_relation_batch_calls=0;self._state_cache={}
         self.engine=_ObservedEngine(NativeBrainEngine(settings.relation_evidence_window),self._native_mutated)
@@ -53,6 +58,7 @@ class NativeGraphBackend:
     def update_transition_evidence(self,before,action,after):self.ffi_calls+=1;self.engine.update_transition_evidence(list(before),action.value,list(after))
     def materialize(self,world_tick,before,action,after):self.ffi_calls+=1;return self.engine.materialize_current(self.evidence_config,world_tick,list(before),action.value,list(after),self.settings.max_new_relations_per_tick,self.settings.max_relations,self.settings.relation_confidence_decay)
     def cognit_state_one(self,node_id):
+        """Прочитать 12-field native state для одного 1-based Cognit ID."""
         row=self._state_cache.get(node_id)
         if row is None or any(value is None for value in row):self.ffi_calls+=1;self.state_read_calls+=1;self._state_cache[node_id]=list(self.engine.cognit_state_full([node_id-1]))
         return self._state_cache[node_id]
@@ -94,6 +100,11 @@ class NativeGraphBackend:
         result=self.engine.receive_batch([node_id-1 for node_id,_ in operations],[energy for _,energy in operations],tick,wave_step,settings.refractory_attenuation,settings.refractory_wave_steps)
         self.invalidate_state([node_id for node_id,_ in operations]);return result
     def process_assembly_bridge(self,graph,cognitive_tick,max_births=None):
+        """Drain одного native Assembly event в ordinary Cognit graph.
+
+        Bridge однонаправленный: Python принимает coarse row и semantic metadata,
+        но не отправляет Cognit state обратно в micro-neural substrate.
+        """
         cursor=self.engine.assembly_bridge_state()[0];pending=self.engine.neurodynamic_substrate().assembly_bridge_events_after(cursor,1)
         if not pending:self.last_assembly_bridge_rows=[];return set()
         self.begin_continuous_time(pending[0][2]);self.ffi_calls+=1

@@ -20,11 +20,18 @@ class LanguageUtteranceFrame:
         if not normalized:raise ValueError("LanguageUtteranceFrame requires at least one token")
         object.__setattr__(self,"tokens",normalized)
 @dataclass(frozen=True,slots=True)
-class GroundingContextEntry:cognit_id:int;salience:float
+class GroundingContextEntry:
+    cognit_id: int
+    salience: float
 @dataclass(frozen=True,slots=True)
-class GroundingContextSnapshot:world_time:float;observation_generation:int;entries:tuple[GroundingContextEntry,...]
+class GroundingContextSnapshot:
+    world_time: float
+    observation_generation: int
+    entries: tuple[GroundingContextEntry, ...]
 @dataclass(frozen=True,slots=True)
-class HistoricalGroundingContext:snapshot:GroundingContextSnapshot;retired_at_world_time:float
+class HistoricalGroundingContext:
+    snapshot: GroundingContextSnapshot
+    retired_at_world_time: float
 @dataclass(frozen=True,slots=True)
 class LanguageProcessingResult:symbol_id:int|None;wave:WaveResult;grounding_candidates_updated:int;grounding_relations_materialized:int
 @dataclass(frozen=True,slots=True)
@@ -52,12 +59,24 @@ def normalize_token(surface:str)->str:
     return token
 
 class GroundingContextTracker:
-    """Observational WorldTime-weighted history of sensory-derived Cognit IDs."""
-    def __init__(self,settings):self.settings=settings;self.latest=None;self.historical=deque(maxlen=settings.language_recent_contexts);self.background_mass={};self.total_experience_time=0.;self.accounted_until=None
+    """Observational history в WorldTime для 1-based sensory Cognit IDs.
+
+    Tracker владеет language episode state, но не читает World напрямую и не
+    назначает символам built-in meaning.
+    """
+    def __init__(self,settings):
+        self.settings=settings
+        self.latest=None
+        self.historical=deque(maxlen=settings.language_recent_contexts)
+        self.background_mass={}
+        self.total_experience_time=0.
+        self.accounted_until=None
     @property
     def recent(self):return self.historical
     def accrue(self,now):
-        if self.accounted_until is None:self.accounted_until=float(now);return
+        if self.accounted_until is None:
+            self.accounted_until=float(now)
+            return
         if now<self.accounted_until:raise ValueError("grounding context time moved backwards")
         dt=float(now)-self.accounted_until
         if dt and self.latest:
@@ -79,12 +98,35 @@ class GroundingContextTracker:
             for e in snapshot.entries:merged[e.cognit_id]=max(merged.get(e.cognit_id,0.),e.salience*credit)
         return merged
     @staticmethod
-    def _dump(s):return None if s is None else [s.world_time,s.observation_generation,[[e.cognit_id,e.salience] for e in s.entries]]
+    def _dump(snapshot):
+        if snapshot is None:
+            return None
+        return [snapshot.world_time,snapshot.observation_generation,
+                [[entry.cognit_id,entry.salience] for entry in snapshot.entries]]
     @staticmethod
-    def _load(raw):return None if raw is None else GroundingContextSnapshot(float(raw[0]),int(raw[1]),tuple(GroundingContextEntry(int(i),float(q)) for i,q in raw[2]))
-    def durable_dict(self):return {"background_mass":[[i,v] for i,v in sorted(self.background_mass.items())],"total_experience_time":self.total_experience_time}
-    def episode_dict(self):return {"latest":self._dump(self.latest),"historical":[[self._dump(x.snapshot),x.retired_at_world_time] for x in self.historical],"accounted_until":self.accounted_until}
-    def restore_durable(self,data):data=data or {};self.background_mass={int(i):float(v) for i,v in data.get("background_mass",[])};self.total_experience_time=float(data.get("total_experience_time",0.))
+    def _load(raw):
+        if raw is None:
+            return None
+        return GroundingContextSnapshot(
+            float(raw[0]),int(raw[1]),
+            tuple(GroundingContextEntry(int(i),float(q)) for i,q in raw[2]))
+    def durable_dict(self):
+        return {
+            "background_mass":[[i,v] for i,v in sorted(self.background_mass.items())],
+            "total_experience_time":self.total_experience_time,
+        }
+    def episode_dict(self):
+        return {
+            "latest":self._dump(self.latest),
+            "historical":[[self._dump(x.snapshot),x.retired_at_world_time]
+                          for x in self.historical],
+            "accounted_until":self.accounted_until,
+        }
+    def restore_durable(self,data):
+        data=data or {}
+        self.background_mass={int(i):float(v)
+                              for i,v in data.get("background_mass",[])}
+        self.total_experience_time=float(data.get("total_experience_time",0.))
     def restore_episode(self,data):
         data=data or {};self.latest=self._load(data.get("latest"));rows=data.get("historical")
         if rows is None:rows=[[self._load(x),float(self._load(x).world_time)] for x in data.get("recent",[]) if self._load(x)!=self.latest]
@@ -92,8 +134,29 @@ class GroundingContextTracker:
         self.historical=deque((HistoricalGroundingContext(x,t) for x,t in rows),maxlen=self.settings.language_recent_contexts);self.accounted_until=data.get("accounted_until")
 
 class LanguageLexicon:
-    """Identity and bounded evidence only; Relations carry learned meaning."""
-    def __init__(self,core):self.core=core;self.symbols={};self.exposures={};self.grounded_trials={};self.evidence={};self.materialized={};self.sequence_support={};self.sequence_trials={};self.sequence_materialized={};self.request_concept_id=None;self.request_support={};self.request_trials={};self.request_materialized=set();self.total_exposures=0;self.grounding_relations_materialized=0;self.sequence_relations_materialized=0;self.last_language_symbol_id=None;self.last_language_wave_active_ids=frozenset();self.outgoing_scans=0;self.native_relation_batch_calls=0;self.native_sequence_batch_calls=0
+    """Владеет identity и bounded evidence; learned meaning живёт в Relations."""
+    def __init__(self,core):
+        self.core=core
+        self.symbols={}
+        self.exposures={}
+        self.grounded_trials={}
+        self.evidence={}
+        self.materialized={}
+        self.sequence_support={}
+        self.sequence_trials={}
+        self.sequence_materialized={}
+        self.request_concept_id=None
+        self.request_support={}
+        self.request_trials={}
+        self.request_materialized=set()
+        self.total_exposures=0
+        self.grounding_relations_materialized=0
+        self.sequence_relations_materialized=0
+        self.last_language_symbol_id=None
+        self.last_language_wave_active_ids=frozenset()
+        self.outgoing_scans=0
+        self.native_relation_batch_calls=0
+        self.native_sequence_batch_calls=0
     def symbol(self,surface):
         surface=normalize_token(surface)
         node_id=self.symbols.get(surface)

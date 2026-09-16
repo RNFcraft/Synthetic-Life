@@ -22,6 +22,11 @@ class DeliberationSession:
 
 
 class DeliberativePlanner:
+    """Python-authority поиска action через ordinary Cognit graph context.
+
+    Continuous entrypoints мутируют только ``DeliberationSession`` и semantic
+    planner state. Порядок candidate/action sorting является determinism contract.
+    """
     def __init__(self,settings)->None:
         self.settings=settings;self.plan:Plan|None=None;self.cycles_last=0;self.total_cycles=0;self.plans_created=0;self.plans_revised=0;self.plans_abandoned=0;self.plan_steps_executed=0;self.last_reason="NONE";self.internal_tick=0;self.converged=False;self.last_active=frozenset();self.subgoal_signature=None;self.subgoal_cooldown_until=0
 
@@ -60,6 +65,7 @@ class DeliberativePlanner:
         return current_plan.actions[0] if current_plan.actions else core._choose_action().kind
 
     def begin_continuous(self,core,current:set[int],tick:int)->DeliberationSession:
+        """Открыть сохраняемую session, но ещё не выбирать и не commit action."""
         self._manage_goals(core,current,tick);self.cycles_last=0;self.converged=False
         session=DeliberationSession(tick,frozenset(current),set(current),semantic_cache=({}, {}, {}));self._enqueue_recall(core,session);return session
 
@@ -82,6 +88,7 @@ class DeliberativePlanner:
         return True
 
     def continue_continuous(self,core,session:DeliberationSession)->bool:
+        """Выполнить ровно одну causal work item; True означает quiescence."""
         if session.finalized:raise RuntimeError("continuous deliberation session already finalized")
         if session.quiescent:return True
         if not session.pending_work:raise RuntimeError("continuous deliberation has no pending work and no candidate")

@@ -20,6 +20,12 @@ from persistence import load_container,save_container
 
 
 class Simulation:
+    """Композиционный compatibility facade для World и semantic core.
+
+    Production continuous path создаёт native backend. Этот класс также хранит
+    discrete/reference API, поэтому его public signatures и snapshot payloads
+    являются compatibility contract.
+    """
     def __init__(self,seed:int=12345,settings:Settings|None=None,backend:str="python")->None:
         self.seed=seed;self.settings=settings or Settings();self.rng=Random(seed);self.world=(NativeWorld if backend=="native" else World)(self.settings,self.rng)
         self.core=SyntheticEntityCore(self.settings,backend);self.clock=SimulationClock();self.world_time=WorldTime();self.event_sequence=EventSequence();self.telemetry=Telemetry(self.settings.telemetry_history)
@@ -67,6 +73,7 @@ class Simulation:
         for _ in range(ticks):self.step()
 
     def snapshot_data(self,semantic_graph:bool=False)->dict[str,Any]:
+        """Собрать version-4 semantic snapshot без смены state authority."""
         core=self.core;goal=asdict(core.state.goal) if core.state.goal else None
         return {"version":4,"seed":self.seed,"tick":self.clock.tick,"world_time_seconds":self.world_time.seconds,"event_sequence":self.event_sequence.value,"random_state":encode_random_state(self.rng.getstate()),"world":self.world.to_dict(),
           "cognitive_graph":core.graph.semantic_to_dict() if semantic_graph and core.backend else core.graph.to_dict(),"entity_state":{"last_action":self.last_action.kind.name if self.last_action else None,

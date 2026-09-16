@@ -129,14 +129,30 @@ void NeurodynamicSubstrate::apply_plasticity(double time, const std::vector<std:
   }
 }
 void NeurodynamicSubstrate::emit_bridge_event(std::uint64_t assembly_id, double time, double confidence, AssemblyBridgeEventKind kind) {
-  std::uint64_t episode_id{};double contribution{};
-  if(kind==AssemblyBridgeEventKind::Recognized){
-    auto episode=std::find_if(recognition_episodes_.begin(),recognition_episodes_.end(),[&](auto const&row){return row.assembly_id==assembly_id;});
-    if(episode==recognition_episodes_.end()){recognition_episodes_.push_back({assembly_id,next_recognition_episode_id_++,time,0.});episode=std::prev(recognition_episodes_.end());}
-    else if(time-episode->last_time>assembly_window_){episode->episode_id=next_recognition_episode_id_++;episode->peak_confidence=0.;}
-    episode->last_time=time;episode_id=episode->episode_id;contribution=std::max(0.,confidence-episode->peak_confidence);episode->peak_confidence=std::max(episode->peak_confidence,confidence);
+  std::uint64_t episode_id{};
+  double contribution{};
+  if (kind == AssemblyBridgeEventKind::Recognized) {
+    auto episode = std::find_if(
+        recognition_episodes_.begin(), recognition_episodes_.end(),
+        [&](auto const &row) { return row.assembly_id == assembly_id; });
+    if (episode == recognition_episodes_.end()) {
+      recognition_episodes_.push_back(
+          {assembly_id, next_recognition_episode_id_++, time, 0.});
+      episode = std::prev(recognition_episodes_.end());
+    } else if (time - episode->last_time > assembly_window_) {
+      episode->episode_id = next_recognition_episode_id_++;
+      episode->peak_confidence = 0.;
+    }
+    episode->last_time = time;
+    episode_id = episode->episode_id;
+    // В одном episode вверх проходит только прирост peak confidence. Иначе
+    // повторное чтение Assembly создавало бы feedback, которого в bridge нет.
+    contribution = std::max(0., confidence - episode->peak_confidence);
+    episode->peak_confidence =
+        std::max(episode->peak_confidence, confidence);
   }
-  bridge_events_.push_back({next_bridge_sequence_++, assembly_id, episode_id, time, confidence, contribution, kind});
+  bridge_events_.push_back({next_bridge_sequence_++, assembly_id, episode_id,
+                            time, confidence, contribution, kind});
   if (bridge_events_.size() > bridge_event_capacity)
     bridge_events_.erase(bridge_events_.begin(), bridge_events_.begin() + (bridge_events_.size() - bridge_event_capacity));
 }
@@ -158,7 +174,12 @@ std::vector<AssemblyBridgeEvent> NeurodynamicSubstrate::assembly_bridge_events_a
 void NeurodynamicSubstrate::observe_assemblies(double time, const std::vector<std::uint32_t> &spikes) {
   if (!assembly_tracking_enabled_ || spikes.empty())
     return;
-  recent_spikes_.erase(std::remove_if(recent_spikes_.begin(), recent_spikes_.end(), [&](const NeuralEvent &e) { return time - e.time > assembly_window_; }), recent_spikes_.end());
+  recent_spikes_.erase(
+      std::remove_if(recent_spikes_.begin(), recent_spikes_.end(),
+                     [&](const NeuralEvent &event) {
+                       return time - event.time > assembly_window_;
+                     }),
+      recent_spikes_.end());
   std::vector<NeuralEvent> episode = recent_spikes_;
   for (auto id : spikes) {
     episode.push_back({time, 0, id, 0.});
@@ -172,9 +193,13 @@ void NeurodynamicSubstrate::observe_assemblies(double time, const std::vector<st
   if (members.size() > assembly_max_members_)
     members.resize(assembly_max_members_);
   std::vector<std::array<std::uint32_t, 2>> edges;
+  // Строгое '<' намеренно: spikes одного timestamp одновременны и не должны
+  // создавать temporal edge из-за порядка ID или iteration.
   for (auto const &a : episode)
     for (auto const &b : episode)
-      if (a.time < b.time && a.target != b.target && std::binary_search(members.begin(), members.end(), a.target) && std::binary_search(members.begin(), members.end(), b.target)) {
+      if (a.time < b.time && a.target != b.target &&
+          std::binary_search(members.begin(), members.end(), a.target) &&
+          std::binary_search(members.begin(), members.end(), b.target)) {
         std::array<std::uint32_t, 2> edge{a.target, b.target};
         if (std::find(edges.begin(), edges.end(), edge) == edges.end())
           edges.push_back(edge);

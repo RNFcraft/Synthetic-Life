@@ -74,6 +74,19 @@ host-batching tests; для native wire — Python tests плюс CTest.
 - Legacy/reference удаляется только после доказательства отсутствия callers,
   persistence и oracle value.
 
+## Readability conventions
+
+- Не объединяйте независимые mutations и control flow в плотную строку через
+  `;`: causal порядок должен быть виден при review.
+- Docstring для boundary API описывает owner состояния, ID/time domain, side
+  effects и persistence role, а не повторяет имя функции.
+- Неочевидный `id - 1`/`id + 1` сопровождается контекстом Python/native domain;
+  ambiguous time variables должны называться или комментироваться как
+  WorldTime, evidence tick, scheduler ID или neural time.
+- Комментарий объясняет, почему нельзя переставлять операции. Sorting, iteration,
+  RNG consumption, event insertion и float expression grouping сохраняются даже
+  тогда, когда другая запись выглядит короче.
+
 ## Persistence и совместимость
 
 Не редактируйте вручную `.sebrain`/`.seworld`. Outer container проверяет magic,

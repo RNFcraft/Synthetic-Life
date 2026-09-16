@@ -829,7 +829,11 @@ runtime behavior or persistence format was changed.
 
 ## v0.7.1 — Readability and Documentation Foundation
 
-**Status: PLANNED**
+**Status: FROZEN READABILITY BASELINE.** Dense boundary declarations and
+initialization paths were expanded in place; ownership, ID/time, causal ordering,
+one-way bridge and positional pybind contracts are documented next to the code.
+No responsibility/package movement, API/ABI, algorithm, numeric or persistence
+change was made. Frozen digest, full regression and native gates pass.
 
 Цель — сделать существующий код читаемым до его физического перемещения.
 

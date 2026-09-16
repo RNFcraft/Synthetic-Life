@@ -25,39 +25,86 @@ from .language import GroundingContextEntry,GroundingContextSnapshot,GroundingCo
 
 @dataclass(slots=True)
 class ContinuousCognitionFrontier:
-    generation:int;world_time:float;frame:SensoryFrame;current:set[int];track_ids:tuple[int,...];session:DeliberationSession|None=None;phase:str="OBSERVED";action:ActionType|None=None;committed:bool=False
+    """Сохраняемая Python-authority незавершённой cognition transaction."""
+
+    generation: int
+    world_time: float
+    frame: SensoryFrame
+    current: set[int]
+    track_ids: tuple[int, ...]
+    session: DeliberationSession | None = None
+    phase: str = "OBSERVED"
+    action: ActionType | None = None
+    committed: bool = False
 
 class SyntheticEntityCore:
-    """v0.2 cognitive loop. It consumes sensory values and returns an action only."""
+    """Семантический Python-owner, связывающий perception, memory и planning.
+
+    Core получает только допустимый sensory boundary и возвращает обычный
+    ``Action``. Numeric Cognit/Relation state при native backend принадлежит
+    C++; facade использует 1-based Python Cognit IDs и не создаёт mirror.
+    """
     def __init__(self,settings:Settings,backend:str="python")->None:
         self.settings=settings
-        if backend not in {"python","native"}:raise ValueError("backend must be 'python' or 'native'")
+        if backend not in {"python", "native"}:
+            raise ValueError("backend must be 'python' or 'native'")
         self.backend_name=backend
         if backend=="native":
             from .backends import NativeGraphBackend
             from .native_graph import NativeGraphFacade
-            self.backend=NativeGraphBackend(settings);self.graph=NativeGraphFacade(self.backend)
-        else:self.backend=None;self.graph=CognitiveGraph()
-        self.patterns=SensoryPatternTracker(settings);self.wave=ActivityWaveEngine(settings)
-        self.transitions=TransitionModel(settings.relation_evidence_window);self.trace=WorkingTrace(settings.working_memory_size);self.state=ConsciousnessState()
-        self.perception=PerceptualContinuityEngine(settings);self.composites=CompositeTracker(settings);self.memory=SpatialMemory(settings);self.planner=DeliberativePlanner(settings)
-        self.tie_resolver=SymmetryPreservingTieResolver(settings.action_tie_epsilon);self.calibration=CalibrationTracker(settings.calibration_window)
-        self.pattern_nodes:dict[tuple[PrimitiveKey,...],int]={};self.primitive_index:dict[PrimitiveKey,set[int]]=defaultdict(set)
-        self.previous_active:set[int]=set();self.previous_action:ActionType|None=None
-        self.last_wave=WaveResult(frozenset(),0.0,0);self.events:list[str]=[];self.next_goal_id=1
-        self.dirty_cognits:set[int]=set();self.deletion_candidates:deque[int]=deque();self.lifecycle_cursor=0
-        self.relation_prediction_enabled=True;self.predictions_without_composites:dict[int,float]={}
-        self.available_actions:tuple[ActionType,...]=tuple(ActionType)
-        self.relation_candidates=0;self.relations_materialized=0;self.candidate_supports:deque[int]=deque(maxlen=4096);self.candidate_lifts:deque[float]=deque(maxlen=4096)
-        self.goal_stack:list[Goal]=[];self.target_cognit_ids:set[int]=set()
-        self.current_structure=RelationalStructure(0,());self.target_structure:RelationalStructure|None=None;self.target_mismatch=1.;self.previous_target_mismatch=1.;self.relational_nodes={};self.affordances=AffordanceEvidence();self.previous_context=frozenset();self.previous_body_signature=()
-        self.belief_scene=BeliefScene();self.target_knowledge_uncertainty=1.
+            self.backend = NativeGraphBackend(settings)
+            self.graph = NativeGraphFacade(self.backend)
+        else:
+            self.backend = None
+            self.graph = CognitiveGraph()
+        self.patterns = SensoryPatternTracker(settings)
+        self.wave = ActivityWaveEngine(settings)
+        self.transitions = TransitionModel(settings.relation_evidence_window)
+        self.trace = WorkingTrace(settings.working_memory_size)
+        self.state = ConsciousnessState()
+        self.perception = PerceptualContinuityEngine(settings)
+        self.composites = CompositeTracker(settings)
+        self.memory = SpatialMemory(settings)
+        self.planner = DeliberativePlanner(settings)
+        self.tie_resolver = SymmetryPreservingTieResolver(settings.action_tie_epsilon)
+        self.calibration = CalibrationTracker(settings.calibration_window)
+        self.pattern_nodes: dict[tuple[PrimitiveKey, ...], int] = {}
+        self.primitive_index: dict[PrimitiveKey, set[int]] = defaultdict(set)
+        self.previous_active: set[int] = set()
+        self.previous_action: ActionType | None = None
+        self.last_wave = WaveResult(frozenset(), 0.0, 0)
+        self.events: list[str] = []
+        self.next_goal_id = 1
+        self.dirty_cognits: set[int] = set()
+        self.deletion_candidates: deque[int] = deque()
+        self.lifecycle_cursor = 0
+        self.relation_prediction_enabled = True
+        self.predictions_without_composites: dict[int, float] = {}
+        self.available_actions: tuple[ActionType, ...] = tuple(ActionType)
+        self.relation_candidates = 0
+        self.relations_materialized = 0
+        self.candidate_supports: deque[int] = deque(maxlen=4096)
+        self.candidate_lifts: deque[float] = deque(maxlen=4096)
+        self.goal_stack: list[Goal] = []
+        self.target_cognit_ids: set[int] = set()
+        self.current_structure = RelationalStructure(0, ())
+        self.target_structure: RelationalStructure | None = None
+        self.target_mismatch = 1.0
+        self.previous_target_mismatch = 1.0
+        self.relational_nodes = {}
+        self.affordances = AffordanceEvidence()
+        self.previous_context = frozenset()
+        self.previous_body_signature = ()
+        self.belief_scene = BeliefScene()
+        self.target_knowledge_uncertainty = 1.0
         self.cognitive_tick=0
         self.world_time_seconds:float|None=None
-        self._selectivity_sum=0.;self._selectivity_count=0
+        self._selectivity_sum = 0.0
+        self._selectivity_count = 0
         self.continuous_frontier:ContinuousCognitionFrontier|None=None
         self.language=LanguageLexicon(self)
-        self.grounding_context=GroundingContextTracker(settings);self.last_language_result=None
+        self.grounding_context = GroundingContextTracker(settings)
+        self.last_language_result = None
     def _propagate(self,seeds:set[int],tick:int)->WaveResult:
         return self.backend.propagate_graph(self.graph,seeds,tick) if self.backend else self.wave.propagate(self.graph,seeds,tick)
 
@@ -66,16 +113,32 @@ class SyntheticEntityCore:
         return self.install_relational_goal(RelationalStructure.from_points(target.offsets),1.,"TARGET")
 
     def install_relational_goal(self,structure:RelationalStructure,confidence:float,origin:str)->Goal:
-        self.target_structure=structure;signature=tuple((x,y,"spatial_relation",d,0) for x,y,d in structure.relations)
+        """Материализовать relational target как обычный Goal и graph context."""
+        self.target_structure = structure
+        signature = tuple(
+            (x, y, "spatial_relation", direction, 0)
+            for x, y, direction in structure.relations
+        )
         pattern=CognitPattern(signature,occurrence_count=1,stability=1.,predictive_value=0.,is_translation_tolerant=True)
         node=self.graph.add_cognit(Cognit(self.graph.next_id,pattern=pattern,kind="TARGET",confidence=1.))
         for token in structure.relations:
-            if token not in self.relational_nodes:self.relational_nodes[token]=self.graph.add_cognit(Cognit(self.graph.next_id,kind="RELATIONAL",confidence=1.)).id
+            if token not in self.relational_nodes:
+                self.relational_nodes[token] = self.graph.add_cognit(
+                    Cognit(self.graph.next_id, kind="RELATIONAL", confidence=1.0)
+                ).id
             relation,_=self.graph.connect(node.id,self.relational_nodes[token],RelationType.ASSOCIATIVE)
-            if relation is not None:relation.strength=relation.prediction_probability=1.;relation.confidence=1.;relation.support+=1
-        self.pattern_nodes[signature]=node.id;self.target_cognit_ids.add(node.id)
+            if relation is not None:
+                relation.strength = relation.prediction_probability = 1.0
+                relation.confidence = 1.0
+                relation.support += 1
+        self.pattern_nodes[signature] = node.id
+        self.target_cognit_ids.add(node.id)
         goal=Goal(self.next_goal_id,(node.id,),1.,confidence,confidence,persistence=1.,origin_tension=confidence,origin=origin,target_signature=signature)
-        self.next_goal_id+=1;self.state.goals_generated+=1;self.state.goal=goal;self.events.append(f"TARGET_RECEIVED G{goal.id}");return goal
+        self.next_goal_id += 1
+        self.state.goals_generated += 1
+        self.state.goal = goal
+        self.events.append(f"TARGET_RECEIVED G{goal.id}")
+        return goal
 
     def is_relational_goal(self,goal)->bool:
         return bool(goal and self.target_structure is not None and set(goal.target_cognit_ids)&self.target_cognit_ids)

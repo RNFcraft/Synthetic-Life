@@ -30,7 +30,11 @@ class PersistentStructureMemory:
     last_confirmed_time_seconds:float|None=None;last_touch_time_seconds:float|None=None
 
 class SpatialMemory:
-    """Evidence-based topology; no world coordinates or object identifiers."""
+    """Python-authority evidence topology без World coordinates/object IDs.
+
+    Tick используется legacy/discrete recency, а ``world_time_seconds`` — lazy
+    continuous decay. Эти time domains нельзя взаимозаменять при refactor.
+    """
     def __init__(self,settings)->None:
         self.settings=settings;self.places={};self.structures={};self.place_evidence=Counter();self.transitions=Counter()
         self.feature_seen=Counter();self.feature_change=Counter();self.next_place_id=1;self.next_memory_id=1;self.current_place_id=None
@@ -222,6 +226,7 @@ class SpatialMemory:
         return best if best and score>=self.settings.memory_match_threshold+(1-best.confidence)*.08 else None
 
     def recall(self,goal_target_ids,graph,tick:int,target_structure=None)->set[int]:
+        """Вернуть 1-based Cognit IDs, не обновляя Relation evidence ticks."""
         if not self.enabled:self.last_recalled={};return set()
         self._ensure_indexes();recalled=set();self.last_recalled={};self.last_target_structural_scores={};associated=set(goal_target_ids);target_request=target_structure is not None
         for target in goal_target_ids:

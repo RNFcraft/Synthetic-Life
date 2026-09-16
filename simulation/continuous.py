@@ -17,16 +17,55 @@ from .simulation import Simulation
 from .snapshot import save_snapshot
 
 @dataclass(frozen=True,slots=True)
-class RenderBody:id:int;x:int;y:int;orientation:str;held_object_id:int|None
+class RenderBody:
+    id: int
+    x: int
+    y: int
+    orientation: str
+    held_object_id: int | None
 @dataclass(frozen=True,slots=True)
-class RenderObject:id:int;x:int;y:int;state:int
+class RenderObject:
+    id: int
+    x: int
+    y: int
+    state: int
 @dataclass(frozen=True,slots=True)
-class RenderSnapshot:world_time:float;bodies:tuple[RenderBody,...];objects:tuple[RenderObject,...]
+class RenderSnapshot:
+    """Read-only observer projection; renderer wall clock не causal."""
+    world_time: float
+    bodies: tuple[RenderBody, ...]
+    objects: tuple[RenderObject, ...]
 
 class ContinuousRuntime:
+    """Production orchestration над native World, graph и EventScheduler.
+
+    Scheduler timestamp использует WorldTime; event ID является отдельным
+    tie-break domain. Обработчики обязаны сохранять insertion order, потому что
+    одинаковое время упорядочивается native sequence.
+    """
     ACTION_DURATION=.15
     def __init__(self,seed=12345,settings:Settings|None=None):
-        self.simulation=Simulation(seed,settings,backend="native");self.scheduler=EventScheduler();self.observation_ordinal=0;self.last_frame=None;self.actions_completed=0;self.cognition_wakes=0;self.cognition_continuations=0;self.cognition_generation=0;self.maintenance_ordinal=0;self.scheduler_events_processed=0;self.peak_scheduler_queue=0;self._legacy_monolithic_frontier=False;self.language_inbox={};self.next_language_message_id=1;self.language_frontier=None;self.last_utterance_result=None;self.language_utterances_processed=0;self.language_tokens_processed=0;self.neural_bridge_deliveries=[];self._neural_target_time=None;self.neural_sensory=None
+        self.simulation=Simulation(seed,settings,backend="native")
+        self.scheduler=EventScheduler()
+        self.observation_ordinal=0
+        self.last_frame=None
+        self.actions_completed=0
+        self.cognition_wakes=0
+        self.cognition_continuations=0
+        self.cognition_generation=0
+        self.maintenance_ordinal=0
+        self.scheduler_events_processed=0
+        self.peak_scheduler_queue=0
+        self._legacy_monolithic_frontier=False
+        self.language_inbox={}
+        self.next_language_message_id=1
+        self.language_frontier=None
+        self.last_utterance_result=None
+        self.language_utterances_processed=0
+        self.language_tokens_processed=0
+        self.neural_bridge_deliveries=[]
+        self._neural_target_time=None
+        self.neural_sensory=None
         if self.simulation.settings.sensory_neural_enabled:
             configured=NeurodynamicSubstrate(assembly_tracking_enabled=True,assembly_window=.1,assembly_min_members=4,assembly_consolidation_support=3)
             self.simulation.core.backend.engine.neurodynamic_substrate().restore(configured.snapshot());self.neural_sensory=NeuralSensoryTransducer(self.simulation.settings,self.simulation.core.backend.engine.neurodynamic_substrate())
@@ -38,6 +77,7 @@ class ContinuousRuntime:
     @property
     def world_time(self):return self.scheduler.now
     def _process(self,event):
+        """Обработать один event без изменения native `(time, id)` порядка."""
         now,kind=event.time,event.type
         if kind==RuntimeEventType.SENSORY_CHANGE:
             self._legacy_monolithic_frontier=False;self.cognition_generation+=1;generation=self.cognition_generation;self.last_frame=self.simulation.world.perceive(self.observation_ordinal);self.observation_ordinal+=1
@@ -141,6 +181,7 @@ class ContinuousRuntime:
     def _action_in_flight(self):
         return any(e.type==RuntimeEventType.WORLD_ACTION_COMPLETE for e in self.scheduler.snapshot())
     def run_until(self,until,guard=100000):
+        """Продвинуть causal runtime до абсолютного WorldTime ``until``."""
         processed=0
         while self.scheduler.size:
             self.peak_scheduler_queue=max(self.peak_scheduler_queue,self.scheduler.peak_size)
@@ -154,6 +195,7 @@ class ContinuousRuntime:
                 if processed>guard:raise self._runaway_error()
         self.scheduler.pop_ready(float(until));self.simulation.world.advance_world_time(float(until));self.simulation.world_time=WorldTime(float(until));return processed
     def run_to_quiescence(self,guard=100000):
+        """Исчерпать только события текущего WorldTime, не двигая часы."""
         processed=0;now=self.world_time
         while self.scheduler.size and self.scheduler.snapshot()[0].time<=now:
             self.peak_scheduler_queue=max(self.peak_scheduler_queue,self.scheduler.peak_size)

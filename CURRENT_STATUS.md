@@ -1,4 +1,22 @@
-# Synthetic Entity v0.7.0 — Current Status
+# Synthetic Entity v0.7.1 — Current Status
+
+## v0.7.1 — READABILITY AND DOCUMENTATION FOUNDATION
+
+Status: **FROZEN READABILITY BASELINE**.
+
+Readability was improved in place across the semantic core, language grounding,
+memory, planner, native facade, continuous/discrete simulation and three critical
+native implementation files. New Russian-first docstrings/comments make state
+authority, Cognit ID conversion, time domains, same-time ordering, one-way
+Assembly bridge and positional pybind rows explicit. `DEVELOPER_GUIDE.md` now
+records the corresponding review conventions.
+
+There was no package or responsibility movement, public API or pybind ABI
+change, algorithm/numeric/persistence change, optimization or legacy deletion.
+The v0.7.0 deterministic digest remains
+`7d80bffa82cfbabf8d11373883d03056b26b27eb53a4cbe9246a666e079fbb0f`
+for `PYTHONHASHSEED=1/777`, with `full_graph_sync_calls == 0`. Full acceptance,
+Release native build and CTest pass. v0.7.2 remains PLANNED.
 
 ## v0.7.0 — BASELINE AND FULL AUDIT FREEZE
 

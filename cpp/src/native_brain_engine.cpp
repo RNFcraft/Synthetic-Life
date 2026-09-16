@@ -1116,6 +1116,8 @@ std::vector<std::uint32_t> NativeBrainEngine::action_trials(std::span<const std:
   return out;
 }
 std::pair<std::uint32_t, std::uint32_t> NativeBrainEngine::lifecycle_step(std::uint64_t tick, std::uint64_t max_idle, double death, double decay) {
+  // Eligibility живёт в observation/evidence tick domain. continuous seconds
+  // применяются только к effective-confidence decay и не заменяют этот tick.
   std::uint32_t removed = 0, kept = 0;
   std::vector<RelationHandle> next;
   next.reserve(dirty_relations_.size());
