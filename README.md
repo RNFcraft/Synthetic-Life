@@ -33,15 +33,18 @@ The closure pass identified a second, independent proliferation bug in native
 `(source, action, target)` edge were taken from all trials of `(source, action)`.
 The edge now requires support from its exact triple. Logical relation identity
 remains stable, and useful repeated evidence still strengthens the same edge.
+The public full-history materializer now uses the same exact support,
+probability and confidence semantics as the production current-context path.
 Scheduler queue peak is now recorded authoritatively at native `schedule()` and
 preserved by restore; fixed non-plastic micro-relations are validated against
 their nonnegative finite contract rather than plastic learning bounds.
 
-The milestone remains provisional. The corrected 100-second production run
-completed 666 actions and reduced final Relations from 8,490 to 3,563, but the
-actually-run 500-second soak still grew from 3,563 to 8,298 Relations rather
-than reaching a convincing plateau. The manual 50,000-second extended soak has
-not been run.
+Relation idle eligibility now always uses observation-tick age, while lazy
+confidence decay remains in simulated continuous time. Despite that correction,
+the milestone remains provisional: the actually-run 1,000-second soak reached
+16,559 Relations with no production deletions. Default learned confidence did
+not fall below the independent death threshold, so lifecycle did not balance
+births. The manual 50,000-second extended soak has not been run.
 
 ## v0.6.5 neural cognition to behavior
 

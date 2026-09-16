@@ -6,7 +6,7 @@ from config import Settings
 from consciousness.native_engine import EventScheduler,RuntimeEventType
 from consciousness._native_brain import MicroPolarity,NeurodynamicSubstrate
 from consciousness.core import ContinuousCognitionFrontier,SyntheticEntityCore
-from consciousness.relation import RelationStatus
+from consciousness.relation import RelationStatus,RelationType
 from simulation.continuous import ContinuousRuntime
 from simulation.long_life import LongLifeDiagnostics,validate_long_life_state
 from world import ActionType
@@ -157,3 +157,66 @@ def test_repeated_identical_transition_reuses_relation_identity():
         engine.materialize_current(core.backend.evidence_config,tick,[source-1],ActionType.IDLE.value,[target-1],16,16_384,.999)
     rows=[r for r in core.graph.adjacency[source].values() if r.target_id==target]
     assert len(rows)==2
+
+
+def _evidence_engine(tick=1_000):
+    from consciousness.native_engine import EvidenceConfig,NativeBrainEngine
+    engine=NativeBrainEngine();engine.add_cognits(2)
+    config=EvidenceConfig();config.minimum_support=1;config.minimum_lift=0.;config.confidence_k=4.
+    engine.update_transition_evidence([0],ActionType.IDLE.value,[1])
+    rows=engine.materialize_current(config,tick,[0],ActionType.IDLE.value,[1],16,16_384,.9)
+    handle=next(h for h in engine.dirty_relation_state() if h[2]==2)
+    return engine,config,rows,handle
+
+
+def test_native_continuous_lifecycle_uses_evidence_ticks_not_seconds():
+    engine,_,_,_= _evidence_engine()
+    policy=(.95,.02,.05,.95,.9,.999)
+    engine.begin_continuous_time(0.,*policy,.9);engine.begin_continuous_time(1_000.,*policy,.9)
+    removed,kept=engine.lifecycle_step(1_050,100,.5,.9)
+    assert (removed,kept)==(0,2)
+    removed,kept=engine.lifecycle_step(1_101,100,.5,.9)
+    assert removed==2 and kept==0 and engine.relation_count==0
+
+
+def test_native_lifecycle_preserves_recent_or_effectively_confident_relation():
+    recent,_,_,_=_evidence_engine();policy=(.95,.02,.05,.95,.9,.999)
+    recent.begin_continuous_time(0.,*policy,.9);recent.begin_continuous_time(10_000.,*policy,.9)
+    assert recent.lifecycle_step(1_050,100,.99,.9)==(0,2)
+    useful,_,_,_=_evidence_engine();useful.begin_continuous_time(0.,*policy,1.);useful.begin_continuous_time(10_000.,*policy,1.)
+    assert useful.lifecycle_step(1_101,100,.1,1.)==(0,2)
+
+
+def test_materialization_apis_have_exact_self_action_statistical_parity():
+    from consciousness.native_engine import EvidenceConfig,NativeBrainEngine
+    config=EvidenceConfig();config.minimum_support=2;config.minimum_lift=0.;config.confidence_k=4.
+    public,current=NativeBrainEngine(),NativeBrainEngine()
+    for engine in (public,current):
+        engine.add_cognits(3)
+        for before,after in (([0],[1]),([0],[2]),([0],[1])):engine.update_transition_evidence(before,ActionType.IDLE.value,after)
+    left=public.materialize_relations(config,3)
+    right=[row for row in current.materialize_current(config,3,[0],ActionType.IDLE.value,[1],16,16_384,.999) if row[2]==ActionType.IDLE.value]
+    assert left==right
+    assert left==[(0,1,ActionType.IDLE.value,2,pytest.approx(2/3),pytest.approx(2/6),pytest.approx(1.))]
+
+
+def test_repeated_materialization_does_not_duplicate_lifecycle_work():
+    engine,config,_,_=_evidence_engine()
+    for tick in range(1_001,2_001):engine.materialize_current(config,tick,[0],ActionType.IDLE.value,[1],16,16_384,.999)
+    assert len(engine.dirty_relation_state())==2 and engine.lifecycle_step(2_001,10_000,1.,.999)==(0,2)
+
+
+def test_snapshot_restore_across_relation_deletion_horizon_is_exact(tmp_path):
+    settings=replace(SETTINGS,relation_max_idle=100,relation_death_threshold=.99)
+    continuous=ContinuousRuntime(6614,settings);cycled=ContinuousRuntime(6614,settings)
+    for runtime in (continuous,cycled):
+        core=runtime.simulation.core;source=core.graph.add_cognit().id;target=core.graph.add_cognit().id
+        core.backend.engine.add_relation(source-1,target-1,RelationType.ASSOCIATIVE.value,0,.1,.1,.1)
+        runtime.run_until(10.)
+    path=tmp_path/"before-relation-horizon.seworld";cycled.save_world(path);cycled=ContinuousRuntime.load_world(path,settings)
+    continuous.run_until(20.);cycled.run_until(20.)
+    left,right=_causal(continuous),_causal(cycled)
+    assert left[:1]+left[2:]==right[:1]+right[2:]
+    a,b=continuous.simulation.core.backend.engine,cycled.simulation.core.backend.engine
+    assert a.cognit_state_full(range(a.cognit_count))==pytest.approx(b.cognit_state_full(range(b.cognit_count)),abs=2e-15,rel=0)
+    assert continuous.simulation.core.backend.full_graph_sync_calls==cycled.simulation.core.backend.full_graph_sync_calls==0

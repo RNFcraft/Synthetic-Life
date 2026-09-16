@@ -1119,19 +1119,15 @@ std::pair<std::uint32_t, std::uint32_t> NativeBrainEngine::lifecycle_step(std::u
     auto *edge = graph_.relations.get(handle);
     if (!edge)
       continue;
-    double age, effective;
+    auto last_evidence_tick = graph_.relations.last_evidence(*edge);
+    auto idle_ticks = tick >= last_evidence_tick ? tick - last_evidence_tick : 0;
+    double effective;
     if (continuous_time_enabled_) {
-      auto key = relation_time_key(handle);
-      auto it = relation_last_evidence_time_.find(key);
-      auto last = it == relation_last_evidence_time_.end() || it->second.first != handle.generation || it->second.second < 0. ? continuous_epoch_ : it->second.second;
-      age = continuous_now_ - last;
       effective = effective_relation_confidence(*edge, handle, decay);
     } else {
-      auto last = graph_.relations.last_evidence(*edge);
-      age = double(tick >= last ? tick - last : 0);
-      effective = edge->confidence * std::pow(decay, age);
+      effective = edge->confidence * std::pow(decay, double(idle_ticks));
     }
-    if (age > double(max_idle) && effective < death) {
+    if (idle_ticks > max_idle && effective < death) {
       removed += graph_.relations.erase(handle);
       relation_last_touch_time_.erase(relation_time_key(handle));
       relation_last_evidence_time_.erase(relation_time_key(handle));
@@ -1155,6 +1151,7 @@ std::vector<MaterializedRelation> NativeBrainEngine::materialize_relations(const
       double conditional = double(n) / std::max(1u, source_counts_.at(s)), baseline = double(target_counts_.at(t)) / std::max<std::uint64_t>(1, evidence_steps_), lift = conditional / std::max(baseline, 1e-9);
       if (n < c.minimum_support || lift < c.minimum_lift)
         continue;
+      const auto before_count = graph_.relations.size();
       auto pair = graph_.relations.connect(s, t, RelationType::Sequential);
       auto &e = pair.first;
       e.strength = e.prediction = conditional;
@@ -1163,7 +1160,8 @@ std::vector<MaterializedRelation> NativeBrainEngine::materialize_relations(const
       p.support = n;
       p.lift = lift;
       p.last_evidence_world_tick = tick;
-      dirty_relations_.push_back(pair.second);
+      if (graph_.relations.size() != before_count)
+        dirty_relations_.push_back(pair.second);
     }
   }
   for (auto &[key, mask] : before_action_slots_) {
@@ -1175,18 +1173,22 @@ std::vector<MaterializedRelation> NativeBrainEngine::materialize_relations(const
       auto pairs = action_support(key.s, key.a, t);
       double probability = double(pairs) / trials, conditional = double(support(key.s, t)) / std::max(1u, source_counts_.at(key.s));
       double lift = probability / std::max(conditional, 1e-9);
-      if (trials < c.minimum_support || lift < c.minimum_lift)
+      if (pairs < c.minimum_support || lift < c.minimum_lift)
         continue;
+      const auto before_count = graph_.relations.size();
       auto pair = graph_.relations.connect(key.s, t, RelationType::SelfAction, key.a);
       auto &e = pair.first;
       e.strength = e.prediction = probability;
-      e.confidence = double(trials) / (trials + c.confidence_k);
+      e.confidence = double(pairs) / (pairs + c.confidence_k);
       auto &p = graph_.relations.provisional(e);
-      p.support = trials;
+      p.support = pairs;
       p.lift = lift;
       p.last_evidence_world_tick = tick;
-      dirty_relations_.push_back(pair.second);
-      out.push_back({key.s, t, trials, key.a, probability, e.confidence, lift});
+      if (pairs >= c.consolidated_support && e.confidence >= c.consolidated_confidence)
+        graph_.relations.consolidate(pair.second);
+      if (graph_.relations.size() != before_count)
+        dirty_relations_.push_back(pair.second);
+      out.push_back({key.s, t, pairs, key.a, probability, e.confidence, lift});
     }
   }
   std::sort(out.begin(), out.end(), [](auto &a, auto &b) { return std::tie(a.source, a.target, a.action) < std::tie(b.source, b.target, b.action); });

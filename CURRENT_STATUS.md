@@ -16,19 +16,27 @@
   3,294 / 3,563**. Host times were **0.48 / 0.86 / 1.52 / 2.81 / 3.79 seconds**.
   Before the fix, Relations reached 8,490 and host windows were **0.39 / 1.11 /
   2.98 / 6.57 / 8.04 seconds**.
-- The actually-run **500 simulated-second / 3,333-action** practical soak had
-  Relations **3,563 / 6,434 / 7,006 / 7,714 / 8,298** at 100-second checkpoints.
-  It ended with **27,183 scheduler events**, **168 Cognits**, **79 Assemblies**,
-  bridge retention **256**, and queue peak **3**. Growth slowed but did not
-  plateau, so the freeze gate remains open.
+- Native idle eligibility now always uses observation ticks, independently of
+  continuous-time confidence decay. Controlled tests prove deletion at idle
+  age 101, survival at age 50 despite 1,000 elapsed seconds, and survival of an
+  old relation whose effective confidence remains above the death threshold.
+- The actually-run **1,000 simulated-second / 6,666-action** production soak
+  had Relations **3,563 / 6,434 / 7,006 / 7,714 / 8,298 / 12,351 / 13,862 /
+  16,398 / 16,494 / 16,559**. Observed deletions were zero at every 100-second
+  checkpoint; births were **3,563 / 2,871 / 572 / 708 / 584 / 4,053 / 1,511 /
+  2,536 / 96 / 65**. It ended with **54,358 scheduler events**, **304 Cognits**,
+  **87 Assemblies**, and queue peak **3**. The observation clock is now correct,
+  but default effective confidence never crossed the independent death gate,
+  so production plateau/churn is not demonstrated.
 - Scheduler peak is measured inside native `schedule()` and survives restore.
   Fixed non-plastic micro-relations may exceed plastic bounds while plastic,
   negative, NaN and infinite invalid states are rejected correctly.
-- Three successive save/load cycles, hash-seed replay, lifecycle torture,
+- Save/load across a deletion horizon, three successive save/load cycles,
+  hash-seed replay, lifecycle torture,
   v0.6.5 behavioral coupling/ablation and `full_graph_sync_calls == 0` pass.
 - The 50,000-second soak was **not run**; the manual runner remains available.
-- Focused v0.6.6: **15 passed**; combined v0.6.0-v0.6.6: **88 passed**; full
-  pytest: **403 passed**; Release build passed; CTest **2/2 passed**.
+- Focused v0.6.6: **20 passed**; combined v0.6.0-v0.6.6: **93 passed**; full
+  pytest: **408 passed**; Release build passed; CTest **2/2 passed**.
 
 ## v0.6.5 — NEURAL COGNITION -> BEHAVIOR
 

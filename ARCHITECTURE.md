@@ -41,6 +41,10 @@ planner key divergence and stale context IDs; it never repairs corruption.
 Continuous relation lifecycle uses the latest observation tick because
 Relation evidence is recorded in that domain. Maintenance ordinal remains a
 separate persisted cadence counter and is not used to compute Relation age.
+Native lifecycle likewise computes `relation_max_idle` eligibility from
+`current_evidence_tick - last_evidence_world_tick` even when continuous mode is
+enabled. Only effective-confidence decay uses elapsed simulated time. Planner
+reads, wave traversal and diagnostics do not refresh the evidence tick.
 Runtime scheduler-event and peak-queue counters are persisted in `.seworld`.
 The manual extended soak is `python -m experiments.v066_long_life`.
 
@@ -49,7 +53,9 @@ materialized `SELF_ACTION` Relation is keyed and supported by the exact
 `(source, action, target)` triple. Action-trial count is only the probability
 denominator. This prevents a target seen once in a broad active context from
 inheriting the support/confidence of every action trial. `connect()` continues
-to reuse the stable `(source, target, type, qualifier)` identity.
+to reuse the stable `(source, target, type, qualifier)` identity. Both
+`materialize_relations()` and `materialize_current()` use this statistical
+contract, and lifecycle tracking records newly created handles only.
 
 `EventScheduler` owns its lifetime queue peak and updates it at `schedule()`;
 restore accepts the persisted peak. Neural validation applies learning bounds
