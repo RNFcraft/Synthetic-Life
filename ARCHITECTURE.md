@@ -1,4 +1,4 @@
-# Synthetic Entity Architecture — v0.6.4
+# Synthetic Entity Architecture — v0.6.5
 
 Synthetic Entity is an experimental embodied cognitive architecture built around a sparse, continuously changing graph of Cognits (`κ`) and Relations (`ρ`). It is not a Transformer/LLM inference loop and does not depend on a frozen policy network. The current system learns through persistent predictive, causal, spatial, and goal-directed state that changes during interaction with the world.
 
@@ -9,7 +9,25 @@ isolated native event-driven micro-neurodynamic substrate below that architectur
 v0.6.1 adds only local plasticity and homeostasis within that substrate;
 v0.6.2 adds an observational native assembly-evidence layer; v0.6.3 adds its
 first one-way coarse bridge into the existing native Cognit graph; v0.6.4 adds
-bounded non-semantic embodied sensory transduction into that substrate.
+bounded non-semantic embodied sensory transduction into that substrate; v0.6.5
+merges resulting ordinary Cognit activity into the existing planner frontier.
+
+### Neural cognition to behavior (v0.6.5)
+
+`ContinuousCognitionFrontier.current` and its `DeliberationSession.working` set
+remain the sole planner context authority. Assembly bridge activity traverses
+the ordinary graph first. Before action commit its wave is merged into that
+frontier; an open session discards work derived from the stale context and
+resumes through the existing `PROPAGATE`, `IMAGINE`, and `PLAN_REFINE` stages.
+After commit the chosen action is immutable and bridge activity can contribute
+only to subsequent ordinary transition context.
+
+With embodied neural input enabled, the cognition wake for a SensoryFrame is
+scheduled at the next representable time after its neural frontier. Scheduler
+time and sequence therefore order every causal bridge delivery before the
+decision without callbacks or polling. The ablation flag gates only the merge:
+it does not alter the World, graph, physiology, Goal, RNG, or learned Relations.
+No component below the ordinary Cognit graph imports or encodes ActionType.
 
 ### Embodied sensory transduction (v0.6.4)
 

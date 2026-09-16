@@ -2,7 +2,7 @@
 
 Synthetic-Life is an experimental embodied cognitive architecture built around a sparse, continuously changing graph of Cognits (`κ`) and Relations (`ρ`). The project is not an LLM/Transformer inference wrapper and does not use a frozen policy network as its learned core. Learning, prediction, memory, goals and action selection evolve during interaction with the World.
 
-The current development line is **v0.6.4**.
+The current development line is **v0.6.5**.
 
 Current accepted gates:
 
@@ -14,6 +14,23 @@ Current accepted gates:
 
 See [ARCHITECTURE.md](ARCHITECTURE.md) for the full architecture and [CURRENT_STATUS.md](CURRENT_STATUS.md) for the latest acceptance state.
 
+## v0.6.5 neural cognition to behavior
+
+Experience-derived Assembly Cognits can now participate causally in ordinary
+cognition and existing planner decisions. A coarse bridge event is propagated
+through ordinary Relations and merged into the single continuous cognition
+frontier. If deliberation is already open, its stale candidate is invalidated
+and the normal propagation/imagination/search work chain is rebuilt. An action
+that is already committed is never revised.
+
+For sensory-neural runs, planner wake occurs just after that frame's neural
+frontier, making the ordering independent of host `run_until` batching. The
+research-only `neural_behavioral_participation` ablation keeps the same World,
+neural representation, graph and Goal while suppressing only this frontier
+contribution. There is no Assembly-to-action table, neural planner, reward,
+Goal, or Cognit-to-neural feedback. The feature remains inert when
+`sensory_neural_enabled=False`.
+
 ## v0.6.4 embodied sensory transduction
 
 With `sensory_neural_enabled=True`, each real `SensoryFrame` is encoded by a
@@ -24,8 +41,8 @@ inputs. Ordinary micro-neural dynamics and the existing Assembly/Cognit bridge
 do the remaining work. No object identity, label, Goal or action meaning enters
 the encoder.
 
-This milestone does **not** provide object understanding or neural control of
-behavior. A resulting Assembly is an experience-derived representation with no
+This milestone does **not** provide object understanding or innate neural
+action meaning. A resulting Assembly is an experience-derived representation with no
 innate semantic meaning. The feature is disabled by default to preserve the
 frozen baseline. All receptors from one frame share its exact timestamp, so
 Python cell order cannot create temporal evidence. v0.6.4 focused tests are

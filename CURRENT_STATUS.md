@@ -742,3 +742,22 @@ Event/count state retained:
 - Normal native Python physical World calls: **0 / PASS**
 - Render sampling invariance: **PASS**
 - Long 5K/10K benchmarks were not run.
+# v0.6.5 — NEURAL COGNITION -> BEHAVIOR
+
+- Assembly-derived Cognits now enter the authoritative continuous cognition
+  frontier and the existing planner work chain through ordinary graph waves.
+- Same-time/open-frontier rule: merge before commit, invalidate stale candidate
+  work, and deterministically resume normal planning; committed actions remain
+  immutable.
+- Sensory-neural planner wake is causally ordered just after the frame's neural
+  frontier. No polling, neural planner, direct action mapping, reward, special
+  Goal, or Cognit-to-neural feedback was added.
+- `neural_behavioral_participation` provides a clean research ablation while
+  retaining the same neural physiology and learned graph.
+- Ordinary relation removal eliminates its downstream planner-visible effect;
+  restoring the relation restores that effect. Lifecycle deletion removes IDs
+  from previous, frontier, session, recall and dirty contexts.
+- Existing action-conditioned transition learning accepts these Cognits as
+  ordinary context participants. This milestone does not claim learned value,
+  motivation, object understanding, or a new reinforcement subsystem.
+- Focused v0.6.5 tests: **5 passed**. Full pytest: **383 passed**.

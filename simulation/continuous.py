@@ -43,7 +43,9 @@ class ContinuousRuntime:
             self._legacy_monolithic_frontier=False;self.cognition_generation+=1;generation=self.cognition_generation;self.last_frame=self.simulation.world.perceive(self.observation_ordinal);self.observation_ordinal+=1
             if self.neural_sensory is not None:
                 _,neural_frontier=self.neural_sensory.transduce(self.last_frame,now);self.advance_neural_to(neural_frontier,True)
-            self.simulation.core.begin_continuous_observation(self.last_frame,now,generation);self.scheduler.schedule(now,RuntimeEventType.COGNITION_WAKE,generation)
+            self.simulation.core.begin_continuous_observation(self.last_frame,now,generation)
+            if self.neural_sensory is not None and self.simulation.settings.neural_behavioral_participation:self.scheduler.schedule(math.nextafter(neural_frontier,math.inf),RuntimeEventType.COGNITION_WAKE,generation)
+            else:self.scheduler.schedule(now,RuntimeEventType.COGNITION_WAKE,generation)
         elif kind==RuntimeEventType.COGNITION_WAKE:
             if self._legacy_monolithic_frontier:
                 self._legacy_monolithic_frontier=False;self.cognition_wakes+=1;action=self.simulation.core.deliberate(self.last_frame);self.scheduler.schedule(now+self.ACTION_DURATION,RuntimeEventType.WORLD_ACTION_COMPLETE,action.kind.value);return
@@ -60,6 +62,8 @@ class ContinuousRuntime:
         elif kind==RuntimeEventType.NEURAL_BRIDGE:
             if not event.payload:
                 rows=self.simulation.core.process_continuous_assembly_bridge(now);self.neural_bridge_deliveries.extend(rows)
+                frontier=self.simulation.core.continuous_frontier
+                if frontier is not None and frontier.phase=="DELIBERATING" and frontier.session is not None and not any(e.type==RuntimeEventType.COGNITION_CONTINUE and e.payload==frontier.generation for e in self.scheduler.snapshot()):self.scheduler.schedule(now,RuntimeEventType.COGNITION_CONTINUE,frontier.generation)
             self._schedule_next_neural_bridge()
         elif kind==RuntimeEventType.WORLD_ACTION_COMPLETE:
             action=Action(ActionType(event.payload));physical_sequence=self.simulation.event_sequence.next();intent=ActionIntent(action,WorldTime(now),physical_sequence);self.simulation.world.apply_intent(intent);self.simulation.last_action=action;self.actions_completed+=1;self.scheduler.schedule(now,RuntimeEventType.SENSORY_CHANGE)
@@ -171,7 +175,7 @@ class ContinuousRuntime:
     def scheduler_state(self):
         state={"now":self.world_time,"next_id":self.scheduler.next_id,"events":[[e.time,e.id,e.type.name,e.payload] for e in self.scheduler.snapshot()],"neural_target_time":self._neural_target_time,"neurodynamic":self.simulation.core.backend.engine.neurodynamic_substrate().snapshot()}
         if self.neural_sensory is not None:state["neural_sensory_telemetry"]=[self.neural_sensory.telemetry.sensory_frames_transduced,self.neural_sensory.telemetry.sensory_receptor_events,self.neural_sensory.telemetry.active_receptors]
-        if self.neural_sensory is not None:state["neural_sensory_config"]={name:getattr(self.simulation.settings,name) for name in ("sensory_neural_enabled","perception_radius","sensory_neural_channel_bins","sensory_neural_max_receptors","sensory_neural_max_injections_per_frame","sensory_neural_input_amplitude")}
+        if self.neural_sensory is not None:state["neural_sensory_config"]={name:getattr(self.simulation.settings,name) for name in ("sensory_neural_enabled","neural_behavioral_participation","perception_radius","sensory_neural_channel_bins","sensory_neural_max_receptors","sensory_neural_max_injections_per_frame","sensory_neural_input_amplitude")}
         return state
     @staticmethod
     def _language_result_dict(result):return {"symbol_id":result.symbol_id,"wave":[sorted(result.wave.active_ids),result.wave.energy,result.wave.steps,result.wave.transmitted_energy],"candidates":result.grounding_candidates_updated,"created":result.grounding_relations_materialized}

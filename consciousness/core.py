@@ -209,7 +209,14 @@ class SyntheticEntityCore:
             if not event_rows:break
             rows.extend(event_rows);births+=sum(row[5] for row in event_rows)
             if active:
-                wave=self._propagate(active,self.cognitive_tick);self.last_wave=wave;self.dirty_cognits.update(wave.active_ids);self.previous_active=set(wave.active_ids);self.previous_context=wave.active_ids
+                wave=self._propagate(active,self.cognitive_tick);self.last_wave=wave;self.dirty_cognits.update(wave.active_ids)
+                if self.settings.neural_behavioral_participation:
+                    f=self.continuous_frontier
+                    if f is not None and not f.committed and f.phase in {"OBSERVED","DELIBERATING","QUIESCENT"}:
+                        f.current.update(i for i in wave.active_ids if i in self.graph.nodes)
+                        if f.session is not None:self.planner.merge_context(self,f.session,set(wave.active_ids));f.phase="DELIBERATING"
+                    else:
+                        self.previous_active.update(wave.active_ids);self.previous_context=frozenset(self.previous_active)
         self.backend.begin_continuous_time(world_time)
         return tuple(rows)
 
@@ -522,4 +529,10 @@ class SyntheticEntityCore:
                 if node.pattern.selectivity_trials:self._selectivity_sum-=node.pattern.match_selectivity;self._selectivity_count-=1
                 self.pattern_nodes.pop(node.pattern.signature,None)
                 for p in node.pattern.participants:self.primitive_index[p].discard(node_id)
+            self.previous_active.discard(node_id);self.previous_context=frozenset(i for i in self.previous_context if i!=node_id);self.dirty_cognits.discard(node_id)
+            f=self.continuous_frontier
+            if f is not None:
+                f.current.discard(node_id)
+                if f.session is not None:
+                    f.session.working.discard(node_id);f.session.last_recalled=frozenset(i for i in f.session.last_recalled if i!=node_id)
             self.graph.remove_cognit(node_id);self.language.on_cognit_deleted(node_id);self.events.append(f"COGNIT_DELETED κ{node_id}")

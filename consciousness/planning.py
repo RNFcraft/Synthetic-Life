@@ -72,6 +72,15 @@ class DeliberativePlanner:
         goal=core.state.goal;key=(goal.id if goal else None,tuple(goal.target_cognit_ids) if goal else (),session.working_revision)
         if key!=session.last_recall_key:self._enqueue(session,CognitiveWork(CognitiveWorkKind.RECALL,key))
 
+    def merge_context(self,core,session:DeliberationSession,active:set[int])->bool:
+        """Refine an open session after an ordinary Cognit event."""
+        live={i for i in active if i in core.graph.nodes}
+        if session.finalized or live.issubset(session.working):return False
+        session.working.update(live);session.working_revision+=1;session.candidate=None;session.quiescent=False
+        session.pending_work.clear();session.pending_keys.clear()
+        seeds=tuple(sorted(session.working));self._enqueue(session,CognitiveWork(CognitiveWorkKind.PROPAGATE,(session.working_revision,seeds),seeds));self.converged=False
+        return True
+
     def continue_continuous(self,core,session:DeliberationSession)->bool:
         if session.finalized:raise RuntimeError("continuous deliberation session already finalized")
         if session.quiescent:return True

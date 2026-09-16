@@ -13,6 +13,9 @@ class Settings:
     # v0.6.4 optional embodied neural sensory physiology. Disabled preserves
     # the frozen pre-v0.6.4 behavioral baseline.
     sensory_neural_enabled: bool = False
+    # Research ablation: keep neural physiology but suppress its contribution
+    # to the ordinary cognition/planner frontier.
+    neural_behavioral_participation: bool = True
     sensory_neural_channel_bins: int = 16
     sensory_neural_max_receptors: int = 8192
     sensory_neural_max_injections_per_frame: int = 512
