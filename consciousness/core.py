@@ -241,7 +241,11 @@ class SyntheticEntityCore:
         """Bounded lifecycle transaction, driven by absolute-time runtime timers."""
         self.world_time_seconds=float(world_time);self.memory.set_world_time(world_time)
         if self.backend:self.backend.begin_continuous_time(world_time)
-        self._prune(maintenance_ordinal)
+        # Relations record evidence in observation/frame ticks. Maintenance has
+        # its own slower ordinal, so comparing the two made relation age
+        # permanently negative in continuous runs.
+        relation_tick=self.continuous_frontier.frame.tick if self.continuous_frontier is not None else maintenance_ordinal
+        self._prune(relation_tick)
 
     def deliberate(self,frame:SensoryFrame)->Action:
         """Advance bounded internal recall/planning without another World observation."""

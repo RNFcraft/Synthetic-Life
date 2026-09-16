@@ -1,4 +1,4 @@
-# Synthetic Entity Architecture — v0.6.5
+# Synthetic Entity Architecture — v0.6.6
 
 Synthetic Entity is an experimental embodied cognitive architecture built around a sparse, continuously changing graph of Cognits (`κ`) and Relations (`ρ`). It is not a Transformer/LLM inference loop and does not depend on a frozen policy network. The current system learns through persistent predictive, causal, spatial, and goal-directed state that changes during interaction with the world.
 
@@ -28,6 +28,21 @@ time and sequence therefore order every causal bridge delivery before the
 decision without callbacks or polling. The ablation flag gates only the merge:
 it does not alter the World, graph, physiology, Goal, RNG, or learned Relations.
 No component below the ordinary Cognit graph imports or encodes ActionType.
+
+### Long-life validation (v0.6.6)
+
+`LongLifeDiagnostics` samples existing runtime/native authorities without
+creating a mirror: scheduler workload and queue peak, Cognit/Relation and
+Assembly counts, bridge retention, planner work, memory/percept/composite
+counts, neural events and `full_graph_sync_calls`. `validate_long_life_state`
+fails on non-finite neural values, invalid weights/times, past scheduler work,
+planner key divergence and stale context IDs; it never repairs corruption.
+
+Continuous relation lifecycle uses the latest observation tick because
+Relation evidence is recorded in that domain. Maintenance ordinal remains a
+separate persisted cadence counter and is not used to compute Relation age.
+Runtime scheduler-event and peak-queue counters are persisted in `.seworld`.
+The manual extended soak is `python -m experiments.v066_long_life`.
 
 ### Embodied sensory transduction (v0.6.4)
 

@@ -1,4 +1,36 @@
-# Synthetic Entity v0.6.5 — Current Status
+# Synthetic Entity v0.6.6 — Current Status
+
+## v0.6.6 — LONG-LIFE STABILIZATION
+
+**PROVISIONAL — CI endurance and persistence gates pass, but default-workload performance stabilization is not yet proven.**
+
+- Production soak actually run: **100 simulated seconds**, **666 completed
+  actions**, **5,445 scheduler events**, **8,512 neural events**, peak scheduler
+  queue **3**.
+- End state/peaks: Cognits **182/182**, Relations **8,490/8,490**, Assemblies
+  **74/74**, Assembly candidate records **32**, bridge log **230/230**,
+  composite candidates **84**, planner pending work **0**.
+- Neural numeric validation, weight bounds, event chronology, one-action commit,
+  deterministic replay, irregular host batching, silence and stale-ID checks pass.
+- Three successive `.seworld` save/load cycles match causal, neural, Assembly,
+  planner, scheduler, World and action state. Lazy Cognit numeric round-off is
+  bounded to `1.11e-16` (test limit `2e-15`) and does not alter replay.
+- Lifecycle torture deletes a neural Cognit, clears all contexts/Relations and
+  Assembly mapping, then real recurrence creates a new monotonic Cognit ID.
+- Root-cause fix: continuous relation maintenance compared observation-tick
+  evidence with maintenance ordinal, preventing stale aging. It now uses the
+  current `SensoryFrame.tick` domain.
+- Equal 20-second host windows measured approximately **0.39, 1.11, 2.98,
+  6.57, 8.04 seconds** while Relations grew **461 → 8,490**. This is bounded by
+  existing graph limits but is material structural performance drift, so the
+  freeze gate is not closed.
+- Snapshot sizes in a stable recurring World remained within 10% over the
+  measured 8/16/24-second checkpoints; representation growth per window was
+  bounded and Assembly/Cognit identities were reused.
+- Extended 50,000-second/10,000-action soak: **not run**. A manual runner is
+  available at `experiments/v066_long_life.py`.
+- Focused v0.6.6: **12 passed**; combined v0.6.0-v0.6.6: **85 passed**; full
+  pytest: **400 passed**; `full_graph_sync_calls == 0`.
 
 ## v0.6.5 — NEURAL COGNITION -> BEHAVIOR
 

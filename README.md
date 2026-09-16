@@ -2,7 +2,7 @@
 
 Synthetic-Life is an experimental embodied cognitive architecture built around a sparse, continuously changing graph of Cognits (`κ`) and Relations (`ρ`). The project is not an LLM/Transformer inference wrapper and does not use a frozen policy network as its learned core. Learning, prediction, memory, goals and action selection evolve during interaction with the World.
 
-The current development line is **v0.6.5**.
+The current development line is **v0.6.6**.
 
 Current accepted gates:
 
@@ -13,6 +13,25 @@ Current accepted gates:
 - **NATIVE C++ SDL3/OPENGL OBSERVER — PASS**
 
 See [ARCHITECTURE.md](ARCHITECTURE.md) for the full architecture and [CURRENT_STATUS.md](CURRENT_STATUS.md) for the latest acceptance state.
+
+## v0.6.6 long-life stabilization
+
+v0.6.6 adds no intelligence capability. It adds read-only long-life diagnostics,
+numeric corruption checks, exact scheduler workload counters, CI soak and
+repeated-persistence tests, plus a manual extended-soak runner. The existing
+embodied neural-cognitive-action loop is validated for deterministic bounded
+execution over the CI soak and repeated save/load windows.
+
+The first endurance pass also fixed a continuous lifecycle clock-domain bug:
+Relations record evidence in observation ticks, but maintenance previously
+compared those values with its slower maintenance ordinal, so their apparent
+age could remain negative indefinitely. Maintenance now uses the current
+observation tick for relation lifecycle decisions.
+
+The milestone remains provisional: the measured default 100-second production
+run completed 666 actions without corruption, but graph growth caused a clear
+host-time increase across equal simulated-time windows. The manual 50,000-second
+extended soak has not been run.
 
 ## v0.6.5 neural cognition to behavior
 
