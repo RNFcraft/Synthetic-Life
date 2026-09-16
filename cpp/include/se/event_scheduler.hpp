@@ -11,10 +11,10 @@ class EventScheduler {
   std::uint64_t schedule(double time,RuntimeEventType type,std::uint64_t payload=0);
   std::vector<RuntimeEvent> pop_ready(double through_time);
   std::vector<RuntimeEvent> snapshot()const;
-  void restore(double now,std::uint64_t next_id,const std::vector<RuntimeEvent>&events);
-  double now()const noexcept{return now_;}std::uint64_t next_id()const noexcept{return next_id_;}std::size_t size()const noexcept{return queue_.size();}
+  void restore(double now,std::uint64_t next_id,const std::vector<RuntimeEvent>&events,std::size_t peak_size=0);
+  double now()const noexcept{return now_;}std::uint64_t next_id()const noexcept{return next_id_;}std::size_t size()const noexcept{return queue_.size();}std::size_t peak_size()const noexcept{return peak_size_;}
  private:
   struct Later {bool operator()(const RuntimeEvent&a,const RuntimeEvent&b)const noexcept{return a.time>b.time||(a.time==b.time&&a.id>b.id);}};
-  double now_{};std::uint64_t next_id_{1};std::priority_queue<RuntimeEvent,std::vector<RuntimeEvent>,Later>queue_;
+  double now_{};std::uint64_t next_id_{1};std::size_t peak_size_{};std::priority_queue<RuntimeEvent,std::vector<RuntimeEvent>,Later>queue_;
 };
 }

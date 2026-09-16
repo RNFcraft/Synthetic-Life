@@ -44,6 +44,18 @@ separate persisted cadence counter and is not used to compute Relation age.
 Runtime scheduler-event and peak-queue counters are persisted in `.seworld`.
 The manual extended soak is `python -m experiments.v066_long_life`.
 
+Native transition evidence is a bounded Cartesian observation table, but a
+materialized `SELF_ACTION` Relation is keyed and supported by the exact
+`(source, action, target)` triple. Action-trial count is only the probability
+denominator. This prevents a target seen once in a broad active context from
+inheriting the support/confidence of every action trial. `connect()` continues
+to reuse the stable `(source, target, type, qualifier)` identity.
+
+`EventScheduler` owns its lifetime queue peak and updates it at `schedule()`;
+restore accepts the persisted peak. Neural validation applies learning bounds
+only to plastic micro-relations. Fixed micro-relations may exceed those bounds
+but must remain finite and nonnegative, preserving v0.6.1 semantics.
+
 ### Embodied sensory transduction (v0.6.4)
 
 When explicitly enabled, a deterministic receptor bank is constructed from the

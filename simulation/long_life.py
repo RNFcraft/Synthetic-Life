@@ -31,7 +31,8 @@ def validate_long_life_state(runtime):
     if not math.isfinite(float(neural["now"])):raise AssertionError("non-finite neural time")
     for name in ("last_update","refractory_until","last_spike","trace_last_update","homeostasis_last_update"):
         if any(not math.isfinite(float(value)) and float(value)!=float("-inf") for value in neural[name]):raise AssertionError(f"invalid neural time sentinel in {name}")
-    if any(weight<neural["weight_min"] or weight>neural["weight_max"] for weight in neural["weight"]):raise AssertionError("neural weight outside configured bounds")
+    for weight,plastic in zip(neural["weight"],neural["plasticity_enabled"]):
+        if weight<0 or (plastic and (weight<neural["weight_min"] or weight>neural["weight_max"])):raise AssertionError("neural weight outside configured bounds")
     if any(float(row[0])<neural["now"] for row in neural["pending"]):raise AssertionError("pending neural event is in the past")
     events=runtime.scheduler.snapshot()
     if any(not math.isfinite(event.time) or event.time<runtime.world_time for event in events):raise AssertionError("scheduler event is non-finite or in the past")

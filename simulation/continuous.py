@@ -34,7 +34,7 @@ class ContinuousRuntime:
         if first is not None:self.scheduler.schedule(float(first),RuntimeEventType.WORLD_SPAWN)
         interval=self.simulation.settings.continuous_maintenance_interval_seconds
         if interval<=0:raise ValueError("continuous maintenance interval must be positive")
-        self.scheduler.schedule(float(interval),RuntimeEventType.MAINTENANCE);self.scheduler.schedule(0.,RuntimeEventType.SENSORY_CHANGE);self.peak_scheduler_queue=self.scheduler.size
+        self.scheduler.schedule(float(interval),RuntimeEventType.MAINTENANCE);self.scheduler.schedule(0.,RuntimeEventType.SENSORY_CHANGE);self.peak_scheduler_queue=self.scheduler.peak_size
     @property
     def world_time(self):return self.scheduler.now
     def _process(self,event):
@@ -143,6 +143,7 @@ class ContinuousRuntime:
     def run_until(self,until,guard=100000):
         processed=0
         while self.scheduler.size:
+            self.peak_scheduler_queue=max(self.peak_scheduler_queue,self.scheduler.peak_size)
             first=self.scheduler.snapshot()[0]
             if first.time>until:break
             for event in self.scheduler.pop_ready(first.time):
@@ -155,6 +156,7 @@ class ContinuousRuntime:
     def run_to_quiescence(self,guard=100000):
         processed=0;now=self.world_time
         while self.scheduler.size and self.scheduler.snapshot()[0].time<=now:
+            self.peak_scheduler_queue=max(self.peak_scheduler_queue,self.scheduler.peak_size)
             for event in self.scheduler.pop_ready(now):
                 self._process(event)
                 self.scheduler_events_processed+=1;self.peak_scheduler_queue=max(self.peak_scheduler_queue,self.scheduler.size)
@@ -207,6 +209,7 @@ class ContinuousRuntime:
         cognition_data=None if cognition is None else {"generation":cognition.generation,"world_time":cognition.world_time,"current":sorted(cognition.current),"track_ids":list(cognition.track_ids),"phase":cognition.phase,"action":None if cognition.action is None else cognition.action.name,"committed":cognition.committed,"session":None if cognition.session is None else c.planner.session_to_dict(cognition.session)}
         return {"frame":None if f is None else {"tick":f.tick,"radius":f.radius,"cells":[[x.relative_x,x.relative_y,x.occupied,x.state_channel,x.boundary,x.self_present,x.appearance_channel] for x in f.cells],"body":[f.body.touch_up,f.body.touch_down,f.body.touch_left,f.body.touch_right,f.body.holding,f.body.action_resistance]},"wave":[sorted(w.active_ids),w.energy,w.steps,w.transmitted_energy],"primitives":[[p.relative_x,p.relative_y,p.channel,p.value,p.previous_value,p.change.name] for p in events],"state":{name:getattr(s,name) for name in names},"tie_set":[x.name for x in s.tie_set],"action_scores":[[a.name,v] for a,v in s.action_scores.items()],"futures":[[a.name,asdict(v)] for a,v in s.futures.items()],"cognition":cognition_data}
     def save_world(self,path):
+        self.peak_scheduler_queue=max(self.peak_scheduler_queue,self.scheduler.peak_size)
         native_time,native_sequence=self.simulation.world.native.time_state();self.simulation.world_time=WorldTime(native_time);self.simulation.event_sequence=EventSequence(native_sequence)
         state=self.simulation.snapshot_data(semantic_graph=True)
         fd,tmp=tempfile.mkstemp(suffix=".native");os.close(fd)
@@ -231,6 +234,7 @@ class ContinuousRuntime:
             engine=sim.core.backend.engine;engine.load_graph(tmp);engine.restore_transition_history(data["CONT"].get("transition_history",[]));engine.restore_homeostasis_runtime_state(*data["CONT"]["homeostasis"]);engine.restore_continuous_time_state(*data["CONT"].get("elapsed_cognits",[False,0.0,0.0,[-1.0]*engine.cognit_count,[-1.0]*engine.cognit_count,[.25]*engine.cognit_count,0]));engine.restore_continuous_relation_time_state(*data["CONT"].get("elapsed_relations",[[],0]));engine.restore_dirty_relation_state(data["CONT"]["dirty_relations"]);sim.core.backend.invalidate_state()
         finally:os.unlink(tmp)
         obj=cls.__new__(cls);obj.simulation=sim;obj.scheduler=EventScheduler();cont=data["CONT"];s=cont["scheduler"];events=[RuntimeEvent(t,i,getattr(RuntimeEventType,name),p) for t,i,name,p in s["events"]];obj.scheduler.restore(s["now"],s["next_id"],events);obj.observation_ordinal=cont["observation_ordinal"];obj.actions_completed=cont["actions_completed"];obj.cognition_wakes=cont["cognition_wakes"];obj.cognition_continuations=cont.get("cognition_continuations",0);obj.cognition_generation=cont.get("cognition_generation",0);obj.maintenance_ordinal=cont.get("maintenance_ordinal",0);obj.scheduler_events_processed=cont.get("scheduler_events_processed",0);obj.peak_scheduler_queue=cont.get("peak_scheduler_queue",len(events));obj._legacy_monolithic_frontier=cont.get("legacy_monolithic_frontier",data["META"].get("version",1)<2 and any(e.type==RuntimeEventType.COGNITION_WAKE for e in events));language=cont.get("language",{});from consciousness.language import LanguageLexicon;sim.core.language=LanguageLexicon.from_dict(sim.core,language.get("lexicon",{}));sim.core.grounding_context.restore_durable(language.get("grounding",{}));sim.core.language.restore_legacy_grounding(sim.core.grounding_context);sim.core.grounding_context.restore_episode(language.get("context",{}));obj.next_language_message_id=int(language.get("next_message_id",1));obj.language_inbox=obj._inbox_load(language.get("inbox",[]));obj.language_utterances_processed=int(language.get("utterances_processed",0));obj.language_tokens_processed=int(language.get("tokens_processed",0));obj.language_frontier=None;obj.last_utterance_result=None;obj.neural_bridge_deliveries=[]
+        obj.scheduler.restore(s["now"],s["next_id"],events,obj.peak_scheduler_queue)
         obj._neural_target_time=s.get("neural_target_time")
         if "neurodynamic" in s:engine.neurodynamic_substrate().restore(s["neurodynamic"])
         obj.neural_sensory=NeuralSensoryTransducer(sim.settings,engine.neurodynamic_substrate()) if sim.settings.sensory_neural_enabled else None

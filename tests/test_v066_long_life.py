@@ -4,6 +4,7 @@ import pytest
 
 from config import Settings
 from consciousness.native_engine import EventScheduler,RuntimeEventType
+from consciousness._native_brain import MicroPolarity,NeurodynamicSubstrate
 from consciousness.core import ContinuousCognitionFrontier,SyntheticEntityCore
 from consciousness.relation import RelationStatus
 from simulation.continuous import ContinuousRuntime
@@ -127,3 +128,32 @@ def test_continuous_relation_lifecycle_uses_observation_tick_domain():
     source,target=core.graph.add_cognit().id,core.graph.add_cognit().id;relation,_=core.graph.connect(source,target);relation.confidence=.1;relation.last_evidence_world_tick=100
     frame=SensoryFrame(192,4,(),BodySense(False,False,False,False,False,0.));core.continuous_frontier=ContinuousCognitionFrontier(1,1.,frame,set(),())
     core.continuous_maintenance(1.,1);assert core.graph.relation_count==0
+
+
+def test_scheduler_peak_counts_same_time_batch_and_restore():
+    scheduler=EventScheduler()
+    for payload in range(50):scheduler.schedule(1.,RuntimeEventType.EXTERNAL_INPUT,payload)
+    assert scheduler.peak_size==50
+    events=scheduler.snapshot();scheduler.pop_ready(1.);scheduler.restore(1.,scheduler.next_id,[],50)
+    assert len(events)==50 and scheduler.peak_size==50
+
+
+def test_long_life_validator_respects_fixed_and_plastic_weight_contract():
+    runtime=_runtime(6612);substrate=NeurodynamicSubstrate(weight_min=.2,weight_max=1.)
+    a=substrate.add_micro_kappa();b=substrate.add_micro_kappa()
+    substrate.add_micro_rho(a,b,2.,1.,MicroPolarity.EXCITATORY,False)
+    runtime.simulation.core.backend.engine.neurodynamic_substrate().restore(substrate.snapshot())
+    assert validate_long_life_state(runtime)
+    for weight,plastic in ((2.,True),(-.1,False),(float("nan"),False),(float("inf"),False)):
+        bad=substrate.snapshot();bad["weight"][0]=weight;bad["plasticity_enabled"][0]=plastic
+        with pytest.raises((ValueError,AssertionError)):runtime.simulation.core.backend.engine.neurodynamic_substrate().restore(bad)
+
+
+def test_repeated_identical_transition_reuses_relation_identity():
+    runtime=ContinuousRuntime(6613,replace(Settings(),relation_provisional_support=1,relation_provisional_lift=0.));core=runtime.simulation.core
+    source,target=core.graph.add_cognit().id,core.graph.add_cognit().id;engine=core.backend.engine
+    for tick in range(1_000):
+        engine.update_transition_evidence([source-1],ActionType.IDLE.value,[target-1])
+        engine.materialize_current(core.backend.evidence_config,tick,[source-1],ActionType.IDLE.value,[target-1],16,16_384,.999)
+    rows=[r for r in core.graph.adjacency[source].values() if r.target_id==target]
+    assert len(rows)==2

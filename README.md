@@ -28,10 +28,20 @@ compared those values with its slower maintenance ordinal, so their apparent
 age could remain negative indefinitely. Maintenance now uses the current
 observation tick for relation lifecycle decisions.
 
-The milestone remains provisional: the measured default 100-second production
-run completed 666 actions without corruption, but graph growth caused a clear
-host-time increase across equal simulated-time windows. The manual 50,000-second
-extended soak has not been run.
+The closure pass identified a second, independent proliferation bug in native
+`SELF_ACTION` materialization: confidence and support for a specific
+`(source, action, target)` edge were taken from all trials of `(source, action)`.
+The edge now requires support from its exact triple. Logical relation identity
+remains stable, and useful repeated evidence still strengthens the same edge.
+Scheduler queue peak is now recorded authoritatively at native `schedule()` and
+preserved by restore; fixed non-plastic micro-relations are validated against
+their nonnegative finite contract rather than plastic learning bounds.
+
+The milestone remains provisional. The corrected 100-second production run
+completed 666 actions and reduced final Relations from 8,490 to 3,563, but the
+actually-run 500-second soak still grew from 3,563 to 8,298 Relations rather
+than reaching a convincing plateau. The manual 50,000-second extended soak has
+not been run.
 
 ## v0.6.5 neural cognition to behavior
 

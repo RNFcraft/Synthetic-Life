@@ -1246,7 +1246,9 @@ std::vector<MaterializedRelation> NativeBrainEngine::materialize_current(const E
       double probability = conditioned ? double(action_support(s, action, t)) / std::max(1u, trials) : conditional;
       double baseline = conditioned ? conditional : double(target_counts_.at(t)) / std::max<std::uint64_t>(1, evidence_steps_);
       double lift = probability / std::max(baseline, 1e-9);
-      auto support_count = conditioned ? trials : count;
+      // Support belongs to this exact (source, action, target) triple. Action
+      // trials are its denominator, not evidence that this target occurred.
+      auto support_count = conditioned ? action_support(s, action, t) : count;
       if (support_count < c.minimum_support || lift < c.minimum_lift)
         continue;
       RelationHandle h;

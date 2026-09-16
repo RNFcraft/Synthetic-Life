@@ -2,35 +2,33 @@
 
 ## v0.6.6 — LONG-LIFE STABILIZATION
 
-**PROVISIONAL — CI endurance and persistence gates pass, but default-workload performance stabilization is not yet proven.**
+**PROVISIONAL — correctness and persistence gates pass, but Relation growth did not reach the required plateau.**
 
-- Production soak actually run: **100 simulated seconds**, **666 completed
-  actions**, **5,445 scheduler events**, **8,512 neural events**, peak scheduler
-  queue **3**.
-- End state/peaks: Cognits **182/182**, Relations **8,490/8,490**, Assemblies
-  **74/74**, Assembly candidate records **32**, bridge log **230/230**,
-  composite candidates **84**, planner pending work **0**.
-- Neural numeric validation, weight bounds, event chronology, one-action commit,
-  deterministic replay, irregular host batching, silence and stale-ID checks pass.
-- Three successive `.seworld` save/load cycles match causal, neural, Assembly,
-  planner, scheduler, World and action state. Lazy Cognit numeric round-off is
-  bounded to `1.11e-16` (test limit `2e-15`) and does not alter replay.
-- Lifecycle torture deletes a neural Cognit, clears all contexts/Relations and
-  Assembly mapping, then real recurrence creates a new monotonic Cognit ID.
-- Root-cause fix: continuous relation maintenance compared observation-tick
-  evidence with maintenance ordinal, preventing stale aging. It now uses the
-  current `SensoryFrame.tick` domain.
-- Equal 20-second host windows measured approximately **0.39, 1.11, 2.98,
-  6.57, 8.04 seconds** while Relations grew **461 → 8,490**. This is bounded by
-  existing graph limits but is material structural performance drift, so the
-  freeze gate is not closed.
-- Snapshot sizes in a stable recurring World remained within 10% over the
-  measured 8/16/24-second checkpoints; representation growth per window was
-  bounded and Assembly/Cognit identities were reused.
-- Extended 50,000-second/10,000-action soak: **not run**. A manual runner is
-  available at `experiments/v066_long_life.py`.
-- Focused v0.6.6: **12 passed**; combined v0.6.0-v0.6.6: **85 passed**; full
-  pytest: **400 passed**; `full_graph_sync_calls == 0`.
+- The corrected 100-second production soak completed **666 actions** and
+  **5,442 scheduler events**. Peak scheduler queue was **3**; final Cognits,
+  Relations and Assemblies were **118**, **3,563** and **63**.
+- Native `SELF_ACTION` materialization incorrectly used every action trial as
+  support for each specific `(source, action, target)` edge. Exact triple
+  support is now used. The stable logical identity is reused under 1,000
+  repeated observations instead of creating duplicates.
+- Corrected 20-second windows had Relation births **336 / 945 / 1,032 / 981 /
+  269**, deletions **0 / 0 / 0 / 0 / 0**, and live counts **336 / 1,281 / 2,313 /
+  3,294 / 3,563**. Host times were **0.48 / 0.86 / 1.52 / 2.81 / 3.79 seconds**.
+  Before the fix, Relations reached 8,490 and host windows were **0.39 / 1.11 /
+  2.98 / 6.57 / 8.04 seconds**.
+- The actually-run **500 simulated-second / 3,333-action** practical soak had
+  Relations **3,563 / 6,434 / 7,006 / 7,714 / 8,298** at 100-second checkpoints.
+  It ended with **27,183 scheduler events**, **168 Cognits**, **79 Assemblies**,
+  bridge retention **256**, and queue peak **3**. Growth slowed but did not
+  plateau, so the freeze gate remains open.
+- Scheduler peak is measured inside native `schedule()` and survives restore.
+  Fixed non-plastic micro-relations may exceed plastic bounds while plastic,
+  negative, NaN and infinite invalid states are rejected correctly.
+- Three successive save/load cycles, hash-seed replay, lifecycle torture,
+  v0.6.5 behavioral coupling/ablation and `full_graph_sync_calls == 0` pass.
+- The 50,000-second soak was **not run**; the manual runner remains available.
+- Focused v0.6.6: **15 passed**; combined v0.6.0-v0.6.6: **88 passed**; full
+  pytest: **403 passed**; Release build passed; CTest **2/2 passed**.
 
 ## v0.6.5 — NEURAL COGNITION -> BEHAVIOR
 
