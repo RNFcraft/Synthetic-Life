@@ -1,4 +1,33 @@
-# Synthetic Entity v0.6.4 — Current Status
+# Synthetic Entity v0.6.5 — Current Status
+
+## v0.6.5 — NEURAL COGNITION -> BEHAVIOR
+
+**PASS — experience-derived neural Cognits can participate causally in ordinary cognition and existing planner decisions.**
+
+**v0.6.5: FROZEN**
+
+- A production `World -> SENSORY_CHANGE -> SensoryFrame -> receptor -> micro-neural
+  dynamics -> Assembly -> Cognit -> frontier -> planner -> Action` test births
+  the source Cognit without direct Cognit or Assembly injection.
+- The only behavioral integration is an ordinary graph wave merged into
+  `ContinuousCognitionFrontier.current` and `DeliberationSession.working`.
+  Open deliberation invalidates stale work and resumes through the existing
+  `PROPAGATE -> IMAGINE -> PLAN_REFINE` chain. Committed actions are immutable.
+- Enabled/ablated production runs have the same seed, World, Assembly/Cognit
+  identity, ordinary Relation and Goal. Coupling changes prediction, action
+  score and chosen planner Action solely through context participation.
+- Sensory-neural wake ordering is identical under ablation. A same-time
+  scheduler regression confirms one continuation chain and one action commit;
+  the former duplicate-continuation scheduling defect is removed.
+- Long/split host batching, `.seworld` save before commit, lifecycle cleanup,
+  silent intervals, anti-cheat checks and `full_graph_sync_calls == 0` pass.
+- No neural planner, action table, reward/value system, special Goal, or
+  Cognit-to-neural feedback exists. Real value/motivation learning is not
+  claimed.
+- Focused v0.6.5: **10 passed**; v0.6.0-v0.6.5: **73 passed**; full pytest:
+  **388 passed**; Release build: **PASS**; CTest Release: **2/2 passed**.
+- Disabled `PYTHONHASHSEED=1/77` digest remains
+  `c54f1fe0d1b5df9f2b1db6a778cc421e4aa206c295119a689c0828fbf1b1c6f6`.
 
 ## v0.6.4 — EMBODIED SENSORY TRANSDUCTION
 
@@ -742,22 +771,3 @@ Event/count state retained:
 - Normal native Python physical World calls: **0 / PASS**
 - Render sampling invariance: **PASS**
 - Long 5K/10K benchmarks were not run.
-# v0.6.5 — NEURAL COGNITION -> BEHAVIOR
-
-- Assembly-derived Cognits now enter the authoritative continuous cognition
-  frontier and the existing planner work chain through ordinary graph waves.
-- Same-time/open-frontier rule: merge before commit, invalidate stale candidate
-  work, and deterministically resume normal planning; committed actions remain
-  immutable.
-- Sensory-neural planner wake is causally ordered just after the frame's neural
-  frontier. No polling, neural planner, direct action mapping, reward, special
-  Goal, or Cognit-to-neural feedback was added.
-- `neural_behavioral_participation` provides a clean research ablation while
-  retaining the same neural physiology and learned graph.
-- Ordinary relation removal eliminates its downstream planner-visible effect;
-  restoring the relation restores that effect. Lifecycle deletion removes IDs
-  from previous, frontier, session, recall and dirty contexts.
-- Existing action-conditioned transition learning accepts these Cognits as
-  ordinary context participants. This milestone does not claim learned value,
-  motivation, object understanding, or a new reinforcement subsystem.
-- Focused v0.6.5 tests: **5 passed**. Full pytest: **383 passed**.

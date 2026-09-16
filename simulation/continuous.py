@@ -44,7 +44,7 @@ class ContinuousRuntime:
             if self.neural_sensory is not None:
                 _,neural_frontier=self.neural_sensory.transduce(self.last_frame,now);self.advance_neural_to(neural_frontier,True)
             self.simulation.core.begin_continuous_observation(self.last_frame,now,generation)
-            if self.neural_sensory is not None and self.simulation.settings.neural_behavioral_participation:self.scheduler.schedule(math.nextafter(neural_frontier,math.inf),RuntimeEventType.COGNITION_WAKE,generation)
+            if self.neural_sensory is not None:self.scheduler.schedule(math.nextafter(neural_frontier,math.inf),RuntimeEventType.COGNITION_WAKE,generation)
             else:self.scheduler.schedule(now,RuntimeEventType.COGNITION_WAKE,generation)
         elif kind==RuntimeEventType.COGNITION_WAKE:
             if self._legacy_monolithic_frontier:
@@ -62,8 +62,6 @@ class ContinuousRuntime:
         elif kind==RuntimeEventType.NEURAL_BRIDGE:
             if not event.payload:
                 rows=self.simulation.core.process_continuous_assembly_bridge(now);self.neural_bridge_deliveries.extend(rows)
-                frontier=self.simulation.core.continuous_frontier
-                if frontier is not None and frontier.phase=="DELIBERATING" and frontier.session is not None and not any(e.type==RuntimeEventType.COGNITION_CONTINUE and e.payload==frontier.generation for e in self.scheduler.snapshot()):self.scheduler.schedule(now,RuntimeEventType.COGNITION_CONTINUE,frontier.generation)
             self._schedule_next_neural_bridge()
         elif kind==RuntimeEventType.WORLD_ACTION_COMPLETE:
             action=Action(ActionType(event.payload));physical_sequence=self.simulation.event_sequence.next();intent=ActionIntent(action,WorldTime(now),physical_sequence);self.simulation.world.apply_intent(intent);self.simulation.last_action=action;self.actions_completed+=1;self.scheduler.schedule(now,RuntimeEventType.SENSORY_CHANGE)
