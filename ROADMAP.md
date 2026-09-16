@@ -669,3 +669,87 @@ physical experience
 ```
 
 без отдельного neural action system.
+
+---
+
+## v0.6.6 — Long-Life Stabilization
+
+**Status: IN PROGRESS / PROVISIONAL**
+
+v0.6.6 посвящена проверке того, что накопленная к этому моменту архитектура способна стабильно существовать длительное время без нарушения причинности, разрушения persistence или неконтролируемого роста внутренних структур.
+
+На текущем этапе реализованы и проверены:
+
+- long-running production execution;
+- deterministic replay;
+- irregular host batching;
+- neural numeric validation;
+- micro-ρ weight bounds;
+- neural event chronology;
+- one-action commit invariant;
+- scheduler stability;
+- repeated `.seworld` save/load continuation;
+- persistence neural state;
+- persistence Assembly state;
+- persistence cognition/planner state;
+- persistence World and scheduler frontier;
+- lifecycle cleanup удалённых neural Cognits;
+- invalidation устаревшего `AssemblyID → CognitID` mapping;
+- monotonic rebirth Cognit IDs после реального повторного recognition;
+- bounded representation reuse;
+- bounded Assembly candidate state;
+- Relation lifecycle aging correction.
+
+Текущий production soak достиг:
+
+- 100 simulated seconds;
+- 666 completed actions;
+- 5,445 scheduler events;
+- 8,512 neural events;
+- 182 Cognits;
+- 8,490 Relations;
+- 74 consolidated Assemblies.
+
+Три последовательных цикла save/load сохраняют causal, neural, Assembly, planner, scheduler, World и action state.
+
+Был обнаружен и исправлен lifecycle defect: continuous Relation maintenance сравнивал evidence observation ticks с maintenance ordinal из другого временного домена. Aging Relations теперь использует соответствующий `SensoryFrame.tick`.
+
+### Current blocker
+
+Функциональная и causal стабильность уже подтверждается текущими тестами, однако версия пока не заморожена из-за performance drift на стандартной workload.
+
+При последовательных 20-second simulation windows наблюдалось увеличение host execution time примерно:
+
+```text
+0.39 s
+→ 1.11 s
+→ 2.98 s
+→ 6.57 s
+→ 8.04 s
+```
+
+одновременно с ростом Relations:
+
+```text
+461
+→ ...
+→ 8,490
+```
+
+Рост остаётся внутри существующих graph limits, но показывает существенное структурное замедление.
+
+Поэтому текущий freeze gate v0.6.6:
+
+```text
+long-life correctness        PASS
+deterministic continuation   PASS
+persistence                  PASS
+lifecycle integrity          PASS
+bounded representation       PASS
+
+default-workload performance NOT YET CLOSED
+```
+
+Расширенный `50,000 simulated seconds / 10,000 actions` soak пока не является закрытым acceptance gate.
+
+После устранения performance blocker и финальной endurance-проверки v0.6.6 должна быть переведена из `IN PROGRESS / PROVISIONAL` в `DONE / FROZEN`.
