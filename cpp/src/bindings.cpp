@@ -474,6 +474,8 @@ PYBIND11_MODULE(_native_brain, m) {
           py::arg("source"), py::arg("target"), py::arg("relation_type"),
           py::arg("action") = 0, py::arg("strength") = .2,
           py::arg("confidence") = .3, py::arg("probability") = 0.)
+      .def("set_relation_capacity",&NativeBrainEngine::set_relation_capacity)
+      .def_property_readonly("relation_capacity",&NativeBrainEngine::relation_capacity)
       .def("upsert_relation_states_batch",
            [](NativeBrainEngine &e, std::uint32_t source,
               const std::vector<

@@ -6,6 +6,7 @@
 #include "neurodynamic_substrate.hpp"
 #include <array>
 #include <deque>
+#include <limits>
 #include <stdexcept>
 #include <string>
 #include <tuple>
@@ -81,6 +82,8 @@ public:
   bool remove_cognit(std::uint32_t id);
   std::size_t live_cognit_count() const { return cognit_count() - dead_cognits_; }
   RelationHandle add_relation(std::uint32_t source, std::uint32_t target, RelationType type, std::uint32_t action, double strength, double confidence, double probability);
+  void set_relation_capacity(std::size_t capacity) { if (capacity < graph_.relation_count()) throw std::invalid_argument("relation capacity below live graph"); relation_capacity_ = capacity; }
+  std::size_t relation_capacity() const { return relation_capacity_; }
   std::vector<std::uint32_t> upsert_relation_states_batch(std::uint32_t source, const std::vector<PersistedRelation> &rows, std::uint32_t max_new, std::uint32_t max_total);
   std::vector<std::pair<RelationHandle, PersistedRelation>> outgoing(std::span<const std::uint32_t> sources) const;
   PersistedRelation relation_state(std::uint32_t source, RelationHandle h) const { return graph_.relations.state(source, h); }
@@ -195,6 +198,7 @@ private:
   std::vector<std::uint32_t> candidate_gen_;
   std::array<std::vector<std::pair<std::uint32_t, double>>, 256> conditioned_scratch_;
   std::vector<RelationHandle> dirty_relations_;
+  std::size_t relation_capacity_{std::numeric_limits<std::size_t>::max()};
   std::uint32_t generation_{1};
   void resize_scratch();
   std::uint32_t next_generation();

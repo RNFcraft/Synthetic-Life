@@ -220,3 +220,32 @@ def test_snapshot_restore_across_relation_deletion_horizon_is_exact(tmp_path):
     a,b=continuous.simulation.core.backend.engine,cycled.simulation.core.backend.engine
     assert a.cognit_state_full(range(a.cognit_count))==pytest.approx(b.cognit_state_full(range(b.cognit_count)),abs=2e-15,rel=0)
     assert continuous.simulation.core.backend.full_graph_sync_calls==cycled.simulation.core.backend.full_graph_sync_calls==0
+
+
+def test_global_relation_capacity_allows_reuse_suppresses_ninth_and_reopens():
+    from consciousness.native_engine import NativeBrainEngine
+    engine=NativeBrainEngine();engine.add_cognits(10);engine.set_relation_capacity(8)
+    handles=[engine.add_relation(0,i,RelationType.ASSOCIATIVE.value) for i in range(1,9)]
+    assert engine.relation_count==8 and engine.add_relation(0,1,RelationType.ASSOCIATIVE.value)==handles[0]
+    with pytest.raises(ValueError,match="capacity exhausted"):engine.add_relation(9,1,RelationType.SEQUENTIAL.value)
+    assert engine.relation_count==8 and engine.remove_relation(handles[-1])
+    replacement=engine.add_relation(9,1,RelationType.SEQUENTIAL.value)
+    assert engine.relation_count==8 and engine.relation_handle_valid(replacement)
+
+
+def test_graph_restore_rejects_capacity_below_saved_live_count(tmp_path):
+    from consciousness.native_engine import NativeBrainEngine
+    source=NativeBrainEngine();source.add_cognits(10);source.set_relation_capacity(8)
+    for target in range(1,9):source.add_relation(0,target,RelationType.ASSOCIATIVE.value)
+    path=tmp_path/"at-cap.sebrain";source.save_graph(str(path))
+    exact=NativeBrainEngine();exact.set_relation_capacity(8);exact.load_graph(str(path))
+    assert exact.relation_count==8 and exact.predict([0],ActionType.IDLE.value)==source.predict([0],ActionType.IDLE.value)
+    incompatible=NativeBrainEngine();incompatible.set_relation_capacity(7)
+    with pytest.raises(RuntimeError,match="exceeds configured relation capacity"):incompatible.load_graph(str(path))
+
+
+def test_transition_evidence_canonicalizes_duplicate_active_ids():
+    from consciousness.native_engine import NativeBrainEngine
+    engine=NativeBrainEngine();engine.update_transition_evidence([1,1,1,2],ActionType.IDLE.value,[3,3,4,4])
+    assert engine.evidence_stats[:3]==(2,2,4)
+    assert engine.transition_history()==[([1,2],ActionType.IDLE.value,[3,4])]

@@ -35,6 +35,7 @@ class NativeGraphBackend:
     def __init__(self,settings):
         self.settings=settings;self.full_graph_sync_calls=0;self.ffi_calls=0;self.receive_calls=0;self.field_write_calls=0;self.state_read_calls=0;self.relation_proxy_objects_created=0;self.language_relation_batch_calls=0;self._state_cache={}
         self.engine=_ObservedEngine(NativeBrainEngine(settings.relation_evidence_window),self._native_mutated)
+        self.engine.set_relation_capacity(settings.max_relations)
         self.evidence_config=EvidenceConfig();self.evidence_config.minimum_support=settings.relation_provisional_support
         self.evidence_config.minimum_lift=settings.relation_provisional_lift
         self.evidence_config.confidence_k=settings.relation_confidence_k;self.evidence_config.consolidated_support=settings.relation_consolidated_support;self.evidence_config.consolidated_confidence=settings.relation_consolidated_confidence

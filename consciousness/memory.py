@@ -156,8 +156,10 @@ class SpatialMemory:
             if previous and previous_action is not None:
                 av=previous_action.value;self.transitions[(previous,av,place.id)]+=1
                 if previous!=place.id:
-                    rel,_=graph.connect(self.places[previous].cognit_id,place.cognit_id,RelationType.SELF_ACTION,av);rel.support+=1
-                    total=sum(n for (p,a,_),n in self.transitions.items() if p==previous and a==av);rel.strength=rel.prediction_probability=self.transitions[(previous,av,place.id)]/max(1,total);rel.confidence=rel.support/(rel.support+4);rel.status=RelationStatus.CONSOLIDATED if rel.support>=4 else RelationStatus.PROVISIONAL
+                    rel,_=graph.connect(self.places[previous].cognit_id,place.cognit_id,RelationType.SELF_ACTION,av)
+                    if rel is not None:
+                        rel.support+=1
+                        total=sum(n for (p,a,_),n in self.transitions.items() if p==previous and a==av);rel.strength=rel.prediction_probability=self.transitions[(previous,av,place.id)]/max(1,total);rel.confidence=rel.support/(rel.support+4);rel.status=RelationStatus.CONSOLIDATED if rel.support>=4 else RelationStatus.PROVISIONAL
             self._reconcile(place,graph)
         active={place.cognit_id} if place else set();visible=[]
         for track in tracks:
@@ -191,7 +193,9 @@ class SpatialMemory:
             if visual>.86 and route and min(place.visits,other.visits)>=3:
                 place.aliases.add(other.id);other.aliases.add(place.id);self.alias_reconciliations+=1
                 for source,target in ((place,other),(other,place)):
-                    relation,_=graph.connect(source.cognit_id,target.cognit_id,RelationType.ASSOCIATIVE);relation.strength=relation.prediction_probability=min(source.confidence,target.confidence);relation.confidence=relation.strength
+                    relation,_=graph.connect(source.cognit_id,target.cognit_id,RelationType.ASSOCIATIVE)
+                    if relation is None:continue
+                    relation.strength=relation.prediction_probability=min(source.confidence,target.confidence);relation.confidence=relation.strength
 
     def _match_structure_legacy(self,features,state,place_id,tick,excluded=None):
         best=None;score=0.;fs=set(features)

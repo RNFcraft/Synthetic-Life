@@ -62,6 +62,13 @@ restore accepts the persisted peak. Neural validation applies learning bounds
 only to plastic micro-relations. Fixed micro-relations may exceed those bounds
 but must remain finite and nonnegative, preserving v0.6.1 semantics.
 
+The native engine also owns the global live-Relation capacity. All creation
+paths converge on that boundary: reuse and updates remain legal at capacity,
+new identities are rejected, and deletion makes capacity available again.
+Graph restore validates capacity before mutation and never silently truncates.
+Transition evidence canonicalizes active IDs and retains a bounded 512-event
+window, so candidate work depends on current context rather than total history.
+
 ### Embodied sensory transduction (v0.6.4)
 
 When explicitly enabled, a deterministic receptor bank is constructed from the

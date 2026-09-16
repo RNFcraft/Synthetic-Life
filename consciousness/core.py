@@ -71,7 +71,8 @@ class SyntheticEntityCore:
         node=self.graph.add_cognit(Cognit(self.graph.next_id,pattern=pattern,kind="TARGET",confidence=1.))
         for token in structure.relations:
             if token not in self.relational_nodes:self.relational_nodes[token]=self.graph.add_cognit(Cognit(self.graph.next_id,kind="RELATIONAL",confidence=1.)).id
-            relation,_=self.graph.connect(node.id,self.relational_nodes[token],RelationType.ASSOCIATIVE);relation.strength=relation.prediction_probability=1.;relation.confidence=1.;relation.support+=1
+            relation,_=self.graph.connect(node.id,self.relational_nodes[token],RelationType.ASSOCIATIVE)
+            if relation is not None:relation.strength=relation.prediction_probability=1.;relation.confidence=1.;relation.support+=1
         self.pattern_nodes[signature]=node.id;self.target_cognit_ids.add(node.id)
         goal=Goal(self.next_goal_id,(node.id,),1.,confidence,confidence,persistence=1.,origin_tension=confidence,origin=origin,target_signature=signature)
         self.next_goal_id+=1;self.state.goals_generated+=1;self.state.goal=goal;self.events.append(f"TARGET_RECEIVED G{goal.id}");return goal

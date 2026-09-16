@@ -295,6 +295,10 @@ RelationHandle NativeBrainEngine::add_relation(std::uint32_t s, std::uint32_t t,
   if (!cognit_alive(s) || !cognit_alive(t))
     throw std::out_of_range("dead or invalid Cognit");
   const auto count = graph_.relations.size();
+  RelationHandle existing{}; bool found=false;
+  graph_.relations.for_each(s,[&](const Edge&e,RelationHandle h){if(e.target==t&&e.type==type&&e.action==action){existing=h;found=true;}});
+  if(found)return existing;
+  if(count>=relation_capacity_)throw std::length_error("relation capacity exhausted");
   auto pair = graph_.relations.connect(s, t, type, action);
   if (graph_.relations.size() != count) {
     pair.first.strength = strength;
@@ -335,7 +339,7 @@ std::vector<std::uint32_t> NativeBrainEngine::upsert_relation_states_batch(std::
     auto it = existing.find(key);
     RelationHandle h;
     if (it == existing.end()) {
-      if (made >= max_new || graph_.relation_count() >= max_total)
+      if (made >= max_new || graph_.relation_count() >= std::min<std::size_t>(max_total,relation_capacity_))
         continue;
       h = add_relation(source, row.target, (RelationType)row.type, row.action, row.strength, row.confidence, row.prediction);
       existing[key] = h;
@@ -1151,17 +1155,15 @@ std::vector<MaterializedRelation> NativeBrainEngine::materialize_relations(const
       double conditional = double(n) / std::max(1u, source_counts_.at(s)), baseline = double(target_counts_.at(t)) / std::max<std::uint64_t>(1, evidence_steps_), lift = conditional / std::max(baseline, 1e-9);
       if (n < c.minimum_support || lift < c.minimum_lift)
         continue;
-      const auto before_count = graph_.relations.size();
-      auto pair = graph_.relations.connect(s, t, RelationType::Sequential);
-      auto &e = pair.first;
+      RelationHandle handle;
+      try { handle=add_relation(s,t,RelationType::Sequential,0,.2,.3,0.); } catch(const std::length_error&) { continue; }
+      auto &e = *graph_.relations.get(handle);
       e.strength = e.prediction = conditional;
       e.confidence = double(n) / (n + c.confidence_k);
       auto &p = graph_.relations.provisional(e);
       p.support = n;
       p.lift = lift;
       p.last_evidence_world_tick = tick;
-      if (graph_.relations.size() != before_count)
-        dirty_relations_.push_back(pair.second);
     }
   }
   for (auto &[key, mask] : before_action_slots_) {
@@ -1175,9 +1177,9 @@ std::vector<MaterializedRelation> NativeBrainEngine::materialize_relations(const
       double lift = probability / std::max(conditional, 1e-9);
       if (pairs < c.minimum_support || lift < c.minimum_lift)
         continue;
-      const auto before_count = graph_.relations.size();
-      auto pair = graph_.relations.connect(key.s, t, RelationType::SelfAction, key.a);
-      auto &e = pair.first;
+      RelationHandle handle;
+      try { handle=add_relation(key.s,t,RelationType::SelfAction,key.a,.2,.3,0.); } catch(const std::length_error&) { continue; }
+      auto &e = *graph_.relations.get(handle);
       e.strength = e.prediction = probability;
       e.confidence = double(pairs) / (pairs + c.confidence_k);
       auto &p = graph_.relations.provisional(e);
@@ -1185,9 +1187,7 @@ std::vector<MaterializedRelation> NativeBrainEngine::materialize_relations(const
       p.lift = lift;
       p.last_evidence_world_tick = tick;
       if (pairs >= c.consolidated_support && e.confidence >= c.consolidated_confidence)
-        graph_.relations.consolidate(pair.second);
-      if (graph_.relations.size() != before_count)
-        dirty_relations_.push_back(pair.second);
+        graph_.relations.consolidate(handle);
       out.push_back({key.s, t, pairs, key.a, probability, e.confidence, lift});
     }
   }
@@ -1221,7 +1221,8 @@ std::vector<MaterializedRelation> NativeBrainEngine::materialize_current(const E
         existing.emplace(e.target, h);
     });
     targets.clear();
-    if (created >= quota || graph_.relation_count() >= max_relations) {
+    auto capacity=std::min<std::size_t>(max_relations,relation_capacity_);
+    if (created >= quota || graph_.relation_count() >= capacity) {
       for (auto &[t, h] : existing)
         if (current.contains(t))
           targets.push_back(t);
@@ -1241,7 +1242,7 @@ std::vector<MaterializedRelation> NativeBrainEngine::materialize_current(const E
         continue;
       auto found = existing.find(t);
       bool fresh = found == existing.end();
-      if (fresh && (created >= quota || graph_.relation_count() >= max_relations))
+      if (fresh && (created >= quota || graph_.relation_count() >= capacity))
         continue;
       auto count = support(s, t);
       double conditional = double(count) / std::max(1u, sc->second);
@@ -1416,6 +1417,7 @@ void NativeBrainEngine::load_graph(const std::string &path) {
   auto ages = read_vector<std::uint32_t>(b, o);
   auto low = read_vector<std::uint32_t>(b, o);
   auto relations = read_vector<PersistedRelation>(b, o);
+  if(relations.size()>relation_capacity_)throw std::runtime_error("saved graph exceeds configured relation capacity");
   auto n = activity.size();
   if (o != b.size() || threshold.size() != n || confidence.size() != n || utility.size() != n || trace.size() != n || last.size() != n || refractory.size() != n || flags.size() != n || homeostatic.size() != n || target.size() != n || contribution.size() != n || ages.size() != n || low.size() != n)
     throw std::runtime_error("inconsistent graph arrays");

@@ -39,12 +39,11 @@ Scheduler queue peak is now recorded authoritatively at native `schedule()` and
 preserved by restore; fixed non-plastic micro-relations are validated against
 their nonnegative finite contract rather than plastic learning bounds.
 
-Relation idle eligibility now always uses observation-tick age, while lazy
-confidence decay remains in simulated continuous time. Despite that correction,
-the milestone remains provisional: the actually-run 1,000-second soak reached
-16,559 Relations with no production deletions. Default learned confidence did
-not fall below the independent death threshold, so lifecycle did not balance
-births. The manual 50,000-second extended soak has not been run.
+Relation idle eligibility uses observation-tick age while lazy confidence decay
+remains in simulated continuous time. The milestone is frozen after the native
+global capacity invariant held through an actually-run 1,000-second soak:
+Relations reached exactly 16,384 and remained there without overwrite or
+runaway. The manual 50,000-second extended soak has not been run.
 
 ## v0.6.5 neural cognition to behavior
 

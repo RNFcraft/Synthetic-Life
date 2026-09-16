@@ -98,7 +98,11 @@ class NativeGraphFacade:
             node=NativeCognit(node_id,self.backend,Cognit(node_id,kind=kind));self.nodes[node_id]=node
         return node
     def connect(self,source,target,relation_type=RelationType.ASSOCIATIVE,context_id=None):
-        before=self.relation_count;self.backend.ffi_calls+=1;handle=self.backend.engine.add_relation(source-1,target-1,relation_type.value,context_id or 0,.2,.3,0.)
+        before=self.relation_count
+        if before>=self.backend.settings.max_relations:
+            existing=next((r for r in self.outgoing(source) if r.target_id==target and r.relation_type is relation_type and r.context_id==context_id),None)
+            return existing,False
+        self.backend.ffi_calls+=1;handle=self.backend.engine.add_relation(source-1,target-1,relation_type.value,context_id or 0,.2,.3,0.)
         self.backend.ffi_calls+=1;row=self.backend.engine.relation_state(source-1,handle)
         return NativeRelation(self.backend,row),self.relation_count>before
     def outgoing(self,source):self.backend.ffi_calls+=1;return [NativeRelation(self.backend,r) for r in self.backend.engine.outgoing([source-1])]

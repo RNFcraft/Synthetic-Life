@@ -2,7 +2,20 @@
 
 ## v0.6.6 — LONG-LIFE STABILIZATION
 
-**PROVISIONAL — correctness and persistence gates pass, but Relation growth did not reach the required plateau.**
+**FROZEN — global Relation capacity, bounded evidence work, persistence and 1,000-second endurance gates pass.**
+
+- Native `relation_capacity` is now the authoritative global live-edge bound.
+  Existing identities remain updateable at capacity; new identities are safely
+  suppressed, lifecycle deletion reopens capacity, and incompatible restore is
+  rejected instead of truncated.
+- The final 1,000-second run reached exactly **16,384 Relations** at 800 seconds
+  and remained exactly at that configured maximum through 900/1,000 seconds.
+  It never exceeded the cap. Final types: **13,395 SELF_ACTION**, **2,906
+  SEQUENTIAL**, **50 SPATIAL**, **33 ASSOCIATIVE**; statuses: **11,348
+  provisional**, **5,036 consolidated**.
+- The bounded 512-transition evidence window ended with average before/after
+  sizes **46.62 / 37.05**, maxima **53 / 46**, average candidate pairs
+  **1,728.91**, maximum **2,340**. Inputs are canonicalized to unique IDs.
 
 - The corrected 100-second production soak completed **666 actions** and
   **5,442 scheduler events**. Peak scheduler queue was **3**; final Cognits,
@@ -35,8 +48,8 @@
   hash-seed replay, lifecycle torture,
   v0.6.5 behavioral coupling/ablation and `full_graph_sync_calls == 0` pass.
 - The 50,000-second soak was **not run**; the manual runner remains available.
-- Focused v0.6.6: **20 passed**; combined v0.6.0-v0.6.6: **93 passed**; full
-  pytest: **408 passed**; Release build passed; CTest **2/2 passed**.
+- Focused v0.6.6: **23 passed**; combined v0.6.0-v0.6.6: **96 passed**; full
+  pytest: **411 passed**; Release build passed; CTest **2/2 passed**.
 
 ## v0.6.5 — NEURAL COGNITION -> BEHAVIOR
 

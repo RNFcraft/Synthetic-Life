@@ -94,7 +94,8 @@ class BeliefScene:
                     from .cognit import Cognit
                     token_id=graph.add_cognit(Cognit(graph.next_id,kind="RELATIONAL",confidence=confidence)).id;relational_nodes[token]=token_id
                 from .relation import RelationType
-                relation,_=graph.connect(a.cognit_id,b.cognit_id,RelationType.SPATIAL,token_id);relation.strength=relation.prediction_probability=confidence;relation.confidence=confidence;relation.support+=int(a.visible and b.visible);relation.last_evidence_world_tick=tick
+                relation,_=graph.connect(a.cognit_id,b.cognit_id,RelationType.SPATIAL,token_id)
+                if relation is not None:relation.strength=relation.prediction_probability=confidence;relation.confidence=confidence;relation.support+=int(a.visible and b.visible);relation.last_evidence_world_tick=tick
                 graph.connect(a.cognit_id,bound.cognit_id,RelationType.ASSOCIATIVE);graph.connect(bound.cognit_id,b.cognit_id,RelationType.SPATIAL,token_id)
         self.knowledge_uncertainty=1-sum(p.confidence for p in self.participants.values())/max(1,len(self.participants))
         return {r.cognit_id for r in self.relations.values() if r.last_observed_world_tick==tick}
