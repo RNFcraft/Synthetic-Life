@@ -1,4 +1,23 @@
-# Synthetic Entity v0.6.6 — Current Status
+# Synthetic Entity v0.7.0 — Current Status
+
+## v0.7.0 — BASELINE AND FULL AUDIT FREEZE
+
+Status: **FROZEN**.
+
+The repaired baseline commit `46c53e0` passed production import/headless smoke,
+10 entrypoint tests, 96 combined v0.6.0–v0.6.6 acceptance tests, the complete
+412-test suite, Release native build and 2/2 Release CTest. Existing determinism,
+host-batching and exact save/load continuation gates pass; production retains
+`full_graph_sync_calls == 0`.
+
+The earlier `main.py` repository corruption was pre-existing, traced to
+`d53678a`, and repaired before freeze by `46c53e0`; it is CLOSED and protected by
+the clean-source production regression.
+
+No runtime behavior, algorithm, persistence schema or capability changed in
+v0.7.0. The authoritative baseline for v0.7.1–v0.7.6 is
+[`docs/V0_7_REFACTOR_CONTRACT.md`](docs/V0_7_REFACTOR_CONTRACT.md); practical
+build/refactor instructions are in [`DEVELOPER_GUIDE.md`](DEVELOPER_GUIDE.md).
 
 ## v0.6.6 — LONG-LIFE STABILIZATION
 

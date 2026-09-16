@@ -1,8 +1,15 @@
 # Synthetic-Life
 
+> **v0.7.0 baseline frozen.** Authoritative ownership, ID/wire, persistence,
+> determinism and refactor rules are recorded in
+> [`docs/V0_7_REFACTOR_CONTRACT.md`](docs/V0_7_REFACTOR_CONTRACT.md). Setup and
+> contribution workflow: [`DEVELOPER_GUIDE.md`](DEVELOPER_GUIDE.md). v0.7.0 adds
+> no runtime capability and intentionally preserves the v0.6.6 behavior oracle.
+
 Synthetic-Life is an experimental embodied cognitive architecture built around a sparse, continuously changing graph of Cognits (`κ`) and Relations (`ρ`). The project is not an LLM/Transformer inference wrapper and does not use a frozen policy network as its learned core. Learning, prediction, memory, goals and action selection evolve during interaction with the World.
 
-The current development line is **v0.6.6**.
+The current development line is the **v0.7.0 frozen refactor baseline**; runtime
+behavior remains the accepted v0.6.6 system.
 
 Current accepted gates:
 

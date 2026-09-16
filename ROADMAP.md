@@ -792,7 +792,17 @@ v0.6 neurodynamic substrate
 
 ## v0.7.0 — Baseline and Full Audit Freeze
 
-**Status: PLANNED**
+**Status: FROZEN.** Baseline commit `46c53e0` was validated before documentation:
+production smoke, full 412-test suite, combined v0.6 acceptance, Release build
+and CTest all pass. The previous corrupted-entrypoint blocker is closed.
+
+The authoritative audit output is
+[`docs/V0_7_REFACTOR_CONTRACT.md`](docs/V0_7_REFACTOR_CONTRACT.md), with developer
+workflow in [`DEVELOPER_GUIDE.md`](DEVELOPER_GUIDE.md). It freezes production
+path, subsystem/authority/ID/API/wire/time/persistence maps, compatibility and
+architecture invariants, monolith/duplication/legacy inventories, test taxonomy,
+performance/determinism baselines and the risk/rules for v0.7.1–v0.7.6. No
+runtime behavior or persistence format was changed.
 
 Цель — зафиксировать исходное состояние перед любым крупным структурным refactor.
 

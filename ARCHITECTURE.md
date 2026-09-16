@@ -1,4 +1,10 @@
-# Synthetic Entity Architecture — v0.6.6
+# Synthetic Entity Architecture — v0.7.0 baseline
+
+This document remains the explanatory architecture narrative. The authoritative
+contract for v0.7 refactors—including subsystem inventory, ownership, ID and
+wire domains, persistence, tests, performance and risk—is
+[`docs/V0_7_REFACTOR_CONTRACT.md`](docs/V0_7_REFACTOR_CONTRACT.md). v0.7.0 makes
+no runtime or persistence change relative to the frozen v0.6.6 implementation.
 
 Synthetic Entity is an experimental embodied cognitive architecture built around a sparse, continuously changing graph of Cognits (`κ`) and Relations (`ρ`). It is not a Transformer/LLM inference loop and does not depend on a frozen policy network. The current system learns through persistent predictive, causal, spatial, and goal-directed state that changes during interaction with the world.
 
