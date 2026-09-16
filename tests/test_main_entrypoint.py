@@ -1,4 +1,7 @@
 import itertools
+import subprocess
+import sys
+from pathlib import Path
 
 import pytest
 
@@ -72,3 +75,13 @@ def test_production_headless_save_and_load_use_seworld(tmp_path,capsys):
     restored=main.create_runtime(load_path=str(path));assert restored.world_time==.3
     main.main(["--headless","--seconds","0.45","--load",str(path)])
     assert "world time:           0.450000 s" in capsys.readouterr().out
+
+
+def test_clean_source_production_entrypoint_executes_without_bytecode():
+    result=subprocess.run(
+        [sys.executable,"-B","main.py","--headless","--seconds","0"],
+        cwd=Path(__file__).resolve().parents[1],capture_output=True,text=True,
+        check=False,
+    )
+    assert result.returncode==0,result.stderr
+    assert "world time:           0.000000 s" in result.stdout
