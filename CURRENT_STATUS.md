@@ -1,920 +1,167 @@
-# Synthetic Entity v0.7.5 — Current Status
-
-## v0.7.5 — FULL REGRESSION AND PERFORMANCE AUDIT
-
-Status: **FROZEN**.
-
-The v0.7.0 behavioral baseline and v0.7.4 implementation produced the same
-canonical digest and exact semantic/work counters across seven runs each.
-All 422 pytest tests, 2/2 CTest, the complete historical version matrix and a
-1,000-WorldTime post-saturation long-life run passed. End-to-end median changed
-from 0.282944 s to 0.278439 s (-1.59%, noise); native benchmark variation was
-mixed with exact memory/workload sizes and no consistent regression. Full
-evidence and explicit audit limits are in `docs/V0_7_5_REGRESSION_AUDIT.md`.
-No runtime code or v0.8 capability was changed. v0.7.6 remains PLANNED.
-
-## v0.7.4 — REPOSITORY, TESTS AND DEVELOPER TOOLING
-
-Status: **FROZEN**.
-
-The repository now has one portable verification entrypoint with explicit fast
-and full modes, an authoritative test/artifact inventory, and recursive
-architecture guards for extracted modules and frozen causal boundaries.
-Generated local artifacts are ignored while canonical fixtures and historical
-reproducibility records remain preserved. Runtime Python/C++, persistence and
-public APIs were not changed. The canonical digest remains
-`7d80bffa82cfbabf8d11373883d03056b26b27eb53a4cbe9246a666e079fbb0f`.
-v0.7.5 remains PLANNED; no v0.8 implementation was started.
-
-## v0.7.3 — C++ STRUCTURAL REFACTOR
-
-Status: **FROZEN**.
-
-Existing native responsibilities are physically grouped while
-`NativeBrainEngine` and `NeurodynamicSubstrate` remain stable state-owning
-facades. Assembly-to-Cognit bridge methods, bounded neural bridge-event reads,
-and scheduler/event pybind registration now have dedicated translation units.
-No numeric, float-order, container-order, event-order, ID, RelationHandle,
-wire, persistence, neural, Assembly, bridge, observer, or Python behavior was
-changed. The canonical digest remains
-`7d80bffa82cfbabf8d11373883d03056b26b27eb53a4cbe9246a666e079fbb0f`.
-v0.7.4 remains PLANNED; no v0.8 implementation was started.
-
-## v0.7.2 — PYTHON STRUCTURAL REFACTOR
-
-Status: **FROZEN**.
-
-Existing Python responsibilities were extracted without algorithm rewrite:
-language frames/results/grounding context, memory durable records and pure
-matching transforms, planner data/session records, continuous cognition/render
-records, and the core Relation-learning cluster. `SyntheticEntityCore`,
-`ContinuousRuntime`, `Simulation`, `LanguageLexicon`, `SpatialMemory` and
-`DeliberativePlanner` remain stable facades/owners. Compatibility import paths
-re-export the single extracted class definitions.
-
-No duplicate authority, import cycle, public API, persistence schema, native
-wire/ABI, scheduler, RNG, algorithm or behavioral change was introduced. C++
-sources were not changed. The language anti-semantic source guard now follows
-the extracted `language*.py` modules. The canonical digest remains
-`7d80bffa82cfbabf8d11373883d03056b26b27eb53a4cbe9246a666e079fbb0f`.
-v0.7.3 remains PLANNED; no v0.8 implementation was started.
-
-## v0.7.1 — READABILITY AND DOCUMENTATION FOUNDATION
-
-Status: **FROZEN READABILITY BASELINE**.
-
-Readability was improved in place across the semantic core, language grounding,
-memory, planner, native facade, continuous/discrete simulation and three critical
-native implementation files. New Russian-first docstrings/comments make state
-authority, Cognit ID conversion, time domains, same-time ordering, one-way
-Assembly bridge and positional pybind rows explicit. `DEVELOPER_GUIDE.md` now
-records the corresponding review conventions.
-
-There was no package or responsibility movement, public API or pybind ABI
-change, algorithm/numeric/persistence change, optimization or legacy deletion.
-The v0.7.0 deterministic digest remains
-`7d80bffa82cfbabf8d11373883d03056b26b27eb53a4cbe9246a666e079fbb0f`
-for `PYTHONHASHSEED=1/777`, with `full_graph_sync_calls == 0`. Full acceptance,
-Release native build and CTest pass. v0.7.2 remains PLANNED.
-
-## v0.7.0 — BASELINE AND FULL AUDIT FREEZE
-
-Status: **FROZEN**.
-
-The repaired baseline commit `46c53e0` passed production import/headless smoke,
-10 entrypoint tests, 96 combined v0.6.0–v0.6.6 acceptance tests, the complete
-412-test suite, Release native build and 2/2 Release CTest. Existing determinism,
-host-batching and exact save/load continuation gates pass; production retains
-`full_graph_sync_calls == 0`.
-
-The earlier `main.py` repository corruption was pre-existing, traced to
-`d53678a`, and repaired before freeze by `46c53e0`; it is CLOSED and protected by
-the clean-source production regression.
-
-No runtime behavior, algorithm, persistence schema or capability changed in
-v0.7.0. The authoritative baseline for v0.7.1–v0.7.6 is
-[`docs/V0_7_REFACTOR_CONTRACT.md`](docs/V0_7_REFACTOR_CONTRACT.md); practical
-build/refactor instructions are in [`DEVELOPER_GUIDE.md`](DEVELOPER_GUIDE.md).
-
-## v0.6.6 — LONG-LIFE STABILIZATION
-
-**FROZEN — global Relation capacity, bounded evidence work, persistence and 1,000-second endurance gates pass.**
-
-- Native `relation_capacity` is now the authoritative global live-edge bound.
-  Existing identities remain updateable at capacity; new identities are safely
-  suppressed, lifecycle deletion reopens capacity, and incompatible restore is
-  rejected instead of truncated.
-- The final 1,000-second run reached exactly **16,384 Relations** at 800 seconds
-  and remained exactly at that configured maximum through 900/1,000 seconds.
-  It never exceeded the cap. Final types: **13,395 SELF_ACTION**, **2,906
-  SEQUENTIAL**, **50 SPATIAL**, **33 ASSOCIATIVE**; statuses: **11,348
-  provisional**, **5,036 consolidated**.
-- The bounded 512-transition evidence window ended with average before/after
-  sizes **46.62 / 37.05**, maxima **53 / 46**, average candidate pairs
-  **1,728.91**, maximum **2,340**. Inputs are canonicalized to unique IDs.
-
-- The corrected 100-second production soak completed **666 actions** and
-  **5,442 scheduler events**. Peak scheduler queue was **3**; final Cognits,
-  Relations and Assemblies were **118**, **3,563** and **63**.
-- Native `SELF_ACTION` materialization incorrectly used every action trial as
-  support for each specific `(source, action, target)` edge. Exact triple
-  support is now used. The stable logical identity is reused under 1,000
-  repeated observations instead of creating duplicates.
-- Corrected 20-second windows had Relation births **336 / 945 / 1,032 / 981 /
-  269**, deletions **0 / 0 / 0 / 0 / 0**, and live counts **336 / 1,281 / 2,313 /
-  3,294 / 3,563**. Host times were **0.48 / 0.86 / 1.52 / 2.81 / 3.79 seconds**.
-  Before the fix, Relations reached 8,490 and host windows were **0.39 / 1.11 /
-  2.98 / 6.57 / 8.04 seconds**.
-- Native idle eligibility now always uses observation ticks, independently of
-  continuous-time confidence decay. Controlled tests prove deletion at idle
-  age 101, survival at age 50 despite 1,000 elapsed seconds, and survival of an
-  old relation whose effective confidence remains above the death threshold.
-- The actually-run **1,000 simulated-second / 6,666-action** production soak
-  had Relations **3,563 / 6,434 / 7,006 / 7,714 / 8,298 / 12,351 / 13,862 /
-  16,398 / 16,494 / 16,559**. Observed deletions were zero at every 100-second
-  checkpoint; births were **3,563 / 2,871 / 572 / 708 / 584 / 4,053 / 1,511 /
-  2,536 / 96 / 65**. It ended with **54,358 scheduler events**, **304 Cognits**,
-  **87 Assemblies**, and queue peak **3**. The observation clock is now correct,
-  but default effective confidence never crossed the independent death gate,
-  so production plateau/churn is not demonstrated.
-- Scheduler peak is measured inside native `schedule()` and survives restore.
-  Fixed non-plastic micro-relations may exceed plastic bounds while plastic,
-  negative, NaN and infinite invalid states are rejected correctly.
-- Save/load across a deletion horizon, three successive save/load cycles,
-  hash-seed replay, lifecycle torture,
-  v0.6.5 behavioral coupling/ablation and `full_graph_sync_calls == 0` pass.
-- The 50,000-second soak was **not run**; the manual runner remains available.
-- Focused v0.6.6: **23 passed**; combined v0.6.0-v0.6.6: **96 passed**; full
-  pytest: **411 passed**; Release build passed; CTest **2/2 passed**.
-
-## v0.6.5 — NEURAL COGNITION -> BEHAVIOR
-
-**PASS — experience-derived neural Cognits can participate causally in ordinary cognition and existing planner decisions.**
-
-**v0.6.5: FROZEN**
-
-- A production `World -> SENSORY_CHANGE -> SensoryFrame -> receptor -> micro-neural
-  dynamics -> Assembly -> Cognit -> frontier -> planner -> Action` test births
-  the source Cognit without direct Cognit or Assembly injection.
-- The only behavioral integration is an ordinary graph wave merged into
-  `ContinuousCognitionFrontier.current` and `DeliberationSession.working`.
-  Open deliberation invalidates stale work and resumes through the existing
-  `PROPAGATE -> IMAGINE -> PLAN_REFINE` chain. Committed actions are immutable.
-- Enabled/ablated production runs have the same seed, World, Assembly/Cognit
-  identity, ordinary Relation and Goal. Coupling changes prediction, action
-  score and chosen planner Action solely through context participation.
-- Sensory-neural wake ordering is identical under ablation. A same-time
-  scheduler regression confirms one continuation chain and one action commit;
-  the former duplicate-continuation scheduling defect is removed.
-- Long/split host batching, `.seworld` save before commit, lifecycle cleanup,
-  silent intervals, anti-cheat checks and `full_graph_sync_calls == 0` pass.
-- No neural planner, action table, reward/value system, special Goal, or
-  Cognit-to-neural feedback exists. Real value/motivation learning is not
-  claimed.
-- Focused v0.6.5: **10 passed**; v0.6.0-v0.6.5: **73 passed**; full pytest:
-  **388 passed**; Release build: **PASS**; CTest Release: **2/2 passed**.
-- Disabled `PYTHONHASHSEED=1/77` digest remains
-  `c54f1fe0d1b5df9f2b1db6a778cc421e4aa206c295119a689c0828fbf1b1c6f6`.
-
-## v0.6.4 — EMBODIED SENSORY TRANSDUCTION
-
-**PASS — bounded non-semantic World/SensoryFrame input reaches the native neural substrate.**
-
-**v0.6.4: FROZEN**
-
-- The optional production path is `SensoryFrame -> deterministic receptor bank
-  -> one native inject_batch -> ordinary micro dynamics/STDP/homeostasis ->
-  existing Assembly detector -> v0.6.3 Assembly/Cognit bridge`. It is disabled
-  by default so the frozen no-language behavior remains byte-for-byte stable.
-- A radius-4 bank has 2,841 stable receptors: each retinotopic cell has raw
-  occupied/boundary/self receptors and 16-bin state/appearance banks; six more
-  receptors carry touch directions, holding and resistance. Hard limits are
-  8,192 receptors. The conservative maximum is 411 injections for radius 4;
-  the configured bound is 512 and incompatible Settings fail at startup.
-- No object ID/type/name, Goal, evaluator label, action meaning, pattern label,
-  Assembly ID or Cognit ID crosses the transducer. Channel values and positions
-  only select receptor coordinates.
-- One-shot World experience spikes receptors but creates no consolidated
-  Assembly/Cognit. Recurrent real frames form one stable Assembly/Cognit; repeat
-  reuses both IDs, while left/right retinotopic evidence can form distinct IDs.
-- All receptors from one frame use its exact float64 WorldTime. Cell iteration
-  order cannot create temporal edges. `.seworld v7` preserves the minimal
-  sensory physiology, neural state, telemetry, pending events and frontier;
-  production load needs no Settings override. Older files remain disabled and
-  compatible, while incompatible explicit topology overrides are rejected.
-- This is not object understanding and adds no behavioral policy. An Assembly
-  is only an experience-derived internal representation with no innate meaning.
-- v0.6.4 focused: **13 passed**; focused v0.6.0–v0.6.4: **63 passed**; full
-  pytest: **378 passed**; Release build: **PASS**; CTest Release: **2/2**.
-  Disabled `PYTHONHASHSEED=1/77` digest remains
-  `c54f1fe0d1b5df9f2b1db6a778cc421e4aa206c295119a689c0828fbf1b1c6f6`;
-  `full_graph_sync_calls == 0`.
-
-Next: not started.
-
-## v0.6.3 — ASSEMBLY -> COGNIT
-
-**PASS — the one-way native assembly-to-Cognit bridge is accepted.**
-
-**v0.6.3: FROZEN**
-
-- Consolidation emits one monotonic coarse event and births one ordinary Cognit
-  in the authoritative `NativeBrainEngine` graph. Candidates and one-shot
-  activity birth nothing. The engine owns the stable `AssemblyID -> CognitID`
-  mapping; overlap/novelty produces distinct monotonic Cognit IDs and no
-  Relations.
-- Recognition has a native per-assembly episode identity. Incremental matches
-  inside `assembly_window` contribute only
-  `max(0, confidence - previous_peak)`, so cumulative Cognit input equals the
-  episode peak instead of the sum of partial observations. Silence longer than
-  the window starts a new episode. Actual Cognit activity now proves
-  full > partial > reversed. Event time and episode state are float64-native and
-  snapshot-restored; World ticks do not define recognition identity.
-- `advance_neural_to()` advances independent neural physics only to the next
-  coarse boundary, then enqueues one `NEURAL_BRIDGE` at its native float64 time
-  in the existing scheduler. World, language, maintenance, actions, cognition
-  and bridge delivery therefore share one time/sequence ordering. Each
-  recognition performs ordinary receive and downstream wave at its event time.
-- Exactly-once delivery uses persisted monotonic event identities and a native
-  cursor. The event log is bounded to 256 and each drain to 64 by default; cursor
-  overflow is a hard error. Consumed events do not replay and pending events
-  deliver once after restore.
-- Cognit deletion immediately invalidates the mapping. Later recognition births
-  a new monotonic ID; dead IDs are not reused.
-- Each drain respects both `max_cognits` and `max_new_cognits_per_tick`.
-  Overflow events are consumed deterministically and counted as suppressed;
-  later genuine recognition can birth the still-unmapped assembly after
-  capacity becomes available.
-- Substrate snapshot/restore preserves bridge events and their future timing;
-  engine bridge state preserves mapping/cursor/counters alongside the matching
-  graph snapshot. `.seworld v7` includes optional pending neural state and its
-  requested frontier in the scheduler snapshot, so a queued bridge resumes
-  exactly once. The schema version and `.sebrain v6` remain unchanged.
-- No reverse Cognit→micro path, semantic assignment, automatic Relations,
-  World/language/Goal/planner/action coupling, reward, classifier or backprop was
-  added. Silent/default substrates emit zero bridge events.
-- Focused v0.6.0–v0.6.3: **50 passed**; full pytest: **365 passed**; Release
-  build: **PASS**; CTest Release: **2/2 passed**. Current canonical no-language
-  digest is identical for `PYTHONHASHSEED=1/77`:
-  `c54f1fe0d1b5df9f2b1db6a778cc421e4aa206c295119a689c0828fbf1b1c6f6`;
-  `full_graph_sync_calls == 0`.
-
-Next: not started.
-
-## v0.6.2 — EMERGENT ASSEMBLIES
-
-**PASS — native evidence-derived assemblies accepted.**
-
-**v0.6.2: FROZEN**
-
-- Assembly membership is inferred only from recurring emitted micro-κ spikes.
-  Per-assembly member participation, normalized individual activity, occurrence
-  support, and directed temporal support determine stable core membership; no
-  membership lists, labels, classifiers, or semantic hints enter the detector.
-- Final temporal identity is membership-closed: temporal support is filtered
-  only after stable membership normalization, and every persisted/exposed edge
-  has both endpoints in the final member set. Restore rebuilds this derived edge
-  view from authoritative support, so stale excluded-node edges cannot return.
-- Activity episodes preserve timestamp groups. Spikes at the same float64 time
-  contribute unordered coactivation but never a directed edge; temporal support
-  requires strictly earlier/later groups and tolerates timing jitter.
-- Deterministic similarity updates compatible candidates instead of creating an
-  exact-timestamp record per occurrence. One-shot records cannot consolidate;
-  recurrent evidence crosses candidate and consolidation thresholds. Rare noise
-  and frequent distractors do not enter the stable core. Overlapping and novel
-  assemblies remain independent.
-- Consolidated assemblies produce bounded native `AssemblyMatch` summaries.
-  Correct full recurrence scores above correct partial recurrence, which scores
-  above reversed order. Recognition does not edit synapses or neural physics.
-- Recent activity, members, temporal edges, candidate count, consolidated count,
-  and recent matches are bounded. Weak/old candidates use lazy elapsed-time
-  decay for deterministic capacity eviction; silent time performs no assembly
-  work.
-- Ordinary Python `snapshot()/restore()` now preserves assembly physiology,
-  IDs, recent spikes, candidate/consolidated evidence, normalized node support,
-  recent matches, and telemetry for exact continuation. `.sebrain v6` and
-  `.seworld v7` remain unchanged.
-- Tracking enabled/disabled runs have exact neural-state parity. There is no
-  Python per-spike processing, Cognit creation, assembly↔Cognit bridge, World,
-  language, Goal, planner, action, or motor coupling.
-- The adversarial closure makes frequent X fire globally and inside three
-  A→X→B→C windows. Raw X temporal support reaches at least 3, yet specificity
-  excludes X from membership and membership-closed filtering removes every X
-  edge while preserving A/B/C temporal structure.
-- Focused v0.6.0–v0.6.2 tests: **30 passed**; full pytest: **345 passed**;
-  Release build: **PASS**; CTest Release: **2/2 passed**. Silent 10,000 micro-κ /
-  50,000 micro-ρ assembly work: **0**. No-language digest remains
-  `e334137aab48aac629c9ac0d4dbc77ea8ec7f51203acda0c970a9bb647c3d731`;
-  `full_graph_sync_calls == 0`.
-
-v0.6.2 remains frozen beneath the accepted v0.6.3 bridge.
-
-## v0.6.1 — LOCAL PLASTICITY + HOMEOSTASIS
-
-**PASS — local native plasticity and homeostasis accepted.**
-
-**v0.6.1 — LOCAL PLASTICITY + HOMEOSTASIS: FROZEN**
-
-- Micro-ρ has an immutable innate polarity, bounded mutable nonnegative weight
-  magnitude, and explicit `plasticity_enabled` control. Native incoming and
-  outgoing adjacency limits learning work to a spiking node's local degree.
-- Frozen v0.6.0 fixed edges preserve their original domain: every finite
-  nonnegative magnitude is valid when `plasticity_enabled == false`, including
-  values outside v0.6.1 learning bounds. Bounds apply only to plastic edges in
-  both creation and snapshot validation; STDP still clamps every plastic update.
-- A native two-phase same-time spike transaction applies pair-based STDP from
-  traces strictly before the timestamp. Pre→post pairs potentiate, post→pre
-  pairs depress, and simultaneous spikes create no artificial causal learning.
-  There is no Python callback per spike or plasticity update.
-- Per-micro-κ pre/post traces and slow threshold bias are analytically lazy.
-  Homeostasis is innate physiology, separate from fast adaptation: spiking raises
-  bias, elapsed quiet time projects it toward zero, and silent networks receive
-  no global neural/homeostatic update.
-- All plasticity/homeostasis physiology, relation flags/weights, traces, bias,
-  timestamps, queue, and telemetry are native snapshot state and restore exactly
-  into an instance constructed with different defaults. `.sebrain v6` and
-  `.seworld v7` remain deliberately unchanged.
-- The substrate remains isolated: no assembly detection, micro↔Cognit bridge,
-  World, language, Goal, action, reinforcement, or backpropagation coupling.
-- Focused v0.6.0/v0.6.1 tests: **21 passed**; full pytest: **336 passed**;
-  Release build: **PASS**; CTest Release: **2/2 passed**. No-language digest
-  remains `e334137aab48aac629c9ac0d4dbc77ea8ec7f51203acda0c970a9bb647c3d731`;
-  `full_graph_sync_calls == 0`.
-
-v0.6.1 remains frozen under the accepted v0.6.2 observational assembly layer.
-
-## v0.6.0 — NATIVE EVENT-DRIVEN MICRO-NEURODYNAMIC SUBSTRATE
-
-**PASS — isolated native substrate accepted.**
-
-**v0.6.0 CLOSURE: PASS**
-
-**v0.6.0 — NATIVE EVENT-DRIVEN MICRO-NEURODYNAMIC SUBSTRATE: FROZEN**
-
-- Native `NeurodynamicSubstrate` supplies SoA micro-κ state, stable monotonic
-  IDs, fixed delayed signed micro-ρ edges, float64 continuous neural time, and
-  a deterministic `(time, sequence)` native event queue. Same-time events are
-  deterministically aggregated per target; lazy leak/adaptation touches only
-  affected micro-κ; refractory deliveries are discarded and counted.
-- It is owned by `NativeBrainEngine` and is empty by default. It has no global
-  neural tick, Python per-event callback, Cognit/Relation coupling, plasticity,
-  STDP, assemblies, World, language, Goal, motor, or sensory integration.
-  Physiology constants are innate substrate physics. Snapshot/restore exactly
-  preserves neural continuation, including all innate physiology and event guard,
-  even when restored into an instance built with different defaults. Snapshot
-  validation rejects invalid physiology, state, micro-ρ topology/polarity, and
-  pending event targets/times/sequences. `.sebrain v6` and `.seworld v7` are
-  intentionally unchanged.
-- `states(ids)` projects potential and adaptation analytically at current neural
-  time for requested IDs without mutating lazy storage or sweeping the network.
-- Focused native/Python micro-neurodynamic tests: **11 passed** — analytical lazy
-  leak, excitation, inhibition/same-time aggregation, delayed chain,
-  refractory, adaptation, deterministic replay, physiology-safe
-  snapshot/restore, invalid snapshot validation, and silent 10,000 micro-κ /
-  50,000 micro-ρ zero-event-work check.
-- No-language deterministic baseline remains
-  `e334137aab48aac629c9ac0d4dbc77ea8ec7f51203acda0c970a9bb647c3d731`;
-  `full_graph_sync_calls == 0`.
-- Verification: full pytest **326 passed**; Release native build **PASS**;
-  CTest Release **2/2 passed**.
-
-No v0.6.1 work has started.
-
-## LANGUAGE PASS 4 — GROUNDED REQUESTS / LANGUAGE -> GOALS
-
-LANGUAGE PASS 4 — GROUNDED REQUESTS / LANGUAGE -> GOALS: PASS
-
-LANGUAGE PASS 4: FROZEN
-
-LANGUAGE PASS 4 CLOSURE: PASS
-
-LANGUAGE PASS 4 — GROUNDED REQUESTS / LANGUAGE -> GOALS: FROZEN
-
-- Request intent is learned contrastively from externally demonstrated desired
-  structures. An arbitrary NFC token can acquire an ordinary ASSOCIATIVE link
-  to one generic `COMMUNICATIVE_REQUEST` Cognit; no spelling or command is
-  hard-coded and the concept contains no ActionType semantics.
-- Immutable `LanguageRequestResult` records the Pass-3 result, retrieved cue
-  symbols, confidence, desired structure, Goal ID, and provenance. A Goal is
-  installed only when the learned cue is retrieved and all non-cue Pass-3 roles
-  form a complete relational structure.
-- `SyntheticEntityCore.install_relational_goal` is the shared ordinary Goal
-  path. Language preserves canonical relations, directed role edges and bound
-  participant Cognits with `origin="LANGUAGE_REQUEST"`; the existing
-  BeliefScene/planner machinery consumes `core.target_structure`.
-- Description controls create the same Pass-3 structure without a Goal.
-  Ambiguous or incomplete requests create no Goal. Language never chooses an
-  action and does not mutate World, EventSequence, or ActionIntent state.
-- The embodied acceptance path uses real World-derived participant/relation
-  Cognits, normal Pass-1 grounding, a learned nonce request cue, and a held-out
-  first request. Request-label permutation and an untrained `take` control prove
-  that surface spelling supplies no intent.
-- Request-cue generalization is now held out: `mip` is demonstrated only with
-  structure X, while independently grounded structure Y is never paired with
-  `mip` until its first successful requested Goal. The same Y remains a
-  description without the cue.
-- Relational Goal behavior is generic: provenance is not used to select planner
-  mechanics. Any active Goal whose target Cognits and `target_structure` agree
-  enters target seeding, progress/action scoring, and relational subgoal
-  management; this includes `LANGUAGE_REQUEST`.
-- Queued request utterances persist their target structure in backward-compatible
-  v7 inbox rows; old three-field rows still load. One global deterministic
-  `max_new_relations_per_tick` budget spans all qualifying request cues, and a
-  cue is marked materialized only after its actual ASSOCIATIVE Relation exists.
-- Language identity is Unicode `str`, normalized by NFC only. Cyrillic/Latin
-  confusables, case, CJK, Greek, emoji, and arrows remain exact distinct tokens;
-  canonically equivalent accented forms share one symbol. Containers encode
-  JSON as UTF-8 without ASCII escaping.
-- Request evidence/concept identity/materialized cue bookkeeping persist in the
-  existing LANG payload. Previous v0.5.6 payloads migrate with no request cues;
-  schemas remain `.seworld v7` and `.sebrain v6`.
-- Focused Pass-4 closure tests: **12 passed**; focused Pass-1–4: **50 passed**;
-  full pytest: **315 passed**; Release build: **PASS**; CTest: **2/2**;
-  `full_graph_sync_calls == 0`; `PYTHONHASHSEED=1/77`: identical.
-
-## LANGUAGE PASS 3 — RELATIONAL COMPOSITIONAL GROUNDING
-
-LANGUAGE PASS 3 — RELATIONAL COMPOSITIONAL GROUNDING: PASS
-
-LANGUAGE PASS 3: FROZEN
-
-- Immutable `LanguageRelationalResult` exposes ordered symbol IDs, bounded
-  semantic slots, a real `RelationalStructure` when supported, confidence,
-  unresolved positions, and Cognit provenance.
-- A slot can use only a live, non-language, non-target Cognit that is both a
-  materialized Pass-1 grounding target and active in that token's actual
-  retrieval wave. Candidate ranking and ambiguity handling are bounded and
-  deterministic; equal learned evidence remains unresolved.
-- Relational meaning comes only from existing `RELATIONAL` token Cognits or
-  existing `BOUND_RELATION` beliefs. Two non-relational participants are bound
-  in utterance order to directed roles `(0, 1)`; no relation is invented when
-  a relational anchor is absent.
-- Held-out first-occurrence triples compose immediately from constituent
-  meanings, and reversing participant order reverses the participant binding.
-  The result is directly consumable by `BeliefScene`.
-- The closure curriculum uses only real native World observations: two
-  perceptually distinct objects produce memory participants and ordinary
-  relational Cognits; normal Pass-1 exposures ground three nonce words. The
-  first unseen triple composes immediately, and a full surface-label
-  permutation preserves the learned semantics.
-- `RelationalStructure.source_cognits` contains participants only. Its
-  `relations` use the ordinary canonical representation, while `role_edges`
-  preserve direction. Generic `BeliefScene` binding respects explicit bound
-  participant IDs without changing free binding for unbound structures, so a
-  correct scene scores above a role-reversed scene.
-- Composition is read-only interpretation: it creates no phrase Cognit,
-  ASSOCIATIVE meaning, Goal, ActionIntent, World mutation, or evidence refresh.
-  Frozen Pass-2 sequence learning remains unchanged.
-- Persistence remains `.seworld v7` / `.sebrain v6`; an unfinished utterance
-  resumes to the identical derived relational result.
-- Focused Pass-3 tests: **9 passed**; frozen Pass-1/2 plus Pass-3 tests:
-  **38 passed**; full pytest: **303 passed**; Release build: **PASS**;
-  CTest: **2/2**; `full_graph_sync_calls == 0`; `PYTHONHASHSEED=1/77`: identical.
-
-v0.5.x LANGUAGE FOUNDATION: FROZEN
-
-## LANGUAGE PASS 2 — MULTI-TOKEN SEQUENCE + BASIC COMPOSITIONAL RETRIEVAL
-
-LANGUAGE PASS 2 — MULTI-TOKEN SEQUENCE + BASIC COMPOSITIONAL RETRIEVAL: PASS
-
-LANGUAGE PASS 2 CLOSURE: PASS — FROZEN
-
-- Immutable `LanguageUtteranceFrame` accepts only externally segmented exact
-  NFC symbols, with a maximum of **16** tokens. A string is not treated as a
-  tokenized utterance; the frozen single-token API delegates to Pass 1.
-- Multi-token work uses one persistable `LanguageUtteranceFrontier`. Each token
-  consumes one continuation/cognitive tick, followed by one COMPOSE
-  continuation/tick, all at the utterance's unchanged WorldTime. Utterances do
-  not interleave.
-- Every `LANGUAGE_CONTINUE` rechecks the ordinary cognition transaction and
-  reschedules at the same WorldTime when it is unfinished. Maintenance likewise
-  performs no lifecycle work while a language frontier is active.
-- One embodied context is frozen at utterance arrival and reused for every
-  token. Token waves cannot become grounding input for later tokens. Pure
-  multi-token retrieval leaves Pass-1 embodied evidence unchanged.
-- Python maintains bounded directional adjacency evidence (minimum support
-  **2**, confidence k **3.0**, at most **64** candidates/source). A finalization
-  batch materializes ordinary LANGUAGE_SYMBOL `SEQUENTIAL` Relations under the
-  existing global Cognit/Relation budgets.
-- Composition is the deterministic union of non-language Cognits retrieved by
-  constituent token waves. There are no phrase Cognits, phrase dictionaries,
-  grammar roles, command mappings, Goals, or ActionIntents.
-- First-ever pair retrieval, real embodied constituent composition, unseen
-  combination generalization, order permutation, duplicate/unknown tokens,
-  frozen-context isolation, capacity pressure and evidence order invariance:
-  **PASS**.
-- `.seworld` schema **v7** persists pending utterances and exact mid-utterance
-  execution state; real v6 single-token worlds migrate without graph mutation.
-  `.sebrain` schema **v6** transfers sequence evidence/materialized bookkeeping;
-  real Pass-1 v5 brains migrate with empty sequence evidence.
-- Language sequence/evidence dictionaries follow real Cognit deletion through
-  `LanguageLexicon.on_cognit_deleted`; forgotten tokens are reborn under a new
-  monotonic ID without inheriting stale sequence state.
-- The native SDL3/OpenGL observer has a bounded left **DIALOGUE** panel backed by
-  a latest-only immutable 64-line native channel. Accepted EXTERNAL utterances
-  publish once at event boundaries. ENTITY is reserved for future real speech;
-  entity language production is not implemented and no fake response is shown.
-- Focused closure/UI tests: **27 passed**; focused Pass-2 tests: **13 passed**;
-  frozen Pass-1 tests: **25 passed**; critical regressions: **115 passed**;
-  full pytest: **294 passed**; Release
-  native build: **PASS**; CTest: **2/2**.
-- `full_graph_sync_calls == 0`; no-language digest remains
-  `e334137aab48aac629c9ac0d4dbc77ea8ec7f51203acda0c970a9bb647c3d731`;
-  utterance curriculum is identical under `PYTHONHASHSEED=1/77`.
-
-## LANGUAGE PASS 1.1 — EMBODIED GROUNDING HARDENING
-
-LANGUAGE PASS 1.1 — EMBODIED GROUNDING HARDENING: PASS
-
-- `GroundingContextSnapshot` is captured inside the real observation transaction
-  from matched sensory Cognits, perceptual/memory-active Cognits, and current
-  relational/bound Cognits, before recall and planning propagation.
-- Grounding never reads ordinary `core.last_wave`. A language wave is returned as
-  `LanguageProcessingResult` and does not overwrite the ordinary wave.
-- `GroundingContextTracker` keeps the latest embodied context current, at full
-  salience, until a real observation replaces it. Replaced contexts retire at
-  that exact WorldTime and then use a **1.0 s** horizon and **0.5 s** exponential
-  tau measured from retirement; duplicate salience merges by deterministic max.
-- Experiential background mass accrues from ordinary embodied contexts over
-  elapsed WorldTime. It is independent of language event count and render FPS;
-  minimum background before Relation birth is **0.5 s**.
-- Relation strength/confidence are deterministic functions of accumulated
-  support mass, grounded trials, experiential background and lift. Curriculum
-  order invariance passes.
-- Pure symbol retrieval is Relation use, not grounding evidence. With no valid
-  filtered embodied context it increments exposure diagnostics and propagates
-  the symbol wave, but performs no grounded trial, evidence mutation, language
-  Relation batch, or learner-driven Relation evidence/touch-time refresh.
-- LANGUAGE_INPUT enters exact native continuous time before mutation, consumes
-  one cognitive tick, and defers at the same WorldTime behind unfinished
-  cognition. An action already in flight is neither cancelled nor duplicated.
-- Vocabulary respects `max_cognits`; Relation creation respects `max_relations`
-  and `max_new_relations_per_tick`. Unmaterialized evidence is capped at **256**
-  candidates per symbol.
-- Language performs **0 outgoing scans in normal learning** and one generic
-  coarse native Relation batch when updates exist. The batch returns exact
-  created targets and updates only its owned numeric fields, preserving all
-  other existing Relation metadata. Python retains meaning policy; C++ mutates
-  numeric Relation state. `full_graph_sync_calls == 0`.
-- Real embodied nonce grounding, embodied label permutation, first-word-only
-  grounding, temporal delay/expiry, last-wave isolation, deferral, exact time,
-  resource bounds, order invariance, and real legacy migration: **PASS**.
-- `.seworld` schema **v6** persists durable background plus the exact
-  current/historical retirement frontier and inbox. Real previous-language
-  `.seworld v5` state migrates to v6. `.sebrain` schema **v5** transfers durable
-  grounding but no episode context or pending utterance; real previous-language
-  `.sebrain v4` migrates to v5. Legacy count background uses an explicit
-  one-exposure/one-compatibility-unit normalization because elapsed time was not
-  present, and materialized targets are reconstructed from the persisted graph.
-- Focused language tests: **25 passed**; critical regressions: **145 passed**;
-  full pytest: **276 passed**; Release native build: **PASS**; CTest: **2/2**.
-- No-language `PYTHONHASHSEED=1/77` trajectory remains deterministic with digest
-  `e334137aab48aac629c9ac0d4dbc77ea8ec7f51203acda0c970a9bb647c3d731`;
-  the real embodied curriculum is also identical under both hash seeds.
-
-The earlier association-only Pass 1 proof is superseded by this embodied gate.
-LANGUAGE PASS 1 — RECEPTIVE SYMBOL GROUNDING: PASS
-
-## BRAIN VIEW SCALING OPTIMIZATION
-
-BRAIN VIEW SCALING OPTIMIZATION: PASS
-
-- Producer limits are named observer constants: **1024 Cognits / 4096 Relations**.
-  Snapshots also carry exact total/visible/active counts and truncation state.
-- Deterministic selection prioritizes active, recent, and newly created Cognits.
-  Relations are top-K ranked from visible sources by current use/activity,
-  strength and confidence; both endpoints must be visible.
-- Normal publication performs **no** `RelationStore::snapshot()` or other full
-  Relation-vector copy. It reads raw observational fields and does not touch lazy
-  time, confidence, use markers, RNG, revisions, or lifecycle.
-- Panel-area LOD is **128–512 nodes** and at most `min(nodes*4, 2048)` edges.
-  The tested desktop panel displays **128 / 10000 Cognits** and at most
-  **512 / 50000 Relations**.
-- `NativeObserver` caches snapshot identity, viewport dimensions and CPU/GPU
-  geometry. Repeated frames do not rebuild unchanged graph geometry.
-- Edges use one dynamic `GL_LINES` VBO draw; Cognits use one circular
-  `GL_POINTS` VBO draw. The previous CPU pixel-walk/scissor Relation renderer
-  is removed.
-- Presentation history is bounded: current cached geometry is LOD-bounded and
-  Cognit birth identity uses a compact monotonic-ID frontier rather than an
-  unbounded per-Cognit map.
-- 10,000-Cognit/50,000-unique-Relation fixture: snapshot **1024 / 4096**,
-  publication **1.809 ms** observed locally; exact selection is repeatable.
-- Focused observer/continuous regression: **41 passed**; full pytest:
-  **251 passed**; observer-enabled Release build: **PASS**; CTest: **2/2**.
-- Real Windows window smoke and resize-safe rendering: **PASS**.
-- Python calls per render frame: **0**; `full_graph_sync_calls`: **0**;
-  exact trajectory invariance: **PASS**. Established `PYTHONHASHSEED=1/77`
-  digest remains `e334137aab48aac629c9ac0d4dbc77ea8ec7f51203acda0c970a9bb647c3d731`.
-
-
-## NATIVE OBSERVER VISUAL UI + BRAIN GRAPH
-
-NATIVE OBSERVER VISUAL UI + BRAIN GRAPH: PASS
-
-- The SDL3/OpenGL window now uses a 72/28 research layout: polished physical
-  viewport left, Brain and Status panels right.
-- Native Cognits render as activity-scaled nodes; primitive/composite state has
-  a secondary mark. Native Relations render as typed, strength/confidence-scaled
-  edges and highlight only from observed current use/activity.
-- New Cognit IDs acquire observer-local birth time and fade/scale in. Stable
-  deterministic ID hashing retains layout across snapshots without simulation RNG.
-- `BrainSnapshotChannel` is an immutable latest-only
-  `atomic<shared_ptr<const BrainSnapshot>>`. Snapshot production reads the sole
-  authoritative native graph and occurs once at causal runtime boundaries, not
-  per render frame.
-- The render thread reads only `RenderSnapshotChannel` and
-  `BrainSnapshotChannel`. Python callbacks per frame: **0**.
-- Graph/status DTOs and presentation state are excluded from `.sebrain` and
-  `.seworld`; publication leaves `full_graph_sync_calls == 0`.
-- Focused brain/native observer/continuous regression: **53 passed**.
-- Full pytest: **250 passed**. Observer-enabled Release build: **PASS**.
-- CTest Release: **2/2 passed**.
-- Real Windows graphical smoke: **PASS** (resize-safe split viewport, live graph,
-  clean timed close).
-- `PYTHONHASHSEED=1/77` established trajectory digest remains
-  `e334137aab48aac629c9ac0d4dbc77ea8ec7f51203acda0c970a9bb647c3d731`.
-
-## PRODUCTION NATIVE UI MIGRATION
-
-PRODUCTION NATIVE UI MIGRATION: PASS
-
-    python main.py
-      -> ContinuousRuntime
-      -> authoritative native WorldRuntime
-      -> immutable RenderSnapshotChannel
-      -> NativeObserver thread
-      -> SDL3/OpenGL
-
-- Default execution contains no Pygame import and never calls `Simulation.step()` per frame.
-- Live target WorldTime comes only from monotonic host time multiplied by `--speed`; observer frames never define simulation progress.
-- `--headless --seconds T` runs the same `ContinuousRuntime` without an observer and advances to absolute WorldTime `T`.
-- `--save` uses `.seworld`; `--load` restores through `ContinuousRuntime.load_world()` before observer attachment.
-- `--ticks` was removed. Legacy tick telemetry is explicitly rejected instead of reintroducing the discrete runtime.
-- Observer shutdown, Ctrl+C, and exceptions execute idempotent `observer.stop()` cleanup.
-- The old `ui/` package remains legacy/debug-only. Pygame was removed from production requirements.
-- Focused entrypoint **9 passed**; live observer **5 passed**; continuous-world **28 passed**; render snapshot/observer **4 passed**.
-- Full pytest **247 passed**; observer-enabled Release build **PASS**; CTest Release **2/2 passed**.
-- Established `PYTHONHASHSEED=1/77` digest remains `e334137aab48aac629c9ac0d4dbc77ea8ec7f51203acda0c970a9bb647c3d731`.
-
-## NATIVE C++ SDL3 / OPENGL OBSERVER
-
-NATIVE C++ SDL3 / OPENGL OBSERVER: PASS
-
-PASS 1 — NATIVE RENDER SNAPSHOT BOUNDARY: PASS
-
-PASS 2 — SDL3 / OPENGL NATIVE 2D RENDERER: PASS
-
-The optional `SE_BUILD_OBSERVER` CMake target fetches pinned SDL 3.2.8 and
-builds a native OpenGL observer plus deterministic demo. Its native frame loop
-accepts only value-owned `RenderSnapshot` values through `SnapshotSource`; it
-does not invoke Python or mutate `World`. Renderer geometry preparation is
-unit-testable without a window. Live attachment uses the native snapshot channel
-owned by the same authoritative `WorldRuntime`; lifecycle, trajectory invariance,
-post-stop continuation, and persistence exclusion are covered by tests.
-
-Observer closure details:
-
-- `RenderSnapshotChannel` is a latest-state-only C++20 `atomic<shared_ptr<const RenderSnapshot>>`; production code contains no mutex, lock guard, queue, condition variable, or spin lock.
-- Public `World::apply()` mutates through `apply_internal()` and publishes exactly one fresh immutable snapshot without changing EventSequence.
-- `World::apply_intent()` and `World::resolve_intents()` use the same non-publishing helper; multi-body resolution publishes one coherent snapshot only after the complete batch.
-- Previously retained snapshots remain immutable and safe while newer snapshots are published concurrently.
-- Observer sampling causes zero Python per-frame calls, scheduler/World events, EventSequence increments, or cognition work. Renderer wall-clock has no path into WorldTime, scheduler, RNG, or cognition.
-- The observer now includes the separate right-side Cognit/Relation visualization
-  described above; it remains wholly downstream of authoritative cognition.
-- `_native_brain` and `SDL3.dll` are runtime-local build outputs. Neither is tracked; `cpp/build*`, `CMakeFiles`, CMake cache files, and pip build logs are also excluded.
-- Repository cleanup: **PASS**.
-
-Current verification after a fresh observer-enabled Release build: focused
-live observer **5 passed**, continuous-world **28 passed**, render snapshot/observer **4 passed**; full pytest **247 passed**;
-CTest Release **2/2 passed**.
-
-## CONTINUOUS WORLD COMPLETION
-
-CONTINUOUS WORLD COMPLETION: PASS
-
-The implementation branch schedules `WORLD_SPAWN` and `MAINTENANCE` at
-absolute `WorldTime`, and normal `ContinuousRuntime` no longer dispatches
-`NativeWorld.world_tick()`. The frozen legacy `world_tick()` API remains.
-`RuntimeEvent.id` is now retained solely for scheduler ordering; physical
-World mutations allocate their own `Simulation.event_sequence` at execution.
-Maintenance passes its absolute deadline through the established continuous
-time entry point before bounded lifecycle work.
-Final verification: continuous-world focused tests 28 passed; focused
-runtime/frontier/elapsed selection 97 passed; full pytest 247 passed; clean
-observer-enabled Release native build PASS; CTest 2/2 PASS. `PYTHONHASHSEED=1/77` digest:
-`e334137aab48aac629c9ac0d4dbc77ea8ec7f51203acda0c970a9bb647c3d731`.
-Normal continuous `world_tick` calls, native Python physical World calls, and
-`full_graph_sync_calls` are all zero.
-
-## TRUE EVENT-DRIVEN COGNITION FRONTIER
-
-TRUE EVENT-DRIVEN COGNITION FRONTIER: PASS
-
-## ARCHITECTURE
-
-    SENSORY_CHANGE
-      -> bounded observation / new cognition generation
-      -> COGNITION_WAKE
-      -> COGNITION_CONTINUE x N at the same WorldTime
-      -> QUIESCENT
-      -> one decision commit
-      -> WORLD_ACTION_COMPLETE at WorldTime + 0.15
-
-- Normal `ContinuousRuntime` uses dedicated continuous core/planner APIs and calls neither legacy `SyntheticEntityCore.step()` nor `DeliberativePlanner.deliberate()`.
-- One `COGNITION_CONTINUE` consumes at most one explicit pending cognitive work item.
-- `cognitive_tick`, planner `internal_tick`, and `total_cycles` increment once per continuation; EventSequence and float64 WorldTime remain independent.
-- External sensory evidence is applied once in the observation transaction. Predictions, trace, previous action/context, active homeostasis, planner commit, and action are committed once after quiescence.
-- Wake/continue payloads carry a monotonically increasing generation. Stale events are deterministic no-ops.
-
-## QUIESCENCE MODEL
-
-`QUIESCENT` iff a valid candidate exists, `pending_work` is empty, no deduplicated invalidation key remains pending, and the session is not finalized. There is no stable-count, repetition count, numeric epsilon, elapsed-time, timeout, minimum-cycle, or maximum-cycle stopping rule. The diagnostic guard reports generation, WorldTime, pending kinds, recent work history, and Goal ID, then raises without forcing an action.
-
-## COGNITIVE WORK TYPES
-
-- `RECALL`: seeded by a new sensory episode or a changed Goal/cue/revision; performs retrieval and exactly one recall stimulation.
-- `PROPAGATE`: caused by a recall/internal activation and carries explicit seed Cognits.
-- `IMAGINE`: caused by a new/invalidated working-state and Goal input.
-- `PLAN_REFINE`: caused by new futures; runs one existing bounded `_search`. A Goal/subgoal change invalidates the candidate and creates a new recall chain.
-
-## CAUSAL WORK CHAIN
-
-    RECALL
-      -> PROPAGATE
-      -> IMAGINE
-      -> PLAN_REFINE
-      -> EMPTY
-      -> QUIESCENT
-
-The internally changed-Goal fixture produces two such chains before quiescence.
-
-## RECALL SEMANTICS
-
-Recall may repeat only when its exact semantic key `(Goal ID, target IDs, working revision)` changes. Pending work identities are deduplicated. Repeated scheduler events alone cannot rerun recall or stimulate a Cognit: **NO**.
-
-## CONTINUOUS BUDGET
-
-`max_deliberation_cycles` participates in continuous behavior: **NO**. The frozen legacy `deliberate()` retains its original budget. With the continuous maximum set to 1, the tested session still consumes its four causally pending work items and matches a maximum of 12.
-
-## FRONTIER PERSISTENCE
-
-Continuous `.seworld` schema version 4 persists the schema-v3 cognition frontier plus absolute spawn and maintenance scheduling state. Event-by-event continuation passes at all seven required cognitive work boundaries. No consumed work replays after load. v1 retains its explicit legacy pending-wake adapter; v2 unfinished stable-counter sessions migrate conservatively into one causal recall chain; v3 snapshots deterministically reconstruct the new World timers.
-
-## HOMEOSTATIC EVENT SEMANTICS
-
-- Passive Cognit/Relation/memory/Goal evolution remains lazy elapsed-time behavior.
-- Recall stimulation, waves, and final active homeostasis remain causal activation operations. Same-time continuations invent no elapsed `dt`.
-
-## DETERMINISM
-
-- `PYTHONHASHSEED=1`: `f527b2d204acb87a7279e53783e66d3640086eba1bb70577653d855f21da2685`
-- `PYTHONHASHSEED=77`: `f527b2d204acb87a7279e53783e66d3640086eba1bb70577653d855f21da2685`
-- Renderer sampling and arbitrary host work between continuation events are observational.
-
-## CONTINUATION COUNTS
-
-- Small deterministic simple/Goal-invalidation sample: **min 4 / mean 6.0 / max 8** continuation events.
-- Ordinary 20-decision sample: **min 4 / mean 4.0 / max 4**; these values are observations, not invariants.
-- Ordinary sample mean native FFI calls per continuation: **15.16**.
-- Session-local working state and semantic caches persist across events and save/load.
-- `full_graph_sync_calls == 0`: **PASS**.
-- Normal native Python physical World calls: **0 / PASS**.
-
-## FRONTIER GATE CHECKPOINT TESTS
-
-Focused frontier counts are retained; repository-wide counts reflect the current observer-enabled build:
-
-- Event-driven cognition frontier focused module: **18 passed**.
-- Frontier plus continuous runtime modules: **31 passed**.
-- Elapsed/native/causal/legacy compatibility selection: **81 passed**.
-- Full pytest: **237 passed**.
-- CTest Release: **2/2 passed**.
-- Long 5K/10K benchmarks were not run.
-
-## FIRST FAILURE
-
-None.
-
-## NEXT GATE
-
-**SCALING / NATIVE-BOUNDARY CLEANUP**
-
-Not started. Continuous World completion and the native SDL3/OpenGL observer are complete.
-
-## FRONTIER MODIFIED FILES
-
-- consciousness/planning.py
-- simulation/continuous.py
-- tests/test_v053_continuous_runtime.py
-- tests/test_v053_cognition_frontier.py
-- CURRENT_STATUS.md
-
-## ELAPSED-TIME LAZY COGNITION
-
-ELAPSED-TIME LAZY COGNITION: PASS
-
-## CORRECTIVE PASS
-
-Blocker 1 — homeostatic clamp and save invariance:
-
-- Continuous Cognits preserve an unclamped float64 latent homeostatic threshold.
-- The behavior-visible threshold remains clamped to the configured minimum/maximum.
-- Intermediate reads no longer discard latent motion beyond either clamp boundary.
-- Split versus one-shot evolution passes for 0.1+0.2, 0.25+0.75, 1+9, and 1000 seconds at both clamps.
-- Reading every 0.01 seconds matches one touch after 10 seconds.
-- Continuous save_graph no longer performs its legacy all-Cognit catch-up.
-- No-save, save-without-load, and save/load branches converge to identical behavior-affecting Cognit and latent state.
-- Continuous .seworld capture now snapshots semantic state before capturing the matching native/frontier payload.
-
-## BLOCKER 2 — TARGET MEMORY
-
-**PASS**
-
-- Candidate discovery is conservative: exact relation-token hits and directly associated places are always admitted.
-- Zero-token-overlap candidates use participant-count plus 0.001-wide maximum-confidence buckets.
-- For participant counts n/m and bucket upper confidence c, the admissible bound is:
-  - roles = min(n,m) / max(n,m)
-  - role_support = min(1,n/m)
-  - structural_upper = 0.2 * roles * min(c,target_confidence)
-  - strength_upper = (0.1 + 0.65 * structural_upper + 0.25 * role_support) * c
-- Recency is bounded by 1. Group mean confidence and every member confidence cannot exceed the bucket upper bound, so a place whose exact zero-overlap score can reach 0.12 cannot be excluded.
-- Exact relation-token matches bypass the zero-overlap bound; direct associations bypass all structural pruning.
-- Existing memory_structure.match, relevance, recency, and final threshold scoring remain authoritative after admission.
-- Adversarial high-confidence/no-token-overlap recall: **PASS**.
-- Low-confidence final rejection: **PASS**.
-- Participant-count, stale/fresh, and direct-association cases: **PASS**.
-- Deterministic randomized differential: **80 worlds passed; 0 false negatives**.
-- Full-scan oracle is test-only and is not called by runtime.
-- Strengthened scaling result:
-  - total memories: **10,000**
-  - total places: **5,000**
-  - exact-token matching places: **2**
-  - zero-token/high-confidence recallable places: **2**
-  - candidate places: **4**
-  - candidate memories: **8**
-  - memories materialized: **8**
-
-Blocker 3 — causal Goal persistence:
-
-- Passive waiting applies only goal_decay raised to elapsed simulated seconds.
-- Understanding is applied exactly once at the cognitive event that produced it.
-- A new observation never changes decay over the preceding silent interval.
-- Low-before/high-after and high-before/low-after causal-order scenarios pass.
-- Ten observations at exact one-second cadence match the frozen per-observation multiplicative formula.
-- Goal age remains a causal/event count.
-- Continuous save/load preserves Goal time anchors and exact continuation.
-
-## TIME SEMANTICS
-
-Elapsed-time state:
-
-- Cognit activity, utility, inactive trace, latent/visible homeostatic threshold, last touch, and last activation time
-- Relation passive confidence and separate confidence/evidence time frontiers
-- memory confidence, confirmation time, recency, and idle duration
-- Goal passive persistence, creation time, unavailable duration, and cooldown timestamp
-
-Event/count state retained:
-
-- EventSequence, event IDs, cognitive_tick, and last_activated_cognitive_tick
-- evidence windows, support, confirmations, contradictions, and prototype evidence
-- prototype occurrences and explained_sum
-- percept observation age and missing_ticks
-- wave/refractory steps
-- Cognit age and low_retention_ticks
-- planner depth, expansions, tie cursors, and subgoal attempt cooldown
-- Goal age, attempts, interventions, completions, and causal observations
-
-## COMPLEXITY
-
-- Native dormant Cognits: **100,000**
-- Elapsed jump: **1,000 seconds**
-- Materialized before touch: **0**
-- Materialized after touching {7, 19}: **2**
-- Target memories: **10,000**
-- Target candidate/materialized memories: **8 / 8**
-- No time-advance graph scan and no target full-memory scan remain in the continuous path.
-
-## PERSISTENCE
-
-- Clamp-crossing latent frontier: **PASS**
-- Save is behaviorally observational: **PASS**
-- No-save == save == save/load: **PASS**
-- Exact .seworld continuation at 12.001, 12.149, 12.437, and 12.999 seconds: **PASS**
-- Relation semantic-identity frontier restore: **PASS**
-- Memory and Goal elapsed anchors: **PASS**
-
-## TESTS
-
-- Corrective elapsed, target-memory, and continuous acceptance set: **51 passed**
-- Elapsed-time focused module: **32 passed**
-- Target-memory adversarial/randomized/scaling module: **6 passed**
-- Continuous runtime module: **13 passed**
-- v0.5.2 native/causal compatibility subset: **43 passed**
-- Full pytest: **183 passed**
-- CTest: **1/1 passed**
-- Release native rebuild: **PASS**
-- full_graph_sync_calls == 0: **PASS**
-- Normal native Python physical World calls: **0 / PASS**
-- Render sampling invariance: **PASS**
-- Long 5K/10K benchmarks were not run.
+# Synthetic-Life — Current Status
+
+## Current accepted state
+
+**v0.7.5 — FROZEN**  
+Commit: `26b1308f3e61ca1d9fe573e693748021831a816d`
+
+v0.7 — cleanup/refactor line. Она не добавляла новую cognitive capability и
+сохранила frozen behavior v0.7.0/v0.6.6. Полный cross-worktree audit после
+Python/C++ structural refactor и tooling cleanup не обнаружил semantic, numeric,
+causal, persistence или ABI divergence.
+
+Полный evidence:
+[`docs/V0_7_5_REGRESSION_AUDIT.md`](docs/V0_7_5_REGRESSION_AUDIT.md).
+
+## Acceptance snapshot
+
+Последний полный audit:
+
+```text
+pytest                         422 passed
+CTest Release                  2/2 passed
+historical groups v0.2-v0.6.6 17/17 PASS
+full_graph_sync_calls          0
+```
+
+Canonical workload, seed `6607`:
+
+```text
+digest          7d80bffa82cfbabf8d11373883d03056b26b27eb53a4cbe9246a666e079fbb0f
+actions         79
+scheduler       655 events
+queue peak      3
+Cognits         27
+Relations       162
+planner cycles  294
+FFI calls       2668
+Assemblies      6
+```
+
+`PYTHONHASHSEED=1` и `777` совпадают. Семь запусков v0.7.0 и семь запусков
+v0.7.5 совпали по digest, structural counters и full neural telemetry.
+
+## Long-life state
+
+Проверенный manual run: `1,000 WorldTime`.
+
+```text
+actions               6,666
+scheduler events      54,363
+queue peak            3
+Cognits               593
+Relations             16,384 (global cap)
+Assemblies            87
+neural events          95,129
+planner cycles         25,329
+full_graph_sync_calls  0
+```
+
+Relations достигли cap к `WorldTime 300` и оставались bounded ещё 700 WorldTime,
+при этом actions, cognition, neural events и Assemblies продолжали изменяться.
+NaN/Inf, capacity overflow и scheduler runaway не обнаружены.
+
+50,000-WorldTime soak не запускался: 1,000 WorldTime заняли `548.725 s`.
+Это зафиксированная audit limitation, а не скрытый PASS.
+
+## Performance audit
+
+Одинаковый canonical workload, одна машина, семь запусков каждой версии:
+
+| Version | Median | Range |
+|---|---:|---:|
+| v0.7.0 `e97a7b7` | 0.282944 s | 0.276895–0.293184 s |
+| v0.7.5 audited implementation | 0.278439 s | 0.272324–0.289722 s |
+
+Delta `-1.59%` классифицирована как wall-clock noise. Native benchmark дал
+смешанные отклонения в обе стороны без repeatable regression; workload/memory
+counters совпадали.
+
+## Current production architecture
+
+```text
+main.py
+  -> ContinuousRuntime
+  -> Simulation(backend="native")
+  -> NativeWorldFacade -> C++ WorldRuntime
+  -> SyntheticEntityCore -> NativeGraphBackend -> C++ NativeBrainEngine
+  -> NeurodynamicSubstrate
+  -> EventScheduler
+  -> NativeObserver (read-only)
+```
+
+Authority summary:
+
+- Python: semantic cognition, memory/planner/language, cognition frontier;
+- C++: authoritative numeric Cognit/Relation graph, World, scheduler,
+  micro-neural substrate, Assemblies and one-way bridge;
+- Python graph/World: reference/oracle/compatibility;
+- observer: snapshot-only.
+
+Полное описание: [`ARCHITECTURE.md`](ARCHITECTURE.md).
+
+## Persistence
+
+Текущие accepted surfaces:
+
+```text
+.sebrain v6
+.seworld v7
+native graph v3
+```
+
+Existing migration/checksum/roundtrip/exact-continuation tests PASS. В
+репозитории нет отдельного внешнего архивного binary fixture старых
+`.sebrain/.seworld`; это вторая явно зафиксированная limitation v0.7.5.
+
+## Frozen milestone summary
+
+| Milestone | Status | Purpose |
+|---|---|---|
+| v0.7.0 | FROZEN | baseline/full architecture audit |
+| v0.7.1 | FROZEN | readability/documentation foundation |
+| v0.7.2 | FROZEN | Python structural extraction |
+| v0.7.3 | FROZEN | C++ structural extraction |
+| v0.7.4 | FROZEN | repository/tests/tooling |
+| v0.7.5 | FROZEN | full regression/performance audit |
+| v0.7.6 | PLANNED | architecture freeze/future-proofing |
+
+Historical v0.2-v0.6.6 acceptance сохраняется как executable regression layer;
+точная taxonomy — в [`docs/TESTING.md`](docs/TESTING.md).
+
+## Next work
+
+### v0.7.6 — Architecture Freeze and Future-Proofing
+
+Остаётся финальный cleanup:
+
+- удалить только доказанный dead code;
+- окончательно маркировать legacy/reference paths;
+- усилить future-proof architecture guards;
+- сверить docs с фактической структурой;
+- проверить clean-clone build/verify path;
+- заморозить public/internal boundaries перед новой capability work.
+
+### v0.8 — Homeostatic Motivation and First Survival Learning
+
+Запланировано, но **не реализовано**. Основная исследовательская цепочка:
+
+```text
+physiological deviation
+-> non-semantic interoception
+-> learned representation/consequence
+-> prediction
+-> planner trajectory valuation
+-> Action
+-> physical/physiological consequence
+-> changed future behavior
+```
+
+Подробный план и архитектурные контракты — в [`ROADMAP.md`](ROADMAP.md).
+
+## Documentation rule
+
+Этот файл содержит только **текущее** состояние. Старые version-by-version
+подробности находятся в `ROADMAP.md`, experiment reports и frozen audit
+documents; они больше не копируются сюда, чтобы не создавать противоречащие
+снимки прошлого.

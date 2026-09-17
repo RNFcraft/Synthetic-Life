@@ -1,162 +1,294 @@
-# Developer Guide
+# Synthetic-Life Developer Guide
 
-Этот guide — практический вход в frozen v0.7 baseline. Архитектурные нормы и
-точные ownership/risk tables находятся в
-[`docs/V0_7_REFACTOR_CONTRACT.md`](docs/V0_7_REFACTOR_CONTRACT.md).
+Практический guide для текущей **v0.7.5 FROZEN** architecture.
 
-## Быстрый старт
+Перед архитектурными изменениями прочитайте:
 
-Требуются Python 3.11+, C++20 toolchain, CMake и pybind11. На Windows установите
-Visual Studio 2022 Build Tools с MSVC v143 и Windows SDK.
+- [`ARCHITECTURE.md`](ARCHITECTURE.md);
+- [`docs/V0_7_REFACTOR_CONTRACT.md`](docs/V0_7_REFACTOR_CONTRACT.md);
+- [`docs/TESTING.md`](docs/TESTING.md);
+- [`CURRENT_STATUS.md`](CURRENT_STATUS.md).
+
+## 1. Setup
+
+Требуются Python 3.11+, C++20, CMake и pybind11.
+
+Windows:
+
+- Visual Studio 2022 Build Tools / Visual Studio 2022;
+- MSVC v143;
+- Windows 10/11 SDK.
 
 ```powershell
 python -m pip install -r requirements.txt
 cmake -S cpp -B cpp/build -A x64
 cmake --build cpp/build --config Release
-python -m pytest -q
-ctest --test-dir cpp/build -C Release --output-on-failure
 ```
 
-Проверка production entrypoint:
+Production smoke:
 
 ```powershell
 python -B -c "import main"
 python -B main.py --headless --seconds 0
-python main.py --headless --seconds 100 --save run.seworld
-python main.py --load run.seworld
 ```
 
-`--seconds` задаёт абсолютный WorldTime. Wall clock/FPS не является causal time.
+## 2. Standard verification
 
-## Где вносить изменения
-
-- `simulation/continuous.py` — production event orchestration;
-  `simulation/runtime_types.py` — read-only render records.
-- `consciousness/core.py` — semantic composition facade;
-  `core_learning.py` — transition/error/Relation learning;
-  `cognition_types.py` — continuous frontier record.
-- `consciousness/memory.py` — memory policy/index authority;
-  `memory_types.py` и `memory_matching.py` — durable records и pure matching
-  transforms.
-- `consciousness/planning.py` — planner implementation; `planning_types.py` —
-  Plan/work/session records.
-- `consciousness/language.py` — lexicon/learning facade;
-  `language_types.py` — frames, results и grounding-context episode state.
-- `consciousness/backends.py`/`native_graph.py` — единственная Python/native
-  граница Cognit/Relation; здесь централизуются преобразования ID.
-- Native graph CRUD, prediction, evidence/materialization, lifecycle and native
-  persistence: `cpp/src/native_brain_engine.cpp`; Assembly-to-Cognit bridge:
-  `cpp/src/native_brain_bridge.cpp`. The class remains the stable facade/owner.
-- Neural physics, plasticity/homeostasis, Assembly observation and snapshot
-  validation: `cpp/src/neurodynamic_substrate.cpp`; bounded bridge-event reads:
-  `cpp/src/neurodynamic_bridge.cpp`. The substrate remains the sole state owner.
-- Pybind module/graph/engine/neural/world/observer wiring:
-  `cpp/src/bindings.cpp`; scheduler/event wire group:
-  `cpp/src/bindings_scheduler.cpp`. Observer implementation remains
-  `cpp/src/observer.cpp` and read-only.
-- `world/` и native World — causal physical boundary.
-- `persistence/` — versioned containers; не меняйте format неявно.
-- Python graph/World implementations — oracle/compatibility, не production copy.
-
-Перед структурным изменением определите owner состояния, ID/time domain,
-persistence section, API class и protecting tests по refactor contract.
-
-Старые modules являются compatibility import surface. Новая реализация должна
-иметь единственное место определения; facade только импортирует/re-export symbol.
-Pure types/state modules не должны импортировать `SyntheticEntityCore`.
-
-## Обязательный цикл проверки
-
-Сначала запускайте ближайший test file, затем:
+Fast developer gate:
 
 ```powershell
-python -m pytest -q tests/test_main_entrypoint.py
-python -m pytest -q tests/test_v060_neurodynamic_substrate.py tests/test_v061_local_plasticity.py tests/test_v062_assemblies.py tests/test_v063_assembly_cognit_bridge.py tests/test_v064_sensory_transduction.py tests/test_v065_neural_behavior.py tests/test_v066_long_life.py
-python -m pytest -q
-cmake --build cpp/build --config Release
-ctest --test-dir cpp/build -C Release --output-on-failure
+python tools/verify.py
 ```
 
-Если имена acceptance files изменились, используйте фактический набор
-`tests/test_v06*.py`, не исключая ни один milestone. Для persistence/scheduler
-изменений обязательны event-boundary save/load tests; для ordering — hash-seed и
-host-batching tests; для native wire — Python tests плюс CTest.
-
-## Правила refactor
-
-- Не смешивайте structural change с новой capability или optimization research.
-- Не создавайте Python mirror native numeric state и не вводите full graph sync.
-- Не меняйте 1-based Python Cognit IDs / 0-based native indices случайно.
-- Не сравнивайте WorldTime, cognitive tick, event ID и wall clock как одну шкалу.
-- Не меняйте positional pybind rows без атомарной миграции и тестов обоих концов.
-- Не позволяйте neural code импортировать action/Goal semantics.
-- Observer и diagnostics остаются read-only.
-- При split расширьте source-scanning guards на новые recursive paths до переноса.
-- Legacy/reference удаляется только после доказательства отсутствия callers,
-  persistence и oracle value.
-
-## Unified verification and repository boundaries
+Full release gate:
 
 ```powershell
-python tools/verify.py          # fast default
-python tools/verify.py --full   # complete release gate
+python tools/verify.py --full
 ```
 
-Fast runs production smokes, entrypoint and architecture/tooling guards,
-Release build and CTest. Full replaces the focused pytest selection with the
-complete suite; pytest is not run twice. The script is fail-fast, uses the
-active Python interpreter, installs nothing and needs no network after local
-prerequisites are available. The authoritative taxonomy, frozen acceptance
-groups, manual soak commands and artifact classes are in
+`verify.py`:
+
+- fail-fast;
+- использует текущий Python interpreter;
+- не устанавливает dependencies;
+- не требует network после setup;
+- при необходимости конфигурирует `cpp/build`;
+- запускает Release build и CTest.
+
+Test taxonomy и manual workloads:
 [`docs/TESTING.md`](docs/TESTING.md).
 
-Facade/public surfaces are production entrypoints and compatibility re-exports,
-documented runtime classes, and headers under `cpp/include/se`. Extracted
-`*_types.py`, matching helpers, C++ implementations and declarations under
-`cpp/src` are internal. A facade may compose and delegate but must not absorb a
-new unrelated responsibility. Every new subsystem needs a named state owner,
-dependency direction, public/internal boundary, persistence responsibility when
-stateful, causal tests, and an architecture update when a boundary changes.
+## 3. Production path
 
-Generated caches, builds, binaries, coverage, local profiles and temporary
-`.sebrain`/`.seworld` runs are ignored. Canonical fixtures and documented
-historical `runs/`/profiling evidence are not cleanup targets. `git diff
---check` and a clean tree remain freeze/review gates, not prerequisites for an
-ordinary test run.
+```text
+main.py
+  -> ContinuousRuntime
+  -> Simulation(backend="native")
+  -> NativeWorldFacade -> C++ WorldRuntime
+  -> SyntheticEntityCore -> NativeGraphBackend -> C++ NativeBrainEngine
+  -> NeurodynamicSubstrate
+  -> EventScheduler
+```
 
-## Readability conventions
+Observer — только read-only consumer snapshots.
 
-- Не объединяйте независимые mutations и control flow в плотную строку через
-  `;`: causal порядок должен быть виден при review.
-- Docstring для boundary API описывает owner состояния, ID/time domain, side
-  effects и persistence role, а не повторяет имя функции.
-- Неочевидный `id - 1`/`id + 1` сопровождается контекстом Python/native domain;
-  ambiguous time variables должны называться или комментироваться как
-  WorldTime, evidence tick, scheduler ID или neural time.
-- Комментарий объясняет, почему нельзя переставлять операции. Sorting, iteration,
-  RNG consumption, event insertion и float expression grouping сохраняются даже
-  тогда, когда другая запись выглядит короче.
+## 4. Где менять код
 
-## Persistence и совместимость
+### Semantic cognition
 
-Не редактируйте вручную `.sebrain`/`.seworld`. Outer container проверяет magic,
-version, required sections и SHA-256; запись атомарна. Restore обязан сохранять
-не только durable brain, но и pending scheduler/frontier/neural bridge episode
-state. Любое изменение schema требует явной версии, backward tests и отдельного
-решения — оно не входит в baseline freeze.
+- `consciousness/core.py` — `SyntheticEntityCore` composition facade;
+- `consciousness/core_learning.py` — transition/error/Relation learning;
+- `consciousness/cognition_types.py` — cognition frontier record;
+- `consciousness/memory.py` — `SpatialMemory` authority;
+- `consciousness/memory_types.py` — durable records;
+- `consciousness/memory_matching.py` — pure matching transforms;
+- `consciousness/planning.py` — `DeliberativePlanner`;
+- `consciousness/planning_types.py` — planner records/session/work;
+- `consciousness/language.py` — `LanguageLexicon`/learning facade;
+- `consciousness/language_types.py` — language frames/results/context.
 
-## Диагностика расхождений
+### Python/native boundary
 
-При первом divergence сравнивайте в таком порядке: scheduler `(time,id,type,
-payload)`, WorldTime/EventSequence, World state, native Cognit/Relation state,
-neural snapshot/bridge cursor, semantic state, planner frontier. Не маскируйте
-ошибку пересозданием derived state, если оно влияет на causal continuation.
-`full_graph_sync_calls` должен оставаться нулём.
+- `consciousness/backends.py`;
+- `consciousness/native_graph.py`;
+- `consciousness/native_engine.py`.
 
-Manual long-life workload:
+Здесь должны оставаться Cognit ID conversions и wire translation. Не
+распространяйте `id - 1` / `id + 1` по semantic code.
+
+### Continuous runtime
+
+- `simulation/continuous.py` — production event orchestration;
+- `simulation/runtime_types.py` — read-only render records;
+- `simulation/simulation.py` — composition/discrete compatibility facade.
+
+### Native brain
+
+- `cpp/src/native_brain_engine.cpp` — graph/prediction/evidence/lifecycle/persistence;
+- `cpp/src/native_brain_bridge.cpp` — Assembly -> Cognit bridge;
+- `cpp/src/neurodynamic_substrate.cpp` — neural physics/STDP/Assemblies/snapshot;
+- `cpp/src/neurodynamic_bridge.cpp` — bounded bridge-event reads.
+
+### Bindings
+
+- `cpp/src/bindings.cpp`;
+- `cpp/src/bindings_scheduler.cpp`.
+
+Не меняйте positional wire shape без atomic migration обоих концов.
+
+### World
+
+- native `WorldRuntime` — production physical authority;
+- Python World — differential oracle/compatibility.
+
+### Observer
+
+- `cpp/src/observer.cpp` и facade header;
+- только snapshot consumption, никаких causal mutation APIs.
+
+## 5. State ownership rule
+
+Перед новой stateful responsibility ответьте письменно:
+
+1. кто authoritative owner;
+2. кто только читает;
+3. кто мутирует;
+4. какой ID/time domain;
+5. участвует ли state в persistence;
+6. какие tests защищают continuation;
+7. public это surface или internal.
+
+Нельзя создавать два authoritative copies одного state.
+
+Facade может orchestration/delegation, но не должен превращаться в новый
+god-object.
+
+## 6. Frozen architecture invariants
+
+Не нарушать:
+
+```text
+Python Cognit ID      1-based
+native Cognit index   0-based
+RelationHandle        page/slot/generation
+
+scheduler order       (WorldTime, event id)
+full_graph_sync_calls 0
+```
+
+Также:
+
+- no neural -> Action/Goal semantic shortcut;
+- no Cognit -> micro injection;
+- no language -> direct Action policy;
+- no observer -> World/scheduler/cognition mutation;
+- no hidden wall-clock/FPS causal dependence;
+- no silent persistence schema change;
+- no test weakening вместо исправления причины.
+
+## 7. Time discipline
+
+Не смешивайте:
+
+- `WorldTime`;
+- scheduler sequence ID;
+- cognitive/evidence tick;
+- maintenance ordinal;
+- neural time;
+- wall clock;
+- render frame.
+
+Если variable name двусмыслен, имя или комментарий должен указывать domain.
+
+Same-time order — часть causal behavior, а не implementation detail.
+
+## 8. Structural refactor rule
+
+`EXTRACT != REWRITE`.
+
+При переносе implementation сохраняйте:
+
+- sorting/iteration order;
+- RNG consumption;
+- scheduler insertion order;
+- float expression grouping;
+- mutation order;
+- exception behavior;
+- return/data identity where externally observed;
+- persistence/wire shape.
+
+Сначала расширьте architecture guard на новый path, затем переносите код.
+
+## 9. Persistence
+
+Не редактируйте snapshot files вручную.
+
+Accepted surfaces:
+
+```text
+.sebrain v6
+.seworld v7
+native graph v3
+```
+
+Изменение persistence требует:
+
+- явного version bump или documented migration;
+- backward/migration tests;
+- checksum/required-section validation;
+- pending-state continuation tests;
+- отдельного design decision.
+
+Save/load должен продолжать pending scheduler/frontier/language/neural/bridge
+state, а не только durable brain.
+
+## 10. Диагностика divergence
+
+При первом mismatch сравнивайте в таком порядке:
+
+```text
+scheduler (time,id,type,payload)
+WorldTime / EventSequence
+World state
+native Cognit state
+native Relation state / handles
+neural snapshot / bridge cursor
+Python semantic state
+planner frontier/session
+```
+
+Не «чините» divergence пересозданием derived state, если это меняет exact
+continuation.
+
+## 11. Tests по типу изменения
+
+- language: `test_v054*`–`test_v057*` + architecture guards;
+- neural physics/STDP: `test_v060*`, `test_v061*`;
+- Assemblies/bridge: `test_v062*`, `test_v063*`;
+- sensory/neural behavior: `test_v064*`, `test_v065*`;
+- long-life/lifecycle/persistence: `test_v066*`;
+- native World: v0.5.2 parity + continuous World tests;
+- persistence/scheduler: pending-boundary continuation tests;
+- wire/bindings: Python parity + CTest.
+
+После targeted tests всегда выполняйте `python tools/verify.py --full` перед
+freeze.
+
+## 12. Manual long-life
 
 ```powershell
 python -m experiments.v066_long_life
 ```
 
-Он не заменяет full suite и должен сравниваться с одинаковыми seed/config/build.
+Manual soak не заменяет automated suite. Сравнивайте одинаковые
+seed/config/build и отдельно записывайте WorldTime и host time.
+
+## 13. Repository hygiene
+
+Не коммитить generated local output:
+
+- build trees/binaries;
+- caches;
+- coverage;
+- temporary `.sebrain`/`.seworld`;
+- local profiles.
+
+Historical reproducibility artifacts и canonical fixtures не удаляются как
+«мусор». Policy: [`docs/TESTING.md`](docs/TESTING.md).
+
+## 14. Documentation policy
+
+У каждого живого документа одна роль:
+
+- `README.md` — entrypoint;
+- `CURRENT_STATUS.md` — только текущий accepted state;
+- `ARCHITECTURE.md` — текущая architecture;
+- `DEVELOPER_GUIDE.md` — практический workflow;
+- `ROADMAP.md` — milestones/future plan;
+- `docs/TESTING.md` — verification;
+- `docs/V0_7_REFACTOR_CONTRACT.md` — frozen v0.7 contract;
+- `docs/V0_7_5_REGRESSION_AUDIT.md` — frozen audit evidence.
+
+Не копируйте длинный version history в `README` или `CURRENT_STATUS`.
+Historical documents не переписываются для «актуализации»; вместо этого
+помечайте их роль в [`docs/DOCUMENTATION.md`](docs/DOCUMENTATION.md).
