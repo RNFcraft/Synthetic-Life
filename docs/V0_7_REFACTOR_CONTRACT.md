@@ -18,6 +18,12 @@ implementations физически сгруппированы в `native_brain_b
 public include surface. Python-visible symbols/wire rows, ID domains,
 RelationHandle, event order, binary graph v3 и `.seworld` schema не изменены.
 
+Уточнение v0.7.4: repository guardrails теперь исполняются через
+`python tools/verify.py`; test taxonomy и artifact classes зафиксированы в
+`docs/TESTING.md`. Recursive/AST guards следуют extracted Python/C++ modules и
+защищают dependency/causality boundaries. Это tooling-only изменение: frozen
+behavioral oracle, ABI, persistence и runtime ownership не изменены.
+
 ## 1. Scope and non-goals
 
 v0.7.0 документирует существующую систему перед структурным refactor. Этот pass

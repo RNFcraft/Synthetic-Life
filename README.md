@@ -21,6 +21,10 @@ Current accepted gates:
 
 See [ARCHITECTURE.md](ARCHITECTURE.md) for the full architecture and [CURRENT_STATUS.md](CURRENT_STATUS.md) for the latest acceptance state.
 
+Developer verification is one command: `python tools/verify.py` for the fast
+default or `python tools/verify.py --full` for the complete release gate. Test
+taxonomy and artifact policy are documented in [docs/TESTING.md](docs/TESTING.md).
+
 ## v0.6.6 long-life stabilization
 
 v0.6.6 adds no intelligence capability. It adds read-only long-life diagnostics,

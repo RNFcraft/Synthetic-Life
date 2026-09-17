@@ -95,6 +95,35 @@ host-batching tests; для native wire — Python tests плюс CTest.
 - Legacy/reference удаляется только после доказательства отсутствия callers,
   persistence и oracle value.
 
+## Unified verification and repository boundaries
+
+```powershell
+python tools/verify.py          # fast default
+python tools/verify.py --full   # complete release gate
+```
+
+Fast runs production smokes, entrypoint and architecture/tooling guards,
+Release build and CTest. Full replaces the focused pytest selection with the
+complete suite; pytest is not run twice. The script is fail-fast, uses the
+active Python interpreter, installs nothing and needs no network after local
+prerequisites are available. The authoritative taxonomy, frozen acceptance
+groups, manual soak commands and artifact classes are in
+[`docs/TESTING.md`](docs/TESTING.md).
+
+Facade/public surfaces are production entrypoints and compatibility re-exports,
+documented runtime classes, and headers under `cpp/include/se`. Extracted
+`*_types.py`, matching helpers, C++ implementations and declarations under
+`cpp/src` are internal. A facade may compose and delegate but must not absorb a
+new unrelated responsibility. Every new subsystem needs a named state owner,
+dependency direction, public/internal boundary, persistence responsibility when
+stateful, causal tests, and an architecture update when a boundary changes.
+
+Generated caches, builds, binaries, coverage, local profiles and temporary
+`.sebrain`/`.seworld` runs are ignored. Canonical fixtures and documented
+historical `runs/`/profiling evidence are not cleanup targets. `git diff
+--check` and a clean tree remain freeze/review gates, not prerequisites for an
+ordinary test run.
+
 ## Readability conventions
 
 - Не объединяйте независимые mutations и control flow в плотную строку через

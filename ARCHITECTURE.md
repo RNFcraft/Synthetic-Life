@@ -54,6 +54,17 @@ cpp/src/bindings_scheduler.cpp     scheduler/event wire bindings
 original point in `_native_brain` initialization. Wire rows, identifier domains,
 persistence formats, event order and numeric expressions are unchanged.
 
+### Public, compatibility and internal boundaries
+
+Production entrypoints, documented runtime facades and headers under
+`cpp/include/se` form the supported surface. Historical Python import paths are
+compatibility surfaces and re-export their single implementations. Extracted
+type/data modules, matching helpers, `cpp/src` declarations and implementation
+translation units are internal dependency layers. Architecture tests enforce
+the downward direction from facades to those layers and the snapshot-only
+observer, one-way neural bridge, anti-semantic language/neural, and zero
+full-graph-sync boundaries. See `docs/TESTING.md` for the executable inventory.
+
 Synthetic Entity is an experimental embodied cognitive architecture built around a sparse, continuously changing graph of Cognits (`κ`) and Relations (`ρ`). It is not a Transformer/LLM inference loop and does not depend on a frozen policy network. The current system learns through persistent predictive, causal, spatial, and goal-directed state that changes during interaction with the world.
 
 The v0.5.2 runtime remains the frozen compatibility oracle. v0.5.7 retains the

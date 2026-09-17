@@ -1,4 +1,17 @@
-# Synthetic Entity v0.7.3 — Current Status
+# Synthetic Entity v0.7.4 — Current Status
+
+## v0.7.4 — REPOSITORY, TESTS AND DEVELOPER TOOLING
+
+Status: **FROZEN**.
+
+The repository now has one portable verification entrypoint with explicit fast
+and full modes, an authoritative test/artifact inventory, and recursive
+architecture guards for extracted modules and frozen causal boundaries.
+Generated local artifacts are ignored while canonical fixtures and historical
+reproducibility records remain preserved. Runtime Python/C++, persistence and
+public APIs were not changed. The canonical digest remains
+`7d80bffa82cfbabf8d11373883d03056b26b27eb53a4cbe9246a666e079fbb0f`.
+v0.7.5 remains PLANNED; no v0.8 implementation was started.
 
 ## v0.7.3 — C++ STRUCTURAL REFACTOR
 

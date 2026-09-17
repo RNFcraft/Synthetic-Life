@@ -970,7 +970,12 @@ Python ↔ C++ wire-format должен быть явно документиро
 
 ## v0.7.4 — Repository, Tests and Developer Tooling
 
-**Status: PLANNED**
+**Status: DONE / FROZEN**
+
+Test taxonomy, recursive architecture/dependency guards, repository artifact
+policy and a portable fast/full verification command are now authoritative.
+Historical acceptance and research artifacts remain in place; runtime behavior,
+ABI and persistence are unchanged. v0.7.5 remains PLANNED.
 
 Цель — организовать repository так, чтобы новый технический долг не накапливался снова автоматически.
 

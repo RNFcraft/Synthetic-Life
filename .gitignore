@@ -3,8 +3,16 @@ __pycache__/
 consciousness/SDL3.dll
 .pytest_cache/
 .vscode/
+.idea/
 *.jsonl
 snapshot*.json
+*.sebrain
+*.seworld
+.coverage
+coverage.xml
+htmlcov/
+*.pstats
+*.prof
 cpp/build/
 cpp/build-*/
 CMakeFiles/
