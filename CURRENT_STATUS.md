@@ -1,4 +1,23 @@
-# Synthetic Entity v0.7.1 — Current Status
+# Synthetic Entity v0.7.2 — Current Status
+
+## v0.7.2 — PYTHON STRUCTURAL REFACTOR
+
+Status: **FROZEN**.
+
+Existing Python responsibilities were extracted without algorithm rewrite:
+language frames/results/grounding context, memory durable records and pure
+matching transforms, planner data/session records, continuous cognition/render
+records, and the core Relation-learning cluster. `SyntheticEntityCore`,
+`ContinuousRuntime`, `Simulation`, `LanguageLexicon`, `SpatialMemory` and
+`DeliberativePlanner` remain stable facades/owners. Compatibility import paths
+re-export the single extracted class definitions.
+
+No duplicate authority, import cycle, public API, persistence schema, native
+wire/ABI, scheduler, RNG, algorithm or behavioral change was introduced. C++
+sources were not changed. The language anti-semantic source guard now follows
+the extracted `language*.py` modules. The canonical digest remains
+`7d80bffa82cfbabf8d11373883d03056b26b27eb53a4cbe9246a666e079fbb0f`.
+v0.7.3 remains PLANNED; no v0.8 implementation was started.
 
 ## v0.7.1 — READABILITY AND DOCUMENTATION FOUNDATION
 

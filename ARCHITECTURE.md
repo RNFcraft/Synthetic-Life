@@ -6,6 +6,36 @@ wire domains, persistence, tests, performance and risk—is
 [`docs/V0_7_REFACTOR_CONTRACT.md`](docs/V0_7_REFACTOR_CONTRACT.md). v0.7.0 makes
 no runtime or persistence change relative to the frozen v0.6.6 implementation.
 
+### Python physical structure after v0.7.2
+
+The stable facades and compatibility imports remain unchanged, while existing
+responsibilities now have explicit lower-level modules:
+
+```text
+consciousness/core.py             SyntheticEntityCore composition facade
+consciousness/core_learning.py    transition/error/Relation-learning methods
+consciousness/cognition_types.py  continuous cognition frontier record
+
+consciousness/language.py         LanguageLexicon + compatibility re-exports
+consciousness/language_types.py   frames, results, grounding context state
+
+consciousness/memory.py           SpatialMemory authoritative policy/state
+consciousness/memory_types.py     durable Place/Structure records
+consciousness/memory_matching.py  pure signature transforms
+
+consciousness/planning.py         DeliberativePlanner implementation
+consciousness/planning_types.py   Plan/work/session records
+
+simulation/continuous.py          ContinuousRuntime facade/orchestration
+simulation/runtime_types.py       read-only rendering records
+simulation/simulation.py          discrete/reference compatibility facade
+```
+
+The extracted type modules depend downward on domain records, never on the core.
+`CoreLearningMixin` owns no state; it operates on the one state composed by
+`SyntheticEntityCore`. Old import paths re-export the same class objects. No
+Python/native boundary, scheduler order or persistence payload changed.
+
 Synthetic Entity is an experimental embodied cognitive architecture built around a sparse, continuously changing graph of Cognits (`κ`) and Relations (`ρ`). It is not a Transformer/LLM inference loop and does not depend on a frozen policy network. The current system learns through persistent predictive, causal, spatial, and goal-directed state that changes during interaction with the world.
 
 The v0.5.2 runtime remains the frozen compatibility oracle. v0.5.7 retains the

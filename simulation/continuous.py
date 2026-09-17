@@ -1,5 +1,5 @@
 """Deterministic event-driven v0.5.3 runtime foundation."""
-from dataclasses import asdict,dataclass,replace
+from dataclasses import asdict,replace
 import base64,math,os,tempfile
 from config import Settings
 from consciousness.native_engine import EventScheduler,RuntimeEvent,RuntimeEventType
@@ -15,26 +15,7 @@ from consciousness._native_brain import NeurodynamicSubstrate
 from consciousness.language import LanguageFrame,LanguageProcessingResult,LanguageUtteranceFrame,LanguageUtteranceFrontier,LanguageUtteranceResult
 from .simulation import Simulation
 from .snapshot import save_snapshot
-
-@dataclass(frozen=True,slots=True)
-class RenderBody:
-    id: int
-    x: int
-    y: int
-    orientation: str
-    held_object_id: int | None
-@dataclass(frozen=True,slots=True)
-class RenderObject:
-    id: int
-    x: int
-    y: int
-    state: int
-@dataclass(frozen=True,slots=True)
-class RenderSnapshot:
-    """Read-only observer projection; renderer wall clock не causal."""
-    world_time: float
-    bodies: tuple[RenderBody, ...]
-    objects: tuple[RenderObject, ...]
+from .runtime_types import RenderBody,RenderObject,RenderSnapshot
 
 class ContinuousRuntime:
     """Production orchestration над native World, graph и EventScheduler.
@@ -299,3 +280,6 @@ class ContinuousRuntime:
         if cognition is not None:
             session=None if cognition["session"] is None else sim.core.planner.session_from_dict(cognition["session"]);sim.core.continuous_frontier=ContinuousCognitionFrontier(cognition["generation"],cognition["world_time"],obj.last_frame,set(cognition["current"]),tuple(cognition["track_ids"]),session,cognition["phase"],None if cognition["action"] is None else ActionType[cognition["action"]],cognition["committed"])
         return obj
+
+
+__all__ = ["ContinuousRuntime", "RenderBody", "RenderObject", "RenderSnapshot"]

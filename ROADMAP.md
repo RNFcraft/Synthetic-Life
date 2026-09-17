@@ -868,7 +868,11 @@ experiment reports   — неизменяемые научные артефак�
 
 ## v0.7.2 — Python Structural Refactor
 
-**Status: PLANNED**
+**Status: FROZEN.** Existing responsibilities were extracted into explicit
+Python data/state, matching and core-learning modules. Stable facades and old
+import paths remain; no algorithm, scheduler, persistence, native ABI or C++
+structural change was made. Full behavioral/determinism gates pass. v0.7.3
+remains PLANNED.
 
 Цель — декомпозировать крупные Python-файлы по существующим responsibilities без изменения cognitive behavior.
 

@@ -1,33 +1,11 @@
 from __future__ import annotations
 from collections import Counter
-from dataclasses import dataclass,field
 from math import exp
 from .cognit import Cognit
 from .relation import RelationStatus,RelationType
-
-def _rotate(sig:tuple,n:int)->tuple:
-    out=[]
-    for x,y,ch,val in sig:
-        for _ in range(n%4):x,y=-y,x
-        out.append((x,y,ch,val))
-    return tuple(sorted(out))
-
-def _similarity(a:tuple,b:tuple,weights=None)->float:
-    a,b=set(a),set(b);u=a|b
-    return (sum((weights or {}).get(x,1.) for x in a&b)/max(1e-9,sum((weights or {}).get(x,1.) for x in u))) if u else 1.
-
-@dataclass(slots=True)
-class PlaceMemory:
-    id:int;cognit_id:int;signature:tuple;confidence:float=.5;visits:int=1;last_confirmed_tick:int=0
-    views:list[tuple]=field(default_factory=list);contradictions:int=0;aliases:set[int]=field(default_factory=set)
-    last_confirmed_time_seconds:float|None=None
-
-@dataclass(slots=True)
-class PersistentStructureMemory:
-    id:int;cognit_id:int;feature_signature:tuple;place_cognit_id:int;relative_context:tuple[float,float]
-    remembered_state:tuple[int,...];confidence:float=.5;last_confirmed_tick:int=0;contradictions:int=0;reactivations:int=0
-    last_recall_strength:float=0.;status:str="UNCERTAIN"
-    last_confirmed_time_seconds:float|None=None;last_touch_time_seconds:float|None=None
+from .memory_types import PersistentStructureMemory,PlaceMemory
+from .memory_matching import rotate_signature as _rotate
+from .memory_matching import weighted_similarity as _similarity
 
 class SpatialMemory:
     """Python-authority evidence topology без World coordinates/object IDs.
@@ -309,3 +287,6 @@ class SpatialMemory:
         for key in ("next_place_id","next_memory_id","current_place_id","reactivation_count","confirmation_count","contradiction_count","alias_reconciliations"):setattr(self,key,data.get(key,getattr(self,key)))
         self.world_time_seconds=data.get("world_time_seconds")
         self._rebuild_indexes();self._nonzero_recall_ids={m.id for m in self.structures.values() if m.last_recall_strength}
+
+
+__all__ = ["PersistentStructureMemory", "PlaceMemory", "SpatialMemory"]

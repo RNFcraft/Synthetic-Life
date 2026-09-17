@@ -30,9 +30,18 @@ python main.py --load run.seworld
 
 ## Где вносить изменения
 
-- `simulation/continuous.py` — production event orchestration.
-- `consciousness/core.py` и semantic modules — meaning, Goals, memory, planner,
-  language и continuous frontier.
+- `simulation/continuous.py` — production event orchestration;
+  `simulation/runtime_types.py` — read-only render records.
+- `consciousness/core.py` — semantic composition facade;
+  `core_learning.py` — transition/error/Relation learning;
+  `cognition_types.py` — continuous frontier record.
+- `consciousness/memory.py` — memory policy/index authority;
+  `memory_types.py` и `memory_matching.py` — durable records и pure matching
+  transforms.
+- `consciousness/planning.py` — planner implementation; `planning_types.py` —
+  Plan/work/session records.
+- `consciousness/language.py` — lexicon/learning facade;
+  `language_types.py` — frames, results и grounding-context episode state.
 - `consciousness/backends.py`/`native_graph.py` — единственная Python/native
   граница Cognit/Relation; здесь централизуются преобразования ID.
 - `cpp/src/native_brain_engine.cpp` — authoritative numeric graph/evidence.
@@ -43,6 +52,10 @@ python main.py --load run.seworld
 
 Перед структурным изменением определите owner состояния, ID/time domain,
 persistence section, API class и protecting tests по refactor contract.
+
+Старые modules являются compatibility import surface. Новая реализация должна
+иметь единственное место определения; facade только импортирует/re-export symbol.
+Pure types/state modules не должны импортировать `SyntheticEntityCore`.
 
 ## Обязательный цикл проверки
 

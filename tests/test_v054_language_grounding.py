@@ -103,7 +103,12 @@ def test_no_language_runtime_baseline_and_full_sync():
 
 
 def test_language_source_has_no_semantic_mapping():
-    source=Path("consciousness/language.py").read_text(encoding="utf-8")
+    # The compatibility facade and extracted language data/state modules share
+    # the same frozen anti-semantic boundary.
+    source="\n".join(
+        path.read_text(encoding="utf-8")
+        for path in sorted(Path("consciousness").glob("language*.py"))
+    )
     forbidden=("ActionType","relative_x","relative_y","SensoryPrimitive","commands[","meanings[","dictionary[")
     assert not any(token in source for token in forbidden)
 

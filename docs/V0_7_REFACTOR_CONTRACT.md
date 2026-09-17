@@ -5,6 +5,12 @@ commit `46c53e0a1bd2c98149721a32cc6a8610cde4a217`. Если краткое оп�
 документе расходится с этим контрактом, в ветке v0.7 действует этот документ и
 исполняемый тестовый oracle.
 
+Уточнение v0.7.2: behavioral baseline ниже не изменён. Фактическая Python
+реализация физически разделяет facade и существующие responsibility layers:
+`core_learning`/`cognition_types`, `language_types`,
+`memory_types`/`memory_matching`, `planning_types` и `runtime_types`. Старые
+modules сохраняют compatibility re-exports; authoritative state не дублируется.
+
 ## 1. Scope and non-goals
 
 v0.7.0 документирует существующую систему перед структурным refactor. Этот pass
