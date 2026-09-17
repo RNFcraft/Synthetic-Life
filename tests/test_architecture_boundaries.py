@@ -18,14 +18,12 @@ def _imports(path: Path) -> set[str]:
 
 
 def test_data_layers_do_not_import_core_facade():
-    paths = [
-        ROOT / "consciousness" / "cognition_types.py",
-        ROOT / "consciousness" / "language_types.py",
-        ROOT / "consciousness" / "memory_types.py",
-        ROOT / "consciousness" / "memory_matching.py",
-        ROOT / "consciousness" / "planning_types.py",
-        ROOT / "simulation" / "runtime_types.py",
-    ]
+    paths = sorted((ROOT / "consciousness").glob("*_types.py"))
+    paths += sorted((ROOT / "simulation").glob("*_types.py"))
+    # Pure helpers do not share the naming convention but have the same
+    # downward-only dependency contract.
+    paths.append(ROOT / "consciousness" / "memory_matching.py")
+    assert paths, "no data/type layers discovered"
     for path in paths:
         assert not any(name in {"core", "consciousness.core"} for name in _imports(path)), f"data layer imports core facade: {path}"
 
