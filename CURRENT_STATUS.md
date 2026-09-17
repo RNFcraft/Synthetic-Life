@@ -1,4 +1,18 @@
-# Synthetic Entity v0.7.2 — Current Status
+# Synthetic Entity v0.7.3 — Current Status
+
+## v0.7.3 — C++ STRUCTURAL REFACTOR
+
+Status: **FROZEN**.
+
+Existing native responsibilities are physically grouped while
+`NativeBrainEngine` and `NeurodynamicSubstrate` remain stable state-owning
+facades. Assembly-to-Cognit bridge methods, bounded neural bridge-event reads,
+and scheduler/event pybind registration now have dedicated translation units.
+No numeric, float-order, container-order, event-order, ID, RelationHandle,
+wire, persistence, neural, Assembly, bridge, observer, or Python behavior was
+changed. The canonical digest remains
+`7d80bffa82cfbabf8d11373883d03056b26b27eb53a4cbe9246a666e079fbb0f`.
+v0.7.4 remains PLANNED; no v0.8 implementation was started.
 
 ## v0.7.2 — PYTHON STRUCTURAL REFACTOR
 

@@ -36,6 +36,24 @@ The extracted type modules depend downward on domain records, never on the core.
 `SyntheticEntityCore`. Old import paths re-export the same class objects. No
 Python/native boundary, scheduler order or persistence payload changed.
 
+### Native physical structure after v0.7.3
+
+The public `NativeBrainEngine` and `NeurodynamicSubstrate` classes remain the
+single state owners. Their implementations are grouped without new state or ABI:
+
+```text
+cpp/src/native_brain_engine.cpp    graph, prediction, evidence, lifecycle, persistence
+cpp/src/native_brain_bridge.cpp    Assembly -> Cognit delivery and bridge state
+cpp/src/neurodynamic_substrate.cpp micro physics, plasticity, assemblies, snapshots
+cpp/src/neurodynamic_bridge.cpp    bounded bridge-event cursor reads
+cpp/src/bindings.cpp               module composition and remaining pybind groups
+cpp/src/bindings_scheduler.cpp     scheduler/event wire bindings
+```
+
+`bindings_scheduler.hpp` is private to `cpp/src`; registration remains at its
+original point in `_native_brain` initialization. Wire rows, identifier domains,
+persistence formats, event order and numeric expressions are unchanged.
+
 Synthetic Entity is an experimental embodied cognitive architecture built around a sparse, continuously changing graph of Cognits (`κ`) and Relations (`ρ`). It is not a Transformer/LLM inference loop and does not depend on a frozen policy network. The current system learns through persistent predictive, causal, spatial, and goal-directed state that changes during interaction with the world.
 
 The v0.5.2 runtime remains the frozen compatibility oracle. v0.5.7 retains the

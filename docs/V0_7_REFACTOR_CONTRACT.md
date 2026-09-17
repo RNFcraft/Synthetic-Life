@@ -11,6 +11,13 @@ commit `46c53e0a1bd2c98149721a32cc6a8610cde4a217`. Если краткое оп�
 `memory_types`/`memory_matching`, `planning_types` и `runtime_types`. Старые
 modules сохраняют compatibility re-exports; authoritative state не дублируется.
 
+Уточнение v0.7.3: behavioral baseline также не изменён. C++ member
+implementations физически сгруппированы в `native_brain_bridge.cpp`,
+`neurodynamic_bridge.cpp` и `bindings_scheduler.cpp`; исходные public classes
+остались единственными owners. Внутренний `bindings_scheduler.hpp` не расширяет
+public include surface. Python-visible symbols/wire rows, ID domains,
+RelationHandle, event order, binary graph v3 и `.seworld` schema не изменены.
+
 ## 1. Scope and non-goals
 
 v0.7.0 документирует существующую систему перед структурным refactor. Этот pass

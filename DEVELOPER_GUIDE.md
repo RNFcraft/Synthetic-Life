@@ -44,8 +44,16 @@ python main.py --load run.seworld
   `language_types.py` — frames, results и grounding-context episode state.
 - `consciousness/backends.py`/`native_graph.py` — единственная Python/native
   граница Cognit/Relation; здесь централизуются преобразования ID.
-- `cpp/src/native_brain_engine.cpp` — authoritative numeric graph/evidence.
-- `cpp/src/neurodynamic_substrate.cpp` — micro-neural dynamics and Assemblies.
+- Native graph CRUD, prediction, evidence/materialization, lifecycle and native
+  persistence: `cpp/src/native_brain_engine.cpp`; Assembly-to-Cognit bridge:
+  `cpp/src/native_brain_bridge.cpp`. The class remains the stable facade/owner.
+- Neural physics, plasticity/homeostasis, Assembly observation and snapshot
+  validation: `cpp/src/neurodynamic_substrate.cpp`; bounded bridge-event reads:
+  `cpp/src/neurodynamic_bridge.cpp`. The substrate remains the sole state owner.
+- Pybind module/graph/engine/neural/world/observer wiring:
+  `cpp/src/bindings.cpp`; scheduler/event wire group:
+  `cpp/src/bindings_scheduler.cpp`. Observer implementation remains
+  `cpp/src/observer.cpp` and read-only.
 - `world/` и native World — causal physical boundary.
 - `persistence/` — versioned containers; не меняйте format неявно.
 - Python graph/World implementations — oracle/compatibility, не production copy.

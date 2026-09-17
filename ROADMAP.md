@@ -921,7 +921,13 @@ Python reference/oracle code должен быть явно отделён от 
 
 ## v0.7.3 — C++ Structural Refactor
 
-**Status: PLANNED**
+**Status: DONE / FROZEN**
+
+Completed as an extraction-only pass: Assembly/Cognit bridge ownership,
+bounded neural bridge-event access, and scheduler/event binding registration
+were moved to responsibility-named translation units. Stable facades, wire
+shape, persistence and the deterministic oracle are unchanged. v0.7.4 remains
+PLANNED.
 
 Цель — разгрузить крупные native translation units без изменения внешнего поведения и numeric semantics.
 
