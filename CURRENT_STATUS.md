@@ -1,4 +1,17 @@
-# Synthetic Entity v0.7.4 — Current Status
+# Synthetic Entity v0.7.5 — Current Status
+
+## v0.7.5 — FULL REGRESSION AND PERFORMANCE AUDIT
+
+Status: **FROZEN**.
+
+The v0.7.0 behavioral baseline and v0.7.4 implementation produced the same
+canonical digest and exact semantic/work counters across seven runs each.
+All 422 pytest tests, 2/2 CTest, the complete historical version matrix and a
+1,000-WorldTime post-saturation long-life run passed. End-to-end median changed
+from 0.282944 s to 0.278439 s (-1.59%, noise); native benchmark variation was
+mixed with exact memory/workload sizes and no consistent regression. Full
+evidence and explicit audit limits are in `docs/V0_7_5_REGRESSION_AUDIT.md`.
+No runtime code or v0.8 capability was changed. v0.7.6 remains PLANNED.
 
 ## v0.7.4 — REPOSITORY, TESTS AND DEVELOPER TOOLING
 

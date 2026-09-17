@@ -1024,7 +1024,13 @@ Developer tooling должен включать единый воспроизв�
 
 ## v0.7.5 — Full Regression and Performance Audit
 
-**Status: PLANNED**
+**Status: DONE / FROZEN**
+
+The complete 422-test suite, 2/2 native CTest, all historical version groups,
+canonical cross-worktree equivalence, persistence/parity/observer/language and
+neural gates, a 1,000-WorldTime bounded soak, and repeated performance
+measurements passed. Results and measurement limits are recorded in
+`docs/V0_7_5_REGRESSION_AUDIT.md`. v0.7.6 remains PLANNED.
 
 Цель — повторить аудит после рефакторинга и доказать, что уборка не изменила Synthetic-Life.
 
