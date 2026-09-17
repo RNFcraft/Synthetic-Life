@@ -26,6 +26,23 @@ class Settings:
     world_event_weights: tuple[float,float,float] = (1.0,0.0,0.0)  # legacy API; autonomous events are disabled
     spawn_interval_min: int = 250
     spawn_interval_max: int = 750
+    # ORGANISM PHYSIOLOGY (WorldTime only; authoritative owner is Simulation)
+    physiology_max_energy: float = 100.0
+    physiology_max_nutrients: float = 100.0
+    physiology_max_hydration: float = 100.0
+    physiology_initial_energy: float = 80.0
+    physiology_initial_nutrients: float = 60.0
+    physiology_initial_hydration: float = 80.0
+    physiology_energy_target: float = 75.0
+    physiology_nutrient_target: float = 55.0
+    physiology_hydration_target: float = 75.0
+    physiology_basal_body_rate: float = 0.010
+    physiology_basal_brain_rate: float = 0.005
+    physiology_hydration_rate: float = 0.008
+    physiology_digestion_rate: float = 0.020
+    physiology_digestion_efficiency: float = 0.75
+    physiology_movement_cost: float = 0.050
+    physiology_interaction_cost: float = 0.020
     # HOMEOSTASIS
     cognit_activity_decay: float = 0.72
     homeostasis_trace_decay: float = 0.95

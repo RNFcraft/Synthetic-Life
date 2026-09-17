@@ -145,7 +145,7 @@ def test_real_previous_language_seworld_v5_migration(tmp_path):
     lex=loaded.simulation.core.language;assert lex.symbols==old["symbols"] and lex.exposures==old["exposures"] and message in loaded.language_inbox
     assert lex.grounded_trials["dax"]==old["exposures"]["dax"] and loaded.simulation.core.grounding_context.total_experience_time==old["total_exposures"]
     assert [tuple(r._values) for r in loaded.simulation.core.graph.outgoing(source)]==before and lex.materialized["dax"]
-    upgraded=tmp_path/"upgraded.seworld";loaded.save_world(upgraded);assert load_container(upgraded,"world",{"META","STATE","CONT","NBRN"})["META"]["version"]==7
+    upgraded=tmp_path/"upgraded.seworld";loaded.save_world(upgraded);assert load_container(upgraded,"world",{"META","STATE","CONT","NBRN"})["META"]["version"]==8
 
 
 def test_real_previous_language_sebrain_v4_and_pre_language_migration(tmp_path):

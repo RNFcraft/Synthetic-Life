@@ -1,6 +1,6 @@
 # Testing and Repository Verification
 
-**Current verified baseline: v0.7.6 FROZEN.**
+**Current verified baseline: v0.8.0 HOMEOSTATIC FOUNDATION.**
 
 Полный v0.7.5 audit: `422` pytest PASS, CTest Release `2/2` PASS, все `17`
 version groups v0.2–v0.6.6 PASS. Подробности:
@@ -83,6 +83,11 @@ C++ `se_equivalence` использует `cpp/fixtures/oracle_v051.txt`.
 Version groups = `376` tests; полный suite = `422`, включая `46`
 non-versioned/core/tooling tests.
 
+v0.8.0 добавляет `9` tests в `test_v080_homeostasis.py`; полный suite = `431`.
+Они защищают WorldTime determinism, bounds/finite state, action cost/brownout,
+world-consequence hooks, tension, exact persistence/config continuation и
+immutable core/planner/observer projections.
+
 ## Architecture guards
 
 Централизованные guards дополняют historical assertions:
@@ -126,7 +131,7 @@ Assemblies      6
 Обязательные contracts:
 
 - `.sebrain v6`;
-- `.seworld v7`;
+- `.seworld v8` (v7 migration remains covered);
 - native graph v3;
 - checksum/version validation;
 - pending scheduler continuation;

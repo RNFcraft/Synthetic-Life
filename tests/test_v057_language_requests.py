@@ -67,7 +67,7 @@ def test_utf8_request_evidence_brain_and_world_roundtrip(tmp_path):
     loaded=ContinuousRuntime.load_world(world);fresh=Simulation(771,backend="native");fresh.load_brain(brain)
     for core in (loaded.simulation.core,fresh.core):
         assert "просьба" in core.language.symbols and core.language.request_support["просьба"]==2 and core.language.request_concept_id in core.graph.nodes
-    assert load_container(world,"world",{"META","STATE","CONT","NBRN"})["META"]["version"]==7 and load_container(brain,"brain",{"META","COGN","RELA","PATT","SPAT","BELS","LEAR","LANG","NBRN"})["META"]["version"]==6
+    assert load_container(world,"world",{"META","STATE","CONT","NBRN"})["META"]["version"]==8 and load_container(brain,"brain",{"META","COGN","RELA","PATT","SPAT","BELS","LEAR","LANG","NBRN"})["META"]["version"]==6
 
 
 def test_old_lexicon_migrates_without_request_cues():

@@ -1,6 +1,8 @@
 """Read-only rendering records exported by the continuous runtime facade."""
 from dataclasses import dataclass
 
+from physiology import PhysiologySnapshot
+
 
 @dataclass(frozen=True, slots=True)
 class RenderBody:
@@ -26,6 +28,7 @@ class RenderSnapshot:
     world_time: float
     bodies: tuple[RenderBody, ...]
     objects: tuple[RenderObject, ...]
+    physiology: PhysiologySnapshot | None = None
 
 
 __all__ = ["RenderBody", "RenderObject", "RenderSnapshot"]

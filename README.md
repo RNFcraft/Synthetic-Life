@@ -8,29 +8,21 @@ LLM/Transformer-обёрткой и не использует frozen policy netw
 
 ## Текущий статус
 
-**v0.7.6 — FROZEN.**
+**v0.8.0 — HOMEOSTATIC FOUNDATION — FROZEN.**
 
-Текущая ветка v0.7 — архитектурная уборка без намеренного изменения поведения.
-Полный regression/performance audit подтвердил эквивалентность v0.7.0 и
-рефакторированной системы:
+Первый этап v0.8 реализует bounded runtime physiology, deterministic WorldTime
+metabolism, action costs, read-only projections и exact persistence:
 
-- `422` pytest — PASS;
-- CTest Release — `2/2` PASS;
-- canonical digest:
-  `7d80bffa82cfbabf8d11373883d03056b26b27eb53a4cbe9246a666e079fbb0f`;
-- canonical structural counters: `79` actions, `655` scheduler events,
-  queue peak `3`, `27` Cognits, `162` Relations;
-- `full_graph_sync_calls == 0`;
-- seven canonical runs of v0.7.0 and seven runs of v0.7.5 matched exactly on
-  digest and semantic/work counters;
-- 1,000-WorldTime long-life audit reached the global Relation cap `16,384` and
-  remained bounded while cognition, actions, neural events and Assemblies kept
-  updating.
+- full suite: `431` passed (`422` frozen/legacy + `9` v0.8.0);
+- CTest Release: `2/2` PASS;
+- deterministic digest: `8dfb1595eb4bd704f7d0b8780f1e58d725f7ae6b50df47f43937efc45797580c`;
+- `.seworld v8`, `.sebrain v6`, native graph v3.
 
-Полные доказательства: [`docs/V0_7_6_ARCHITECTURE_FREEZE.md`](docs/V0_7_6_ARCHITECTURE_FREEZE.md).
-
-Следующая исследовательская ветка — **v0.8 Homeostatic Motivation and First
-Survival Learning — PLANNED**. Она ещё не реализована.
+Consumable objects, interoception и planner valuation остаются следующими
+v0.8.x этапами. Design:
+[`docs/V0_8_HOMEOSTASIS_DESIGN.md`](docs/V0_8_HOMEOSTASIS_DESIGN.md).
+Frozen v0.7 evidence остаётся в
+[`docs/V0_7_6_ARCHITECTURE_FREEZE.md`](docs/V0_7_6_ARCHITECTURE_FREEZE.md).
 
 ## Быстрый старт
 
@@ -116,7 +108,7 @@ SensoryFrame
 Основные форматы:
 
 - `.sebrain v6` — durable learned cognition / native brain payload;
-- `.seworld v7` — exact continuous World + scheduler/frontiers/pending episode;
+- `.seworld v8` — exact continuous World + physiology + scheduler/frontiers/pending episode;
 - native binary graph v3 — внутренний persisted numeric graph.
 
 Изменение формата требует явной версии и backward/migration tests. Нельзя

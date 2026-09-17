@@ -1,56 +1,49 @@
 # Synthetic-Life — Current Status
 
-## v0.7.6 — ARCHITECTURE FREEZE — FROZEN
+## v0.8.0 — HOMEOSTATIC FOUNDATION — FROZEN
 
-The v0.7 cleanup line is complete. The accepted production path, ownership,
-causal boundaries, time/ID domains, persistence formats, compatibility paths,
-and reference oracles are frozen as the baseline for future research work.
-v0.7.6 changed no runtime semantics, numeric equations, scheduler ordering,
-persistence schema, or pybind wire shape.
+Synthetic-Life now has its first causal internal organism state. A separate
+runtime-owned physiology subsystem is authoritative for bounded energy,
+nutrient reserve, and hydration. Hunger and homeostatic tension are derived,
+finite read-only projections rather than reward or policy variables.
 
-## Acceptance snapshot
+Physiology advances exclusively by simulation WorldTime. Basal metabolism,
+digestion, hydration loss, successful action costs, and zero-energy brownout
+are deterministic. Core/planner and observer receive immutable projections and
+cannot mutate physiology or turn tension into an action shortcut.
+
+## Acceptance
 
 ```text
-pytest                    422 passed
-CTest Release             2/2 passed
-canonical digest          7d80bffa82cfbabf8d11373883d03056b26b27eb53a4cbe9246a666e079fbb0f
-actions                    79
-scheduler events          655
-queue peak                  3
-Cognits                    27
-Relations                 162
-planner cycles            294
-FFI calls                2668
-Assemblies                   6
-full_graph_sync_calls        0
+full pytest                 431 passed
+legacy/frozen tests         422 passed
+new v0.8.0 tests              9 passed
+CTest Release               2/2 passed
+v0.8.0 digest               8dfb1595eb4bd704f7d0b8780f1e58d725f7ae6b50df47f43937efc45797580c
+.seworld                     v8
+.sebrain                     v6 (unchanged)
+native graph                 v3 (unchanged)
 ```
 
-`PYTHONHASHSEED=1` and `777` produce the same digest and counters. A separate
-Windows clean clone, fresh virtual environment, fresh Release native build,
-CTest, full pytest, import smoke, and zero-second production smoke all pass.
+The v0.7.6 behavioral oracle remains protected by its original tests. Runtime
+behavior is intentionally extended by metabolism/action costs, and persistence
+schema changes only by adding exact physiological continuation. Older
+`.seworld` snapshots migrate deterministically.
 
-## Frozen architecture
+The v0.8.0 digest matches for `PYTHONHASHSEED=1` and `777`; the canonical run
+still completes `79` actions and `655` scheduler events.
 
-- Python owns semantic cognition, memory/planner/language policy, and the
-  cognition frontier.
-- C++ owns the authoritative numeric Cognit/Relation graph, physical World,
-  scheduler, neurodynamic substrate, Assemblies, and one-way bridge.
-- Python graph/World and discrete `Simulation.step()` remain reference and
-  compatibility surfaces; `ui/` remains legacy/unsupported/non-production.
-- Persistence remains `.sebrain v6`, `.seworld v7`, and native graph v3.
+Design and boundaries:
+[`docs/V0_8_HOMEOSTASIS_DESIGN.md`](docs/V0_8_HOMEOSTASIS_DESIGN.md).
 
-Full evidence: [`docs/V0_7_6_ARCHITECTURE_FREEZE.md`](docs/V0_7_6_ARCHITECTURE_FREEZE.md).
+## Not implemented yet
 
-## Known limitations
+v0.8.0 does not add consumable World objects, interoceptive receptors,
+homeostatic planner valuation, learned physiological consequences, or delayed
+credit assignment. These remain staged v0.8.x work in [`ROADMAP.md`](ROADMAP.md).
 
-- No separately archived external binary fixtures exist for old
-  `.sebrain`/`.seworld` versions; migrations are protected by executable tests.
-- The measured long-life audit is 1,000 WorldTime; the proposed 50,000 soak was
-  not run because the shorter run took 548.725 seconds.
-- The Python UI is retained as an unsupported debug tool and is not installed
-  by production requirements.
+## Frozen foundation
 
-## Next work
-
-v0.8 — Homeostatic Motivation and First Survival Learning — is **PLANNED**, not
-implemented. Its design is recorded in [`ROADMAP.md`](ROADMAP.md).
+The v0.7.6 architecture freeze remains the structural foundation. No neural,
+Assembly, Relation, language, scheduler-order, brain persistence, or native
+graph contract was changed.

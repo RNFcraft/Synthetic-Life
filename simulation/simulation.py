@@ -1,4 +1,4 @@
-from dataclasses import asdict
+from dataclasses import asdict,replace
 from collections import Counter,deque
 from random import Random
 from typing import Any
@@ -17,6 +17,7 @@ from world.time import ActionIntent,EventSequence,WorldTime
 from .clock import SimulationClock
 from .snapshot import decode_random_state,encode_random_state,load_snapshot,save_snapshot
 from persistence import load_container,save_container
+from physiology import Physiology
 
 
 class Simulation:
@@ -29,10 +30,13 @@ class Simulation:
     def __init__(self,seed:int=12345,settings:Settings|None=None,backend:str="python")->None:
         self.seed=seed;self.settings=settings or Settings();self.rng=Random(seed);self.world=(NativeWorld if backend=="native" else World)(self.settings,self.rng)
         self.core=SyntheticEntityCore(self.settings,backend);self.clock=SimulationClock();self.world_time=WorldTime();self.event_sequence=EventSequence();self.telemetry=Telemetry(self.settings.telemetry_history)
+        self.physiology=Physiology(self.settings);self.core.homeostatic_projection=self.physiology.snapshot()
         self.event_log=EventLogger();self.last_action:Action|None=None;self.last_action_result:ActionResult|None=None
 
     def step(self)->TickMetrics:
-        tick=self.clock.tick;frame=self.world.perceive(tick);self.core.step(frame);action=self.core.deliberate(frame);intent=ActionIntent(action,self.world_time,self.event_sequence.next());result=self.world.apply_intent(intent) if isinstance(self.world,NativeWorld) else self.world.apply_action(intent.action)
+        tick=self.clock.tick;self.physiology.advance_to(self.world_time.seconds);self.core.homeostatic_projection=self.physiology.snapshot();frame=self.world.perceive(tick);self.core.step(frame);action=self.core.deliberate(frame)
+        if not self.physiology.can_begin(action.kind):action=Action(ActionType.IDLE)
+        intent=ActionIntent(action,self.world_time,self.event_sequence.next());result=self.world.apply_intent(intent) if isinstance(self.world,NativeWorld) else self.world.apply_action(intent.action);self.physiology.apply_action(action.kind,result is ActionResult.SUCCESS);self.core.homeostatic_projection=self.physiology.snapshot()
         self.event_log.emit(tick,f"ACTION {action.kind.name} {result.name}");world_event=None
         if (tick+1)%self.settings.world_tick_interval==0:
             world_event=self.world.world_tick();self.event_log.emit(tick,f"WORLD_EVENT {world_event}")
@@ -65,7 +69,7 @@ class Simulation:
           self.core.relation_candidates,self.core.relations_materialized/max(1,self.core.relation_candidates),self.core.state.pattern_selectivity,
           self.core.state.representation_quality,self.core.state.agency_estimate,sum((body.touch_up,body.touch_down,body.touch_left,body.touch_right)),
           body.holding,body.action_resistance,len(self.core.patterns.last_events)-body_primitives,body_primitives)
-        self.telemetry.record(metrics);self.last_action=action;self.last_action_result=result;self.clock.advance();self.world_time=WorldTime(float(self.clock.tick))
+        self.telemetry.record(metrics);self.last_action=action;self.last_action_result=result;self.clock.advance();self.world_time=WorldTime(float(self.clock.tick));self.physiology.advance_to(self.world_time.seconds);self.core.homeostatic_projection=self.physiology.snapshot()
         if isinstance(self.world,NativeWorld):self.world.advance_world_time(self.world_time.seconds)
         return metrics
 
@@ -73,9 +77,9 @@ class Simulation:
         for _ in range(ticks):self.step()
 
     def snapshot_data(self,semantic_graph:bool=False)->dict[str,Any]:
-        """Собрать version-4 semantic snapshot без смены state authority."""
+        """Собрать version-5 semantic snapshot без смены state authority."""
         core=self.core;goal=asdict(core.state.goal) if core.state.goal else None
-        return {"version":4,"seed":self.seed,"tick":self.clock.tick,"world_time_seconds":self.world_time.seconds,"event_sequence":self.event_sequence.value,"random_state":encode_random_state(self.rng.getstate()),"world":self.world.to_dict(),
+        return {"version":5,"seed":self.seed,"tick":self.clock.tick,"world_time_seconds":self.world_time.seconds,"event_sequence":self.event_sequence.value,"random_state":encode_random_state(self.rng.getstate()),"world":self.world.to_dict(),"physiology":self.physiology.to_dict(),
           "cognitive_graph":core.graph.semantic_to_dict() if semantic_graph and core.backend else core.graph.to_dict(),"entity_state":{"last_action":self.last_action.kind.name if self.last_action else None,
           "last_action_result":self.last_action_result.name if self.last_action_result else None},"core":{"transitions":core.transitions.to_dict(),
           "previous_active":sorted(core.previous_active),"previous_action":core.previous_action.name if core.previous_action else None,
@@ -182,8 +186,15 @@ class Simulation:
     @classmethod
     def load(cls,path:str,settings:Settings|None=None,backend:str="python")->"Simulation":
         data=load_snapshot(path)
-        if data.get("version")!=4:raise ValueError(f"Unsupported snapshot schema v{data.get('version')}; expected v4")
+        if data.get("version") not in (4,5):raise ValueError(f"Unsupported snapshot schema v{data.get('version')}; expected v4 or v5")
+        physiology_config=data.get("physiology",{}).get("config")
+        if physiology_config is not None:
+            if settings is None:settings=replace(Settings(),**physiology_config)
+            elif any(getattr(settings,name)!=value for name,value in physiology_config.items()):raise ValueError("explicit Settings are incompatible with saved physiology")
         sim=cls(data["seed"],settings,backend);sim.clock.tick=data["tick"];sim.world_time=WorldTime(data.get("world_time_seconds",float(sim.clock.tick)));sim.event_sequence=EventSequence(data.get("event_sequence",sim.clock.tick));sim.rng.setstate(decode_random_state(data["random_state"]));world=data["world"]
+        if "physiology" in data:sim.physiology.restore(data["physiology"])
+        else:sim.physiology.advance_to(sim.world_time.seconds)
+        sim.core.homeostatic_projection=sim.physiology.snapshot()
         sim.world.grid=Grid(world["width"],world["height"]);sim.world.world_tick_count=world["world_tick"]
         bodies=world.get("bodies",[world["body"]]);sim.world.bodies={x["id"]:EntityBody(**x) for x in bodies};sim.world.body=sim.world.bodies[min(sim.world.bodies)];sim.world.objects=[WorldObject(**x) for x in world["objects"]]
         sim.world.next_spawn_tick=world["next_spawn_tick"];sim.world.next_object_id=world["next_object_id"];sim.world.last_resistance=world["last_resistance"];sim.world.last_outcome=world["last_outcome"]

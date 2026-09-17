@@ -207,7 +207,7 @@ Accepted surfaces:
 
 ```text
 .sebrain v6
-.seworld v7
+.seworld v8
 native graph v3
 ```
 

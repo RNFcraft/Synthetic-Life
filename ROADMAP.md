@@ -762,7 +762,7 @@ default-workload performance NOT YET CLOSED
 
 # v0.7 — Architecture Stabilization and Repository Refactor
 
-**Status: PLANNED**
+**Status: DONE / FROZEN**
 
 v0.7 не является этапом добавления новой интеллектуальной способности. Это отдельная инженерная ветка между исследовательскими этапами, предназначенная для приведения накопившейся архитектуры к состоянию, в котором её можно безопасно развивать дальше.
 
@@ -1089,7 +1089,7 @@ extension without relying on commit history or external conversations.
 
 # v0.8 — Homeostatic Motivation and First Survival Learning
 
-**Status: PLANNED**
+**Status: IN PROGRESS — v0.8.0 FROZEN**
 
 v0.8 открывает первую ветку, в которой у Synthetic-Life появляется собственное непрерывное физиологическое состояние и впервые возникает внутренний критерий функциональной полезности последствий поведения.
 
@@ -1225,7 +1225,14 @@ J = Σ γ^k * Δt_k * T_k
 
 ## v0.8.0 — Metabolic and Homeostatic Substrate
 
-**Status: PLANNED**
+**Status: DONE / FROZEN**
+
+Implemented as a separate runtime-owned subsystem with bounded energy,
+nutrients and hydration; WorldTime-only metabolism and digestion; deterministic
+action costs and brownout; immutable core/planner/observer projections; exact
+`.seworld v8` continuation and v7 migration. It does not yet identify
+consumables, inject interoception, or score planner trajectories. Design and
+acceptance evidence: [`docs/V0_8_HOMEOSTASIS_DESIGN.md`](docs/V0_8_HOMEOSTASIS_DESIGN.md).
 
 Цель — добавить минимальную deterministic physiology, существующую только в causal simulation time.
 

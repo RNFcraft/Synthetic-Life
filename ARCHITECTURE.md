@@ -1,6 +1,6 @@
 # Synthetic-Life Architecture
 
-**Current architecture baseline: v0.7.6 FROZEN.**
+**Current architecture baseline: v0.8.0 HOMEOSTATIC FOUNDATION.**
 
 Этот документ описывает фактическую текущую архитектуру. Исторический контракт
 рефакторинга v0.7 находится в
@@ -366,7 +366,7 @@ Observer не:
 
 ```text
 .sebrain v6       durable learned cognition/native brain
-.seworld v7       exact World + scheduler + episode/frontiers
+.seworld v8       exact World + physiology + scheduler + episode/frontiers
 native graph v3   binary authoritative numeric graph
 ```
 
@@ -429,15 +429,17 @@ Architecture guards и acceptance tests защищают минимум:
 Полный verification contract:
 [`docs/TESTING.md`](docs/TESTING.md).
 
-## 21. v0.8 integration boundary
+## 21. v0.8 homeostatic foundation
 
-v0.8 ещё не реализован. Его planned physiology должна встраиваться без нарушения
-вышеуказанных boundaries.
+v0.8.0 добавляет отдельный runtime-owned `physiology` subsystem. Он является
+единственным authoritative owner energy, nutrient reserve и hydration. Core,
+planner и observer получают только immutable `PhysiologySnapshot`; derived
+hunger/tension не являются второй authoritative copy.
 
 Зафиксированное направление:
 
 ```text
-native physiology (N, E)
+runtime physiology (N, E, hydration)
   -> non-semantic interoception
   -> neural/cognitive representation
   -> learned action-conditioned consequences
@@ -446,8 +448,10 @@ native physiology (N, E)
   -> ordinary Action
 ```
 
-Homeostatic tension не должна становиться semantic shortcut
-`hunger -> find_food`. Подробный staged plan находится в `ROADMAP.md`.
+v0.8.0 реализует только первый блок и read-only seam. Interoception, learned
+consequences и planner valuation остаются последующими milestones. Homeostatic
+tension не должна становиться semantic shortcut `hunger -> find_food`.
+Подробный contract: [`docs/V0_8_HOMEOSTASIS_DESIGN.md`](docs/V0_8_HOMEOSTASIS_DESIGN.md).
 
 ## 22. Что считать источником истины
 

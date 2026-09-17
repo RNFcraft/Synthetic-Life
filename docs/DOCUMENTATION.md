@@ -29,6 +29,11 @@
 Это evidence documents. После freeze их не переписывают для косметической
 актуализации; новые факты добавляются отдельным документом/milestone.
 
+## Current v0.8 design
+
+- [`V0_8_HOMEOSTASIS_DESIGN.md`](V0_8_HOMEOSTASIS_DESIGN.md) — physiology
+  ownership/model, persistence, causal seams and staged v0.8.x integration.
+
 ## Foundational / historical design documents
 
 - [`../COGNITIVE_FORMALISM.md`](../COGNITIVE_FORMALISM.md) — формализм v0.4,

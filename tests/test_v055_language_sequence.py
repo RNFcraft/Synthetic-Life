@@ -127,7 +127,7 @@ def test_seworld_v7_mid_utterance_exact_continuation_and_v6_migration(tmp_path):
     legacy=ContinuousRuntime(714);legacy.run_to_quiescence();legacy.inject_language("legacy",legacy.world_time+.5);current=tmp_path/"current.seworld";legacy.save_world(current);data=load_container(current,"world",{"META","STATE","CONT","NBRN"});data["META"]["version"]=6;language=data["CONT"]["language"];language.pop("active_frontier",None);language.pop("last_utterance_result",None);language.pop("utterances_processed",None);language.pop("tokens_processed",None)
     for key in ("sequence_support","sequence_trials","sequence_materialized","sequence_relations_materialized"):language["lexicon"].pop(key,None)
     old=tmp_path/"v6.seworld";save_container(old,"world",data,{"NBRN"});migrated=ContinuousRuntime.load_world(old);assert migrated.language_frontier is None and isinstance(next(iter(migrated.language_inbox.values())),LanguageFrame)
-    upgraded=tmp_path/"upgraded.seworld";migrated.save_world(upgraded);assert load_container(upgraded,"world",{"META","STATE","CONT","NBRN"})["META"]["version"]==7
+    upgraded=tmp_path/"upgraded.seworld";migrated.save_world(upgraded);assert load_container(upgraded,"world",{"META","STATE","CONT","NBRN"})["META"]["version"]==8
 
 
 def test_sebrain_v6_sequence_transfer_and_v5_migration(tmp_path):
