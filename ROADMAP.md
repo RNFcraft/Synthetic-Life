@@ -1080,42 +1080,135 @@ measurement/tooling difference
 
 **Status: PLANNED**
 
-v0.8 открывает первую ветку, в которой у Synthetic-Life появляется не просто способность воспринимать, запоминать и выбирать действия, а собственное непрерывное внутреннее состояние, которое делает последствия поведения функционально значимыми для самого организма.
+v0.8 открывает первую ветку, в которой у Synthetic-Life появляется собственное непрерывное физиологическое состояние и впервые возникает внутренний критерий функциональной полезности последствий поведения.
 
-Центральный исследовательский вопрос ветки:
+Центральный исследовательский вопрос:
 
-> Сможет ли Synthetic-Life самостоятельно обнаружить, что определённый внешний объект и определённая последовательность действий уменьшают его внутренний физиологический дисбаланс, а затем использовать приобретённый опыт для более эффективного поведения?
+> Сможет ли Synthetic-Life самостоятельно обнаружить, что определённый внешний объект и последовательность действий уменьшают его внутренний физиологический дисбаланс, затем сохранить это как приобретённое causal knowledge и использовать его в multi-step prediction для более эффективного поведения?
 
-Ключевой принцип: в v0.8 не вводится скрытая таблица `food -> reward` и не задаётся поведение вида `if hunger > threshold: go_to_food()`. Врождённой является только физиология и её устойчивый диапазон. Значение конкретного объекта и действий должно быть приобретено через обычный опыт, prediction, Relations и planner.
-
-Базовая causal chain:
-
-```text
-internal physiological deviation
-→ non-semantic interoception
-→ neural/cognitive representation
-→ ordinary context and prediction
-→ Action
-→ physical consequence
-→ physiological consequence
-→ homeostatic error changes
-→ acquired causal evidence
-→ later planner decision changes
-```
-
-Главное различие от reward shortcut:
+Ключевой запрет всей ветки:
 
 ```text
 НЕ:
-food object → reward += 1
+food -> reward
+hunger -> find_food
+food detector -> Goal
+edible object -> fixed action bonus
+consume -> reward += constant
 
 А:
-food object + successful interaction
-→ nutrient reserve changes physically
-→ digestion restores usable energy
-→ hunger/homeostatic tension changes
-→ system learns this consequence from experience
+physiology defines desirable state
++
+experience learns consequences
++
+planner evaluates predicted trajectories
 ```
+
+Врожденной является только физиология, её допустимые ranges и функция оценки внутреннего дисбаланса. Какой объект помогает, какое действие нужно совершить и какая последовательность к нему приводит, организм должен приобрести из опыта.
+
+Базовая causal architecture:
+
+```text
+                 NATIVE PHYSIOLOGY
+                 ┌──────────────┐
+Food ─consume──→ │ N            │
+                 │ E            │
+                 └──────┬───────┘
+                        │
+           ┌────────────┴─────────────┐
+           │                          │
+           ▼                          ▼
+   interoceptive receptors      derived T(N,E)
+           │                          │
+           ▼                          │
+        neural                       │
+           │                          │
+           ▼                          │
+        Cognits                       │
+           │                          │
+           ├──── learned κ/ρ ─────────┤
+           │      prediction          │
+           ▼                          ▼
+              multi-step planner
+                       │
+              predicted trajectory
+                       │
+                       ▼
+               discounted T integral
+                       │
+                       ▼
+                    Action
+```
+
+Главная архитектурная формула ветки:
+
+> Physiology определяет, какие внутренние состояния устойчивы; experience учит причинные пути между состояниями; planner выбирает действие через предсказанную траекторию, а не через врождённое знание о пище.
+
+### Authority и representation contract
+
+Authoritative physiology должна жить в native/runtime physical state, рядом с causal World/entity state, а не в Python semantic mirror.
+
+Минимальная authority:
+
+```text
+N — nutrient / stomach reserve
+E — available energy
+```
+
+`H` и `T` являются derived values:
+
+```text
+H = f(N)
+T = f(N, E, target ranges)
+```
+
+Они не должны иметь второй authoritative copy и не обязаны сохраняться отдельно, если exact restore однозначно восстанавливает их из `N`, `E` и configuration.
+
+`T` НЕ является:
+
+- Cognit;
+- Goal;
+- BeliefScene entity;
+- reward variable;
+- action policy.
+
+Она принадлежит отдельному read-only по отношению к поведению `HomeostaticEvaluator`, который может только оценить фактический или imagined physiological state. Он не выбирает Action и не знает семантику пищи.
+
+При этом организм чувствует physiology через другой путь — non-semantic interoception. Таким образом, существуют два принципиально разных канала:
+
+```text
+physiology
+├── interoceptive receptors -> neural -> Cognits -> learned prediction
+└── HomeostaticEvaluator -> scalar evaluation of predicted physiology
+```
+
+Первый канал является опытом организма. Второй — врождённой функцией устойчивости организма. Их нельзя объединять в shortcut `hunger -> action`.
+
+### Planner valuation contract
+
+Planner не должен оптимизировать только immediate `ΔT`, потому что это создаёт близорукое поведение.
+
+Основная objective v0.8:
+
+```text
+J = Σ γ^k * Δt_k * T_k
+    + γ^n * τ_terminal * T_terminal
+```
+
+где planner предпочитает меньший `J`.
+
+Это bounded discounted integral homeostatic tension по imagined trajectory. Каждый переход учитывает собственную causal duration.
+
+Такой objective делает значимыми:
+
+- время, проведённое в дефиците;
+- длительность пути;
+- лишние действия;
+- metabolic cost движения;
+- отложенное восстановление energy;
+- terminal state при ограниченном planning horizon.
+
+На первом проходе используется существующий bounded multi-step planner. Не вводится infinite-horizon RL, TD-learning или отдельный value network.
 
 ---
 
@@ -1123,40 +1216,108 @@ food object + successful interaction
 
 **Status: PLANNED**
 
-Цель — добавить минимальную детерминированную физиологию сущности, существующую в `WorldTime` и независимую от FPS, wall-clock и host performance.
+Цель — добавить минимальную deterministic physiology, существующую только в causal simulation time.
 
-Минимальные state variables:
+Authoritative variables:
 
 ```text
-N — nutrient / stomach reserve
-E — available energy
-H — hunger / food deficit signal
-T — aggregate homeostatic tension
+0 <= N <= N_max
+0 <= E <= E_max
 ```
 
 Предпочтительная модель:
 
-- пища сначала увеличивает `N`, а не мгновенно добавляет energy;
+- successful consumption сразу увеличивает `N`;
 - digestion постепенно переводит `N` в `E`;
-- базовый brain metabolism непрерывно расходует energy;
-- movement расходует дополнительную energy;
-- physical interaction также имеет небольшой action cost;
-- neural activity может иметь bounded deterministic metabolic cost, если он выражен через simulated neural events, а не через CPU/FFI/wall-clock metrics;
-- hunger является производной внутреннего состояния, а не semantic label внешнего мира;
-- homeostatic target задаёт устойчивый физиологический диапазон, но не знает, каким действием его достигать.
+- базовый body metabolism расходует `E` по `WorldTime`;
+- базовый brain metabolism расходует `E` по `WorldTime`;
+- movement имеет дополнительный deterministic cost;
+- physical interaction имеет небольшой deterministic cost;
+- расход не зависит от FPS, wall-clock, Python call count, FFI call count или host execution time.
 
-Нельзя использовать для energy accounting:
+Например физиологический deficit может быть bounded:
 
-- FPS;
-- elapsed host time;
-- число Python calls;
+```text
+dE = clamp((E_target - E) / E_target, 0, 1)
+dN = clamp((N_target - N) / N_target, 0, 1)
+
+T = wE * dE^2 + wN * dN^2
+```
+
+Точная функция и параметры выбираются экспериментально до freeze, но обязательны свойства:
+
+```text
+0 <= T <= T_max
+finite(T)
+monotonic worsening under growing deficit
+no singularity at E = 0 or N = 0
+```
+
+### Energy exhaustion / brownout semantics
+
+В v0.8 смерть ещё не вводится. Поэтому `E = 0` означает metabolic brownout, а не отрицательную energy и не смерть.
+
+Если voluntary Action требует больше energy, чем доступно, Action физически не может начаться.
+
+Пример:
+
+```text
+MOVE cost = C_move
+E < C_move
+→ MOVE cannot start
+```
+
+То же относится к дорогим motor/interaction actions.
+
+При этом сохраняются passive процессы:
+
+- passage of WorldTime;
+- digestion;
+- sensory input;
+- scheduler processing;
+- минимально необходимая cognition;
+- WAIT / inactivity semantics.
+
+Если `N > 0`, digestion может восстановить `E` после brownout.
+
+Недопустимы:
+
+- negative `E`;
+- negative `N`;
+- NaN/Inf physiology;
+- бесконечный `T`;
+- продолжение любых действий при отсутствии требуемой energy.
+
+### Brain metabolism
+
+Первый implementation layer должен быть консервативным:
+
+```text
+brain_cost = basal_brain_rate * ΔWorldTime
+```
+
+Activity-dependent neural cost НЕ является обязательным для первого acceptance и не должен мешать доказательству основной food-learning цепочки.
+
+Если он добавляется позже в этой ветке, единственный допустимый initial signal — deterministic simulated micro-neural activity, предпочтительно emitted micro-spike count:
+
+```text
+ΔE_neural = C_spike * emitted_micro_spike_count
+```
+
+Этот расход должен быть bounded на causal interval и оставаться малой долей общей metabolism.
+
+Запрещено считать brain cost из:
+
 - FFI calls;
-- renderer activity;
-- wall-clock execution cost.
+- planner cycles как host operations;
+- CPU time;
+- C++ function calls;
+- renderer work;
+- wall-clock milliseconds.
 
-Все изменения физиологии должны зависеть только от causal simulation state и `WorldTime`.
+Идея «думать тоже стоит энергии» остаётся допустимым исследованием, но только после того, как базовый homeostatic learning работает без activity-cost domination.
 
-Persistence должна сохранять exact continuation физиологии вместе с существующим runtime state.
+Persistence должна сохранять exact physiological continuation.
 
 ---
 
@@ -1166,21 +1327,22 @@ Persistence должна сохранять exact continuation физиолог�
 
 Цель — добавить простейший физический источник nutrient reserve.
 
-Первый consumable object остаётся обычным кубиком World, но получает физическое свойство nutrient content. Это свойство принадлежит World physics и не передаётся мозгу как слова `food`, `edible`, `nutrition` или reward label.
+Первый consumable object остаётся обычным кубиком World, но получает физическое свойство nutrient content. Это свойство принадлежит World physics и не передаётся cognition как слова `food`, `edible`, `nutrition`, `reward` или evaluator label.
 
-Ожидаемый физический путь:
+Физический путь:
 
 ```text
 visible/touchable cube
 → ordinary movement / interaction
 → successful consume event
 → cube disappears or becomes consumed
-→ nutrient reserve increases
+→ N rises immediately
+→ digestion later converts N into E
 ```
 
-Первоначально достаточно одного типа consumable cube.
+Immediate изменение `N` намеренно создаёт наблюдаемый причинный физиологический consequence самого consumption, тогда как energy restoration остаётся отложенной. Это не reward shortcut: `N` является частью физического организма и также участвует в homeostatic state.
 
-Для интерактивного обучения observer/editor должен позволять создать такой объект нажатием на клетку, но UI не имеет права напрямую мутировать cognition или physiology.
+Для интерактивного curriculum observer/editor должен позволять создавать consumable cube нажатием на клетку, но UI не мутирует World или physiology напрямую.
 
 Допустимый путь:
 
@@ -1193,7 +1355,7 @@ mouse click / experiment command
 → ordinary sensory consequence
 ```
 
-Таким образом, появление еды является внешним причинным событием мира и может участвовать в deterministic replay/save-load semantics.
+Spawn должен иметь causal timestamp/sequence и участвовать в deterministic replay/save-load semantics.
 
 ---
 
@@ -1201,67 +1363,98 @@ mouse click / experiment command
 
 **Status: PLANNED**
 
-Цель — дать организму возможность чувствовать своё физиологическое состояние без загрузки готового значения этих ощущений.
+Цель — дать организму возможность чувствовать собственную physiology без загрузки готового значения этих ощущений.
 
-Минимальные interoceptive channels отражают bounded raw состояние:
+Минимальные bounded channels могут отражать:
 
 - energy level;
-- nutrient/stomach reserve;
+- nutrient reserve;
 - hunger/deficit magnitude;
-- при необходимости coarse homeostatic deviation.
+- coarse homeostatic deviation при необходимости.
 
-Нельзя передавать semantic labels:
+Но через sensory boundary никогда не передаются semantic labels:
 
 ```text
 I_AM_HUNGRY
 FOOD_NEEDED
 LOW_ENERGY_MEANS_FIND_FOOD
+THIS_OBJECT_RESTORES_ENERGY
 ```
 
-Предпочтительный causal path:
+Предпочтительный production path:
 
 ```text
-physiology
+native physiology
 → bounded non-semantic interoceptive receptors
-→ neural substrate / ordinary Cognit path
-→ learned internal representation
+→ neural substrate
+→ Assembly
+→ ordinary Cognit
 ```
 
-Interoception должна следовать тем же принципам, что и embodied sensory transduction: stable receptor identity, deterministic same-time input и отсутствие прямого semantic shortcut в planner.
+Interoception следует тем же принципам, что v0.6.4 sensory transduction:
+
+- stable receptor identity;
+- bounded topology;
+- same-time deterministic injection;
+- no object IDs;
+- no Action semantics;
+- no direct Goal creation;
+- no direct planner score injection.
+
+Interoceptive Cognits являются ordinary learned representations и могут участвовать в context, memory, TransitionEvidence, Relations и prediction так же, как другие experience-derived Cognits.
 
 ---
 
-## v0.8.3 — Homeostatic Motivation
+## v0.8.3 — Homeostatic Motivation and Planner Valuation
 
 **Status: PLANNED**
 
-Цель — превратить физиологическое отклонение в общую внутреннюю мотивационную величину без hardcoded behavioral policy.
+Цель — сделать физиологическую устойчивость общей мотивационной функцией, не превращая её в hardcoded policy.
 
-Система может иметь врождённый устойчивый диапазон, например достаточный energy reserve и низкий physiological deficit. Из текущего состояния вычисляется homeostatic error/tension.
+`HomeostaticEvaluator` получает только physiological state или predicted physiological state и возвращает bounded `T`.
 
-Важно:
+Он НЕ должен:
+
+- видеть object type `FOOD`;
+- выбирать Action;
+- создавать Goal на конкретный object;
+- искать еду;
+- читать coordinates;
+- назначать reward;
+- изменять learned graph.
+
+Planner получает homeostatic contribution только после того, как существующий prediction/imagination path построил predicted internal state.
+
+Правильный шов:
 
 ```text
-homeostatic tension
-!=
-knowledge of what to do
+Action candidate
+→ ordinary learned prediction
+→ predicted interoceptive / physiological consequence
+→ HomeostaticEvaluator(predicted state)
+→ T_k
+→ trajectory objective J
+→ ordinary planner comparison
 ```
 
-Запрещено:
+Неправильный шов:
 
-```python
-if hunger > 0.8:
-    find_food()
+```text
+hunger
+→ special HOMEOSTATIC Goal pointing to food
+→ hardcoded action
 ```
 
-и любые эквивалентные shortcuts:
+В v0.8 homeostatic drive не моделируется как специальный `HOMEOSTATIC Goal`, если для этого требуется встроенное знание способа удовлетворения потребности. Existing Goals могут продолжать существовать для других задач, но physiology предоставляет общий valuation layer для imagined consequences.
 
-- food detector -> Goal;
-- hunger -> movement direction;
-- edible object -> positive action score;
-- consume action -> fixed reward bonus.
+Основная planner objective:
 
-Homeostatic state только определяет, насколько внутреннее состояние желательно стабилизировать. Planner должен получить полезное действие только через приобретённое prediction о последствиях.
+```text
+J = Σ γ^k * Δt_k * T_k
+    + γ^n * τ_terminal * T_terminal
+```
+
+Planner предпочитает меньший expected `J` среди доступных predicted trajectories.
 
 ---
 
@@ -1269,32 +1462,128 @@ Homeostatic state только определяет, насколько внут
 
 **Status: PLANNED**
 
-Цель — связать существующее causal learning с физиологическими последствиями действий.
+Цель — связать существующее causal learning с внутренними physiological outcomes без отдельной HomeostaticMemory и без нового reward-learning subsystem.
 
-Система должна иметь возможность приобрести зависимость вида:
+Долгосрочное знание должно жить в обычном κ/ρ graph.
+
+Interoceptive experience создаёт ordinary Cognits, поэтому learning path имеет вид:
 
 ```text
-current internal context
-+ external perceptual context
-+ Action
-→ later physiological consequence
+external context Cognits
++
+interoceptive Cognits
++
+Action
+→ TransitionEvidence
+→ ordinary action-conditioned Relations / SELF_ACTION evidence
+→ later external and interoceptive Cognits
 ```
 
-Пример после опыта:
+Например после реального опыта система может приобрести knowledge вида:
 
 ```text
-hunger-related internal representation
-+ visual/touch representation A
+visual/context A
++ low-reserve interoceptive representation
 + INTERACT
-→ nutrient reserve rises
-→ later hunger/tension falls
+→ high-reserve interoceptive representation
 ```
 
-Эта связь должна храниться и использоваться через обычные learned mechanisms — TransitionEvidence, Relations, prediction, memory/context и existing planner — без отдельного food policy или нового lookup table.
+Но сама Relation не содержит label `good`, `food` или числовой reward. Её значение для поведения возникает только тогда, когда prediction приводит к physiological state с меньшим `T`.
 
-Planner должен уметь различать действия по predicted homeostatic consequence. Если learned prediction говорит, что определённая action sequence уменьшает внутренний дисбаланс, она может получать преимущество именно по этой приобретённой причинной модели.
+### Persistence of physiological knowledge
 
-Ablation learned causal Relations должна удалять приобретённое преимущество.
+Долговременная память о последствиях не создаётся отдельным `food_value` или `HomeostaticMemory` store.
+
+После materialization learned causal knowledge является обычными Relations и сохраняется тем же durable brain persistence, что и остальные приобретённые Relations.
+
+Episode memory при необходимости может помогать recall/context, но не является единственным authoritative carrier значения пищи.
+
+### Delayed consequence / multi-step credit contract
+
+v0.8 НЕ вводит temporal-difference reward backpropagation.
+
+Отдалённая полезность раннего действия появляется через уже существующую model-based multi-step imagination.
+
+Опыт отдельно учит переходы:
+
+```text
+State A + MOVE_RIGHT
+→ State B
+
+State B + INTERACT
+→ N rises
+```
+
+Затем planner способен imagined trajectory:
+
+```text
+A
+↓ MOVE_RIGHT
+B
+↓ INTERACT
+N ↑
+↓ digestion
+E ↑
+T ↓
+```
+
+и оценивает всю траекторию через discounted integral `J`.
+
+Таким образом, первому MOVE не присваивается искусственный delayed reward. Оно становится предпочтительным, если learned transition model показывает, что через него достижимо последующее состояние с меньшей homeostatic cost.
+
+Первоначальный bounded horizon должен быть достаточен для Stage 2 curriculum. Если текущий planner не способен связать даже короткую двух- или трёхшаговую цепочку без нового RL subsystem, это фиксируется как architecture blocker, а не маскируется immediate reward hack.
+
+### Required ablations
+
+Нужны разные ablation, потому что они доказывают разные звенья causal chain.
+
+#### Primary — homeostatic consequence knowledge ablation
+
+Сохраняются:
+
+- World knowledge;
+- perception;
+- memory;
+- ordinary non-homeostatic Relations;
+- interoception;
+- physiology;
+- HomeostaticEvaluator;
+- planner.
+
+Отключается только использование learned action-conditioned prediction, которое ведёт к interoceptive/physiological outcomes.
+
+То есть organism по-прежнему может знать геометрию и внешний мир, но перестаёт знать, какие действия приводят к улучшению внутреннего состояния.
+
+Это главный causal proof v0.8.
+
+#### Secondary — motivation ablation
+
+Learned prediction полностью сохраняется, включая knowledge:
+
+```text
+INTERACT/context → N rises
+```
+
+но homeostatic valuation выключается:
+
+```text
+homeostatic planner weight = 0
+```
+
+Это проверяет, что одно знание consequence без intrinsic physiological valuation не объясняет acquired preference.
+
+#### Diagnostic — broad prediction ablation
+
+Дополнительно допустимо отключить весь learned prediction path, но это слишком широкая ablation и не является главным доказательством homeostatic learning.
+
+Главные controls:
+
+```text
+FRESH
+EXPERIENCED
+EXPERIENCED + homeostatic-consequence ablation
+EXPERIENCED + motivation ablation
+```
 
 ---
 
@@ -1302,66 +1591,83 @@ Ablation learned causal Relations должна удалять приобретё
 
 **Status: PLANNED**
 
-Цель — впервые начать систематически обучать организм на реальном repeated experience и проверить, работает ли вся архитектура как единая обучающаяся система.
+Цель — впервые начать систематическое обучение организма на repeated embodied experience и проверить всю цепочку целиком.
 
-Начальный curriculum намеренно простой.
-
-### Stage 1 — Discovery рядом с организмом
+### Stage 1 — Discovery beside the organism
 
 Consumable cube появляется непосредственно рядом.
 
-Организм исследует обычные actions. Случайный или exploratory successful interaction должен впервые создать наблюдаемый физиологический consequence.
+Организм исследует обычные Actions. Successful interaction физически увеличивает `N`; затем interoception фиксирует изменение.
 
-Проверяется, что association не существует до опыта.
+До опыта не должно существовать association между appearance кубика, Action и physiological consequence.
 
 ### Stage 2 — One-step approach
 
-Еда появляется в соседней позиции, где требуется сначала корректное движение, затем interaction/consumption.
+Еда находится так, что требуется минимум:
 
-Проверяется acquisition простейшей multi-action causal sequence.
+```text
+MOVE
+→ INTERACT
+```
+
+Проверяется model-based multi-step mechanism:
+
+```text
+current state
+→ predicted movement consequence
+→ predicted interact consequence
+→ lower trajectory homeostatic cost
+```
+
+Первый MOVE должен становиться полезным не из-за reward propagation, а потому что learned model позволяет planner увидеть последующую полезную consequence.
 
 ### Stage 3 — Directional variation
 
 Consumable object появляется в разных направлениях/позициях.
 
-Проверяется перенос acquired value/consequence knowledge без hardcoded координат и без object ID shortcut.
+Проверяется перенос acquisition без:
+
+- hardcoded coordinates;
+- object ID shortcut;
+- fixed direction policy;
+- food-specific action table.
 
 ### Stage 4 — Scarcity and energy economy
 
-Пища появляется реже, а movement/brain activity имеют реальный energy cost.
+Пища появляется реже. Movement и interaction имеют физический energy cost; basal metabolism продолжает работать.
 
-Наблюдается, начинает ли acquired behavior уменьшать бесполезный расход энергии и эффективнее восстанавливать homeostasis.
+Проверяется, начинает ли acquired model сокращать бесполезные действия и время высокого `T`, а не просто максимизировать число consumptions.
 
-Главный paired experiment:
+Primary metric — не immediate reward, а качество physiological trajectory.
+
+Главный эксперимент проводится при одинаковых seed/scenario conditions:
 
 ```text
-FRESH organism
+FRESH
 vs
-EXPERIENCED organism
+EXPERIENCED
+vs
+EXPERIENCED + homeostatic-consequence ablation
+vs
+EXPERIENCED + motivation ablation
 ```
 
-при одинаковых:
+Измерять:
 
-- seed;
-- initial physiology;
-- World layout;
-- food position;
-- sensory/neural settings;
-- scheduler conditions.
-
-Ожидаемый исследовательский критерий — experienced organism после обучения устойчиво достигает физиологически полезного исхода быстрее/надёжнее fresh control, а ablation приобретённых Relations или relevant prediction уничтожает это преимущество.
-
-Измерять нужно не только chosen Action, но и:
-
+- success rate;
 - time-to-consume;
 - action count;
-- energy spent before consumption;
-- homeostatic tension trajectory;
-- prediction/action-score difference;
-- success rate across repeated deterministic seeds/scenarios;
-- fresh / experienced / ablated contrast.
+- energy spent;
+- brownout incidence;
+- `T(t)` trajectory;
+- discounted integral homeostatic cost `J`;
+- predicted physiological outcomes;
+- planner score/choice differences;
+- reproducibility across deterministic seeds/scenarios.
 
 Один удачный эпизод не является доказательством обучения.
+
+Acceptance требует repeated advantage experienced organism над fresh control и причинного исчезновения этого преимущества в соответствующих ablations.
 
 ---
 
@@ -1369,22 +1675,35 @@ EXPERIENCED organism
 
 **Status: PLANNED**
 
-Финальный этап ветки проверяет, что новая physiology/motivation система не разрушила causality и long-life stability.
+Финальный этап проверяет, что physiology/motivation/learning не разрушили causality и long-life stability.
 
 Минимальные gates:
 
 - deterministic replay;
 - host-batching invariance;
-- save/load exact continuation физиологии;
-- energy/nutrient bounds;
+- exact save/load continuation physiology;
+- exact continuation learned physiological Relations;
+- bounded `N`, `E`, `H`, `T`;
 - no negative/NaN/infinite physiology;
+- deterministic brownout behavior;
+- no action starts without required energy;
 - no wall-clock-dependent metabolism;
 - no direct food/reward semantic shortcut;
+- no hunger→Action lookup;
 - bounded interoceptive/neural representation;
-- learned behavior survives ordinary persistence;
+- homeostatic evaluator does not select Actions;
+- learned behavior survives normal persistence;
 - fresh/experienced/ablation experiment reproducible;
+- delayed two-step curriculum works through model-based prediction;
 - existing v0.5/v0.6 frozen contracts remain valid;
 - `full_graph_sync_calls == 0` remains invariant.
+
+Activity-dependent neural metabolism, если включена, дополнительно должна доказать:
+
+- deterministic cost from simulated neural events;
+- bounded cost per causal interval;
+- no dependency on CPU/FFI/host metrics;
+- no collapse of cognition solely because accounting coefficient dominates total energy budget.
 
 v0.8 намеренно НЕ включает на первом проходе:
 
@@ -1396,22 +1715,26 @@ v0.8 намеренно НЕ включает на первом проходе:
 - социальные drives;
 - эмоции;
 - генетическое наследование;
-- отдельный reinforcement-learning subsystem.
+- отдельный reinforcement-learning subsystem;
+- TD reward propagation;
+- отдельную learned value network.
 
 Эти механизмы имеют смысл только после доказательства базовой цепочки:
 
 ```text
-потребность
-→ ощущение
-→ опыт
-→ приобретённое causal knowledge
-→ prediction
-→ действие
-→ физиологическое последствие
-→ изменение будущего поведения
+physiological need
+→ non-semantic interoception
+→ learned internal representation
+→ ordinary causal experience
+→ durable Relations
+→ multi-step prediction
+→ homeostatic trajectory evaluation
+→ Action
+→ physical/physiological consequence
+→ changed future behavior
 ```
 
-Если эта цепочка не демонстрирует устойчивого learned advantage относительно fresh/ablated controls, расширять физиологию дальше преждевременно.
+Если эта цепочка не демонстрирует устойчивого learned advantage относительно fresh и targeted ablated controls, расширять physiology дальше преждевременно.
 
 ---
 
