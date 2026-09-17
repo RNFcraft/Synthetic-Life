@@ -8,7 +8,7 @@ LLM/Transformer-обёрткой и не использует frozen policy netw
 
 ## Текущий статус
 
-**v0.7.5 — FROZEN.**
+**v0.7.6 — FROZEN.**
 
 Текущая ветка v0.7 — архитектурная уборка без намеренного изменения поведения.
 Полный regression/performance audit подтвердил эквивалентность v0.7.0 и
@@ -27,10 +27,10 @@ LLM/Transformer-обёрткой и не использует frozen policy netw
   remained bounded while cognition, actions, neural events and Assemblies kept
   updating.
 
-Полные доказательства: [`docs/V0_7_5_REGRESSION_AUDIT.md`](docs/V0_7_5_REGRESSION_AUDIT.md).
+Полные доказательства: [`docs/V0_7_6_ARCHITECTURE_FREEZE.md`](docs/V0_7_6_ARCHITECTURE_FREEZE.md).
 
-Следующий cleanup milestone — **v0.7.6 Architecture Freeze and Future-Proofing**.
-После него запланирован **v0.8 Homeostatic Motivation and First Survival Learning**.
+Следующая исследовательская ветка — **v0.8 Homeostatic Motivation and First
+Survival Learning — PLANNED**. Она ещё не реализована.
 
 ## Быстрый старт
 

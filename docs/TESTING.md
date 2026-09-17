@@ -1,6 +1,6 @@
 # Testing and Repository Verification
 
-**Current verified baseline: v0.7.5 FROZEN.**
+**Current verified baseline: v0.7.6 FROZEN.**
 
 Полный v0.7.5 audit: `422` pytest PASS, CTest Release `2/2` PASS, все `17`
 version groups v0.2–v0.6.6 PASS. Подробности:
@@ -96,9 +96,9 @@ non-versioned/core/tooling tests.
 - `full_graph_sync_calls` имеет только zero initialization и не имеет increment
   path.
 
-Для текущего v0.7.5 дерева scope проверен полностью. Известный future-proofing
-пункт v0.7.6: data/type guard сейчас перечисляет существующие extracted files
-явно; при появлении новых `*_types.py` его нужно сделать discovery-based.
+Data/type guard автоматически обнаруживает `consciousness/*_types.py` и
+`simulation/*_types.py`; будущий `physiology_types.py` не может обойти invariant.
+Pure helpers без naming convention добавляются в короткий explicit список.
 
 ## Determinism contract
 

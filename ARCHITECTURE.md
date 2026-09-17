@@ -1,12 +1,14 @@
 # Synthetic-Life Architecture
 
-**Current architecture baseline: v0.7.5 FROZEN.**
+**Current architecture baseline: v0.7.6 FROZEN.**
 
 Этот документ описывает фактическую текущую архитектуру. Исторический контракт
 рефакторинга v0.7 находится в
 [`docs/V0_7_REFACTOR_CONTRACT.md`](docs/V0_7_REFACTOR_CONTRACT.md), а результаты
 доказательного аудита — в
 [`docs/V0_7_5_REGRESSION_AUDIT.md`](docs/V0_7_5_REGRESSION_AUDIT.md).
+Финальный freeze и classification audit зафиксированы в
+[`docs/V0_7_6_ARCHITECTURE_FREEZE.md`](docs/V0_7_6_ARCHITECTURE_FREEZE.md).
 
 ## 1. Архитектурная цель
 

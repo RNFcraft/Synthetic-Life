@@ -1,6 +1,6 @@
 # Synthetic-Life Developer Guide
 
-Практический guide для текущей **v0.7.5 FROZEN** architecture.
+Практический guide для текущей **v0.7.6 FROZEN** architecture.
 
 Перед архитектурными изменениями прочитайте:
 
@@ -288,7 +288,22 @@ Historical reproducibility artifacts и canonical fixtures не удаляютс
 - `docs/TESTING.md` — verification;
 - `docs/V0_7_REFACTOR_CONTRACT.md` — frozen v0.7 contract;
 - `docs/V0_7_5_REGRESSION_AUDIT.md` — frozen audit evidence.
+- `docs/V0_7_6_ARCHITECTURE_FREEZE.md` — final architecture freeze evidence.
 
 Не копируйте длинный version history в `README` или `CURRENT_STATUS`.
 Historical documents не переписываются для «актуализации»; вместо этого
 помечайте их роль в [`docs/DOCUMENTATION.md`](docs/DOCUMENTATION.md).
+
+## 15. Contract for a new subsystem
+
+До написания behavior logic явно определите: **STATE OWNER, INPUTS, OUTPUTS,
+CAUSAL DIRECTION, TIME DOMAIN, ID DOMAIN, PERSISTENCE RESPONSIBILITY,
+PUBLIC/INTERNAL API, BOUNDEDNESS, TEST ORACLE и ARCHITECTURE GUARDS**.
+
+У state ровно один authoritative owner. Вторая representation допустима только
+как документированный read-only snapshot/cache/reference. Dependencies должны
+быть явными: не добавляйте global service registry, giant context, mutable
+singleton или новый God Object. Wall clock не является simulated causal time.
+State, влияющий на будущее поведение, сохраняется либо точно и детерминированно
+восстанавливается с доказательством. Новый causal boundary требует regression
+test; структурно обходимое isolation rule требует architecture guard.

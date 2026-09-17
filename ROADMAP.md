@@ -1071,29 +1071,19 @@ measurement/tooling difference
 
 ## v0.7.6 — Architecture Freeze and Future-Proofing
 
-**Status: PLANNED**
+**Status: DONE / FROZEN**
 
-Финальный этап генеральной уборки.
+Final repository classification, API/dependency/persistence/documentation
+audits, automatic data-layer discovery guard, and an independent Windows
+clean-clone build/test/smoke gate passed. No proven dead code was removed and no
+runtime, numeric, scheduler, persistence, ABI, or wire behavior changed. The
+evidence is [`docs/V0_7_6_ARCHITECTURE_FREEZE.md`](docs/V0_7_6_ARCHITECTURE_FREEZE.md).
 
-После повторного аудита необходимо:
-
-- удалить только доказанный dead code;
-- удалить или архивировать действительно ненужные compatibility adapters;
-- окончательно маркировать legacy/reference subsystems;
-- проверить отсутствие циклических и запрещённых dependencies;
-- проверить соответствие документации реальной структуре кода;
-- проверить clean clone → dependencies → Release build → CTest → pytest → production run;
-- проверить public/internal API boundaries;
-- проверить persistence contracts;
-- проверить структуру historical documentation и research artifacts;
-- зафиксировать правила добавления новых subsystem в будущих версиях;
-- зафиксировать архитектурные guardrails в automated checks там, где это возможно.
-
-Финальный критерий v0.7:
-
-> Разработчик, который раньше не видел Synthetic-Life, должен иметь возможность открыть репозиторий, понять назначение проекта, пройти от README к актуальной архитектуре, определить владельца нужного state, найти соответствующую реализацию, собрать проект, запустить проверки и безопасно начать изменение системы без необходимости восстанавливать архитектуру по истории коммитов, старым experiment reports или внешним чатам.
-
-Закрытие v0.7 означает, что функционально это всё ещё тот же Synthetic-Life, который был заморожен перед refactor, но его кодовая база стала читаемой, модульной, документированной и защищённой от повторного накопления хаотичного технического долга.
+Reference/legacy paths and compatibility adapters were retained where tests,
+experiments, historical contracts, or debug value made removal unsafe. The
+living documentation now provides the complete route from project purpose to
+state ownership, implementation, build, verification, and safe subsystem
+extension without relying on commit history or external conversations.
 
 ---
 

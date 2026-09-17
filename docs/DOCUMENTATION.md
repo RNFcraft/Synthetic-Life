@@ -23,6 +23,8 @@
   ownership, ID/wire/persistence/refactor contract для линии v0.7.
 - [`V0_7_5_REGRESSION_AUDIT.md`](V0_7_5_REGRESSION_AUDIT.md) — фактический
   cross-worktree regression/performance audit.
+- [`V0_7_6_ARCHITECTURE_FREEZE.md`](V0_7_6_ARCHITECTURE_FREEZE.md) — финальная
+  classification, clean-clone validation и frozen architecture baseline.
 
 Это evidence documents. После freeze их не переписывают для косметической
 актуализации; новые факты добавляются отдельным документом/milestone.
