@@ -18,11 +18,7 @@ def verification_commands(mode: str, *, build_configured: bool, windows: bool) -
     tests = [python, "-B", "-m", "pytest", "-q"]
     if mode == "fast":
         tests += ["tests/test_main_entrypoint.py", "tests/test_architecture_boundaries.py", "tests/test_verify_tool.py"]
-    commands = [
-        [python, "-B", "-c", "import main"],
-        [python, "-B", "main.py", "--headless", "--seconds", "0"],
-        tests,
-    ]
+    commands: list[list[str]] = []
     if not build_configured:
         configure = ["cmake", "-S", "cpp", "-B", "cpp/build"]
         if windows:
@@ -31,6 +27,9 @@ def verification_commands(mode: str, *, build_configured: bool, windows: bool) -
     commands += [
         ["cmake", "--build", "cpp/build", "--config", "Release"],
         ["ctest", "--test-dir", "cpp/build", "-C", "Release", "--output-on-failure"],
+        [python, "-B", "-c", "import main"],
+        [python, "-B", "main.py", "--headless", "--seconds", "0"],
+        tests,
     ]
     return commands
 
