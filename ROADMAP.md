@@ -1756,7 +1756,7 @@ physiological need
 
 ---
 
-## v0.9.0 — **STAGE IN PLANNIG**
+## v0.9.0 — **STAGE IN PLANNING**
 
 ---
 

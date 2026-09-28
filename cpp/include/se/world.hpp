@@ -33,8 +33,9 @@ public:
   std::uint64_t world_tick_count()const noexcept{return world_tick_count_;}std::optional<std::uint64_t>next_spawn_tick()const noexcept{return next_spawn_tick_;}std::uint32_t next_object_id()const noexcept{return next_object_id_;}
   const std::vector<Object>& objects() const noexcept{return objects_;}const std::vector<Body>& bodies()const noexcept{return bodies_;}
   const Body& body() const noexcept{return bodies_.front();}const std::vector<std::optional<Object>>& held_objects()const noexcept{return held_;}
-  double resistance(std::uint32_t id=0)const noexcept{return resistance_.at(id);}std::uint32_t conflict_cursor()const{return conflict_cursor_;}std::uint64_t conflict_count()const{return conflict_count_;}const std::vector<std::uint64_t>&fairness_wins()const{return fairness_wins_;}
+  double resistance(std::uint32_t id=0)const{auto*b=body_by_id(id);return b?resistance_.at(body_index(id)):0.;}std::uint32_t conflict_cursor()const{return conflict_cursor_;}std::uint64_t conflict_count()const{return conflict_count_;}const std::vector<std::uint64_t>&fairness_wins()const{return fairness_wins_;}
   const std::vector<double>& resistances()const noexcept{return resistance_;}
+  std::size_t body_index(std::uint32_t id)const;
   RenderSnapshot latest_render_snapshot()const;
   std::shared_ptr<RenderSnapshotChannel> snapshot_channel()const noexcept{return snapshot_channel_;}
 private:
