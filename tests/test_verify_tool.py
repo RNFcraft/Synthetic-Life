@@ -13,17 +13,11 @@ def test_default_and_explicit_modes():
 def test_fast_and_full_select_expected_python_scope():
     fast = verify.verification_commands("fast", build_configured=True, windows=True)
     full = verify.verification_commands("full", build_configured=True, windows=True)
-<<<<<<< HEAD
-    assert "tests/test_architecture_boundaries.py" in fast[2]
-    assert full[3][-3:] == ["-m", "pytest", "-q"]
-    assert "tests/test_architecture_boundaries.py" not in full[3]
-=======
     fast_pytest = next(cmd for cmd in fast if "-m" in cmd and "pytest" in cmd)
     full_pytest = next(cmd for cmd in full if "-m" in cmd and "pytest" in cmd)
     assert "tests/test_architecture_boundaries.py" in fast_pytest
     assert full_pytest[-3:] == ["-m", "pytest", "-q"]
     assert "tests/test_architecture_boundaries.py" not in full_pytest
->>>>>>> ccb06e20407de836efa0483a9017f417bb41a9d9
 
 
 def test_unconfigured_windows_build_gets_portable_configure_step():

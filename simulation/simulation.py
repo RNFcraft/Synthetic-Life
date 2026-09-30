@@ -41,11 +41,7 @@ class Simulation:
     def step(self)->TickMetrics:
         tick=self.clock.tick;self.physiology.advance_to(self.world_time.seconds);self.core.homeostatic_projection=self.physiology.snapshot();frame=self.world.perceive(tick);self.core.step(frame);action=self.core.deliberate(frame)
         if not self.physiology.can_begin(action.kind):action=Action(ActionType.IDLE)
-<<<<<<< HEAD
-        intent=ActionIntent(action,self.world_time,self.event_sequence.next());result=self.world.apply_intent(intent) if isinstance(self.world,NativeWorld) else self.world.apply_action(intent.action);self.physiology.apply_action(action.kind,result is ActionResult.SUCCESS);self.apply_world_consequence();self.core.homeostatic_projection=self.physiology.snapshot()
-=======
-        intent=ActionIntent(action,self.world_time,self.event_sequence.next());result=self.world.apply_intent(intent) if getattr(self.world,"is_native",False) else self.world.apply_action(intent.action);self.physiology.apply_action(action.kind,result is ActionResult.SUCCESS);self.core.homeostatic_projection=self.physiology.snapshot()
->>>>>>> ccb06e20407de836efa0483a9017f417bb41a9d9
+        intent=ActionIntent(action,self.world_time,self.event_sequence.next());result=self.world.apply_intent(intent) if self.world.is_native else self.world.apply_action(intent.action);self.physiology.apply_action(action.kind,result is ActionResult.SUCCESS);self.apply_world_consequence();self.core.homeostatic_projection=self.physiology.snapshot()
         self.event_log.emit(tick,f"ACTION {action.kind.name} {result.name}");world_event=None
         if (tick+1)%self.settings.world_tick_interval==0:
             world_event=self.world.world_tick();self.event_log.emit(tick,f"WORLD_EVENT {world_event}")

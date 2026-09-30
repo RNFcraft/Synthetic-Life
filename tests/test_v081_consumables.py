@@ -11,6 +11,7 @@ import sys
 import pytest
 
 from config import Settings
+from consciousness.native_engine import WorldRuntime
 from persistence import load_container
 from simulation import Simulation
 from simulation.continuous import ContinuousRuntime
@@ -41,6 +42,17 @@ def test_world_interaction_consumes_once_with_native_parity():
         assert world.apply_action(Action(ActionType.INTERACT_UP)) is ActionResult.BLOCKED
         assert world.take_consequence() == (0., 0.)
     assert oracle.to_dict() == native.to_dict()
+
+
+def test_native_consumption_with_sparse_body_ids():
+    native=WorldRuntime(8,8,4)
+    native.initialize_multi([(10,1,1,"N",1),(20,3,4,"N",2)],[])
+    native.configure_resource_limit(2)
+    native.spawn_resource((3,3),1,12.,0.,0.,1)
+    assert native.apply(ActionType.INTERACT_UP.value,20)==ActionResult.SUCCESS.value
+    assert native.take_consequence()==(12.,0.)
+    assert native.apply(ActionType.INTERACT_UP.value,20)==ActionResult.BLOCKED.value
+    assert native.take_consequence()==(0.,0.)
 
 
 def test_failed_interaction_and_hydration_consequence():
