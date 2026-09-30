@@ -15,6 +15,7 @@ ACTION_DELTA={"UP":(0,-1),"DOWN":(0,1),"LEFT":(-1,0),"RIGHT":(1,0)}
 
 class NativeWorld:
     """Normal native runtime: Python World physical methods are never called."""
+    is_native = True
     python_physical_calls=0
     def __init__(self,settings:Settings,rng:Random)->None:
         self.settings,self.rng=settings,rng;self.grid=Grid(settings.world_width,settings.world_height);n=max(1,settings.entity_count)

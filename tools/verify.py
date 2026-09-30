@@ -18,12 +18,16 @@ def verification_commands(mode: str, *, build_configured: bool, windows: bool, b
     tests = [python, "-B", "-m", "pytest", "-q"]
     if mode == "fast":
         tests += ["tests/test_main_entrypoint.py", "tests/test_architecture_boundaries.py", "tests/test_verify_tool.py"]
+<<<<<<< HEAD
     smokes = [
         [python, "-B", "-c", "import main"],
         [python, "-B", "main.py", "--headless", "--seconds", "0"],
         tests,
     ]
     commands = [] if mode == "full" else smokes
+=======
+    commands: list[list[str]] = []
+>>>>>>> ccb06e20407de836efa0483a9017f417bb41a9d9
     if not build_configured:
         configure = ["cmake", "-S", "cpp", "-B", build_dir]
         if windows:
@@ -33,9 +37,19 @@ def verification_commands(mode: str, *, build_configured: bool, windows: bool, b
             if observer_source:
                 configure += [f"-DFETCHCONTENT_SOURCE_DIR_SDL3={observer_source}"]
         commands.append(configure)
+<<<<<<< HEAD
     commands.append(["cmake", "--build", build_dir, "--config", "Release"])
     if mode == "full":commands.extend(smokes)
     commands.append(["ctest", "--test-dir", build_dir, "-C", "Release", "--output-on-failure"])
+=======
+    commands += [
+        ["cmake", "--build", "cpp/build", "--config", "Release"],
+        ["ctest", "--test-dir", "cpp/build", "-C", "Release", "--output-on-failure"],
+        [python, "-B", "-c", "import main"],
+        [python, "-B", "main.py", "--headless", "--seconds", "0"],
+        tests,
+    ]
+>>>>>>> ccb06e20407de836efa0483a9017f417bb41a9d9
     return commands
 
 

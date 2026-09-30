@@ -17,6 +17,7 @@ ORIENTATION_DELTA={"NORTH":(0,-1),"EAST":(1,0),"SOUTH":(0,1),"WEST":(-1,0)}
 
 class World:
     """Deterministic physical laboratory. Only SensoryFrame crosses into Core."""
+    is_native = False
     def __init__(self, settings: Settings, rng: Random) -> None:
         self.settings, self.rng = settings, rng
         self.grid = Grid(settings.world_width, settings.world_height)

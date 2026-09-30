@@ -92,6 +92,7 @@ class SyntheticEntityCore(CoreLearningMixin):
         self.language=LanguageLexicon(self)
         self.grounding_context = GroundingContextTracker(settings)
         self.last_language_result = None
+        self.homeostatic_projection = None
     def _propagate(self,seeds:set[int],tick:int)->WaveResult:
         return self.backend.propagate_graph(self.graph,seeds,tick) if self.backend else self.wave.propagate(self.graph,seeds,tick)
 

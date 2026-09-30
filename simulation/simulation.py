@@ -9,7 +9,7 @@ from consciousness.patterns import CognitPattern
 from consciousness.relation import Relation,RelationStatus,RelationType
 from consciousness.state import Goal,TraceEntry
 from telemetry import EventLogger,Telemetry,TickMetrics
-from world import Action,ActionResult,ActionType,NativeWorld,World
+from world import Action,ActionResult,ActionType,World
 from world.entities import EntityBody
 from world.grid import Grid
 from world.objects import WorldObject
@@ -28,7 +28,12 @@ class Simulation:
     являются compatibility contract.
     """
     def __init__(self,seed:int=12345,settings:Settings|None=None,backend:str="python")->None:
-        self.seed=seed;self.settings=settings or Settings();self.rng=Random(seed);self.world=(NativeWorld if backend=="native" else World)(self.settings,self.rng)
+        self.seed=seed;self.settings=settings or Settings();self.rng=Random(seed)
+        if backend=="native":
+            from world.native_world import NativeWorld
+            self.world=NativeWorld(self.settings,self.rng)
+        else:
+            self.world=World(self.settings,self.rng)
         self.core=SyntheticEntityCore(self.settings,backend);self.clock=SimulationClock();self.world_time=WorldTime();self.event_sequence=EventSequence();self.telemetry=Telemetry(self.settings.telemetry_history)
         self.physiology=Physiology(self.settings);self.core.homeostatic_projection=self.physiology.snapshot()
         self.event_log=EventLogger();self.last_action:Action|None=None;self.last_action_result:ActionResult|None=None
@@ -36,7 +41,11 @@ class Simulation:
     def step(self)->TickMetrics:
         tick=self.clock.tick;self.physiology.advance_to(self.world_time.seconds);self.core.homeostatic_projection=self.physiology.snapshot();frame=self.world.perceive(tick);self.core.step(frame);action=self.core.deliberate(frame)
         if not self.physiology.can_begin(action.kind):action=Action(ActionType.IDLE)
+<<<<<<< HEAD
         intent=ActionIntent(action,self.world_time,self.event_sequence.next());result=self.world.apply_intent(intent) if isinstance(self.world,NativeWorld) else self.world.apply_action(intent.action);self.physiology.apply_action(action.kind,result is ActionResult.SUCCESS);self.apply_world_consequence();self.core.homeostatic_projection=self.physiology.snapshot()
+=======
+        intent=ActionIntent(action,self.world_time,self.event_sequence.next());result=self.world.apply_intent(intent) if getattr(self.world,"is_native",False) else self.world.apply_action(intent.action);self.physiology.apply_action(action.kind,result is ActionResult.SUCCESS);self.core.homeostatic_projection=self.physiology.snapshot()
+>>>>>>> ccb06e20407de836efa0483a9017f417bb41a9d9
         self.event_log.emit(tick,f"ACTION {action.kind.name} {result.name}");world_event=None
         if (tick+1)%self.settings.world_tick_interval==0:
             world_event=self.world.world_tick();self.event_log.emit(tick,f"WORLD_EVENT {world_event}")
@@ -70,7 +79,7 @@ class Simulation:
           self.core.state.representation_quality,self.core.state.agency_estimate,sum((body.touch_up,body.touch_down,body.touch_left,body.touch_right)),
           body.holding,body.action_resistance,len(self.core.patterns.last_events)-body_primitives,body_primitives)
         self.telemetry.record(metrics);self.last_action=action;self.last_action_result=result;self.clock.advance();self.world_time=WorldTime(float(self.clock.tick));self.physiology.advance_to(self.world_time.seconds);self.core.homeostatic_projection=self.physiology.snapshot()
-        if isinstance(self.world,NativeWorld):self.world.advance_world_time(self.world_time.seconds)
+        if getattr(self.world,"is_native",False):self.world.advance_world_time(self.world_time.seconds)
         return metrics
 
     def run(self,ticks:int)->None:
@@ -218,7 +227,7 @@ class Simulation:
         sim.world.body_resistance={int(k):v for k,v in world.get("body_resistance",{i:0. for i in sim.world.bodies}).items()};sim.world.body_outcomes={int(k):v for k,v in world.get("body_outcomes",{i:"INITIAL" for i in sim.world.bodies}).items()};sim.world.fairness_wins={int(k):v for k,v in world.get("fairness_wins",{i:0 for i in sim.world.bodies}).items()}
         sim.world.spawn_records=[{**x,"spawn_position":tuple(x["spawn_position"])} for x in world["spawn_records"]];sim.world.action_counts=world["action_counts"]
         for key in ("blind_grabs","blind_interactions"):sim.world.action_counts.setdefault(key,0)
-        if isinstance(sim.world,NativeWorld):sim.world.restore_native(sim.world_time.seconds,sim.event_sequence.value)
+        if getattr(sim.world,"is_native",False):sim.world.restore_native(sim.world_time.seconds,sim.event_sequence.value)
         graph=data["cognitive_graph"];sim.core.graph.nodes.clear()
         if not sim.core.backend:sim.core.graph.adjacency.clear();sim.core.graph.next_id=graph["next_id"]
         for raw in graph["nodes"]:
