@@ -1,5 +1,16 @@
 # Synthetic-Life — Current Status
 
+## Current implementation: v0.8.2
+
+v0.8.0 is the frozen foundation; v0.8.1 consumables and v0.8.2 opt-in
+nonsemantic interoception are implemented. v0.8.3 action valuation is planned.
+Interoception enters ordinary pattern learning, not a direct reward or planner
+score. See [v0.8.2 details](docs/V0_8_2_INTEROCEPTION.md). Snapshot v7 and
+continuous `.seworld` v10 apply when enabled; `.sebrain` stays v6. The
+acceptance numbers below describe the historical v0.8.0 freeze.
+
+Current full verification: 465 pytest passed and CTest Release 2/2 passed.
+
 ## v0.8.0 — HOMEOSTATIC FOUNDATION — FROZEN
 
 Synthetic-Life now has its first causal internal organism state. A separate

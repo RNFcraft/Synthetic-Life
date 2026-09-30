@@ -1,4 +1,4 @@
-from dataclasses import asdict,replace
+from dataclasses import asdict
 from collections import Counter,deque
 from random import Random
 from typing import Any
@@ -18,6 +18,8 @@ from .clock import SimulationClock
 from .snapshot import decode_random_state,encode_random_state,load_snapshot,save_snapshot
 from persistence import load_container,save_container
 from physiology import Physiology
+from physiology.interoception import InteroceptiveTransducer
+from .persisted_settings import restore_settings
 
 
 class Simulation:
@@ -36,10 +38,11 @@ class Simulation:
             self.world=World(self.settings,self.rng)
         self.core=SyntheticEntityCore(self.settings,backend);self.clock=SimulationClock();self.world_time=WorldTime();self.event_sequence=EventSequence();self.telemetry=Telemetry(self.settings.telemetry_history)
         self.physiology=Physiology(self.settings);self.core.homeostatic_projection=self.physiology.snapshot()
+        self.interoception=InteroceptiveTransducer(self.settings) if self.settings.interoception_enabled else None
         self.event_log=EventLogger();self.last_action:Action|None=None;self.last_action_result:ActionResult|None=None
 
     def step(self)->TickMetrics:
-        tick=self.clock.tick;self.physiology.advance_to(self.world_time.seconds);self.core.homeostatic_projection=self.physiology.snapshot();frame=self.world.perceive(tick);self.core.step(frame);action=self.core.deliberate(frame)
+        tick=self.clock.tick;self.physiology.advance_to(self.world_time.seconds);self.core.homeostatic_projection=self.physiology.snapshot();frame=self.world.perceive(tick);internal=self.interoception.sample(self.core.homeostatic_projection) if self.interoception else None;self.core.step(frame,internal=internal);action=self.core.deliberate(frame)
         if not self.physiology.can_begin(action.kind):action=Action(ActionType.IDLE)
         intent=ActionIntent(action,self.world_time,self.event_sequence.next());result=self.world.apply_intent(intent) if self.world.is_native else self.world.apply_action(intent.action);self.physiology.apply_action(action.kind,result is ActionResult.SUCCESS);self.apply_world_consequence();self.core.homeostatic_projection=self.physiology.snapshot()
         self.event_log.emit(tick,f"ACTION {action.kind.name} {result.name}");world_event=None
@@ -90,7 +93,7 @@ class Simulation:
         core=self.core;goal=asdict(core.state.goal) if core.state.goal else None
         world_state=self.world.to_dict()
         resources=self.settings.resource_spawning_enabled or any(o.resource_channel for o in [*self.world.objects,*self.world.held_objects.values()]) or "pending_consequence" in world_state
-        return {"version":6 if resources else 5,"seed":self.seed,"tick":self.clock.tick,"world_time_seconds":self.world_time.seconds,"event_sequence":self.event_sequence.value,"random_state":encode_random_state(self.rng.getstate()),"world":world_state,"physiology":self.physiology.to_dict(),**({"resource_config":{name:getattr(self.settings,name) for name in Settings.RESOURCE_FIELDS}} if self.settings.resource_spawning_enabled else {}),
+        return {"version":7 if self.settings.interoception_enabled else (6 if resources else 5),"seed":self.seed,"tick":self.clock.tick,"world_time_seconds":self.world_time.seconds,"event_sequence":self.event_sequence.value,"random_state":encode_random_state(self.rng.getstate()),"world":world_state,"physiology":self.physiology.to_dict(),**({"resource_config":{name:getattr(self.settings,name) for name in Settings.RESOURCE_FIELDS}} if resources else {}),**({"interoception_config":{name:getattr(self.settings,name) for name in Settings.INTEROCEPTION_FIELDS},"world_config":{name:getattr(self.settings,name) for name in Settings.WORLD_FIELDS}} if self.settings.interoception_enabled else {}),
           "cognitive_graph":core.graph.semantic_to_dict() if semantic_graph and core.backend else core.graph.to_dict(),"entity_state":{"last_action":self.last_action.kind.name if self.last_action else None,
           "last_action_result":self.last_action_result.name if self.last_action_result else None},"core":{"transitions":core.transitions.to_dict(),
           "previous_active":sorted(core.previous_active),"previous_action":core.previous_action.name if core.previous_action else None,
@@ -99,7 +102,7 @@ class Simulation:
           "cognitive_tick":core.cognitive_tick,
           "relational":{"nodes":[[list(k),v] for k,v in core.relational_nodes.items()],"belief_scene":core.belief_scene.to_dict(),"current":{"participant_count":core.current_structure.participant_count,"relations":core.current_structure.relations,"confidence":core.current_structure.confidence,"source_cognits":core.current_structure.source_cognits,"role_edges":core.current_structure.role_edges},"target":None if core.target_structure is None else {"participant_count":core.target_structure.participant_count,"relations":core.target_structure.relations,"confidence":core.target_structure.confidence,"source_cognits":core.target_structure.source_cognits,"role_edges":core.target_structure.role_edges},"target_mismatch":core.target_mismatch,"previous_target_mismatch":core.previous_target_mismatch,"previous_context":sorted(core.previous_context),"previous_body_signature":core.previous_body_signature},"affordances":core.affordances.to_dict(),
           "completed_goal_lifetimes":core.state.completed_goal_lifetimes,"sensory_previous":[[x,y,*values] for (x,y),values in core.patterns.layer.previous.items()],
-          "sensory_previous_body":core.patterns.layer.previous_body,"relation_prediction_enabled":core.relation_prediction_enabled,
+          "sensory_previous_body":core.patterns.layer.previous_body,**({"sensory_previous_internal":core.patterns.layer.previous_internal} if self.settings.interoception_enabled else {}),"relation_prediction_enabled":core.relation_prediction_enabled,
           "available_actions":[a.name for a in core.available_actions],
           "memory":core.memory.to_dict(),"planner":core.planner.to_dict(),
           "previous_observation":sorted(getattr(core,"previous_observation",frozenset())),"predictions_without_composites":core.predictions_without_composites,
@@ -125,7 +128,7 @@ class Simulation:
     def save_world(self,path:str)->None:
         import base64,tempfile,os
         snapshot=self.snapshot_data(semantic_graph=bool(self.core.backend))
-        sections={"META":{"schema":"synthetic-entity-world","version":3 if snapshot["version"]==6 else 2 if self.core.backend else 1,"numeric_backend":self.core.backend_name},"STATE":snapshot}
+        sections={"META":{"schema":"synthetic-entity-world","version":4 if snapshot["version"]==7 else 3 if snapshot["version"]==6 else 2 if self.core.backend else 1,"numeric_backend":self.core.backend_name},"STATE":snapshot}
         if self.core.backend:
             fd,tmp=tempfile.mkstemp(suffix='.native');os.close(fd)
             try:self.core.backend.engine.save_graph(tmp);sections["NBRN"]={"encoding":"base64","data":base64.b64encode(open(tmp,'rb').read()).decode('ascii')}
@@ -175,7 +178,7 @@ class Simulation:
         core["memory"]=data["SPAT"];core["prototypes"]=data["PATT"]["prototypes"];saved=data["PATT"]["composites"];core["composites"].update(saved);core["composites"]["recent"]=[];core["composites"]["candidates"]=[]
         core["perception"]["transforms"]=data["LEAR"]["transforms"];core["relation_diagnostics"]=data["LEAR"]["relation_diagnostics"];core["calibration"]=data["LEAR"]["calibration"];core["affordances"]=data["LEAR"].get("affordances",[]);core["memory"]["current_place_id"]=None;core["relational"]["nodes"]=data["LEAR"].get("relational_nodes",[]);core["relational"]["belief_scene"]=data.get("BELS",{})
         # A transferred brain begins a new episode: no track, goal, trace, plan cursor or active state survives.
-        core.update({"previous_active":[],"previous_action":None,"predictions":{},"goal":None,"goal_stack":[],"target_cognit_ids":[],"sensory_previous":[],"sensory_previous_body":{},"previous_observation":[],"trace":[]});core["perception"].update({"tracks":[],"next_track_id":1,"created_total":0,"closed_total":0,"completed_lifetimes":[]});core["planner"]={}
+        core.update({"previous_active":[],"previous_action":None,"predictions":{},"goal":None,"goal_stack":[],"target_cognit_ids":[],"sensory_previous":[],"sensory_previous_body":{},"sensory_previous_internal":None,"previous_observation":[],"trace":[]});core["perception"].update({"tracks":[],"next_track_id":1,"created_total":0,"closed_total":0,"completed_lifetimes":[]});core["planner"]={}
         fd,tmp=tempfile.mkstemp(suffix=".json");os.close(fd)
         try:
             save_snapshot(blank,tmp);loaded=type(self).load(tmp,self.settings,self.core.backend_name);self.core=loaded.core
@@ -196,19 +199,10 @@ class Simulation:
             except OSError:pass
 
     @classmethod
-    def load(cls,path:str,settings:Settings|None=None,backend:str="python")->"Simulation":
+    def load(cls,path:str,settings:Settings|None=None,backend:str="python",_sensory_config=None)->"Simulation":
         data=load_snapshot(path)
-        if data.get("version") not in (4,5,6):raise ValueError(f"Unsupported snapshot schema v{data.get('version')}; expected v4, v5 or v6")
-        explicit_settings=settings is not None
-        resource_config=data.get("resource_config")
-        if resource_config is not None:
-            if set(resource_config)!=set(Settings.RESOURCE_FIELDS):raise ValueError("invalid resource configuration")
-            if settings is None:settings=replace(Settings(),**resource_config)
-            elif any(getattr(settings,name)!=value for name,value in resource_config.items()):raise ValueError("explicit Settings are incompatible with saved resources")
-        physiology_config=data.get("physiology",{}).get("config")
-        if physiology_config is not None:
-            if not explicit_settings:settings=replace(settings or Settings(),**physiology_config)
-            elif any(getattr(settings,name)!=value for name,value in physiology_config.items()):raise ValueError("explicit Settings are incompatible with saved physiology")
+        if data.get("version") not in (4,5,6,7):raise ValueError(f"Unsupported snapshot schema v{data.get('version')}; expected v4-v7")
+        settings=restore_settings(data,settings,_sensory_config)
         sim=cls(data["seed"],settings,backend);sim.clock.tick=data["tick"];sim.world_time=WorldTime(data.get("world_time_seconds",float(sim.clock.tick)));sim.event_sequence=EventSequence(data.get("event_sequence",sim.clock.tick));sim.rng.setstate(decode_random_state(data["random_state"]));world=data["world"]
         if "physiology" in data:sim.physiology.restore(data["physiology"])
         else:sim.physiology.advance_to(sim.world_time.seconds)
@@ -257,6 +251,8 @@ class Simulation:
         sim.core.next_goal_id=core["next_goal_id"];sim.core.state.goals_generated=core["goals_generated"];sim.core.state.completed_goal_lifetimes=core["completed_goal_lifetimes"]
         sim.core.patterns.layer.previous={(x[0],x[1]):tuple(x[2:]) for x in core["sensory_previous"]}
         sim.core.patterns.layer.previous_body=core.get("sensory_previous_body",{})
+        internal_previous=core.get("sensory_previous_internal")
+        sim.core.patterns.layer.previous_internal=None if internal_previous is None else tuple(internal_previous)
         sim.core.previous_observation=frozenset(tuple(x) for x in core.get("previous_observation",[]));sim.core.predictions_without_composites={int(k):v for k,v in core.get("predictions_without_composites",{}).items()}
         sim.core.relation_prediction_enabled=core.get("relation_prediction_enabled",True);diagnostics=core.get("relation_diagnostics",{})
         sim.core.available_actions=tuple(ActionType[x] for x in core.get("available_actions",[a.name for a in ActionType]))

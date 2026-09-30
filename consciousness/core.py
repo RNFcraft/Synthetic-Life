@@ -131,18 +131,20 @@ class SyntheticEntityCore(CoreLearningMixin):
     def is_relational_goal(self,goal)->bool:
         return bool(goal and self.target_structure is not None and set(goal.target_cognit_ids)&self.target_cognit_ids)
 
-    def step(self,frame:SensoryFrame,world_time:float|None=None)->Action:
-        return self._observe(frame,world_time,True)
+    def step(self,frame:SensoryFrame,world_time:float|None=None,internal=None)->Action:
+        return self._observe(frame,world_time,True,internal=internal)
 
-    def _observe(self,frame:SensoryFrame,world_time:float|None,commit:bool,generation:int=0):
+    def _observe(self,frame:SensoryFrame,world_time:float|None,commit:bool,generation:int=0,internal=None):
         self.world_time_seconds=world_time;self.memory.set_world_time(world_time)
         if world_time is not None and self.backend:self.backend.begin_continuous_time(world_time)
         self.events=[];self.cognitive_tick+=1;cognitive_tick=self.cognitive_tick
         bridge_active=set()
-        observation,protos=self.patterns.observe(frame,self.state.representation_coverage,self.state.predictions)
-        tracks=self.perception.update(self.patterns.last_events,frame.tick,self.previous_action)
-        self.current_structure=observed_structure(observation);self.previous_target_mismatch=self.target_mismatch
-        memory_active=self.memory.observe(observation,tracks,self.graph,frame.tick,self.previous_action)
+        observation,protos=self.patterns.observe(frame,self.state.representation_coverage,self.state.predictions,internal)
+        external_events=tuple(p for p in self.patterns.last_events if not p.channel.startswith("internal_")) if internal is not None else self.patterns.last_events
+        external_observation=frozenset(p.structural_key() for p in external_events) if internal is not None else observation
+        tracks=self.perception.update(external_events,frame.tick,self.previous_action)
+        self.current_structure=observed_structure(external_observation);self.previous_target_mismatch=self.target_mismatch
+        memory_active=self.memory.observe(external_observation,tracks,self.graph,frame.tick,self.previous_action)
         relational_active=set()
         for token in self.current_structure.relations:
             if token not in self.relational_nodes:self.relational_nodes[token]=self.graph.add_cognit(Cognit(self.graph.next_id,kind="RELATIONAL",confidence=self.current_structure.confidence)).id
@@ -218,8 +220,8 @@ class SyntheticEntityCore(CoreLearningMixin):
         self._prune(frame.tick);self.previous_active=current;self.previous_context=frozenset(current);self.previous_body_signature=(frame.body.holding,frame.body.action_resistance>0,frame.body.touch_up,frame.body.touch_down,frame.body.touch_left,frame.body.touch_right);self.previous_action=action.kind
         return action
 
-    def begin_continuous_observation(self,frame:SensoryFrame,world_time:float,generation:int)->None:
-        self._observe(frame,world_time,False,generation)
+    def begin_continuous_observation(self,frame:SensoryFrame,world_time:float,generation:int,internal=None)->None:
+        self._observe(frame,world_time,False,generation,internal)
 
     def process_language(self,frame):
         context=self.grounding_context.eligible(frame.issued_at_world_time)

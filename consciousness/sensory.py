@@ -8,6 +8,7 @@ class SensoryEventLayer:
     def __init__(self) -> None:
         self.previous: dict[tuple[int,int],tuple[bool,int,bool,int]] = {}
         self.previous_body: dict[str,int] = {}
+        self.previous_internal: tuple[int,int,int]|None = None
 
     def decompose(self, frame: SensoryFrame) -> tuple[SensoryPrimitive,...]:
         events=[]
@@ -31,6 +32,14 @@ class SensoryEventLayer:
         self.previous_body=body_values
         return tuple(events)
 
+    def decompose_internal(self, frame) -> tuple[SensoryPrimitive,...]:
+        previous = self.previous_internal
+        events = tuple(SensoryPrimitive(0,0,f"internal_{index}",value,value if previous is None else previous[index],
+            SensoryEventKind.STATE_CHANGED if previous is not None and value != previous[index] else SensoryEventKind.OCCUPIED_PRESENT)
+            for index,value in enumerate(frame.levels))
+        self.previous_internal = frame.levels
+        return events
+
 
 class SensoryPatternTracker:
     """Indexes small local event structures; whole-frame signatures are debug-only."""
@@ -39,8 +48,10 @@ class SensoryPatternTracker:
         self.legacy_last_frame: object|None=None
         self.last_events:tuple[SensoryPrimitive,...]=()
 
-    def observe(self,frame:SensoryFrame,known_coverage:float,predicted:dict[int,float])->tuple[frozenset[PrimitiveKey],list[tuple[ProtoPattern,float]]]:
-        primitives=self.layer.decompose(frame);self.last_events=primitives;observation=frozenset(p.structural_key() for p in primitives)
+    def observe(self,frame:SensoryFrame,known_coverage:float,predicted:dict[int,float],internal=None)->tuple[frozenset[PrimitiveKey],list[tuple[ProtoPattern,float]]]:
+        primitives=self.layer.decompose(frame)
+        if internal is not None:primitives+=self.layer.decompose_internal(internal)
+        self.last_events=primitives;observation=frozenset(p.structural_key() for p in primitives)
         candidates:set[tuple[tuple[PrimitiveKey,...],bool]]={((key,),False) for key in observation}
         by_anchor:dict[tuple[int,int],list[PrimitiveKey]]=defaultdict(list)
         for key in observation: by_anchor[(key[0],key[1])].append(key)

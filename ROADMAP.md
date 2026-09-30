@@ -1379,7 +1379,10 @@ Spawn должен иметь causal timestamp/sequence и участвоват�
 
 ## v0.8.2 — Non-Semantic Interoception
 
-**Status: PLANNED**
+**Status: IMPLEMENTED (opt-in ordinary pattern path; neural micro-path deferred).**
+
+The implementation contract is [docs/V0_8_2_INTEROCEPTION.md](docs/V0_8_2_INTEROCEPTION.md).
+The conceptual neural-substrate path below remains a future extension.
 
 Цель — дать организму возможность чувствовать собственную physiology без загрузки готового значения этих ощущений.
 

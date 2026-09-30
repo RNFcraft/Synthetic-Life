@@ -1,5 +1,9 @@
 # Synthetic-Life
 
+Current implementation: v0.8.2 opt-in nonsemantic interoception. See
+[the v0.8.2 contract](docs/V0_8_2_INTEROCEPTION.md). v0.8.0 remains the frozen
+foundation, v0.8.1 consumables are implemented, and v0.8.3 valuation is planned.
+
 Synthetic-Life — экспериментальная embodied cognitive architecture на основе
 динамического графа Cognits (`κ`) и Relations (`ρ`). Проект не является
 LLM/Transformer-обёрткой и не использует frozen policy network как основной

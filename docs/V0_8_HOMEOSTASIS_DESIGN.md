@@ -88,7 +88,7 @@ reward backpropagation.
 
 - v0.8.1: opt-in physical consumables and deterministic external spawn
   (implemented; see [v0.8.1](V0_8_1_CONSUMABLES.md));
-- v0.8.2: bounded non-semantic interoception;
+- v0.8.2: bounded non-semantic interoception (implemented; see [v0.8.2](V0_8_2_INTEROCEPTION.md));
 - v0.8.3: trajectory-level homeostatic planner valuation;
 - v0.8.4: learned homeostatic consequences and ablations;
 - v0.8.5: resource constraints and curriculum;

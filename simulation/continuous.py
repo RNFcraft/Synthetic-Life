@@ -1,5 +1,5 @@
 """Deterministic event-driven v0.5.3 runtime foundation."""
-from dataclasses import asdict,replace
+from dataclasses import asdict
 import base64,math,os,tempfile
 from config import Settings
 from consciousness.native_engine import EventScheduler,RuntimeEvent,RuntimeEventType
@@ -30,6 +30,7 @@ class ContinuousRuntime:
         self.scheduler=EventScheduler()
         self.observation_ordinal=0
         self.last_frame=None
+        self.last_internal=None
         self.actions_completed=0
         self.cognition_wakes=0
         self.cognition_continuations=0
@@ -66,7 +67,8 @@ class ContinuousRuntime:
             self._legacy_monolithic_frontier=False;self.cognition_generation+=1;generation=self.cognition_generation;self.last_frame=self.simulation.world.perceive(self.observation_ordinal);self.observation_ordinal+=1
             if self.neural_sensory is not None:
                 _,neural_frontier=self.neural_sensory.transduce(self.last_frame,now);self.advance_neural_to(neural_frontier,True)
-            self.simulation.core.begin_continuous_observation(self.last_frame,now,generation)
+            self.last_internal=self.simulation.interoception.sample(self.simulation.core.homeostatic_projection) if self.simulation.interoception else None
+            self.simulation.core.begin_continuous_observation(self.last_frame,now,generation,self.last_internal)
             if self.neural_sensory is not None:self.scheduler.schedule(math.nextafter(neural_frontier,math.inf),RuntimeEventType.COGNITION_WAKE,generation)
             else:self.scheduler.schedule(now,RuntimeEventType.COGNITION_WAKE,generation)
         elif kind==RuntimeEventType.COGNITION_WAKE:
@@ -250,7 +252,7 @@ class ContinuousRuntime:
         f=self.last_frame;c=self.simulation.core;w=c.last_wave;events=c.patterns.last_events;s=c.state;names=("prediction_error","prediction_error_valid","representation_coverage","representation_error","continuity_error","overall_surprise","brier_score","ece","novelty","uncertainty","controllability","agency_estimate","pattern_selectivity","representation_quality","internal_tension","loop_score","tie_count","tie_resolution_method","goals_retired","goals_suspended")
         cognition=c.continuous_frontier
         cognition_data=None if cognition is None else {"generation":cognition.generation,"world_time":cognition.world_time,"current":sorted(cognition.current),"track_ids":list(cognition.track_ids),"phase":cognition.phase,"action":None if cognition.action is None else cognition.action.name,"committed":cognition.committed,"session":None if cognition.session is None else c.planner.session_to_dict(cognition.session)}
-        return {"frame":None if f is None else {"tick":f.tick,"radius":f.radius,"cells":[[x.relative_x,x.relative_y,x.occupied,x.state_channel,x.boundary,x.self_present,x.appearance_channel] for x in f.cells],"body":[f.body.touch_up,f.body.touch_down,f.body.touch_left,f.body.touch_right,f.body.holding,f.body.action_resistance]},"wave":[sorted(w.active_ids),w.energy,w.steps,w.transmitted_energy],"primitives":[[p.relative_x,p.relative_y,p.channel,p.value,p.previous_value,p.change.name] for p in events],"state":{name:getattr(s,name) for name in names},"tie_set":[x.name for x in s.tie_set],"action_scores":[[a.name,v] for a,v in s.action_scores.items()],"futures":[[a.name,asdict(v)] for a,v in s.futures.items()],"cognition":cognition_data}
+        return {"frame":None if f is None else {"tick":f.tick,"radius":f.radius,"cells":[[x.relative_x,x.relative_y,x.occupied,x.state_channel,x.boundary,x.self_present,x.appearance_channel] for x in f.cells],"body":[f.body.touch_up,f.body.touch_down,f.body.touch_left,f.body.touch_right,f.body.holding,f.body.action_resistance]},**({"internal":[self.last_internal.world_time,list(self.last_internal.levels)]} if self.last_internal is not None else {}),"wave":[sorted(w.active_ids),w.energy,w.steps,w.transmitted_energy],"primitives":[[p.relative_x,p.relative_y,p.channel,p.value,p.previous_value,p.change.name] for p in events],"state":{name:getattr(s,name) for name in names},"tie_set":[x.name for x in s.tie_set],"action_scores":[[a.name,v] for a,v in s.action_scores.items()],"futures":[[a.name,asdict(v)] for a,v in s.futures.items()],"cognition":cognition_data}
     def save_world(self,path):
         self.peak_scheduler_queue=max(self.peak_scheduler_queue,self.scheduler.peak_size)
         native_time,native_sequence=self.simulation.world.native.time_state();self.simulation.world_time=WorldTime(native_time);self.simulation.event_sequence=EventSequence(native_sequence)
@@ -260,16 +262,13 @@ class ContinuousRuntime:
         finally:os.unlink(tmp)
         engine=self.simulation.core.backend.engine;history=engine.transition_history();homeostasis=engine.homeostasis_runtime_state();elapsed=engine.continuous_time_state();elapsed_relations=engine.continuous_relation_time_state();dirty=engine.dirty_relation_state()
         inbox=[[i,f.issued_at_world_time,f.surface if isinstance(f,LanguageFrame) else list(f.tokens),None if isinstance(f,LanguageFrame) else self._structure_dict(f.request_target)] for i,f in sorted(self.language_inbox.items())]
-        save_container(path,"world",{"META":{"schema":"synthetic-entity-continuous-world","version":9 if state["version"]==6 else 8},"STATE":state,"CONT":{"scheduler":self.scheduler_state(),"observation_ordinal":self.observation_ordinal,"actions_completed":self.actions_completed,"cognition_wakes":self.cognition_wakes,"cognition_continuations":self.cognition_continuations,"cognition_generation":self.cognition_generation,"maintenance_ordinal":self.maintenance_ordinal,"scheduler_events_processed":self.scheduler_events_processed,"peak_scheduler_queue":self.peak_scheduler_queue,"legacy_monolithic_frontier":self._legacy_monolithic_frontier,"transition_history":history,"homeostasis":homeostasis,"elapsed_cognits":elapsed,"elapsed_relations":elapsed_relations,"dirty_relations":dirty,"frontier":self._frontier_state(),"language":{"lexicon":self.simulation.core.language.to_dict(),"grounding":self.simulation.core.grounding_context.durable_dict(),"context":self.simulation.core.grounding_context.episode_dict(),"next_message_id":self.next_language_message_id,"inbox":inbox,"active_frontier":self._language_frontier_state(),"last_utterance_result":self._utterance_result_state(),"utterances_processed":self.language_utterances_processed,"tokens_processed":self.language_tokens_processed}},"NBRN":{"encoding":"base64","data":native}},{"NBRN"})
+        save_container(path,"world",{"META":{"schema":"synthetic-entity-continuous-world","version":10 if state["version"]==7 else (9 if state["version"]==6 else 8)},"STATE":state,"CONT":{"scheduler":self.scheduler_state(),"observation_ordinal":self.observation_ordinal,"actions_completed":self.actions_completed,"cognition_wakes":self.cognition_wakes,"cognition_continuations":self.cognition_continuations,"cognition_generation":self.cognition_generation,"maintenance_ordinal":self.maintenance_ordinal,"scheduler_events_processed":self.scheduler_events_processed,"peak_scheduler_queue":self.peak_scheduler_queue,"legacy_monolithic_frontier":self._legacy_monolithic_frontier,"transition_history":history,"homeostasis":homeostasis,"elapsed_cognits":elapsed,"elapsed_relations":elapsed_relations,"dirty_relations":dirty,"frontier":self._frontier_state(),"language":{"lexicon":self.simulation.core.language.to_dict(),"grounding":self.simulation.core.grounding_context.durable_dict(),"context":self.simulation.core.grounding_context.episode_dict(),"next_message_id":self.next_language_message_id,"inbox":inbox,"active_frontier":self._language_frontier_state(),"last_utterance_result":self._utterance_result_state(),"utterances_processed":self.language_utterances_processed,"tokens_processed":self.language_tokens_processed}},"NBRN":{"encoding":"base64","data":native}},{"NBRN"})
     @classmethod
     def load_world(cls,path,settings=None):
         data=load_container(path,"world",{"META","STATE","CONT","NBRN"});saved_sensory=data["CONT"]["scheduler"].get("neural_sensory_config")
-        if saved_sensory is not None:
-            if settings is None:settings=replace(Settings(),**saved_sensory)
-            elif any(getattr(settings,name)!=value for name,value in saved_sensory.items()):raise ValueError("explicit Settings are incompatible with saved sensory-neural topology")
-        elif settings is not None and settings.sensory_neural_enabled:raise ValueError("legacy .seworld has no enabled sensory-neural configuration")
+        if saved_sensory is None and settings is not None and settings.sensory_neural_enabled:raise ValueError("legacy .seworld has no enabled sensory-neural configuration")
         fd,tmp=tempfile.mkstemp(suffix=".json");os.close(fd)
-        try:save_snapshot(data["STATE"],tmp);sim=Simulation.load(tmp,settings,"native")
+        try:save_snapshot(data["STATE"],tmp);sim=Simulation.load(tmp,settings,"native",_sensory_config=saved_sensory)
         finally:os.unlink(tmp)
         fd,tmp=tempfile.mkstemp(suffix=".native");os.close(fd)
         try:
@@ -293,7 +292,7 @@ class ContinuousRuntime:
             if first is not None and not any(e.type==RuntimeEventType.WORLD_SPAWN for e in events):obj.scheduler.schedule(max(obj.scheduler.now,float(first)),RuntimeEventType.WORLD_SPAWN)
             if not any(e.type==RuntimeEventType.MAINTENANCE for e in events):obj.scheduler.schedule(obj.scheduler.now+sim.settings.continuous_maintenance_interval_seconds,RuntimeEventType.MAINTENANCE)
         frontier=cont["frontier"];raw=frontier["frame"]
-        obj.last_frame=None if raw is None else SensoryFrame(raw["tick"],raw["radius"],tuple(SensoryCell(*x) for x in raw["cells"]),BodySense(*raw["body"]));ids,energy,steps,transmitted=frontier["wave"];sim.core.last_wave=WaveResult(frozenset(ids),energy,steps,transmitted);sim.core.patterns.last_events=tuple(SensoryPrimitive(x,y,ch,value,previous,SensoryEventKind[kind]) for x,y,ch,value,previous,kind in frontier["primitives"])
+        obj.last_frame=None if raw is None else SensoryFrame(raw["tick"],raw["radius"],tuple(SensoryCell(*x) for x in raw["cells"]),BodySense(*raw["body"]));from physiology.interoception import InteroceptiveFrame;internal=frontier.get("internal");obj.last_internal=None if internal is None else InteroceptiveFrame(internal[0],tuple(internal[1]));ids,energy,steps,transmitted=frontier["wave"];sim.core.last_wave=WaveResult(frozenset(ids),energy,steps,transmitted);sim.core.patterns.last_events=tuple(SensoryPrimitive(x,y,ch,value,previous,SensoryEventKind[kind]) for x,y,ch,value,previous,kind in frontier["primitives"])
         for name,value in frontier["state"].items():setattr(sim.core.state,name,value)
         sim.core.state.tie_set=tuple(ActionType[name] for name in frontier["tie_set"]);sim.core.state.action_scores={ActionType[name]:value for name,value in frontier["action_scores"]};sim.core.state.futures={ActionType[name]:FutureEstimate(**{**value,"probabilities":{int(k):v for k,v in value["probabilities"].items()}}) for name,value in frontier["futures"]}
         cognition=frontier.get("cognition")

@@ -1,6 +1,12 @@
 # Synthetic-Life Architecture
 
-**Current architecture baseline: v0.8.0 HOMEOSTATIC FOUNDATION.**
+**Current architecture: v0.8.2 opt-in interoception on the frozen v0.8.0 foundation.**
+
+The physiology owner feeds a pure numeric transducer at the external frame's
+WorldTime. Three bounded levels enter ordinary pattern learning; spatial
+perception sees only external primitives. No physiological need score enters
+choice. Neural micro-receptors remain external-only. See
+[the interoception contract](docs/V0_8_2_INTEROCEPTION.md).
 
 Этот документ описывает фактическую текущую архитектуру. Исторический контракт
 рефакторинга v0.7 находится в

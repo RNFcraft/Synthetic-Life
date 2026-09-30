@@ -1,6 +1,12 @@
 # Testing and Repository Verification
 
-**Current verified baseline: v0.8.1 opt-in physical consumables.**
+**Current implementation: v0.8.2 opt-in interoception; historical audit below.**
+
+The focused tests are `tests/test_v082_interoception.py`. Full verification is
+`python tools/verify.py --full`; its outcome is separate from the historical
+v0.7.5 audit count below.
+
+Latest full verification: 465 pytest passed; CTest Release 2/2 passed.
 
 Полный v0.7.5 audit: `422` pytest PASS, CTest Release `2/2` PASS, все `17`
 version groups v0.2–v0.6.6 PASS. Подробности:
