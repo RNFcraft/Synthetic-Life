@@ -2,11 +2,47 @@
 #include <algorithm>
 #include <cmath>
 #include <map>
+#include <unordered_set>
 #include <stdexcept>
 
 namespace se {
-World::World(const World& o):width_(o.width_),height_(o.height_),radius_(o.radius_),bodies_(o.bodies_),objects_(o.objects_),held_(o.held_),resistance_(o.resistance_),conflict_cursor_(o.conflict_cursor_),next_object_id_(o.next_object_id_),max_objects_(o.max_objects_),conflict_count_(o.conflict_count_),world_tick_count_(o.world_tick_count_),fairness_wins_(o.fairness_wins_),next_spawn_tick_(o.next_spawn_tick_),world_time_(o.world_time_),event_sequence_(o.event_sequence_),snapshot_channel_(std::make_shared<RenderSnapshotChannel>()){publish_snapshot();}
-World& World::operator=(const World& o){if(this==&o)return *this;width_=o.width_;height_=o.height_;radius_=o.radius_;bodies_=o.bodies_;objects_=o.objects_;held_=o.held_;resistance_=o.resistance_;conflict_cursor_=o.conflict_cursor_;next_object_id_=o.next_object_id_;max_objects_=o.max_objects_;conflict_count_=o.conflict_count_;world_tick_count_=o.world_tick_count_;fairness_wins_=o.fairness_wins_;next_spawn_tick_=o.next_spawn_tick_;world_time_=o.world_time_;event_sequence_=o.event_sequence_;snapshot_channel_=std::make_shared<RenderSnapshotChannel>();publish_snapshot();return *this;}
+World::World(const World& o):width_(o.width_),height_(o.height_),radius_(o.radius_),bodies_(o.bodies_),objects_(o.objects_),held_(o.held_),resistance_(o.resistance_),conflict_cursor_(o.conflict_cursor_),next_object_id_(o.next_object_id_),max_objects_(o.max_objects_),max_resource_objects_(o.max_resource_objects_),conflict_count_(o.conflict_count_),world_tick_count_(o.world_tick_count_),fairness_wins_(o.fairness_wins_),next_spawn_tick_(o.next_spawn_tick_),world_time_(o.world_time_),event_sequence_(o.event_sequence_),pending_nutrients_(o.pending_nutrients_),pending_hydration_(o.pending_hydration_),snapshot_channel_(std::make_shared<RenderSnapshotChannel>()){publish_snapshot();}
+World& World::operator=(const World& o){if(this==&o)return *this;width_=o.width_;height_=o.height_;radius_=o.radius_;bodies_=o.bodies_;objects_=o.objects_;held_=o.held_;resistance_=o.resistance_;conflict_cursor_=o.conflict_cursor_;next_object_id_=o.next_object_id_;max_objects_=o.max_objects_;max_resource_objects_=o.max_resource_objects_;conflict_count_=o.conflict_count_;world_tick_count_=o.world_tick_count_;fairness_wins_=o.fairness_wins_;next_spawn_tick_=o.next_spawn_tick_;world_time_=o.world_time_;event_sequence_=o.event_sequence_;pending_nutrients_=o.pending_nutrients_;pending_hydration_=o.pending_hydration_;snapshot_channel_=std::make_shared<RenderSnapshotChannel>();publish_snapshot();return *this;}
+
+namespace {
+void validate_resource(int channel,double nutrients,double hydration){
+ if(channel!=1&&channel!=2)throw std::invalid_argument("invalid resource channel");
+ if(!std::isfinite(nutrients)||!std::isfinite(hydration)||nutrients<0||hydration<0||nutrients>100||hydration>100||(nutrients==0&&hydration==0))throw std::invalid_argument("invalid resource payload");
+}
+}
+std::uint32_t World::spawn_resource(std::pair<int,int> position,int channel,double nutrients,double hydration,double time,std::uint64_t event){
+ validate_resource(channel,nutrients,hydration);
+ if(resource_state().size()>=max_resource_objects_)throw std::invalid_argument("resource capacity reached");
+ if(!std::isfinite(time)||time<world_time_||event!=event_sequence_+1)throw std::invalid_argument("non-monotonic resource spawn");
+ auto[x,y]=position;if(!contains(x,y)||at(x,y)||occupied_by_body(x,y,UINT32_MAX))throw std::invalid_argument("invalid resource position");
+ world_time_=time;event_sequence_=event;auto id=next_object_id_++;objects_.push_back({id,x,y,channel,channel,nutrients,hydration});publish_snapshot();return id;
+}
+void World::configure_resource_limit(std::uint32_t limit){if(limit>1024)throw std::invalid_argument("invalid resource limit");max_resource_objects_=limit;}
+void World::restore_resources(const std::vector<std::tuple<std::uint32_t,int,double,double>>& resources,double pending_nutrients,double pending_hydration){
+ if(!std::isfinite(pending_nutrients)||!std::isfinite(pending_hydration)||pending_nutrients<0||pending_hydration<0)throw std::invalid_argument("invalid pending consequence");
+ if(resources.size()>max_resource_objects_)throw std::invalid_argument("resource capacity exceeded");
+ std::unordered_set<std::uint32_t>seen;
+ for(auto[id,channel,nutrients,hydration]:resources){
+  validate_resource(channel,nutrients,hydration);if(!seen.insert(id).second)throw std::invalid_argument("duplicate resource id");
+  Object* target=nullptr;for(auto&o:objects_)if(o.id==id)target=&o;
+  for(auto&held:held_)if(held&&held->id==id)target=&*held;
+  if(!target||target->state!=channel)throw std::invalid_argument("invalid resource object state");
+  target->resource_channel=channel;target->nutrients=nutrients;target->hydration=hydration;
+ }
+ pending_nutrients_=pending_nutrients;pending_hydration_=pending_hydration;publish_snapshot();
+}
+std::vector<std::tuple<std::uint32_t,int,double,double>> World::resource_state()const{
+ std::vector<std::tuple<std::uint32_t,int,double,double>>rows;
+ for(auto const&o:objects_)if(o.resource_channel)rows.emplace_back(o.id,o.resource_channel,o.nutrients,o.hydration);
+ for(auto const&held:held_)if(held&&held->resource_channel)rows.emplace_back(held->id,held->resource_channel,held->nutrients,held->hydration);
+ std::sort(rows.begin(),rows.end());return rows;
+}
+std::pair<double,double> World::take_consequence()noexcept{auto result=std::pair{pending_nutrients_,pending_hydration_};pending_nutrients_=pending_hydration_=0.;return result;}
 namespace {
 std::pair<int,int> direction(ActionType a,char orientation){switch(a){case ActionType::MoveUp:case ActionType::GrabUp:case ActionType::InteractUp:return{0,-1};case ActionType::MoveDown:case ActionType::GrabDown:case ActionType::InteractDown:return{0,1};case ActionType::MoveLeft:case ActionType::GrabLeft:case ActionType::InteractLeft:return{-1,0};case ActionType::MoveRight:case ActionType::GrabRight:case ActionType::InteractRight:return{1,0};default:if(orientation=='N')return{0,-1};if(orientation=='S')return{0,1};if(orientation=='W')return{-1,0};return{1,0};}}
 bool movement(ActionType a){return a>=ActionType::MoveUp&&a<=ActionType::MoveRight;}bool grab(ActionType a){return a>=ActionType::GrabUp&&a<=ActionType::GrabRight;}bool interact(ActionType a){return(a>=ActionType::InteractUp&&a<=ActionType::InteractRight)||a==ActionType::Interact;}
@@ -17,13 +53,45 @@ ActionResult World::apply_intent(ActionType action,double issued,std::uint64_t e
 Body*World::body_by_id(std::uint32_t id){for(auto&b:bodies_)if(b.id==id)return&b;return nullptr;}const Body*World::body_by_id(std::uint32_t id)const{for(auto&b:bodies_)if(b.id==id)return&b;return nullptr;}
 bool World::occupied_by_body(int x,int y,std::uint32_t except)const{for(auto&b:bodies_)if(b.id!=except&&b.x==x&&b.y==y)return true;return false;}
 void World::initialize(Body body,std::vector<std::pair<int,int>> positions){body.id=0;std::vector<Object>objects;std::uint32_t id=1;for(auto[x,y]:positions)objects.push_back({id++,x,y,0});initialize_multi({body},std::move(objects));}
-void World::initialize_multi(std::vector<Body>bodies,std::vector<Object>objects){if(bodies.empty())throw std::invalid_argument("body required");for(auto&b:bodies)if(!contains(b.x,b.y))throw std::invalid_argument("invalid body");for(std::size_t i=0;i<bodies.size();++i)for(std::size_t j=i+1;j<bodies.size();++j)if(bodies[i].x==bodies[j].x&&bodies[i].y==bodies[j].y)throw std::invalid_argument("overlapping bodies");bodies_=std::move(bodies);objects_.clear();for(auto&o:objects){if(!contains(o.x,o.y)||occupied_by_body(o.x,o.y,UINT32_MAX)||at(o.x,o.y))throw std::invalid_argument("invalid object");objects_.push_back(o);}held_.assign(bodies_.size(),std::nullopt);resistance_.assign(bodies_.size(),0.);fairness_wins_.assign(bodies_.size(),0);for(auto&b:bodies_)b.held_object_id=0;conflict_cursor_=0;conflict_count_=0;world_tick_count_=0;next_object_id_=objects_.empty()?1:std::max_element(objects_.begin(),objects_.end(),[](auto&a,auto&b){return a.id<b.id;})->id+1;publish_snapshot();}
+void World::initialize_multi(std::vector<Body>bodies,std::vector<Object>objects){if(bodies.empty())throw std::invalid_argument("body required");for(auto&b:bodies)if(!contains(b.x,b.y))throw std::invalid_argument("invalid body");for(std::size_t i=0;i<bodies.size();++i)for(std::size_t j=i+1;j<bodies.size();++j)if(bodies[i].x==bodies[j].x&&bodies[i].y==bodies[j].y)throw std::invalid_argument("overlapping bodies");bodies_=std::move(bodies);objects_.clear();for(auto&o:objects){if(!contains(o.x,o.y)||occupied_by_body(o.x,o.y,UINT32_MAX)||at(o.x,o.y))throw std::invalid_argument("invalid object");objects_.push_back(o);}held_.assign(bodies_.size(),std::nullopt);resistance_.assign(bodies_.size(),0.);fairness_wins_.assign(bodies_.size(),0);for(auto&b:bodies_)b.held_object_id=0;conflict_cursor_=0;conflict_count_=0;world_tick_count_=0;pending_nutrients_=pending_hydration_=0.;next_object_id_=objects_.empty()?1:std::max_element(objects_.begin(),objects_.end(),[](auto&a,auto&b){return a.id<b.id;})->id+1;publish_snapshot();}
 void World::restore(std::vector<Body>bodies,std::vector<Object>objects,std::vector<std::pair<std::uint32_t,Object>>held,std::vector<double>resistance,std::uint64_t tick,std::optional<std::uint64_t>next,std::uint32_t next_id,std::uint32_t cursor,std::uint64_t conflicts,std::vector<std::uint64_t>wins,double time,std::uint64_t sequence,std::uint32_t max_objects){initialize_multi(std::move(bodies),std::move(objects));if(resistance.size()!=bodies_.size()||wins.size()!=bodies_.size())throw std::invalid_argument("per-body state size");resistance_=std::move(resistance);fairness_wins_=std::move(wins);for(auto&entry:held){auto id=entry.first;if(id>=held_.size()||!body_by_id(id))throw std::invalid_argument("held body");held_[id]=entry.second;body_by_id(id)->held_object_id=entry.second.id;}world_tick_count_=tick;next_spawn_tick_=next;next_object_id_=next_id;conflict_cursor_=cursor;conflict_count_=conflicts;world_time_=time;event_sequence_=sequence;max_objects_=max_objects;publish_snapshot();}
 void World::set_body_state(std::uint32_t id,int x,int y,char o){auto*b=body_by_id(id);if(!b||!contains(x,y))throw std::invalid_argument("invalid body state");b->x=x;b->y=y;b->orientation=o;publish_snapshot();}
 Object*World::at(int x,int y){for(auto&o:objects_)if(o.x==x&&o.y==y)return&o;return nullptr;}const Object*World::at(int x,int y)const{for(auto&o:objects_)if(o.x==x&&o.y==y)return&o;return nullptr;}
 SensoryFrame World::perceive(std::uint64_t tick,std::uint32_t id)const{auto*b=body_by_id(id);if(!b)throw std::out_of_range("body");SensoryFrame f;f.world_tick=tick;int fx=0,fy=-1;if(b->orientation=='E')fx=1,fy=0;else if(b->orientation=='S')fx=0,fy=1;else if(b->orientation=='W')fx=-1,fy=0;for(int dy=-radius_;dy<=radius_;++dy)for(int dx=-radius_;dx<=radius_;++dx){if(dx||dy){int forward=dx*fx+dy*fy,lateral=std::abs(dx*fy-dy*fx);if(forward<=0||forward>radius_||std::max(std::abs(dx),std::abs(dy))>radius_||lateral>1.75*forward)continue;}int x=b->x+dx,y=b->y+dy;auto o=contains(x,y)?at(x,y):nullptr;auto other=std::find_if(bodies_.begin(),bodies_.end(),[&](auto&q){return q.id!=id&&q.x==x&&q.y==y;});f.cells.push_back({(short)dx,(short)dy,o!=nullptr||other!=bodies_.end(),!contains(x,y),dx==0&&dy==0,(short)(o?o->state:0),(short)(other==bodies_.end()?0:other->appearance)});}auto touch=[&](int dx,int dy){int x=b->x+dx,y=b->y+dy;return!contains(x,y)||at(x,y)||occupied_by_body(x,y,id);};f.body={touch(0,-1),touch(0,1),touch(-1,0),touch(1,0),b->held_object_id!=0,resistance_.at(id)};return f;}
 ActionResult World::apply(ActionType a,std::uint32_t id){auto result=apply_internal(a,id);publish_snapshot();return result;}
-ActionResult World::apply_internal(ActionType a,std::uint32_t id){auto*b=body_by_id(id);if(!b)throw std::out_of_range("body");resistance_[id]=0;auto blocked=[&]{resistance_[id]=1;return ActionResult::Blocked;};if(a==ActionType::Idle)return ActionResult::Success;if(a==ActionType::TurnLeft||a==ActionType::TurnRight){constexpr char dirs[]={'N','E','S','W'};int i=0;while(dirs[i]!=b->orientation)++i;b->orientation=dirs[(i+(a==ActionType::TurnLeft?3:1))%4];return ActionResult::Success;}auto[dx,dy]=direction(a,b->orientation);if(movement(a)){b->orientation=orientation(dx,dy);int x=b->x+dx,y=b->y+dy;if(!contains(x,y)||occupied_by_body(x,y,id))return blocked();if(auto*o=at(x,y)){int bx=x+dx,by=y+dy;if(b->held_object_id||!contains(bx,by)||at(bx,by)||occupied_by_body(bx,by,id))return blocked();o->x=bx;o->y=by;}b->x=x;b->y=y;return ActionResult::Success;}if(grab(a)){b->orientation=orientation(dx,dy);if(b->held_object_id)return blocked();int x=b->x+dx,y=b->y+dy;for(auto it=objects_.begin();it!=objects_.end();++it)if(it->x==x&&it->y==y){held_[id]=*it;b->held_object_id=it->id;objects_.erase(it);return ActionResult::Success;}return blocked();}if(a==ActionType::Release){if(!held_[id])return blocked();auto[rx,ry]=direction(a,b->orientation);int x=b->x+rx,y=b->y+ry;if(!contains(x,y)||at(x,y)||occupied_by_body(x,y,id))return blocked();held_[id]->x=x;held_[id]->y=y;objects_.push_back(*held_[id]);held_[id].reset();b->held_object_id=0;return ActionResult::Success;}if(interact(a)){if(a!=ActionType::Interact)b->orientation=orientation(dx,dy);if(auto*o=at(b->x+dx,b->y+dy)){o->state=1-o->state;return ActionResult::Success;}return blocked();}resistance_[id]=1;return ActionResult::Invalid;}
+ActionResult World::apply_internal(ActionType a,std::uint32_t id){
+ auto*b=body_by_id(id);if(!b)throw std::out_of_range("body");resistance_[id]=0;
+ auto blocked=[&]{resistance_[id]=1;return ActionResult::Blocked;};
+ if(a==ActionType::Idle)return ActionResult::Success;
+ if(a==ActionType::TurnLeft||a==ActionType::TurnRight){constexpr char dirs[]={'N','E','S','W'};int i=0;while(dirs[i]!=b->orientation)++i;b->orientation=dirs[(i+(a==ActionType::TurnLeft?3:1))%4];return ActionResult::Success;}
+ auto[dx,dy]=direction(a,b->orientation);
+ if(movement(a)){
+  b->orientation=orientation(dx,dy);int x=b->x+dx,y=b->y+dy;
+  if(!contains(x,y)||occupied_by_body(x,y,id))return blocked();
+  if(auto*o=at(x,y)){int bx=x+dx,by=y+dy;if(b->held_object_id||!contains(bx,by)||at(bx,by)||occupied_by_body(bx,by,id))return blocked();o->x=bx;o->y=by;}
+  b->x=x;b->y=y;return ActionResult::Success;
+ }
+ if(grab(a)){
+  b->orientation=orientation(dx,dy);if(b->held_object_id)return blocked();
+  int x=b->x+dx,y=b->y+dy;for(auto it=objects_.begin();it!=objects_.end();++it)if(it->x==x&&it->y==y){held_[id]=*it;b->held_object_id=it->id;objects_.erase(it);return ActionResult::Success;}
+  return blocked();
+ }
+ if(a==ActionType::Release){
+  if(!held_[id])return blocked();auto[rx,ry]=direction(a,b->orientation);int x=b->x+rx,y=b->y+ry;
+  if(!contains(x,y)||at(x,y)||occupied_by_body(x,y,id))return blocked();
+  held_[id]->x=x;held_[id]->y=y;objects_.push_back(*held_[id]);held_[id].reset();b->held_object_id=0;return ActionResult::Success;
+ }
+ if(interact(a)){
+  if(a!=ActionType::Interact)b->orientation=orientation(dx,dy);
+  for(auto it=objects_.begin();it!=objects_.end();++it)if(it->x==b->x+dx&&it->y==b->y+dy){
+   if(it->resource_channel){pending_nutrients_+=it->nutrients;pending_hydration_+=it->hydration;objects_.erase(it);}
+   else it->state=1-it->state;
+   return ActionResult::Success;
+  }
+  return blocked();
+ }
+ resistance_[id]=1;return ActionResult::Invalid;
+}
 std::vector<ActionResult> World::resolve_intents(std::span<const std::uint32_t>ids,std::span<const std::uint8_t>raw){if(ids.size()!=raw.size())throw std::invalid_argument("intent size");std::map<std::pair<int,int>,std::vector<std::uint32_t>>by_dest;std::map<std::uint32_t,std::vector<std::uint32_t>>by_resource;std::vector<bool>blocked(bodies_.size());for(std::size_t k=0;k<ids.size();++k){auto id=ids[k];auto*b=body_by_id(id);auto a=(ActionType)raw[k];auto[dx,dy]=direction(a,b->orientation);int tx=b->x+dx,ty=b->y+dy;if(movement(a)){int destx=tx,desty=ty;if(auto*o=at(tx,ty)){destx+=dx;desty+=dy;by_resource[o->id].push_back(id);}by_dest[{destx,desty}].push_back(id);}else if(grab(a)||interact(a)){if(auto*o=at(tx,ty))by_resource[o->id].push_back(id);}else if(a==ActionType::Release){by_dest[{tx,ty}].push_back(id);if(b->held_object_id)by_resource[b->held_object_id].push_back(id);}}
  for(auto&[dest,contenders]:by_dest)for(auto id:contenders)if(occupied_by_body(dest.first,dest.second,id))blocked[id]=true;
  auto arbitrate=[&](auto&groups){for(auto&[_,group]:groups){std::vector<std::uint32_t>c;for(auto id:group)if(!blocked[id])c.push_back(id);std::sort(c.begin(),c.end());c.erase(std::unique(c.begin(),c.end()),c.end());if(c.size()>1){auto winner=c[conflict_cursor_%c.size()];++fairness_wins_[winner];conflict_cursor_=(conflict_cursor_+1)%std::max<std::size_t>(1,bodies_.size());++conflict_count_;for(auto id:c)if(id!=winner)blocked[id]=true;}}};arbitrate(by_dest);arbitrate(by_resource);

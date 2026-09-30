@@ -52,6 +52,7 @@ class ContinuousRuntime:
             self.simulation.core.backend.engine.neurodynamic_substrate().restore(configured.snapshot());self.neural_sensory=NeuralSensoryTransducer(self.simulation.settings,self.simulation.core.backend.engine.neurodynamic_substrate())
         world=self.simulation.world;first=world.next_spawn_tick;world.disable_legacy_spawning()
         if first is not None:self.scheduler.schedule(float(first),RuntimeEventType.WORLD_SPAWN)
+        if self.simulation.settings.resource_spawning_enabled:self.scheduler.schedule(self.simulation.settings.resource_spawn_interval_seconds,RuntimeEventType.WORLD_SPAWN,1)
         interval=self.simulation.settings.continuous_maintenance_interval_seconds
         if interval<=0:raise ValueError("continuous maintenance interval must be positive")
         self.scheduler.schedule(float(interval),RuntimeEventType.MAINTENANCE);self.scheduler.schedule(0.,RuntimeEventType.SENSORY_CHANGE);self.peak_scheduler_queue=self.scheduler.peak_size
@@ -89,8 +90,23 @@ class ContinuousRuntime:
                 rows=self.simulation.core.process_continuous_assembly_bridge(now);self.neural_bridge_deliveries.extend(rows)
             self._schedule_next_neural_bridge()
         elif kind==RuntimeEventType.WORLD_ACTION_COMPLETE:
-            action=Action(ActionType(event.payload));physical_sequence=self.simulation.event_sequence.next();intent=ActionIntent(action,WorldTime(now),physical_sequence);result=self.simulation.world.apply_intent(intent);self.simulation.physiology.apply_action(action.kind,result is ActionResult.SUCCESS);self.simulation.core.homeostatic_projection=self.simulation.physiology.snapshot();self.simulation.last_action=action;self.simulation.last_action_result=result;self.actions_completed+=1;self.scheduler.schedule(now,RuntimeEventType.SENSORY_CHANGE)
+            action=Action(ActionType(event.payload));physical_sequence=self.simulation.event_sequence.next();intent=ActionIntent(action,WorldTime(now),physical_sequence);result=self.simulation.world.apply_intent(intent);self.simulation.physiology.apply_action(action.kind,result is ActionResult.SUCCESS);self.simulation.apply_world_consequence();self.simulation.core.homeostatic_projection=self.simulation.physiology.snapshot();self.simulation.last_action=action;self.simulation.last_action_result=result;self.actions_completed+=1;self.scheduler.schedule(now,RuntimeEventType.SENSORY_CHANGE)
         elif kind==RuntimeEventType.WORLD_SPAWN:
+            if event.payload==1:
+                world=self.simulation.world;settings=self.simulation.settings;before=self._sensory_signature()
+                if world.resource_count()<settings.resource_max_live:
+                    position=world.resource_spawn_position()
+                    if position is not None:
+                        channel=1+self.simulation.rng.randrange(2)
+                        nutrients=settings.resource_nutrient_payload if channel==1 else 0.
+                        hydration=settings.resource_hydration_payload if channel==2 else 0.
+                        # A disabled channel has no payload; the configured other channel is used.
+                        if not (nutrients or hydration):
+                            channel=3-channel;nutrients=settings.resource_nutrient_payload if channel==1 else 0.;hydration=settings.resource_hydration_payload if channel==2 else 0.
+                        world.spawn_resource(position,channel,nutrients,hydration,now,self.simulation.event_sequence.next())
+                self.scheduler.schedule(now+settings.resource_spawn_interval_seconds,RuntimeEventType.WORLD_SPAWN,1)
+                if before!=self._sensory_signature() and not self._action_in_flight():self.scheduler.schedule(now,RuntimeEventType.SENSORY_CHANGE)
+                return
             before=self._sensory_signature();position=self.simulation.world.continuous_spawn_position()
             if position is not None:
                 physical_sequence=self.simulation.event_sequence.next();self.simulation.world.continuous_spawn(position,now,physical_sequence)
@@ -244,7 +260,7 @@ class ContinuousRuntime:
         finally:os.unlink(tmp)
         engine=self.simulation.core.backend.engine;history=engine.transition_history();homeostasis=engine.homeostasis_runtime_state();elapsed=engine.continuous_time_state();elapsed_relations=engine.continuous_relation_time_state();dirty=engine.dirty_relation_state()
         inbox=[[i,f.issued_at_world_time,f.surface if isinstance(f,LanguageFrame) else list(f.tokens),None if isinstance(f,LanguageFrame) else self._structure_dict(f.request_target)] for i,f in sorted(self.language_inbox.items())]
-        save_container(path,"world",{"META":{"schema":"synthetic-entity-continuous-world","version":8},"STATE":state,"CONT":{"scheduler":self.scheduler_state(),"observation_ordinal":self.observation_ordinal,"actions_completed":self.actions_completed,"cognition_wakes":self.cognition_wakes,"cognition_continuations":self.cognition_continuations,"cognition_generation":self.cognition_generation,"maintenance_ordinal":self.maintenance_ordinal,"scheduler_events_processed":self.scheduler_events_processed,"peak_scheduler_queue":self.peak_scheduler_queue,"legacy_monolithic_frontier":self._legacy_monolithic_frontier,"transition_history":history,"homeostasis":homeostasis,"elapsed_cognits":elapsed,"elapsed_relations":elapsed_relations,"dirty_relations":dirty,"frontier":self._frontier_state(),"language":{"lexicon":self.simulation.core.language.to_dict(),"grounding":self.simulation.core.grounding_context.durable_dict(),"context":self.simulation.core.grounding_context.episode_dict(),"next_message_id":self.next_language_message_id,"inbox":inbox,"active_frontier":self._language_frontier_state(),"last_utterance_result":self._utterance_result_state(),"utterances_processed":self.language_utterances_processed,"tokens_processed":self.language_tokens_processed}},"NBRN":{"encoding":"base64","data":native}},{"NBRN"})
+        save_container(path,"world",{"META":{"schema":"synthetic-entity-continuous-world","version":9 if state["version"]==6 else 8},"STATE":state,"CONT":{"scheduler":self.scheduler_state(),"observation_ordinal":self.observation_ordinal,"actions_completed":self.actions_completed,"cognition_wakes":self.cognition_wakes,"cognition_continuations":self.cognition_continuations,"cognition_generation":self.cognition_generation,"maintenance_ordinal":self.maintenance_ordinal,"scheduler_events_processed":self.scheduler_events_processed,"peak_scheduler_queue":self.peak_scheduler_queue,"legacy_monolithic_frontier":self._legacy_monolithic_frontier,"transition_history":history,"homeostasis":homeostasis,"elapsed_cognits":elapsed,"elapsed_relations":elapsed_relations,"dirty_relations":dirty,"frontier":self._frontier_state(),"language":{"lexicon":self.simulation.core.language.to_dict(),"grounding":self.simulation.core.grounding_context.durable_dict(),"context":self.simulation.core.grounding_context.episode_dict(),"next_message_id":self.next_language_message_id,"inbox":inbox,"active_frontier":self._language_frontier_state(),"last_utterance_result":self._utterance_result_state(),"utterances_processed":self.language_utterances_processed,"tokens_processed":self.language_tokens_processed}},"NBRN":{"encoding":"base64","data":native}},{"NBRN"})
     @classmethod
     def load_world(cls,path,settings=None):
         data=load_container(path,"world",{"META","STATE","CONT","NBRN"});saved_sensory=data["CONT"]["scheduler"].get("neural_sensory_config")

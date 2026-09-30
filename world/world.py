@@ -1,4 +1,5 @@
 from random import Random
+from math import isfinite
 from typing import Any
 
 from config import Settings
@@ -30,6 +31,7 @@ class World:
         self.next_spawn_tick = self._sample_next_spawn(0) if len(self.objects) < settings.max_objects else None
         self.last_resistance = 0.0; self.last_outcome = "INITIAL"
         self.state_change_count = 0
+        self.pending_consequence = (0.0, 0.0)
         self.spawn_records: list[dict[str, Any]] = [self._spawn_record(o, 0) for o in self.objects]
         self.action_counts = {"push_attempts":0,"successful_pushes":0,"grab_attempts":0,"successful_grabs":0,
                               "release_attempts":0,"successful_releases":0,"interaction_attempts":0,"successful_interactions":0,"blind_grabs":0,"blind_interactions":0}
@@ -47,6 +49,7 @@ class World:
         if len(set(positions))!=len(positions) or any(not self.grid.contains(*p) for p in positions):raise ValueError("controlled object positions must be unique and in bounds")
         if any(p in {b.position for b in self.bodies.values()} for p in positions):raise ValueError("controlled object overlaps body")
         self.objects=[WorldObject(i+1,*p) for i,p in enumerate(positions)];self.held_objects={};self.held_object=None
+        self.pending_consequence=(0.0,0.0)
         for body in self.bodies.values():body.held_object_id=None
         self.next_object_id=len(self.objects)+1;self.spawn_records=[self._spawn_record(o,self.world_tick_count) for o in self.objects];self.next_spawn_tick=None if disable_spawning else self._sample_next_spawn(self.world_tick_count)
 
@@ -129,7 +132,28 @@ class World:
         self.action_counts["interaction_attempts"]+=1;self.body.orientation=ACTION_ORIENTATION[direction];dx,dy=DIRECTIONS[direction]
         obj=self.object_at((self.body.x+dx,self.body.y+dy))
         if obj is None:self.action_counts["blind_interactions"]+=1;return self._blocked("INTERACT")
+        if obj.resource_channel:
+            self.pending_consequence=(self.pending_consequence[0]+obj.nutrients,self.pending_consequence[1]+obj.hydration)
+            self.objects.remove(obj);self.action_counts["successful_interactions"]+=1;self._mark(obj.id,"first_interacted_tick");self.last_outcome="INTERACT";return ActionResult.SUCCESS
         obj.state=1-obj.state;self.state_change_count+=1;self.action_counts["successful_interactions"]+=1;self._mark(obj.id,"first_interacted_tick");self.last_outcome="INTERACT";return ActionResult.SUCCESS
+
+    def take_consequence(self) -> tuple[float, float]:
+        consequence=self.pending_consequence;self.pending_consequence=(0.0,0.0);return consequence
+
+    def resource_count(self) -> int:
+        return sum(o.resource_channel != 0 for o in self.objects) + sum(o.resource_channel != 0 for o in self.held_objects.values())
+
+    def continuous_spawn_position(self):
+        occupied={o.position for o in self.objects}|{b.position for b in self.bodies.values()}
+        free=[(x,y) for y in range(self.grid.height) for x in range(self.grid.width) if (x,y) not in occupied]
+        return self.rng.choice(free) if free else None
+
+    def spawn_resource(self,position,channel,nutrients,hydration,world_time=0.,event_id=0):
+        if channel not in (1,2) or any(not isfinite(v) or not 0 <= v <= 100 for v in (nutrients,hydration)) or not (nutrients or hydration):raise ValueError("invalid resource payload")
+        if self.resource_count()>=self.settings.resource_max_live:raise ValueError("resource capacity reached")
+        if position is None or not self.grid.contains(*position) or self.object_at(position) or any(b.position==position for b in self.bodies.values()):raise ValueError("invalid resource position")
+        obj=WorldObject(self.next_object_id,*position,state=channel,resource_channel=channel,nutrients=nutrients,hydration=hydration)
+        self.next_object_id+=1;self.objects.append(obj);self.spawn_records.append(self._spawn_record(obj,self.world_tick_count));return obj.id
 
     def _blocked(self, outcome: str, result: ActionResult=ActionResult.BLOCKED) -> ActionResult:
         self.last_resistance=1.0;self.last_outcome=outcome;return result
@@ -187,10 +211,16 @@ class World:
                 "last_resistance":self.last_resistance,"last_outcome":self.last_outcome,"state_change_count":self.state_change_count,"body":{"id":self.body.id,"x":self.body.x,"y":self.body.y,"orientation":self.body.orientation,"held_object_id":self.body.held_object_id,"appearance":self.body.appearance},
                 "bodies":[{"id":b.id,"x":b.x,"y":b.y,"orientation":b.orientation,"held_object_id":b.held_object_id,"appearance":b.appearance} for b in self.bodies.values()],"conflict_cursor":self.conflict_cursor,"conflict_count":self.conflict_count,
                 "body_resistance":self.body_resistance,"body_outcomes":self.body_outcomes,"fairness_wins":self.fairness_wins,
-                "objects":[{"id":o.id,"x":o.x,"y":o.y,"type":o.type,"state":o.state,"passable":o.passable} for o in self.objects],
-                "held_object":None if self.held_object is None else {"id":self.held_object.id,"x":self.held_object.x,"y":self.held_object.y,"type":self.held_object.type,"state":self.held_object.state,"passable":self.held_object.passable},
-                "held_objects":{str(i):{"id":o.id,"x":o.x,"y":o.y,"type":o.type,"state":o.state,"passable":o.passable} for i,o in self.held_objects.items()},
-                "spawn_records":self.spawn_records,"action_counts":self.action_counts}
+                "objects":[self._object_dict(o) for o in self.objects],
+                "held_object":None if self.held_object is None else self._object_dict(self.held_object),
+                "held_objects":{str(i):self._object_dict(o) for i,o in self.held_objects.items()},
+                "spawn_records":self.spawn_records,"action_counts":self.action_counts,**({"pending_consequence":self.pending_consequence} if self.pending_consequence!=(0.0,0.0) else {})}
+
+    @staticmethod
+    def _object_dict(o):
+        data={"id":o.id,"x":o.x,"y":o.y,"type":o.type,"state":o.state,"passable":o.passable}
+        if o.resource_channel:data.update(resource_channel=o.resource_channel,nutrients=o.nutrients,hydration=o.hydration)
+        return data
 
     def configuration_hash(self) -> tuple[tuple[int,int,int],...]:
         values=[(o.x,o.y,o.state) for o in self.objects]

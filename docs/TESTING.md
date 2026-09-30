@@ -1,12 +1,17 @@
 # Testing and Repository Verification
 
-**Current verified baseline: v0.8.0 HOMEOSTATIC FOUNDATION.**
+**Current verified baseline: v0.8.1 opt-in physical consumables.**
 
 Полный v0.7.5 audit: `422` pytest PASS, CTest Release `2/2` PASS, все `17`
 version groups v0.2–v0.6.6 PASS. Подробности:
 [`V0_7_5_REGRESSION_AUDIT.md`](V0_7_5_REGRESSION_AUDIT.md).
 
 ## Standard commands
+
+`requirements.txt` is the flexible, human-facing setup surface. For a
+reproducible audit environment use `python -m pip install -r
+requirements-lock.txt`; update that lock intentionally, together with a full
+verification run.
 
 ```powershell
 python tools/verify.py
@@ -51,6 +56,8 @@ configure. На Windows используется `-A x64`.
 | `test_v064*.py` | integration | v0.6.4 sensory transduction |
 | `test_v065*.py` | architecture/integration | v0.6.5 neural behavior |
 | `test_v066*.py` | long-life/performance regression | v0.6.6 |
+| `test_v080*.py` | physiology unit/integration | v0.8.0 |
+| `test_v081*.py` | security, resource parity and continuation | v0.8.1 |
 | `test_architecture_boundaries.py` | architecture | dependency/causal guards |
 | `test_verify_tool.py` | tooling unit | verify modes/failure propagation |
 
@@ -87,6 +94,11 @@ v0.8.0 добавляет `9` tests в `test_v080_homeostasis.py`; полный 
 Они защищают WorldTime determinism, bounds/finite state, action cost/brownout,
 world-consequence hooks, tension, exact persistence/config continuation и
 immutable core/planner/observer projections.
+
+The v0.8.1 audit adds resource authority/parity, deterministic scheduler
+continuation, secure RNG and malformed container tests. The full suite is
+`456` pytest tests; Release CTest is `2/2`. Resource spawning is opt-in, so
+the v0.8.0 trajectory remains the disabled-resource baseline.
 
 ## Architecture guards
 

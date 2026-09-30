@@ -6,12 +6,13 @@ from .panels import draw_lines
 
 
 class Renderer:
+    """Legacy/reference pygame renderer; production uses the native observer."""
     SPEEDS=list(SpeedScheduler.SPEEDS);LABELS=["PAUSE","0.1x","0.25x","0.5x","1x","2x","5x","10x","100x","1000x","MAX"]
     TABS=["GENERAL","COGNITION","PERCEPTION","GOAL","RELATIONS","ACTION","AGENCY"]
     def __init__(self,simulation:Simulation,size:tuple[int,int]=(1200,800))->None:
         import pygame
         self.pg=pygame;pygame.init();self.screen=pygame.display.set_mode(size,pygame.RESIZABLE)
-        pygame.display.set_caption("Synthetic Entity v0.4 - agency research environment")
+        pygame.display.set_caption("Synthetic Entity - legacy/reference pygame renderer")
         self.font=pygame.font.SysFont("consolas",17);self.small=pygame.font.SysFont("consolas",13)
         self.simulation=simulation;self.speed_index=4;self.scheduler=SpeedScheduler(1.0);self.tab=0;self.debug=False;self.running=True;self.fps=0.;self.tps=0.
     def run(self)->None:
@@ -42,7 +43,7 @@ class Renderer:
         body=self.simulation.world.body;pg.draw.circle(screen,(82,200,160),(layout.left+body.x*layout.cell+layout.cell//2,layout.top+body.y*layout.cell+layout.cell//2),max(3,layout.cell//3))
         if body.held_object_id is not None:pg.draw.circle(screen,(231,166,73),(layout.left+body.x*layout.cell+layout.cell//2,layout.top+body.y*layout.cell+layout.cell//2),max(4,layout.cell//2),2)
         pg.draw.rect(screen,(22,28,36),(world_width,0,panel_width,height));m=self.simulation.telemetry.latest
-        title=["SYNTHETIC ENTITY v0.4",f"[1] GENERAL [2] COGNITION [3] PERCEPTION",f"[4] GOAL [5] RELATIONS [6] ACTION [7] AGENCY","",self.TABS[self.tab],""]
+        title=["SYNTHETIC ENTITY - LEGACY REFERENCE",f"[1] GENERAL [2] COGNITION [3] PERCEPTION",f"[4] GOAL [5] RELATIONS [6] ACTION [7] AGENCY","",self.TABS[self.tab],""]
         draw_lines(screen,self.font,title,world_width+20,18,(218,225,232),22)
         lines=self._tab_lines(m);draw_lines(screen,self.small,lines,world_width+20,150,(166,188,207),18)
         controls=f"[Space] pause [.] step [arrows] {self.LABELS[self.speed_index]} [F1] debug [Q] quit"

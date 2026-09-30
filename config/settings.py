@@ -1,8 +1,21 @@
 from dataclasses import dataclass
+from math import isfinite
 
 
 @dataclass(frozen=True, slots=True)
 class Settings:
+    RESOURCE_FIELDS = ("resource_spawning_enabled", "resource_spawn_interval_seconds", "resource_max_live", "resource_nutrient_payload", "resource_hydration_payload")
+
+    def __post_init__(self) -> None:
+        if not isfinite(self.resource_spawn_interval_seconds) or self.resource_spawn_interval_seconds <= 0:
+            raise ValueError("resource spawn interval must be finite and positive")
+        if not isinstance(self.resource_max_live,int) or isinstance(self.resource_max_live,bool) or not 0 <= self.resource_max_live <= 1024:
+            raise ValueError("resource max live must be bounded")
+        for amount in (self.resource_nutrient_payload,self.resource_hydration_payload):
+            if not isfinite(amount) or not 0 <= amount <= 100:
+                raise ValueError("resource payload must be finite and bounded")
+        if self.resource_spawning_enabled and (self.resource_max_live == 0 or not (self.resource_nutrient_payload or self.resource_hydration_payload)):
+            raise ValueError("enabled resource spawning requires capacity and payload")
     # WORLD
     world_width: int = 30
     world_height: int = 30
@@ -26,6 +39,12 @@ class Settings:
     world_event_weights: tuple[float,float,float] = (1.0,0.0,0.0)  # legacy API; autonomous events are disabled
     spawn_interval_min: int = 250
     spawn_interval_max: int = 750
+    # Opt-in v0.8.1 external physical resources (WorldTime seconds).
+    resource_spawning_enabled: bool = False
+    resource_spawn_interval_seconds: float = 10.0
+    resource_max_live: int = 4
+    resource_nutrient_payload: float = 20.0
+    resource_hydration_payload: float = 20.0
     # ORGANISM PHYSIOLOGY (WorldTime only; authoritative owner is Simulation)
     physiology_max_energy: float = 100.0
     physiology_max_nutrients: float = 100.0

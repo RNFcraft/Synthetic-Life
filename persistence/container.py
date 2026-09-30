@@ -52,5 +52,26 @@ def load_container(path:str|Path,kind:str,known:set[str]|None=None)->dict[str,An
     return result
 
 def inspect_container(path:str|Path)->dict[str,Any]:
-    raw=Path(path).read_bytes();magic,version,count,table_size=HEADER.unpack(raw[:HEADER.size])
-    table=json.loads(raw[HEADER.size:HEADER.size+table_size]);return {"magic":magic.decode("ascii"),"version":version,"sections":table,"size":len(raw),"section_count":count}
+    raw=Path(path).read_bytes()
+    if len(raw)<HEADER.size:raise ContainerError("truncated container header")
+    try:magic,version,count,table_size=HEADER.unpack(raw[:HEADER.size])
+    except struct.error as exc:raise ContainerError("corrupt container header") from exc
+    if magic not in MAGICS.values():raise ContainerError("unknown container magic")
+    if version!=1:raise ContainerError(f"unsupported container version: {version}")
+    table_end=HEADER.size+table_size
+    if table_end>len(raw):raise ContainerError("truncated section table")
+    try:table=json.loads(raw[HEADER.size:table_end])
+    except (UnicodeDecodeError,json.JSONDecodeError,TypeError) as exc:raise ContainerError("corrupt section table") from exc
+    if not isinstance(table,list) or len(table)!=count:raise ContainerError("section count mismatch")
+    names=set();payload_size=len(raw)-table_end
+    for entry in table:
+        if not isinstance(entry,dict):raise ContainerError("invalid section entry")
+        try:name,offset,size,digest,required=entry["name"],entry["offset"],entry["size"],entry["sha256"],entry.get("required",True)
+        except KeyError as exc:raise ContainerError("invalid section entry") from exc
+        if not isinstance(name,str) or not name or name in names or type(offset) is not int or type(size) is not int or offset<0 or size<0 or offset+size>payload_size or not isinstance(digest,str) or len(digest)!=64 or not isinstance(required,bool):raise ContainerError("invalid section entry")
+        payload=raw[table_end+offset:table_end+offset+size]
+        if hashlib.sha256(payload).hexdigest()!=digest:raise ContainerError(f"corrupt section: {name}")
+        names.add(name)
+    try:magic_name=magic.decode("ascii")
+    except UnicodeDecodeError as exc:raise ContainerError("invalid container magic") from exc
+    return {"magic":magic_name,"version":version,"sections":table,"size":len(raw),"section_count":count}

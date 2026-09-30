@@ -1756,7 +1756,46 @@ physiological need
 
 ---
 
-## v0.9.0 — **STAGE IN PLANNIG**
+## v0.9 — Adaptive World & Learning Environment
+
+Goal:
+Transform Synthetic-Life from a reactive organism into a learning organism inside a rich deterministic 2D world.
+
+Milestones:
+
+v0.9.0 — 2D World Engine Foundation
+- scalable world model
+- dynamic objects
+- interactions
+- persistence
+
+v0.9.1 — Research Observer & World Editor
+- laboratory interface
+- world manipulation tools
+- inspection and timeline
+
+v0.9.2 — Rich Sensory System
+- non-symbolic perception
+- environmental representations
+
+v0.9.3 — Learned Affordances
+- discovering object capabilities through experience
+
+v0.9.4 — Multi-Step Action Learning
+- behavioral sequences
+- reusable patterns
+
+v0.9.5 — Curiosity & Epistemic Motivation
+- uncertainty driven exploration
+
+v0.9.6 — Causal World Model
+- learning environmental cause-effect relations
+
+v0.9.7 — Long-Life Learning Experiments
+- open-ended development experiments
+
+v0.9.8 — Freeze Audit
+- v1.0 preparation
 
 ---
 

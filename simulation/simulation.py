@@ -36,7 +36,7 @@ class Simulation:
     def step(self)->TickMetrics:
         tick=self.clock.tick;self.physiology.advance_to(self.world_time.seconds);self.core.homeostatic_projection=self.physiology.snapshot();frame=self.world.perceive(tick);self.core.step(frame);action=self.core.deliberate(frame)
         if not self.physiology.can_begin(action.kind):action=Action(ActionType.IDLE)
-        intent=ActionIntent(action,self.world_time,self.event_sequence.next());result=self.world.apply_intent(intent) if isinstance(self.world,NativeWorld) else self.world.apply_action(intent.action);self.physiology.apply_action(action.kind,result is ActionResult.SUCCESS);self.core.homeostatic_projection=self.physiology.snapshot()
+        intent=ActionIntent(action,self.world_time,self.event_sequence.next());result=self.world.apply_intent(intent) if isinstance(self.world,NativeWorld) else self.world.apply_action(intent.action);self.physiology.apply_action(action.kind,result is ActionResult.SUCCESS);self.apply_world_consequence();self.core.homeostatic_projection=self.physiology.snapshot()
         self.event_log.emit(tick,f"ACTION {action.kind.name} {result.name}");world_event=None
         if (tick+1)%self.settings.world_tick_interval==0:
             world_event=self.world.world_tick();self.event_log.emit(tick,f"WORLD_EVENT {world_event}")
@@ -76,10 +76,16 @@ class Simulation:
     def run(self,ticks:int)->None:
         for _ in range(ticks):self.step()
 
+    def apply_world_consequence(self)->None:
+        nutrients,hydration=self.world.take_consequence()
+        if nutrients or hydration:self.physiology.apply_consequence(nutrients=nutrients,hydration=hydration)
+
     def snapshot_data(self,semantic_graph:bool=False)->dict[str,Any]:
         """Собрать version-5 semantic snapshot без смены state authority."""
         core=self.core;goal=asdict(core.state.goal) if core.state.goal else None
-        return {"version":5,"seed":self.seed,"tick":self.clock.tick,"world_time_seconds":self.world_time.seconds,"event_sequence":self.event_sequence.value,"random_state":encode_random_state(self.rng.getstate()),"world":self.world.to_dict(),"physiology":self.physiology.to_dict(),
+        world_state=self.world.to_dict()
+        resources=self.settings.resource_spawning_enabled or any(o.resource_channel for o in [*self.world.objects,*self.world.held_objects.values()]) or "pending_consequence" in world_state
+        return {"version":6 if resources else 5,"seed":self.seed,"tick":self.clock.tick,"world_time_seconds":self.world_time.seconds,"event_sequence":self.event_sequence.value,"random_state":encode_random_state(self.rng.getstate()),"world":world_state,"physiology":self.physiology.to_dict(),**({"resource_config":{name:getattr(self.settings,name) for name in Settings.RESOURCE_FIELDS}} if self.settings.resource_spawning_enabled else {}),
           "cognitive_graph":core.graph.semantic_to_dict() if semantic_graph and core.backend else core.graph.to_dict(),"entity_state":{"last_action":self.last_action.kind.name if self.last_action else None,
           "last_action_result":self.last_action_result.name if self.last_action_result else None},"core":{"transitions":core.transitions.to_dict(),
           "previous_active":sorted(core.previous_active),"previous_action":core.previous_action.name if core.previous_action else None,
@@ -113,7 +119,8 @@ class Simulation:
 
     def save_world(self,path:str)->None:
         import base64,tempfile,os
-        sections={"META":{"schema":"synthetic-entity-world","version":2 if self.core.backend else 1,"numeric_backend":self.core.backend_name},"STATE":self.snapshot_data(semantic_graph=bool(self.core.backend))}
+        snapshot=self.snapshot_data(semantic_graph=bool(self.core.backend))
+        sections={"META":{"schema":"synthetic-entity-world","version":3 if snapshot["version"]==6 else 2 if self.core.backend else 1,"numeric_backend":self.core.backend_name},"STATE":snapshot}
         if self.core.backend:
             fd,tmp=tempfile.mkstemp(suffix='.native');os.close(fd)
             try:self.core.backend.engine.save_graph(tmp);sections["NBRN"]={"encoding":"base64","data":base64.b64encode(open(tmp,'rb').read()).decode('ascii')}
@@ -186,10 +193,16 @@ class Simulation:
     @classmethod
     def load(cls,path:str,settings:Settings|None=None,backend:str="python")->"Simulation":
         data=load_snapshot(path)
-        if data.get("version") not in (4,5):raise ValueError(f"Unsupported snapshot schema v{data.get('version')}; expected v4 or v5")
+        if data.get("version") not in (4,5,6):raise ValueError(f"Unsupported snapshot schema v{data.get('version')}; expected v4, v5 or v6")
+        explicit_settings=settings is not None
+        resource_config=data.get("resource_config")
+        if resource_config is not None:
+            if set(resource_config)!=set(Settings.RESOURCE_FIELDS):raise ValueError("invalid resource configuration")
+            if settings is None:settings=replace(Settings(),**resource_config)
+            elif any(getattr(settings,name)!=value for name,value in resource_config.items()):raise ValueError("explicit Settings are incompatible with saved resources")
         physiology_config=data.get("physiology",{}).get("config")
         if physiology_config is not None:
-            if settings is None:settings=replace(Settings(),**physiology_config)
+            if not explicit_settings:settings=replace(settings or Settings(),**physiology_config)
             elif any(getattr(settings,name)!=value for name,value in physiology_config.items()):raise ValueError("explicit Settings are incompatible with saved physiology")
         sim=cls(data["seed"],settings,backend);sim.clock.tick=data["tick"];sim.world_time=WorldTime(data.get("world_time_seconds",float(sim.clock.tick)));sim.event_sequence=EventSequence(data.get("event_sequence",sim.clock.tick));sim.rng.setstate(decode_random_state(data["random_state"]));world=data["world"]
         if "physiology" in data:sim.physiology.restore(data["physiology"])
@@ -200,6 +213,7 @@ class Simulation:
         sim.world.next_spawn_tick=world["next_spawn_tick"];sim.world.next_object_id=world["next_object_id"];sim.world.last_resistance=world["last_resistance"];sim.world.last_outcome=world["last_outcome"]
         sim.world.state_change_count=world.get("state_change_count",0)
         sim.world.held_objects={int(k):WorldObject(**v) for k,v in world.get("held_objects",{}).items()};sim.world.held_object=sim.world.held_objects.get(0) or (WorldObject(**world["held_object"]) if world.get("held_object") else None)
+        sim.world.pending_consequence=tuple(world.get("pending_consequence",(0.,0.)))
         sim.world.conflict_cursor=world.get("conflict_cursor",0);sim.world.conflict_count=world.get("conflict_count",0)
         sim.world.body_resistance={int(k):v for k,v in world.get("body_resistance",{i:0. for i in sim.world.bodies}).items()};sim.world.body_outcomes={int(k):v for k,v in world.get("body_outcomes",{i:"INITIAL" for i in sim.world.bodies}).items()};sim.world.fairness_wins={int(k):v for k,v in world.get("fairness_wins",{i:0 for i in sim.world.bodies}).items()}
         sim.world.spawn_records=[{**x,"spawn_position":tuple(x["spawn_position"])} for x in world["spawn_records"]];sim.world.action_counts=world["action_counts"]

@@ -20,6 +20,7 @@ class NativeWorld:
         self.settings,self.rng=settings,rng;self.grid=Grid(settings.world_width,settings.world_height);n=max(1,settings.entity_count)
         positions=rng.sample([(x,y) for y in range(self.grid.height) for x in range(self.grid.width)],min(settings.object_count,settings.max_objects)+n)
         self.native=WorldRuntime(self.grid.width,self.grid.height,settings.perception_radius);self.native.initialize_multi([(i,*positions[i],"N",i+1) for i in range(n)],[(i+1,*p,0) for i,p in enumerate(positions[n:])])
+        self.native.configure_resource_limit(settings.resource_max_live)
         self.world_tick_count=0;self.next_object_id=min(settings.object_count,settings.max_objects)+1;self.next_spawn_tick=self._sample_next_spawn(0) if min(settings.object_count,settings.max_objects)<settings.max_objects else None;self.native.configure_spawning(settings.max_objects,self.next_spawn_tick,self.next_object_id)
         self.last_resistance=0.;self.last_outcome="INITIAL";self.state_change_count=0;self.body_resistance={i:0. for i in range(n)};self.body_outcomes={i:"INITIAL" for i in range(n)};self.fairness_wins={i:0 for i in range(n)};self.conflict_cursor=0;self.conflict_count=0
         self.action_counts={"push_attempts":0,"successful_pushes":0,"grab_attempts":0,"successful_grabs":0,"release_attempts":0,"successful_releases":0,"interaction_attempts":0,"successful_interactions":0,"blind_grabs":0,"blind_interactions":0}
@@ -32,7 +33,11 @@ class NativeWorld:
         if record is not None and record[field] is None:record[field]=self.world_tick_count
     def _refresh(self):
         bodies,objects,held,tick,next_tick,next_id,cursor,conflicts,wins=self.native.full_state()
-        self.bodies={i:EntityBody(i,x,y,LONG[o],held_id or None,appearance) for i,x,y,o,held_id,appearance in bodies};self.body=self.bodies[min(self.bodies)];self.objects=[WorldObject(i,x,y,state=state) for i,x,y,state in objects];self.held_objects={owner:WorldObject(i,x,y,state=state) for owner,i,x,y,state in held};self.held_object=self.held_objects.get(0)
+        resources={i:(channel,nutrients,hydration) for i,channel,nutrients,hydration in self.native.resource_state()}
+        def make_object(i,x,y,state):
+            channel,nutrients,hydration=resources.get(i,(0,0.,0.))
+            return WorldObject(i,x,y,state=state,resource_channel=channel,nutrients=nutrients,hydration=hydration)
+        self.bodies={i:EntityBody(i,x,y,LONG[o],held_id or None,appearance) for i,x,y,o,held_id,appearance in bodies};self.body=self.bodies[min(self.bodies)];self.objects=[make_object(i,x,y,state) for i,x,y,state in objects];self.held_objects={owner:make_object(i,x,y,state) for owner,i,x,y,state in held};self.held_object=self.held_objects.get(0)
         self.world_tick_count=tick;self.next_spawn_tick=next_tick;self.next_object_id=next_id;self.conflict_cursor=cursor;self.conflict_count=conflicts;self.fairness_wins={i:v for i,v in enumerate(wins)}
         self.body_resistance={i:value for i,value in enumerate(self.native.resistances())}
         self.last_resistance=self.body_resistance.get(0,0.)
@@ -69,8 +74,11 @@ class NativeWorld:
             if success:self.action_counts["successful_releases"]+=1;self._mark(held,"first_displaced_tick")
             outcome="RELEASE"
         else:
-            self.action_counts["interaction_attempts"]+=1;changed=[i for i,(x,y,s) in before.items() if any(o.id==i and o.state!=s for o in self.objects)]
-            if success:self.action_counts["successful_interactions"]+=1;self.state_change_count+=1;self._mark(changed[0],"first_interacted_tick")
+            self.action_counts["interaction_attempts"]+=1;changed=[i for i,(x,y,s) in before.items() if any(o.id==i and o.state!=s for o in self.objects)];consumed=[i for i in before if all(o.id!=i for o in self.objects)]
+            if success:
+                self.action_counts["successful_interactions"]+=1
+                if changed:self.state_change_count+=1
+                self._mark((changed or consumed)[0],"first_interacted_tick")
             else:self.action_counts["blind_interactions"]+=1
             outcome="INTERACT"
         self.last_outcome=outcome;self.body_outcomes[body_id]=outcome
@@ -98,6 +106,10 @@ class NativeWorld:
         occupied={o.position for o in self.objects}|{b.position for b in self.bodies.values()}
         free=[(x,y) for y in range(self.grid.height) for x in range(self.grid.width) if (x,y) not in occupied]
         return self.rng.choice(free) if free else None
+    def resource_spawn_position(self):
+        occupied={o.position for o in self.objects}|{b.position for b in self.bodies.values()}
+        free=[(x,y) for y in range(self.grid.height) for x in range(self.grid.width) if (x,y) not in occupied]
+        return self.rng.choice(free) if free else None
     def continuous_spawn(self,position,world_time,event_id):
         """Apply a selected continuous spawn as one physical event."""
         if position is None:raise ValueError("continuous spawn requires a free position")
@@ -105,19 +117,34 @@ class NativeWorld:
         if object_id is not None:
             self.spawn_records.append(self._spawn_record(next(o for o in self.objects if o.id==object_id),self.world_tick_count))
         return object_id
+    def spawn_resource(self,position,channel,nutrients,hydration,world_time,event_id):
+        object_id=self.native.spawn_resource(position,channel,nutrients,hydration,float(world_time),int(event_id));self._refresh()
+        self.spawn_records.append(self._spawn_record(next(o for o in self.objects if o.id==object_id),self.world_tick_count))
+        return object_id
+    def resource_count(self):return sum(o.resource_channel!=0 for o in self.objects)+sum(o.resource_channel!=0 for o in self.held_objects.values())
+    def take_consequence(self):return self.native.take_consequence()
     def disable_legacy_spawning(self):
         self.native.configure_spawning(self.settings.max_objects,None,self.next_object_id);self._refresh()
     def can_spawn_more(self):
         return len(self.objects)+len(self.held_objects)<self.settings.max_objects
     def restore_native(self,world_time=0.,event_sequence=0):
-        self.native.restore([(i,b.x,b.y,SHORT[b.orientation],b.appearance) for i,b in self.bodies.items()],[(o.id,o.x,o.y,o.state) for o in self.objects],[(i,o.id,o.x,o.y,o.state) for i,o in self.held_objects.items()],[self.body_resistance[i] for i in sorted(self.bodies)],self.world_tick_count,self.next_spawn_tick,self.next_object_id,self.conflict_cursor,self.conflict_count,[self.fairness_wins[i] for i in sorted(self.bodies)],world_time,event_sequence,self.settings.max_objects);self._refresh()
+        resources=[(o.id,o.resource_channel,o.nutrients,o.hydration) for o in [*self.objects,*self.held_objects.values()] if o.resource_channel]
+        pending=getattr(self,"pending_consequence",(0.,0.))
+        self.native.restore([(i,b.x,b.y,SHORT[b.orientation],b.appearance) for i,b in self.bodies.items()],[(o.id,o.x,o.y,o.state) for o in self.objects],[(i,o.id,o.x,o.y,o.state) for i,o in self.held_objects.items()],[self.body_resistance[i] for i in sorted(self.bodies)],self.world_tick_count,self.next_spawn_tick,self.next_object_id,self.conflict_cursor,self.conflict_count,[self.fairness_wins[i] for i in sorted(self.bodies)],world_time,event_sequence,self.settings.max_objects)
+        self.native.restore_resources(resources,*pending);self._refresh()
     def advance_world_time(self,seconds):self.native.advance_world_time(seconds)
     @staticmethod
     def _body_dict(b):return {"id":b.id,"x":b.x,"y":b.y,"orientation":b.orientation,"held_object_id":b.held_object_id,"appearance":b.appearance}
     @staticmethod
-    def _object_dict(o):return {"id":o.id,"x":o.x,"y":o.y,"type":o.type,"state":o.state,"passable":o.passable}
+    def _object_dict(o):
+        data={"id":o.id,"x":o.x,"y":o.y,"type":o.type,"state":o.state,"passable":o.passable}
+        if o.resource_channel:data.update(resource_channel=o.resource_channel,nutrients=o.nutrients,hydration=o.hydration)
+        return data
     def to_dict(self)->dict[str,Any]:
-        self._refresh();return {"width":self.grid.width,"height":self.grid.height,"world_tick":self.world_tick_count,"next_spawn_tick":self.next_spawn_tick,"next_object_id":self.next_object_id,"last_resistance":self.last_resistance,"last_outcome":self.last_outcome,"state_change_count":self.state_change_count,"body":self._body_dict(self.body),"bodies":[self._body_dict(b) for b in self.bodies.values()],"conflict_cursor":self.conflict_cursor,"conflict_count":self.conflict_count,"body_resistance":self.body_resistance,"body_outcomes":self.body_outcomes,"fairness_wins":self.fairness_wins,"objects":[self._object_dict(o) for o in self.objects],"held_object":None if self.held_object is None else self._object_dict(self.held_object),"held_objects":{str(i):self._object_dict(o) for i,o in self.held_objects.items()},"spawn_records":self.spawn_records,"action_counts":self.action_counts}
+        self._refresh();data={"width":self.grid.width,"height":self.grid.height,"world_tick":self.world_tick_count,"next_spawn_tick":self.next_spawn_tick,"next_object_id":self.next_object_id,"last_resistance":self.last_resistance,"last_outcome":self.last_outcome,"state_change_count":self.state_change_count,"body":self._body_dict(self.body),"bodies":[self._body_dict(b) for b in self.bodies.values()],"conflict_cursor":self.conflict_cursor,"conflict_count":self.conflict_count,"body_resistance":self.body_resistance,"body_outcomes":self.body_outcomes,"fairness_wins":self.fairness_wins,"objects":[self._object_dict(o) for o in self.objects],"held_object":None if self.held_object is None else self._object_dict(self.held_object),"held_objects":{str(i):self._object_dict(o) for i,o in self.held_objects.items()},"spawn_records":self.spawn_records,"action_counts":self.action_counts}
+        pending=self.native.pending_consequence()
+        if pending!=(0.,0.):data["pending_consequence"]=pending
+        return data
     def configuration_hash(self):return tuple(sorted([(o.x,o.y,o.state) for o in self.objects]+([(-1,-1,self.held_object.state)] if self.held_object else [])))
     def world_modification(self):
         origins={r["object_id"]:tuple(r["spawn_position"]) for r in self.spawn_records};total=float(self.state_change_count)

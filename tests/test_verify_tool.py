@@ -14,8 +14,8 @@ def test_fast_and_full_select_expected_python_scope():
     fast = verify.verification_commands("fast", build_configured=True, windows=True)
     full = verify.verification_commands("full", build_configured=True, windows=True)
     assert "tests/test_architecture_boundaries.py" in fast[2]
-    assert full[2][-3:] == ["-m", "pytest", "-q"]
-    assert "tests/test_architecture_boundaries.py" not in full[2]
+    assert full[3][-3:] == ["-m", "pytest", "-q"]
+    assert "tests/test_architecture_boundaries.py" not in full[3]
 
 
 def test_unconfigured_windows_build_gets_portable_configure_step():
@@ -33,3 +33,16 @@ def test_runner_propagates_first_failure(monkeypatch, tmp_path: Path):
     monkeypatch.setattr(verify.subprocess, "run", fake_run)
     assert verify.run("fast", tmp_path) == 9
     assert len(calls) == 1
+
+
+def test_stale_cmake_cache_uses_isolated_build_directory(monkeypatch, tmp_path: Path):
+    cache=tmp_path / "cpp" / "build" / "CMakeCache.txt"
+    cache.parent.mkdir(parents=True)
+    cache.write_text("CMAKE_HOME_DIRECTORY:INTERNAL=D:/old/workspace/cpp",encoding="utf-8")
+    calls=[]
+    def fake_run(command, **kwargs):
+        calls.append(command)
+        return SimpleNamespace(returncode=0)
+    monkeypatch.setattr(verify.subprocess,"run",fake_run)
+    assert verify.run("fast",tmp_path)==0
+    assert ["cmake","-S","cpp","-B","cpp/build-verify","-A","x64"] in calls if verify.os.name=="nt" else ["cmake","-S","cpp","-B","cpp/build-verify"] in calls

@@ -45,13 +45,17 @@ cannot mutate the authoritative subsystem. v0.8.0 does not yet use tension to
 score actions. That belongs to v0.8.3 after non-semantic interoception and
 learned consequence prediction exist.
 
-`apply_consequence(nutrients=..., hydration=...)` is the explicit future World
-consequence seam. It is deliberately unaware of food, water, coordinates,
-objects, Actions, Goals, or policy. Consumable objects and scheduled external
-spawn belong to v0.8.1/v0.8.2 and must call this seam only after a real physical
-transition.
+`apply_consequence(nutrients=..., hydration=...)` is the World consequence seam.
+It is deliberately unaware of resource channels, coordinates, objects,
+Actions, Goals, or policy. The v0.8.1 World/Simulation adapter calls it only
+after a successful physical interaction. See [v0.8.1](V0_8_1_CONSUMABLES.md).
 
 ## Persistence
+
+RNG state is encoded as the structural, JSON-compatible
+`python-random-json-v1` representation. Normal loaders never deserialize
+legacy pickle RNG payloads: those artifacts fail closed rather than treating a
+snapshot as trusted executable input.
 
 Physiology payload v1 stores only authoritative energy, nutrients, hydration,
 and last processed WorldTime. Semantic snapshot schema is v5 and continuous
@@ -82,7 +86,8 @@ knowledge must use ordinary interoceptive Cognits and action-conditioned
 Relations. Delayed consequences remain model-based multi-step prediction, not
 reward backpropagation.
 
-- v0.8.1: physical consumables and deterministic external spawn;
+- v0.8.1: opt-in physical consumables and deterministic external spawn
+  (implemented; see [v0.8.1](V0_8_1_CONSUMABLES.md));
 - v0.8.2: bounded non-semantic interoception;
 - v0.8.3: trajectory-level homeostatic planner valuation;
 - v0.8.4: learned homeostatic consequences and ablations;

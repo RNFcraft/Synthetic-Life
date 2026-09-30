@@ -12,33 +12,48 @@ import sys
 ROOT = Path(__file__).resolve().parents[1]
 
 
-def verification_commands(mode: str, *, build_configured: bool, windows: bool) -> list[list[str]]:
+def verification_commands(mode: str, *, build_configured: bool, windows: bool, build_dir: str = "cpp/build", observer_source: str | None = None) -> list[list[str]]:
     """Return the ordered commands for the selected verification contract."""
     python = sys.executable
     tests = [python, "-B", "-m", "pytest", "-q"]
     if mode == "fast":
         tests += ["tests/test_main_entrypoint.py", "tests/test_architecture_boundaries.py", "tests/test_verify_tool.py"]
-    commands = [
+    smokes = [
         [python, "-B", "-c", "import main"],
         [python, "-B", "main.py", "--headless", "--seconds", "0"],
         tests,
     ]
+    commands = [] if mode == "full" else smokes
     if not build_configured:
-        configure = ["cmake", "-S", "cpp", "-B", "cpp/build"]
+        configure = ["cmake", "-S", "cpp", "-B", build_dir]
         if windows:
             configure += ["-A", "x64"]
+        if mode == "full":
+            configure += ["-DSE_BUILD_OBSERVER=ON"]
+            if observer_source:
+                configure += [f"-DFETCHCONTENT_SOURCE_DIR_SDL3={observer_source}"]
         commands.append(configure)
-    commands += [
-        ["cmake", "--build", "cpp/build", "--config", "Release"],
-        ["ctest", "--test-dir", "cpp/build", "-C", "Release", "--output-on-failure"],
-    ]
+    commands.append(["cmake", "--build", build_dir, "--config", "Release"])
+    if mode == "full":commands.extend(smokes)
+    commands.append(["ctest", "--test-dir", build_dir, "-C", "Release", "--output-on-failure"])
     return commands
 
 
 def run(mode: str, root: Path = ROOT) -> int:
     """Run in repository-root context and stop at the first failed command."""
-    configured = (root / "cpp" / "build" / "CMakeCache.txt").is_file()
-    commands = verification_commands(mode, build_configured=configured, windows=os.name == "nt")
+    build_dir = "cpp/build"
+    cache = root / build_dir / "CMakeCache.txt"
+    if cache.is_file():
+        expected = f"CMAKE_HOME_DIRECTORY:INTERNAL={str((root / 'cpp').resolve()).replace(chr(92), '/')}"
+        if expected.lower() not in cache.read_text(encoding="utf-8", errors="replace").replace(chr(92), '/').lower():
+            build_dir = "cpp/build-verify"
+            cache = root / build_dir / "CMakeCache.txt"
+    if mode == "full" and cache.is_file() and "SE_BUILD_OBSERVER:BOOL=ON" not in cache.read_text(encoding="utf-8", errors="replace"):
+        build_dir = "cpp/build-verify"
+        cache = root / build_dir / "CMakeCache.txt"
+    configured = cache.is_file()
+    observer_source = root / "cpp" / "build" / "_deps" / "sdl3-src"
+    commands = verification_commands(mode, build_configured=configured, windows=os.name == "nt", build_dir=build_dir, observer_source=str(observer_source) if observer_source.is_dir() else None)
     for index, command in enumerate(commands, 1):
         print(f"[{index}/{len(commands)}] {subprocess.list2cmdline(command)}", flush=True)
         try:
