@@ -19,7 +19,7 @@ from .snapshot import decode_random_state,encode_random_state,load_snapshot,save
 from persistence import load_container,save_container
 from physiology import Physiology
 from physiology.interoception import InteroceptiveTransducer
-from .persisted_settings import restore_settings
+from .persisted_settings import restore_settings, causal_configuration
 
 
 class Simulation:
@@ -39,6 +39,7 @@ class Simulation:
         self.core=SyntheticEntityCore(self.settings,backend);self.clock=SimulationClock();self.world_time=WorldTime();self.event_sequence=EventSequence();self.telemetry=Telemetry(self.settings.telemetry_history)
         self.physiology=Physiology(self.settings);self.core.homeostatic_projection=self.physiology.snapshot()
         self.interoception=InteroceptiveTransducer(self.settings) if self.settings.interoception_enabled else None
+        self.core.homeostatic_target_levels=self.interoception.target_levels if self.interoception else ()
         self.event_log=EventLogger();self.last_action:Action|None=None;self.last_action_result:ActionResult|None=None
 
     def step(self)->TickMetrics:
@@ -93,7 +94,7 @@ class Simulation:
         core=self.core;goal=asdict(core.state.goal) if core.state.goal else None
         world_state=self.world.to_dict()
         resources=self.settings.resource_spawning_enabled or any(o.resource_channel for o in [*self.world.objects,*self.world.held_objects.values()]) or "pending_consequence" in world_state
-        return {"version":7 if self.settings.interoception_enabled else (6 if resources else 5),"seed":self.seed,"tick":self.clock.tick,"world_time_seconds":self.world_time.seconds,"event_sequence":self.event_sequence.value,"random_state":encode_random_state(self.rng.getstate()),"world":world_state,"physiology":self.physiology.to_dict(),**({"resource_config":{name:getattr(self.settings,name) for name in Settings.RESOURCE_FIELDS}} if resources else {}),**({"interoception_config":{name:getattr(self.settings,name) for name in Settings.INTEROCEPTION_FIELDS},"world_config":{name:getattr(self.settings,name) for name in Settings.WORLD_FIELDS}} if self.settings.interoception_enabled else {}),
+        return {"version":7 if self.settings.interoception_enabled else (6 if resources else 5),"causal_config":causal_configuration(self.settings),"seed":self.seed,"tick":self.clock.tick,"world_time_seconds":self.world_time.seconds,"event_sequence":self.event_sequence.value,"random_state":encode_random_state(self.rng.getstate()),"world":world_state,"physiology":self.physiology.to_dict(),**({"resource_config":{name:getattr(self.settings,name) for name in Settings.RESOURCE_FIELDS}} if resources else {}),**({"interoception_config":{name:getattr(self.settings,name) for name in Settings.INTEROCEPTION_FIELDS},"world_config":{name:getattr(self.settings,name) for name in Settings.WORLD_FIELDS}} if self.settings.interoception_enabled else {}),
           "cognitive_graph":core.graph.semantic_to_dict() if semantic_graph and core.backend else core.graph.to_dict(),"entity_state":{"last_action":self.last_action.kind.name if self.last_action else None,
           "last_action_result":self.last_action_result.name if self.last_action_result else None},"core":{"transitions":core.transitions.to_dict(),
           "previous_active":sorted(core.previous_active),"previous_action":core.previous_action.name if core.previous_action else None,

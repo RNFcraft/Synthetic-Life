@@ -9,6 +9,8 @@ class Settings:
     WORLD_FIELDS = ("world_width", "world_height", "object_count", "max_objects")
 
     def __post_init__(self) -> None:
+        if not isinstance(self.homeostatic_valuation_enabled, bool):
+            raise ValueError("homeostatic valuation flag must be boolean")
         if not isinstance(self.interoception_enabled,bool) or not isinstance(self.interoception_bins,int) or isinstance(self.interoception_bins,bool) or not 2 <= self.interoception_bins <= 32:
             raise ValueError("interoception topology must be bounded")
         if not isfinite(self.resource_spawn_interval_seconds) or self.resource_spawn_interval_seconds <= 0:
@@ -51,6 +53,7 @@ class Settings:
     resource_hydration_payload: float = 20.0
     interoception_enabled: bool = False
     interoception_bins: int = 8
+    homeostatic_valuation_enabled: bool = False
     # ORGANISM PHYSIOLOGY (WorldTime only; authoritative owner is Simulation)
     physiology_max_energy: float = 100.0
     physiology_max_nutrients: float = 100.0

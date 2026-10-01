@@ -1,7 +1,7 @@
 from collections import defaultdict
 from config import Settings
 from world.perception import SensoryFrame
-from .patterns import CognitPattern, PrimitiveKey, ProtoPattern, SensoryEventKind, SensoryPrimitive
+from .patterns import CognitPattern, PrimitiveKey, ProtoPattern, SensoryEventKind, SensoryPrimitive, is_spatial_primitive
 
 
 class SensoryEventLayer:
@@ -54,10 +54,15 @@ class SensoryPatternTracker:
         self.last_events=primitives;observation=frozenset(p.structural_key() for p in primitives)
         candidates:set[tuple[tuple[PrimitiveKey,...],bool]]={((key,),False) for key in observation}
         by_anchor:dict[tuple[int,int],list[PrimitiveKey]]=defaultdict(list)
-        for key in observation: by_anchor[(key[0],key[1])].append(key)
+        for key in observation:
+            if is_spatial_primitive(key):by_anchor[(key[0],key[1])].append(key)
+        # Co-occurrence uses no offsets, preserving mixed-domain evidence.
+        internal=sorted(k for k in observation if not is_spatial_primitive(k))
+        external=sorted(k for k in observation if is_spatial_primitive(k))
+        if internal and external:candidates.add((tuple(sorted((internal[0],external[0]))),False))
         for values in by_anchor.values():
             if len(values)>1:candidates.add((tuple(sorted(values))[:3],False))
-        movable=sorted(k for k in observation if k[2] not in {"self","boundary"})
+        movable=sorted(k for k in observation if is_spatial_primitive(k) and k[2] not in {"self","boundary"})
         if movable:
             ax,ay=movable[0][:2];normalized=tuple((x-ax,y-ay,ch,val,change) for x,y,ch,val,change in movable[:3])
             candidates.add((normalized,True))

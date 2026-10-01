@@ -1,11 +1,11 @@
 # Synthetic-Life Architecture
 
-**Current architecture: v0.8.2 opt-in interoception on the frozen v0.8.0 foundation.**
+**Current architecture: v0.8.3 opt-in learned trajectory valuation on the frozen v0.8.0 foundation.**
 
 The physiology owner feeds a pure numeric transducer at the external frame's
 WorldTime. Three bounded levels enter ordinary pattern learning; spatial
-perception sees only external primitives. No physiological need score enters
-choice. Neural micro-receptors remain external-only. See
+perception sees only external primitives. Only learned action-conditioned internal predictions contribute to an opt-in
+bounded beam trajectory component; choice receives no raw physiological need. Neural micro-receptors remain external-only. See
 [the interoception contract](docs/V0_8_2_INTEROCEPTION.md).
 
 Этот документ описывает фактическую текущую архитектуру. Исторический контракт
@@ -372,7 +372,7 @@ Observer не:
 
 ```text
 .sebrain v6       durable learned cognition/native brain
-.seworld v8       exact World + physiology + scheduler + episode/frontiers
+.seworld v10      interoception-enabled exact World + physiology + scheduler + episode/frontiers
 native graph v3   binary authoritative numeric graph
 ```
 
@@ -454,10 +454,13 @@ runtime physiology (N, E, hydration)
   -> ordinary Action
 ```
 
-v0.8.0 реализует только первый блок и read-only seam. Interoception, learned
-consequences и planner valuation остаются последующими milestones. Homeostatic
-tension не должна становиться semantic shortcut `hunger -> find_food`.
-Подробный contract: [`docs/V0_8_HOMEOSTASIS_DESIGN.md`](docs/V0_8_HOMEOSTASIS_DESIGN.md).
+Historical v0.8.0 implemented physiology and its read-only seam. Current
+v0.8.1 adds physical consumables, v0.8.2 non-semantic interoception, and v0.8.3
+learned trajectory valuation from action-conditioned rho. Innate target bins
+are runtime supplied; action consequences are acquired. Internal sensors are
+non-spatial, with ordinary mixed-domain evidence preserved. Cognitive intrinsic
+tension remains separate from physiological deviation. See
+[the v0.8.3 contract](docs/V0_8_3_HOMEOSTATIC_VALUATION.md).
 
 ## 22. Что считать источником истины
 

@@ -72,3 +72,56 @@ def test_full_graph_sync_counter_has_no_increment_path():
                 if isinstance(target, ast.Attribute) and target.attr == "full_graph_sync_calls":
                     writes.append(node)
     assert len(writes) == 1 and isinstance(writes[0], ast.Assign), "full graph synchronization path was added"
+
+
+def test_physiological_policy_dependency_boundaries():
+    for name in ("planning.py", "choice.py", "valuation.py"):
+        path = ROOT / "consciousness" / name
+        assert path.is_file()
+        assert not any(module.startswith(("physiology", "world.objects", "world.native_world"))
+                       for module in _imports(path)), path
+        tree = ast.parse(path.read_text(encoding="utf-8"))
+        attributes = {node.attr for node in ast.walk(tree) if isinstance(node, ast.Attribute)}
+        assert not attributes & {"physiology", "pending_consequence", "nutrient_payload",
+            "hydration_payload", "resource_channel", "homeostatic_projection"}, path
+    path = ROOT / "physiology" / "interoception.py"
+    assert not any(module.startswith(("world", "consciousness")) for module in _imports(path))
+    names = {node.id for node in ast.walk(ast.parse(path.read_text(encoding="utf-8"))) if isinstance(node, ast.Name)}
+    assert not names & {"Action", "ActionType", "Goal", "DeliberativePlanner"}
+
+
+def test_language_has_no_physiological_sensor_domain():
+    for path in (ROOT / "consciousness").glob("language*.py"):
+        assert not any(module.startswith("physiology") for module in _imports(path))
+        tree = ast.parse(path.read_text(encoding="utf-8"))
+        attributes = {node.attr for node in ast.walk(tree) if isinstance(node, ast.Attribute)}
+        assert not attributes & {"previous_internal", "homeostatic_projection", "physiology"}
+        strings = [node.value for node in ast.walk(tree) if isinstance(node, ast.Constant) and isinstance(node.value, str)]
+        assert not any(value.startswith("internal_") for value in strings)
+
+
+def test_observer_cannot_write_internal_state():
+    for path in (ROOT / "ui").rglob("*.py"):
+        assert not any(module.startswith("physiology") for module in _imports(path))
+        tree = ast.parse(path.read_text(encoding="utf-8"))
+        for node in ast.walk(tree):
+            if isinstance(node, (ast.Assign, ast.AnnAssign, ast.AugAssign, ast.Call)):
+                # Explicit production access chains, including mutation calls.
+                chain = ast.unparse(node)
+                assert ".physiology." not in chain and ".interoception." not in chain, path
+    sources = "\n".join((ROOT / "cpp" / part).read_text(encoding="utf-8")
+                        for part in ("src/observer.cpp", "include/se/observer.hpp"))
+    for forbidden in ("apply_consequence", "InteroceptiveTransducer", "Physiology&", "Physiology *"):
+        assert forbidden not in sources
+
+
+def test_spatial_candidate_path_uses_sensor_domain_predicate():
+    from consciousness.patterns import is_spatial_primitive
+    assert not is_spatial_primitive((0, 0, "internal_1", 3, 1))
+    assert is_spatial_primitive((0, 0, "appearance", 3, 1))
+    source = (ROOT / "consciousness" / "sensory.py").read_text(encoding="utf-8")
+    tree = ast.parse(source)
+    movable = next(node for node in ast.walk(tree) if isinstance(node, ast.Assign)
+                   and any(isinstance(t, ast.Name) and t.id == "movable" for t in node.targets))
+    assert any(isinstance(node, ast.Call) and isinstance(node.func, ast.Name)
+               and node.func.id == "is_spatial_primitive" for node in ast.walk(movable))

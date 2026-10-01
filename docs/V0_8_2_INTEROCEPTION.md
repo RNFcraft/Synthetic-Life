@@ -28,5 +28,9 @@ v0.8.2 does not score actions by physiological need.
 
 interoception is sensory evidence, not reward.
 
-v0.8.3 may introduce learned trajectory-level homeostatic valuation; it is not
-implemented here.
+Historical v0.8.2 did not add valuation. Current v0.8.3 implements an opt-in
+learned trajectory component; see [its contract](V0_8_3_HOMEOSTATIC_VALUATION.md).
+The stabilization pass excludes internal primitives from spatial anchors and
+translation matching while retaining singleton and mixed non-spatial evidence.
+Explicit causal field groups now also save perception radius, maintenance and
+spawn cadence, and cognitive settings independent of neural enablement.

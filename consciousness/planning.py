@@ -1,4 +1,7 @@
 from heapq import nsmallest
+from math import prod
+from .valuation import internal_estimate
+from .relation import RelationType
 from world.actions import ActionType
 from .planning_types import CognitiveWork,CognitiveWorkKind,DeliberationSession,Plan
 
@@ -170,9 +173,31 @@ class DeliberativePlanner:
             core.next_goal_id+=1;core.state.goal=child;core.state.subgoals_created+=1;core.state.max_goal_depth=max(core.state.max_goal_depth,child.depth)
             return
 
+    def homeostatic_effects(self, core, state, action):
+        """Only acquired action-conditioned rho can introduce internal effects."""
+        if core.backend:
+            return core.backend.action_effects(state, action)
+        causes = {}
+        for source in sorted(state):
+            for relation in core.graph.outgoing(source):
+                if relation.relation_type is not RelationType.SELF_ACTION or relation.context_id != action.value:
+                    continue
+                q = relation.prediction_probability * relation.confidence
+                if q >= self.settings.prediction_probability_floor:
+                    causes.setdefault(relation.target_id, []).append(q)
+        return {target: 1. - prod(1. - q for q in values) for target, values in sorted(causes.items())}
+
+    def homeostatic_estimate(self, core, state, action, levels=None):
+        targets = getattr(core, "homeostatic_target_levels", ())
+        observed = core.patterns.layer.previous_internal
+        if not (self.settings.interoception_enabled and self.settings.homeostatic_valuation_enabled and targets and observed is not None):
+            return None
+        return internal_estimate(core.graph, self.homeostatic_effects(core, state, action),
+                                 observed if levels is None else levels, targets, self.settings.interoception_bins)
+
     def _search(self,core,current:set[int],tick:int,semantic_cache=None,initial_predictions=None)->Plan:
         epistemic_cache,progress_cache,shared_memory=semantic_cache or ({},{},{})
-        initial_state=frozenset(current);goal=set(core.state.goal.target_cognit_ids) if core.state.goal else set();beam=[((),initial_state,(),0.,1.,())];prediction_cache=({initial_state:initial_predictions} if initial_predictions is not None else {});transition_cache={};loop_cache={};memory_cache={}
+        initial_state=frozenset(current);goal=set(core.state.goal.target_cognit_ids) if core.state.goal else set();beam=[((),initial_state,(),0.,1.,(),core.patterns.layer.previous_internal,0.)];prediction_cache=({initial_state:initial_predictions} if initial_predictions is not None else {});transition_cache={};loop_cache={};memory_cache={}
         memory_index={}
         if shared_memory:memory_index=shared_memory
         else:
@@ -180,11 +205,12 @@ class DeliberativePlanner:
                 for node_id in (memory.cognit_id,memory.place_cognit_id):memory_index[node_id]=max(memory_index.get(node_id,float('-inf')),memory.confidence)
             shared_memory.update(memory_index)
         best=beam[0]
+        self.homeostatic_predictions_considered=0;self.homeostatic_prediction_confidence=0.;self.homeostatic_plan_component=0.
         for _ in range(self.settings.planning_horizon):
             expanded=[]
             if core.backend:
                 layer_states=[];seen=set()
-                for _,state,_,_,_,_ in beam:
+                for _,state,_,_,_,_,_,_ in beam:
                     needs_predictions=state not in prediction_cache
                     needs_effects=core.target_structure is not None and any((state,action) not in progress_cache for action in core.available_actions)
                     if (needs_predictions or needs_effects) and state not in seen:seen.add(state);layer_states.append(state)
@@ -198,7 +224,7 @@ class DeliberativePlanner:
                                 if key not in progress_cache:
                                     predicted_ids={i for i,p in values.items() if p>=.25}
                                     progress_cache[key]=core.target_mismatch-core.belief_scene.predicted_mismatch(core.target_structure,predicted_ids)
-            for actions,state,states,score,confidence,action_values in beam:
+            for actions,state,states,score,confidence,action_values,levels,component in beam:
                 predictions=prediction_cache.get(state)
                 if predictions is None:
                     predictions=core._graph_predictions_for_actions(set(state),core.available_actions);prediction_cache[state]=predictions
@@ -219,11 +245,19 @@ class DeliberativePlanner:
                     if key not in epistemic_cache:epistemic_cache[key]=core.affordances.epistemic(state,action)
                     if key not in progress_cache:progress_cache[key]=core.predicted_target_progress(set(state),action)
                     epistemic=epistemic_cache[key];progress=progress_cache[key];value=score+alignment+.1*conf+.12*memory_conf+.45*epistemic+.8*progress-.12*loop-.03*len(actions)
-                    expanded.append((actions+(action,),next_state,states+(next_state,),value,confidence*max(.05,conf),action_values+(action.value,)))
+                    estimate=self.homeostatic_estimate(core,state,action,levels)
+                    next_levels=levels;next_component=component
+                    if estimate is not None:
+                        self.homeostatic_predictions_considered+=estimate.predictions
+                        self.homeostatic_prediction_confidence=max(self.homeostatic_prediction_confidence,estimate.confidence)
+                        next_levels=estimate.levels
+                        next_component=max(-1.,min(1.,component+confidence*estimate.progress))
+                        value+=.8*(next_component-component)
+                    expanded.append((actions+(action,),next_state,states+(next_state,),value,confidence*max(.05,conf),action_values+(action.value,),next_levels,next_component))
             if not expanded:break
             beam=nsmallest(self.settings.planning_beam_width,expanded,key=lambda x:(-x[3],x[5]))
             if beam[0][3]>best[3]:best=beam[0]
-        actions,state,states,score,confidence,_=best;alignment=len(state&goal)/max(1,len(goal));loop=core.trace.loop_score(state,core.settings.loop_max_period,core.settings.loop_min_repeats) if state else 0.;return Plan(actions,states,score,confidence,alignment,1-confidence,loop,tick,(self.plan.revision+1 if self.plan else 0))
+        actions,state,states,score,confidence,_,_,component=best;self.homeostatic_plan_component=.8*component;alignment=len(state&goal)/max(1,len(goal));loop=core.trace.loop_score(state,core.settings.loop_max_period,core.settings.loop_min_repeats) if state else 0.;return Plan(actions,states,score,confidence,alignment,1-confidence,loop,tick,(self.plan.revision+1 if self.plan else 0))
 
     def committed(self)->None:
         if self.plan and self.plan.actions:self.plan_steps_executed+=1
@@ -233,9 +267,14 @@ class DeliberativePlanner:
         data=asdict(self.plan) if self.plan else None
         if data:
             data["actions"]=[a.name for a in self.plan.actions];data["predicted_states"]=[sorted(x) for x in self.plan.predicted_states]
-        return {"plan":data,"cycles_last":self.cycles_last,"total_cycles":self.total_cycles,"plans_created":self.plans_created,"plans_revised":self.plans_revised,"plans_abandoned":self.plans_abandoned,"plan_steps_executed":self.plan_steps_executed,"last_reason":self.last_reason,"internal_tick":self.internal_tick,"converged":self.converged,"subgoal_signature":self.subgoal_signature,"subgoal_cooldown_until":self.subgoal_cooldown_until}
+        return {**({"homeostatic_diagnostics":self.homeostatic_diagnostics()} if self.settings.interoception_enabled and self.settings.homeostatic_valuation_enabled else {}),"plan":data,"cycles_last":self.cycles_last,"total_cycles":self.total_cycles,"plans_created":self.plans_created,"plans_revised":self.plans_revised,"plans_abandoned":self.plans_abandoned,"plan_steps_executed":self.plan_steps_executed,"last_reason":self.last_reason,"internal_tick":self.internal_tick,"converged":self.converged,"subgoal_signature":self.subgoal_signature,"subgoal_cooldown_until":self.subgoal_cooldown_until}
+
+    def homeostatic_diagnostics(self):
+        return {name:getattr(self,name,0.) for name in ("homeostatic_predictions_considered","homeostatic_prediction_confidence","homeostatic_plan_component")}
 
     def restore(self,data:dict)->None:
+        for name,value in data.get("homeostatic_diagnostics",{}).items():
+            if name in self.homeostatic_diagnostics():setattr(self,name,value)
         raw=data.get("plan")
         if raw:self.plan=Plan(tuple(ActionType[x] for x in raw["actions"]),tuple(frozenset(x) for x in raw["predicted_states"]),raw["score"],raw["confidence"],raw["goal_alignment"],raw["uncertainty"],raw["loop_risk"],raw["created_tick"],raw.get("revision",0))
         for key in ("cycles_last","total_cycles","plans_created","plans_revised","plans_abandoned","plan_steps_executed","last_reason","internal_tick","converged","subgoal_cooldown_until"):setattr(self,key,data.get(key,getattr(self,key)))

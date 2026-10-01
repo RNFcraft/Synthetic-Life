@@ -1,8 +1,11 @@
 # Synthetic-Life
 
-Current implementation: v0.8.2 opt-in nonsemantic interoception. See
-[the v0.8.2 contract](docs/V0_8_2_INTEROCEPTION.md). v0.8.0 remains the frozen
-foundation, v0.8.1 consumables are implemented, and v0.8.3 valuation is planned.
+Current implementation: v0.8.3 opt-in learned trajectory-level homeostatic
+valuation. See [the v0.8.3 contract](docs/V0_8_3_HOMEOSTATIC_VALUATION.md).
+v0.8.0 = frozen physiological foundation; v0.8.1 = physical consumables;
+v0.8.2 = non-semantic interoception; v0.8.3 = learned trajectory valuation.
+Both interoception and dedicated valuation default to OFF.
+Verified on 2026-10-01: 491 pytest passed, CTest Release 2/2 passed.
 
 Synthetic-Life — экспериментальная embodied cognitive architecture на основе
 динамического графа Cognits (`κ`) и Relations (`ρ`). Проект не является
@@ -10,9 +13,9 @@ LLM/Transformer-обёрткой и не использует frozen policy netw
 обучаемый механизм: представления, Relations, память, prediction, Goals и выбор
 действий изменяются во время взаимодействия с World.
 
-## Текущий статус
+## Historical v0.8.0 acceptance
 
-**v0.8.0 — HOMEOSTATIC FOUNDATION — FROZEN.**
+**Historical v0.8.0 — HOMEOSTATIC FOUNDATION — FROZEN.**
 
 Первый этап v0.8 реализует bounded runtime physiology, deterministic WorldTime
 metabolism, action costs, read-only projections и exact persistence:
@@ -20,10 +23,9 @@ metabolism, action costs, read-only projections и exact persistence:
 - full suite: `431` passed (`422` frozen/legacy + `9` v0.8.0);
 - CTest Release: `2/2` PASS;
 - deterministic digest: `8dfb1595eb4bd704f7d0b8780f1e58d725f7ae6b50df47f43937efc45797580c`;
-- `.seworld v8`, `.sebrain v6`, native graph v3.
+- `.seworld v10` with interoception (historical baseline v8), `.sebrain v6`, native graph v3.
 
-Consumable objects, interoception и planner valuation остаются следующими
-v0.8.x этапами. Design:
+Consumables, interoception and learned valuation are implemented in v0.8.1-v0.8.3. Design:
 [`docs/V0_8_HOMEOSTASIS_DESIGN.md`](docs/V0_8_HOMEOSTASIS_DESIGN.md).
 Frozen v0.7 evidence остаётся в
 [`docs/V0_7_6_ARCHITECTURE_FREEZE.md`](docs/V0_7_6_ARCHITECTURE_FREEZE.md).
@@ -112,7 +114,7 @@ SensoryFrame
 Основные форматы:
 
 - `.sebrain v6` — durable learned cognition / native brain payload;
-- `.seworld v8` — exact continuous World + physiology + scheduler/frontiers/pending episode;
+- `.seworld v10` with interoception (historical baseline v8) — exact continuous World + physiology + scheduler/frontiers/pending episode;
 - native binary graph v3 — внутренний persisted numeric graph.
 
 Изменение формата требует явной версии и backward/migration tests. Нельзя

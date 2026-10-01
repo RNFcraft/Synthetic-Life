@@ -27,6 +27,15 @@ class SensoryPrimitive:
 PrimitiveKey = tuple[int, int, str, int, int]
 
 
+def is_internal_primitive(key: PrimitiveKey) -> bool:
+    return key[2].startswith("internal_")
+
+
+def is_spatial_primitive(key: PrimitiveKey) -> bool:
+    """Internal sensor coordinates are placeholders, never retinotopic geometry."""
+    return not is_internal_primitive(key)
+
+
 @dataclass(slots=True)
 class OnlineSpatialConstraint:
     mean:float=0.;m2:float=0.;support:int=0
@@ -87,7 +96,9 @@ class CognitPattern:
     def match(self, observation: frozenset[PrimitiveKey]) -> float:
         if not self.is_translation_tolerant:return sum(p in observation for p in self.participants)/max(1,len(self.participants))
         if not self.participants:return 0.0
-        observed=list(observation);best=0.0
+        if not all(is_spatial_primitive(p) for p in self.participants):
+            return sum(p in observation for p in self.participants)/max(1,len(self.participants))
+        observed=sorted(p for p in observation if is_spatial_primitive(p));best=0.0
         for anchor in observed:
             first=self.participants[0]
             if anchor[2:]!=first[2:]:continue

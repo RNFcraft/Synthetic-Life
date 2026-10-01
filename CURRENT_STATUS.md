@@ -1,15 +1,21 @@
 # Synthetic-Life — Current Status
 
-## Current implementation: v0.8.2
+## Current implementation: v0.8.3
 
-v0.8.0 is the frozen foundation; v0.8.1 consumables and v0.8.2 opt-in
-nonsemantic interoception are implemented. v0.8.3 action valuation is planned.
-Interoception enters ordinary pattern learning, not a direct reward or planner
-score. See [v0.8.2 details](docs/V0_8_2_INTEROCEPTION.md). Snapshot v7 and
-continuous `.seworld` v10 apply when enabled; `.sebrain` stays v6. The
-acceptance numbers below describe the historical v0.8.0 freeze.
+v0.8.0 is the frozen physiological foundation; v0.8.1 physical consumables,
+v0.8.2 non-semantic interoception, and v0.8.3 learned trajectory-level
+homeostatic valuation are implemented. Valuation defaults OFF. Supported
+SELF_ACTION Relations predict internal sensory bins; bounded predicted
+change in target-bin deviation contributes to beam ranking. No resource or
+physiological action rule exists. See [v0.8.3](docs/V0_8_3_HOMEOSTATIC_VALUATION.md).
+Snapshot v7 / continuous .seworld v10 apply with interoception;
+.sebrain v6 and native graph v3 are unchanged. Additive causal configuration
+restores non-default topology, cadence and cognitive settings before construction.
 
-Current full verification: 465 pytest passed and CTest Release 2/2 passed.
+Full verification on 2026-10-01: **491 pytest passed; CTest Release 2/2 passed**.
+`python tools/verify.py --full` completed successfully, including native observer
+build, import/headless smokes, full pytest and CTest.
+Details: [testing](docs/TESTING.md).
 
 ## v0.8.0 — HOMEOSTATIC FOUNDATION — FROZEN
 
@@ -23,7 +29,7 @@ digestion, hydration loss, successful action costs, and zero-energy brownout
 are deterministic. Core/planner and observer receive immutable projections and
 cannot mutate physiology or turn tension into an action shortcut.
 
-## Acceptance
+## Historical v0.8.0 acceptance
 
 ```text
 full pytest                 431 passed
@@ -49,9 +55,9 @@ Design and boundaries:
 
 ## Not implemented yet
 
-v0.8.0 does not add consumable World objects, interoceptive receptors,
-homeostatic planner valuation, learned physiological consequences, or delayed
-credit assignment. These remain staged v0.8.x work in [`ROADMAP.md`](ROADMAP.md).
+General delayed credit assignment, semantic hunger/thirst, innate food/water
+knowledge, neural interoception and long-horizon survival guarantees remain
+outside this milestone. See the v0.8.3 limitations and proposed v0.8.4 scope.
 
 ## Frozen foundation
 

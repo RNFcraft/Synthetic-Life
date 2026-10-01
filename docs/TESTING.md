@@ -1,12 +1,19 @@
 # Testing and Repository Verification
 
-**Current implementation: v0.8.2 opt-in interoception; historical audit below.**
+**Current implementation: v0.8.3 opt-in learned trajectory valuation; historical audit below.**
 
-The focused tests are `tests/test_v082_interoception.py`. Full verification is
+The focused tests are `tests/test_v082_interoception.py` and
+`tests/test_v083_homeostatic_valuation.py`. Full verification is
 `python tools/verify.py --full`; its outcome is separate from the historical
 v0.7.5 audit count below.
 
-Latest full verification: 465 pytest passed; CTest Release 2/2 passed.
+Full verification on 2026-10-01: **491 pytest passed; CTest Release 2/2 passed**.
+`python tools/verify.py --full` completed successfully, including native observer
+build, import/headless smokes, full pytest and CTest.
+
+Targeted verification: 64 passed across v0.8.1 persistence/security, consumables,
+v0.8.2 interoception, v0.8.3 valuation and architecture boundaries. Historical
+pre-v0.8.3 full run: 465 pytest passed; CTest Release 2/2 passed.
 
 Полный v0.7.5 audit: `422` pytest PASS, CTest Release `2/2` PASS, все `17`
 version groups v0.2–v0.6.6 PASS. Подробности:
@@ -62,7 +69,7 @@ configure. На Windows используется `-A x64`.
 | `test_v064*.py` | integration | v0.6.4 sensory transduction |
 | `test_v065*.py` | architecture/integration | v0.6.5 neural behavior |
 | `test_v066*.py` | long-life/performance regression | v0.6.6 |
-| `test_v080*.py` | physiology unit/integration | v0.8.0 |
+| `test_v080*.py` | physiology unit/integration | Historical v0.8.0 |
 | `test_v081*.py` | security, resource parity and continuation | v0.8.1 |
 | `test_architecture_boundaries.py` | architecture | dependency/causal guards |
 | `test_verify_tool.py` | tooling unit | verify modes/failure propagation |
@@ -149,7 +156,7 @@ Assemblies      6
 Обязательные contracts:
 
 - `.sebrain v6`;
-- `.seworld v8` (v7 migration remains covered);
+- `.seworld v10` with interoception; v8 historical baseline (migration remains covered);
 - native graph v3;
 - checksum/version validation;
 - pending scheduler continuation;
