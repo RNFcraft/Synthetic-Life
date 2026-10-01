@@ -92,7 +92,7 @@ class ContinuousRuntime:
                 rows=self.simulation.core.process_continuous_assembly_bridge(now);self.neural_bridge_deliveries.extend(rows)
             self._schedule_next_neural_bridge()
         elif kind==RuntimeEventType.WORLD_ACTION_COMPLETE:
-            action=Action(ActionType(event.payload));physical_sequence=self.simulation.event_sequence.next();intent=ActionIntent(action,WorldTime(now),physical_sequence);result=self.simulation.world.apply_intent(intent);self.simulation.physiology.apply_action(action.kind,result is ActionResult.SUCCESS);self.simulation.apply_world_consequence();self.simulation.core.homeostatic_projection=self.simulation.physiology.snapshot();self.simulation.last_action=action;self.simulation.last_action_result=result;self.actions_completed+=1;self.scheduler.schedule(now,RuntimeEventType.SENSORY_CHANGE)
+            action=Action(ActionType(event.payload));physical_sequence=self.simulation.event_sequence.next();intent=ActionIntent(action,WorldTime(now),physical_sequence);result=self.simulation.world.apply_intent(intent);self.simulation.physiology.apply_action(action.kind,result is ActionResult.SUCCESS);self.simulation.apply_world_consequence();self.simulation.core.record_action_outcome(action.kind,result is ActionResult.SUCCESS);self.simulation.core.homeostatic_projection=self.simulation.physiology.snapshot();self.simulation.last_action=action;self.simulation.last_action_result=result;self.actions_completed+=1;self.scheduler.schedule(now,RuntimeEventType.SENSORY_CHANGE)
         elif kind==RuntimeEventType.WORLD_SPAWN:
             if event.payload==1:
                 world=self.simulation.world;settings=self.simulation.settings;before=self._sensory_signature()

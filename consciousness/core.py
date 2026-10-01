@@ -47,6 +47,7 @@ class SyntheticEntityCore(CoreLearningMixin):
         self.patterns = SensoryPatternTracker(settings)
         self.wave = ActivityWaveEngine(settings)
         self.transitions = TransitionModel(settings.relation_evidence_window)
+        self.transitions.timing_capacity = settings.max_relations * 4
         self.trace = WorkingTrace(settings.working_memory_size)
         self.state = ConsciousnessState()
         self.perception = PerceptualContinuityEngine(settings)
@@ -191,12 +192,21 @@ class SyntheticEntityCore(CoreLearningMixin):
             extra=self._propagate(composite_seeds,cognitive_tick);current|=set(extra.active_ids)
             self.last_wave=WaveResult(frozenset(current),min(self.settings.max_wave_energy,self.last_wave.energy+extra.energy),self.last_wave.steps+extra.steps,self.last_wave.transmitted_energy+extra.transmitted_energy)
         self.dirty_cognits.update(matched);self.dirty_cognits.update(current)
-        self._prediction_error(current);self._update_relation_outcomes(frame.tick,current)
-        if self.backend and self.previous_action is not None:
+        self._prediction_error(current)
+        if self.settings.delayed_homeostatic_prediction_enabled:
+            observed = set(memory_active) | relational_active
+            observed.update(i for i in matched if self.graph.nodes.get(i) and
+                            self.graph.nodes[i].pattern and
+                            set(self.graph.nodes[i].pattern.participants).issubset(observation))
+            now = float(world_time if world_time is not None else internal.world_time if internal is not None else frame.tick)
+            self._learn_timed_observation(observed, now, frame.tick)
+        else:
+            self._update_relation_outcomes(frame.tick,current)
+        if not self.settings.delayed_homeostatic_prediction_enabled and self.backend and self.previous_action is not None:
             priority=lambda i:(0 if self.graph.nodes.get(i) and self.graph.nodes[i].kind=='BOUND_RELATION' else 1,i)
             before=[i-1 for i in sorted(self.previous_active,key=priority)];after=[i-1 for i in sorted(current,key=priority)]
             self.backend.update_transition_evidence(before,self.previous_action,after);self.backend.materialize(frame.tick,before,self.previous_action,after)
-        elif not self.backend:
+        elif not self.settings.delayed_homeostatic_prediction_enabled and not self.backend:
             self.transitions.observe(self.previous_active,self.previous_action,current);self._materialize_relations(frame.tick,current)
         self._update_intrinsic_state(current,matched,observation)
         self._update_goal(current)

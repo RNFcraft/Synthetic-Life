@@ -157,3 +157,21 @@ def test_brain_sensor_metadata_has_no_episode_state_access():
     returns = [node for node in ast.walk(contract) if isinstance(node,ast.Return)]
     assert len(returns) == 1 and isinstance(returns[0].value,ast.Dict)
     assert {key.value for key in returns[0].value.keys} == {"schema","encoding","channels","bins"}
+
+
+def test_delayed_prediction_has_only_graph_and_sensor_domain_inputs():
+    path=ROOT / "consciousness" / "temporal_prediction.py"
+    tree=ast.parse(path.read_text(encoding="utf-8"))
+    assert not any(module.startswith(("physiology","world","simulation")) for module in _imports(path))
+    attributes={node.attr for node in ast.walk(tree) if isinstance(node,ast.Attribute)}
+    assert not attributes & {"physiology","world","resource_nutrient_payload","resource_hydration_payload",
+                             "energy","nutrients","hydration","homeostatic_projection"}
+    assert not attributes & {"INTERACT_UP","INTERACT_DOWN","INTERACT_LEFT","INTERACT_RIGHT"}
+    source=path.read_text(encoding="utf-8")
+    assert "RelationType.SEQUENTIAL" in source and "RelationType.SELF_ACTION" in source
+    assert "is_internal_primitive" in source
+    cpp=(ROOT / "cpp/src/native_brain_engine.cpp").read_text(encoding="utf-8")
+    start=cpp.index("void NativeBrainEngine::observe_transition_delay")
+    stop=cpp.index("void NativeBrainEngine::clear_transition_evidence",start)
+    block=cpp[start:stop]
+    assert not any(word in block for word in ("homeostatic","Goal","reward","digestion","nutrient","hydration"))

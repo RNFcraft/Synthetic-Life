@@ -1,6 +1,16 @@
 # Testing and Repository Verification
 
-**Current implementation: v0.8.3 opt-in learned trajectory valuation; historical audit below.**
+**Current implementation: v0.8.4 delayed and calibrated homeostatic learning.**
+
+Verified on 2026-10-01: **549 pytest passed; CTest Release 2/2 passed** via `python tools/verify.py --full`. Required targeted suites: **122 passed**. Native Release/observer build, import/headless smokes and `git diff --check` passed.
+
+New acceptance: `tests/test_v084_delayed_homeostatic_learning.py` covers native physical
+digestion and counterfactual, ordinary graph acquisition, delayed planner ranking,
+calibration, time/depth/OFF ablations, failures, duplicates, Python/native parity,
+hash seeds 1/777, learned brain timing and exact world/frontier continuation.
+See [the v0.8.4 contract](V0_8_4_DELAYED_HOMEOSTATIC_LEARNING.md).
+
+Historical v0.8.3 stabilization evidence follows.
 
 v0.8.3 stabilization adds `tests/test_brain_sensor_contract.py`, structured
 preflight/metadata guards, a controlled native physical vertical regression,

@@ -11,9 +11,22 @@ class TransitionModel:
         self.action_pair_counts:Counter[tuple[int,ActionType,int]]=Counter();self.action_counts:Counter[ActionType]=Counter()
         self.outgoing_targets:dict[int,set[int]]=defaultdict(set)
         self.window_size=window_size;self.history:deque[tuple[set[int],ActionType,set[int]]]=deque()
+        self.timings = {}
+        self.timing_capacity = 400000
 
-    def observe(self,previous:set[int],action:ActionType|None,current:set[int])->None:
-        if action is None:return
+    def observe(self,previous:set[int],action:ActionType|None,current:set[int],elapsed=None)->None:
+        if action is None and elapsed is None:return
+        if elapsed is not None:
+            from math import isfinite
+            if not isfinite(elapsed) or elapsed < 0:raise ValueError("invalid transition elapsed time")
+            for source in sorted(previous):
+                for target in sorted(current):
+                    if source == target:continue
+                    key = (source, target, action.value if action else 0)
+                    if key not in self.timings and len(self.timings)>=self.timing_capacity:continue
+                    n, mean, m2 = self.timings.get(key, (0, 0., 0.))
+                    delta = elapsed - mean; n += 1; mean += delta / n
+                    self.timings[key] = (n, mean, m2 + delta * (elapsed - mean))
         self.history.append((set(previous),action,set(current)))
         self.total_steps+=1;self.action_counts[action]+=1
         self.target_counts.update(current);self.source_counts.update(previous)
@@ -78,16 +91,28 @@ class TransitionModel:
 
     def to_dict(self)->dict:
         return {"total_steps":self.total_steps,"source_counts":dict(self.source_counts),"target_counts":dict(self.target_counts),
-          "pair_counts":[[s,t,n] for (s,t),n in self.pair_counts.items()],"action_source_counts":[[s,a.name,n] for (s,a),n in self.action_source_counts.items()],
-          "action_pair_counts":[[s,a.name,t,n] for (s,a,t),n in self.action_pair_counts.items()],"action_counts":{a.name:n for a,n in self.action_counts.items()},
-          "window_size":self.window_size,"history":[[sorted(p),a.name,sorted(c)] for p,a,c in self.history]}
+          "pair_counts":[[s,t,n] for (s,t),n in self.pair_counts.items()],"action_source_counts":[[s,a.name if a else None,n] for (s,a),n in self.action_source_counts.items()],
+          "action_pair_counts":[[s,a.name if a else None,t,n] for (s,a,t),n in self.action_pair_counts.items()],"action_counts":{a.name if a else "PASSIVE":n for a,n in self.action_counts.items()},
+          "window_size":self.window_size,"history":[[sorted(p),a.name if a else None,sorted(c)] for p,a,c in self.history],
+          **({"timings":[[*key,*value] for key,value in sorted(self.timings.items())]} if self.timings else {})}
 
     def restore(self,data:dict)->None:
         self.total_steps=data.get("total_steps",0);self.source_counts=Counter({int(k):v for k,v in data.get("source_counts",{}).items()});self.target_counts=Counter({int(k):v for k,v in data.get("target_counts",{}).items()})
         self.pair_counts=Counter({(s,t):n for s,t,n in data.get("pair_counts",[])})
-        self.action_source_counts=Counter({(s,ActionType[a]):n for s,a,n in data.get("action_source_counts",[])})
-        self.action_pair_counts=Counter({(s,ActionType[a],t):n for s,a,t,n in data.get("action_pair_counts",[])})
-        self.action_counts=Counter({ActionType[a]:n for a,n in data.get("action_counts",{}).items()})
+        self.action_source_counts=Counter({(s,ActionType[a] if a else None):n for s,a,n in data.get("action_source_counts",[])})
+        self.action_pair_counts=Counter({(s,ActionType[a] if a else None,t):n for s,a,t,n in data.get("action_pair_counts",[])})
+        self.action_counts=Counter({ActionType[a] if a != "PASSIVE" else None:n for a,n in data.get("action_counts",{}).items()})
         self.outgoing_targets=defaultdict(set)
         for source,target in self.pair_counts:self.outgoing_targets[source].add(target)
-        self.window_size=data.get("window_size",self.window_size);self.history=deque((set(p),ActionType[a],set(c)) for p,a,c in data.get("history",[]))
+        self.window_size=data.get("window_size",self.window_size);self.history=deque((set(p),ActionType[a] if a else None,set(c)) for p,a,c in data.get("history",[]))
+        from math import isfinite
+        timings={}
+        rows=data.get("timings",[])
+        if len(rows)>self.timing_capacity:raise ValueError("temporal knowledge capacity exceeded")
+        for s,t,a,n,mean,m2 in rows:
+            if any(type(value) not in (int,float) or not isfinite(value) or value<0 for value in (s,t,a,n,mean,m2)):
+                raise ValueError("invalid temporal knowledge")
+            if any(value!=int(value) for value in (s,t,a,n)) or s<1 or t<1 or a>255 or n<1 or (s,t,a) in timings:
+                raise ValueError("invalid temporal endpoint/support")
+            timings[s,t,a]=(n,mean,m2)
+        self.timings=timings

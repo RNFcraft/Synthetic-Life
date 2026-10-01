@@ -55,8 +55,8 @@ class NativeGraphBackend:
     def propagate(self,seeds,cognitive_tick):self.ffi_calls+=1;return self.engine.propagate(list(seeds),cognitive_tick)
     def predict(self,active,action):self.ffi_calls+=1;return self.engine.predict_compact(list(active),action.value)
     def predict_actions_batch(self,active,actions):self.ffi_calls+=1;return self.engine.predict_actions_batch(list(active),[a.value for a in actions])
-    def update_transition_evidence(self,before,action,after):self.ffi_calls+=1;self.engine.update_transition_evidence(list(before),action.value,list(after))
-    def materialize(self,world_tick,before,action,after):self.ffi_calls+=1;return self.engine.materialize_current(self.evidence_config,world_tick,list(before),action.value,list(after),self.settings.max_new_relations_per_tick,self.settings.max_relations,self.settings.relation_confidence_decay)
+    def update_transition_evidence(self,before,action,after):self.ffi_calls+=1;self.engine.update_transition_evidence(list(before),action.value if action else 0,list(after))
+    def materialize(self,world_tick,before,action,after):self.ffi_calls+=1;return self.engine.materialize_current(self.evidence_config,world_tick,list(before),action.value if action else 0,list(after),self.settings.max_new_relations_per_tick,self.settings.max_relations,self.settings.relation_confidence_decay)
     def cognit_state_one(self,node_id):
         """Прочитать 12-field native state для одного 1-based Cognit ID."""
         row=self._state_cache.get(node_id)

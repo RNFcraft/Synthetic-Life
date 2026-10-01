@@ -749,6 +749,10 @@ PYBIND11_MODULE(_native_brain, m) {
       .def("restore_continuous_relation_time_state",
            &NativeBrainEngine::restore_continuous_relation_time_state,
            py::arg("rows"), py::arg("work") = 0)
+      .def("observe_transition_delay", [](NativeBrainEngine &e, const std::vector<std::uint32_t> &before, int action, const std::vector<std::uint32_t> &after, double elapsed) {e.observe_transition_delay(before,std::uint8_t(action),after,elapsed);})
+      .def("timed_successors", [](NativeBrainEngine &e, const std::vector<std::uint32_t> &active, int action, std::uint32_t support, double floor) {return e.timed_successors(active,std::uint8_t(action),support,floor);})
+      .def("temporal_state", &NativeBrainEngine::temporal_state)
+      .def("restore_temporal_state", &NativeBrainEngine::restore_temporal_state)
       .def("update_transition_evidence",
            [](NativeBrainEngine &e, const std::vector<std::uint32_t> &before,
               int action, const std::vector<std::uint32_t> &after) {

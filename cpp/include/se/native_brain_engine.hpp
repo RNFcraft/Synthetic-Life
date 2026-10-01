@@ -6,6 +6,7 @@
 #include "neurodynamic_substrate.hpp"
 #include <array>
 #include <deque>
+#include <map>
 #include <limits>
 #include <stdexcept>
 #include <string>
@@ -113,6 +114,10 @@ public:
   std::vector<double> cognit_elapsed_times(std::span<const std::uint32_t> ids) const;
   std::tuple<std::vector<std::array<double, 6>>, std::uint64_t> continuous_relation_time_state() const;
   void restore_continuous_relation_time_state(const std::vector<std::array<double, 6>> &, std::uint64_t work = 0);
+  void observe_transition_delay(std::span<const std::uint32_t> before, std::uint8_t action, std::span<const std::uint32_t> after, double elapsed);
+  std::vector<std::array<double, 4>> timed_successors(std::span<const std::uint32_t> active, std::uint8_t action, std::uint32_t minimum_support, double floor) const;
+  std::vector<std::array<double, 6>> temporal_state() const;
+  void restore_temporal_state(const std::vector<std::array<double, 6>> &rows);
   void update_transition_evidence(std::span<const std::uint32_t> before, std::uint8_t action, std::span<const std::uint32_t> after);
   std::vector<MaterializedRelation> materialize_relations(const EvidenceConfig &, std::uint64_t world_tick);
   std::vector<MaterializedRelation> materialize_current(const EvidenceConfig &, std::uint64_t world_tick, std::span<const std::uint32_t> before, std::uint8_t action, std::span<const std::uint32_t> after, std::uint32_t max_new, std::uint32_t max_relations, double confidence_decay);
@@ -185,6 +190,8 @@ private:
     std::uint8_t action{};
     bool occupied{};
   };
+  // Delay moments extend existing graph evidence; no second prediction learner.
+  std::map<std::tuple<std::uint32_t,std::uint32_t,std::uint8_t>,std::array<double,3>> temporal_timing_;
   mutable CognitiveGraph graph_;
   std::uint64_t evidence_steps_{}, source_events_{}, target_events_{}, candidate_pair_updates_{};
   std::size_t evidence_window_{512}, evidence_cursor_{};

@@ -18,7 +18,13 @@ WORLD_CAUSAL_FIELDS = (
     'spawn_interval_max',
 )
 
-RUNTIME_CAUSAL_FIELDS = (
+V084_CAUSAL_FIELDS = (
+    'delayed_homeostatic_prediction_enabled', 'planning_passive_prediction_depth',
+    'planning_prediction_time_horizon', 'planning_time_discount',
+    'planning_temporal_probability_floor',
+)
+
+RUNTIME_CAUSAL_FIELDS = V084_CAUSAL_FIELDS + (
     'world_tick_interval',
     'continuous_maintenance_interval_seconds',
     'homeostatic_valuation_enabled',
@@ -211,6 +217,9 @@ def restore_settings(state, explicit=None, sensory=None):
     for label, values, fields in sources:
         if values is None:
             continue
+        if label == "runtime" and set(values) == set(fields) - set(V084_CAUSAL_FIELDS):
+            # Exact historical v0.8.3 group, not a permissive missing-field rule.
+            values = {**{name:getattr(Settings(),name) for name in V084_CAUSAL_FIELDS}, **values}
         if set(values) != set(fields):
             raise ValueError(f"invalid saved {label} configuration")
         for name, value in values.items():

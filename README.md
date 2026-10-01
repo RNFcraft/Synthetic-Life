@@ -1,11 +1,12 @@
 # Synthetic-Life
 
-Current implementation: v0.8.3 opt-in learned trajectory-level homeostatic
-valuation. See [the v0.8.3 contract](docs/V0_8_3_HOMEOSTATIC_VALUATION.md).
-v0.8.0 = frozen physiological foundation; v0.8.1 = physical consumables;
-v0.8.2 = non-semantic interoception; v0.8.3 = learned trajectory valuation.
-Both interoception and dedicated valuation default to OFF.
-v0.8.3 stabilization verified on 2026-10-01: 516 pytest passed, CTest Release 2/2 passed.
+Current implementation: v0.8.4 opt-in delayed and calibrated homeostatic
+consequence learning. See [the v0.8.4 contract](docs/V0_8_4_DELAYED_HOMEOSTATIC_LEARNING.md).
+v0.8.0 = frozen physiology; v0.8.1 = consumables; v0.8.2 = interoception;
+v0.8.3 = learned trajectory valuation; v0.8.4 = learned passive delays and calibration.
+Interoception, valuation and delayed prediction default OFF. v0.8.5 curriculum remains planned.
+
+Verified on 2026-10-01: **549 pytest passed; CTest Release 2/2 passed** via `python tools/verify.py --full`. Required targeted suites: **122 passed**. Native Release/observer build, import/headless smokes and `git diff --check` passed.
 
 v0.8.3 stabilization fix adds fail-closed brain internal sensor topology
 compatibility. Learned knowledge transfers only with a matching encoding
@@ -30,7 +31,7 @@ metabolism, action costs, read-only projections и exact persistence:
 - deterministic digest: `8dfb1595eb4bd704f7d0b8780f1e58d725f7ae6b50df47f43937efc45797580c`;
 - `.seworld v10` with interoception (historical baseline v8), `.sebrain v6`, native graph v3.
 
-Consumables, interoception and learned valuation are implemented in v0.8.1-v0.8.3. Design:
+Consumables, interoception and learned valuation are implemented in v0.8.1-v0.8.4. Design:
 [`docs/V0_8_HOMEOSTASIS_DESIGN.md`](docs/V0_8_HOMEOSTASIS_DESIGN.md).
 Frozen v0.7 evidence остаётся в
 [`docs/V0_7_6_ARCHITECTURE_FREEZE.md`](docs/V0_7_6_ARCHITECTURE_FREEZE.md).

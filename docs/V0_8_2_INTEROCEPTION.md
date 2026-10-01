@@ -28,7 +28,7 @@ v0.8.2 does not score actions by physiological need.
 
 interoception is sensory evidence, not reward.
 
-Historical v0.8.2 did not add valuation. Current v0.8.3 implements an opt-in
+Historical v0.8.2 did not add valuation. v0.8.3 introduced an opt-in
 learned trajectory component; see [its contract](V0_8_3_HOMEOSTATIC_VALUATION.md).
 The stabilization pass excludes internal primitives from spatial anchors and
 translation matching while retaining singleton and mixed non-spatial evidence.
@@ -42,3 +42,5 @@ receiving encoding must match bins and channel order/version before graph
 activation. Legacy external-only brains load; legacy internal brains with no
 contract fail closed. Brain v6 stays unchanged; no current internal levels or
 body state enter this metadata. See [v0.8.3](V0_8_3_HOMEOSTATIC_VALUATION.md).
+
+Current v0.8.4 adds [delayed and calibrated consequence prediction](V0_8_4_DELAYED_HOMEOSTATIC_LEARNING.md) using these same sensor bins and the unchanged fail-closed brain contract.

@@ -1236,8 +1236,58 @@ std::vector<MaterializedRelation> NativeBrainEngine::materialize_current(const E
     }
   };
   for (auto s : sources) process(s, RelationType::Sequential);
-  for (auto s : before) process(s, RelationType::SelfAction);
+  if (action) for (auto s : before) process(s, RelationType::SelfAction);
   return out;
+}
+void NativeBrainEngine::observe_transition_delay(std::span<const std::uint32_t> before, std::uint8_t action, std::span<const std::uint32_t> after, double elapsed) {
+  if (!std::isfinite(elapsed) || elapsed < 0) throw std::invalid_argument("invalid observed WorldTime delay");
+  std::set<std::uint32_t> sources(before.begin(),before.end()), targets(after.begin(),after.end());
+  for (auto source : sources) for (auto target : targets) {
+    if (source == target || !cognit_alive(source) || !cognit_alive(target)) continue;
+    auto key = std::make_tuple(source,target,action);
+    if (!temporal_timing_.contains(key) && temporal_timing_.size() >= relation_capacity_ * 4) continue;
+    auto &stats = temporal_timing_[key];
+    auto delta = elapsed - stats[1];
+    stats[0] += 1; stats[1] += delta / stats[0]; stats[2] += delta * (elapsed - stats[1]);
+  }
+}
+std::vector<std::array<double,4>> NativeBrainEngine::timed_successors(std::span<const std::uint32_t> active, std::uint8_t action, std::uint32_t minimum_support, double floor) const {
+  std::vector<std::array<double,4>> rows;
+  std::set<std::uint32_t> sources(active.begin(),active.end());
+  for (auto source : sources) {
+    if (!cognit_alive(source)) continue;
+    graph_.relations.for_each(source,[&](const Edge &edge, RelationHandle handle) {
+      if (edge.type != (action ? RelationType::SelfAction : RelationType::Sequential) || edge.action != action || !cognit_alive(edge.target)) return;
+      auto found = temporal_timing_.find({source,edge.target,action});
+      if (found == temporal_timing_.end() || found->second[0] < minimum_support) return;
+      const auto &stats = found->second;
+      auto variance = stats[2] / std::max(1.,stats[0]-1.);
+      auto record = graph_.relations.state(source,handle);
+      auto q = edge.prediction * edge.confidence * (1.-record.contradiction) / (1.+variance / std::max(1e-9,stats[1]*stats[1]));
+      if (q >= floor) rows.push_back({double(source),double(edge.target),q,stats[1]});
+    });
+  }
+  std::sort(rows.begin(),rows.end()); return rows;
+}
+std::vector<std::array<double,6>> NativeBrainEngine::temporal_state() const {
+  std::vector<std::array<double,6>> rows;
+  for (const auto &[key,stats] : temporal_timing_) {
+    auto [source,target,action] = key;
+    if (cognit_alive(source) && cognit_alive(target)) rows.push_back({double(source),double(target),double(action),stats[0],stats[1],stats[2]});
+  }
+  return rows;
+}
+void NativeBrainEngine::restore_temporal_state(const std::vector<std::array<double,6>> &rows) {
+  if (rows.size() > relation_capacity_*4) throw std::invalid_argument("temporal knowledge capacity exceeded");
+  decltype(temporal_timing_) restored;
+  for (const auto &row : rows) {
+    for (auto value : row) if (!std::isfinite(value) || value < 0) throw std::invalid_argument("invalid temporal knowledge");
+    if (row[0]!=std::floor(row[0]) || row[1]!=std::floor(row[1]) || row[2]!=std::floor(row[2]) || row[2]>255 || row[3]!=std::floor(row[3]) || row[3]<1 || row[0]>=cognit_count() || row[1]>=cognit_count()) throw std::invalid_argument("invalid temporal endpoint/support");
+    auto key=std::make_tuple(std::uint32_t(row[0]),std::uint32_t(row[1]),std::uint8_t(row[2]));
+    if (!cognit_alive(std::get<0>(key)) || !cognit_alive(std::get<1>(key)) || restored.contains(key)) throw std::invalid_argument("invalid temporal live endpoint/duplicate");
+    restored[key] = {row[3],row[4],row[5]};
+  }
+  temporal_timing_ = std::move(restored);
 }
 void NativeBrainEngine::clear_transition_evidence() {
   evidence_steps_ = 0;
@@ -1332,7 +1382,9 @@ void NativeBrainEngine::save_graph(const std::string &path) const {
   append_vector(b, graph_.low_retention_ticks);
   auto relations = graph_.relations.snapshot();
   append_vector(b, relations);
-  FileHeader h{{'S', 'E', 'B', 'R', 'A', 'I', 'N', '\0'}, 3, b.size(), checksum(b)};
+  auto timing = temporal_state();
+  if (!timing.empty()) append_vector(b,timing);
+  FileHeader h{{'S', 'E', 'B', 'R', 'A', 'I', 'N', '\0'}, timing.empty() ? 3u : 4u, b.size(), checksum(b)};
   std::ofstream f(path, std::ios::binary | std::ios::trunc);
   if (!f)
     throw std::runtime_error("cannot open graph for writing");
@@ -1351,7 +1403,7 @@ void NativeBrainEngine::load_graph(const std::string &path) {
   f.seekg(0);
   FileHeader h;
   f.read((char *)&h, sizeof(h));
-  if (std::memcmp(h.magic, "SEBRAIN", 7) || h.version != 3 || h.payload_size != (std::uint64_t)(size - (std::streamoff)sizeof(h)))
+  if (std::memcmp(h.magic, "SEBRAIN", 7) || (h.version != 3 && h.version != 4) || h.payload_size != (std::uint64_t)(size - (std::streamoff)sizeof(h)))
     throw std::runtime_error("invalid graph header");
   std::vector<char> b((std::size_t)h.payload_size);
   f.read(b.data(), b.size());
@@ -1368,6 +1420,7 @@ void NativeBrainEngine::load_graph(const std::string &path) {
   auto ages = read_vector<std::uint32_t>(b, o);
   auto low = read_vector<std::uint32_t>(b, o);
   auto relations = read_vector<PersistedRelation>(b, o);
+  auto timing = h.version == 4 ? read_vector<std::array<double,6>>(b,o) : std::vector<std::array<double,6>>{};
   if(relations.size()>relation_capacity_)throw std::runtime_error("saved graph exceeds configured relation capacity");
   auto n = activity.size();
   if (o != b.size() || threshold.size() != n || confidence.size() != n || utility.size() != n || trace.size() != n || last.size() != n || refractory.size() != n || flags.size() != n || homeostatic.size() != n || target.size() != n || contribution.size() != n || ages.size() != n || low.size() != n)
@@ -1391,6 +1444,7 @@ void NativeBrainEngine::load_graph(const std::string &path) {
   ++state_revision_;
   dead_cognits_ = std::count_if(graph_.flags.begin(), graph_.flags.end(), [](auto x) { return x & 1; });
   graph_.relations.restore(n, relations);
+  restore_temporal_state(timing);
   dirty_relations_ = graph_.relations.handles();
   relation_confidence_cache_tick_.clear();
   relation_confidence_cache_base_.clear();

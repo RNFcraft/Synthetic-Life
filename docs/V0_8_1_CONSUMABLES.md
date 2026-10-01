@@ -34,8 +34,7 @@ the pickle. Container framing remains version 1.
 ## Planned later
 
 v0.8.2 now adds [bounded nonsemantic interoception](V0_8_2_INTEROCEPTION.md).
-v0.8.3 action valuation remains planned. The current core has no resource
-reward, resource action rule, or delayed physiological consequence model.
+v0.8.3 action valuation and [v0.8.4 delayed prediction](V0_8_4_DELAYED_HOMEOSTATIC_LEARNING.md) are implemented, opt-in. No resource reward or semantic action rule is introduced.
 
 `BeliefScene.best_binding()` currently enumerates `m!/(m-n)!` participant
 assignments and up to eight transforms per assignment. Larger scenes can

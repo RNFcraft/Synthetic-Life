@@ -1089,7 +1089,7 @@ extension without relying on commit history or external conversations.
 
 # v0.8 — Homeostatic Motivation and First Survival Learning
 
-**Status: IN PROGRESS - v0.8.0 FROZEN; v0.8.1-v0.8.3 IMPLEMENTED; v0.8.4 PLANNED**
+**Status: IN PROGRESS - v0.8.0 FROZEN; v0.8.1-v0.8.4 IMPLEMENTED; v0.8.5 PLANNED**
 
 The broad research design before the milestone sections below is prospective.
 Its continuous integral objective is not the current planner implementation:
@@ -1406,7 +1406,7 @@ Short learned two-action trajectories already work. Cognitive intrinsic
 The v0.8.3 stabilization fix adds a versioned internal sensor contract to brain
 META. Compatible learned knowledge transfers without current body/sensory/plan
 state; incompatible or unverifiable legacy internal topology fails closed.
-Brain v6 and native graph v3 remain unchanged. Competing bins retain the
+At the v0.8.3 baseline, brain v6 and native graph v3 remained unchanged. Competing bins retained the
 existing coarse marginal approximation, not a calibrated joint distribution.
 
 Controlled regression now also covers native physical INTERACT -> consequence
@@ -1420,22 +1420,22 @@ and [verification](docs/TESTING.md).
 
 ## v0.8.4 - Delayed and Calibrated Homeostatic Consequence Learning
 
-**Status: PLANNED - not implemented by the stabilization fix**
+**Status: IMPLEMENTED - controlled delayed consequence vertical slice**
 
-Build on the already implemented SELF_ACTION -> internal prediction -> beam
-valuation path. Remaining research scope:
+Existing SELF_ACTION and SEQUENTIAL Relations now support observed WorldTime delay
+moments, bounded passive prediction between actions, multiplicative chain confidence,
+competing-bin concentration calibration and deterministic temporal discount. Unknown
+mass leaves state unchanged; duplicate direct/indirect consequences are counted once.
 
-- Multi-observation delayed-consequence experiments, including digestion.
-- Confidence calibration and uncertainty for competing predicted internal bins.
-- Longer controlled physical-interaction curricula and full physical experience
-  -> learning -> planner-ranking experiments.
-- Ablations over acquired homeostatic causal knowledge, with ordinary external
-  World knowledge and physiology retained.
+Native digestion acceptance passes real interaction, immediate nutrient observation,
+later energy observation, ordinary learning and planner ranking. A resource of the
+same appearance without nutrients supplies the counterfactual; depth/OFF ablations
+remove the delayed benefit. Exact world/frontier continuation and durable brain timing
+transfer preserve fail-closed internal sensor compatibility. All new causal settings
+are validated/persisted; delayed prediction defaults OFF. No survival claim, reward
+propagation, semantic resource knowledge or raw physiological planning is introduced.
 
-Current competing predictions are coarse marginals; expanding or calibrating
-that approximation needs a separate design and experiments. No TD learning,
-reward propagation, HomeostaticMemory store, semantic food/water shortcut or
-survival guarantee is implied. This section describes future work only.
+See [implementation, formulas, experiments and limits](docs/V0_8_4_DELAYED_HOMEOSTATIC_LEARNING.md).
 
 ---
 

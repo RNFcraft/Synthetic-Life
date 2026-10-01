@@ -1,11 +1,20 @@
 # Synthetic-Life — Current Status
 
-## Current implementation: v0.8.3
+## Current implementation: v0.8.4
+
+Verified on 2026-10-01: **549 pytest passed; CTest Release 2/2 passed** via `python tools/verify.py --full`. Required targeted suites: **122 passed**. Native Release/observer build, import/headless smokes and `git diff --check` passed.
 
 v0.8.3 stabilization fix adds fail-closed brain internal sensor topology
 compatibility. Learned knowledge transfers only with a matching encoding
 contract; current body and episode state do not transfer. See
 [the stabilization contract](docs/V0_8_3_HOMEOSTATIC_VALUATION.md#v083-stabilization-fix-brain-sensor-compatibility).
+
+v0.8.4 adds learned WorldTime delay moments to existing SELF_ACTION/SEQUENTIAL
+evidence, bounded passive projection between actions, confidence composition,
+competing-bin calibration and temporal discount. Native physical digestion and
+its same-appearance counterfactual verify acquisition through planner ranking.
+All three feature flags default OFF. v0.8.5 survival curriculum remains planned.
+See [v0.8.4](docs/V0_8_4_DELAYED_HOMEOSTATIC_LEARNING.md).
 
 v0.8.0 is the frozen physiological foundation; v0.8.1 physical consumables,
 v0.8.2 non-semantic interoception, and v0.8.3 learned trajectory-level
@@ -14,10 +23,10 @@ SELF_ACTION Relations predict internal sensory bins; bounded predicted
 change in target-bin deviation contributes to beam ranking. No resource or
 physiological action rule exists. See [v0.8.3](docs/V0_8_3_HOMEOSTATIC_VALUATION.md).
 Snapshot v7 / continuous .seworld v10 apply with interoception;
-.sebrain v6 and native graph v3 are unchanged. Additive causal configuration
+.sebrain v6 is unchanged; native graph v4 adds timing rows when present and still reads/writes v3 without them. Additive causal configuration
 restores non-default topology, cadence and cognitive settings before construction.
 
-Stabilization full verification on 2026-10-01: **516 pytest passed; CTest Release 2/2 passed**.
+Historical v0.8.3 stabilization full verification on 2026-10-01: **516 pytest passed; CTest Release 2/2 passed**.
 `python tools/verify.py --full` completed successfully, including native observer
 build, import/headless smokes, full pytest and CTest.
 Details: [testing](docs/TESTING.md).

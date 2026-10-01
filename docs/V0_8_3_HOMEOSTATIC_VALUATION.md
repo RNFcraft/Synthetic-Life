@@ -1,5 +1,7 @@
 # v0.8.3 Learned trajectory-level homeostatic valuation
 
+Historical baseline. Current v0.8.4 adds [delayed and calibrated prediction](V0_8_4_DELAYED_HOMEOSTATIC_LEARNING.md); the v0.8.3 path remains the default when delayed prediction is OFF.
+
 The target of homeostasis is innate.
 The action model is learned.
 
@@ -86,7 +88,7 @@ needs a new sensory observation before valuation can operate.
 
 ## v0.8.3 stabilization fix: brain sensor compatibility
 
-Current version remains v0.8.3. This is a stabilization fix, not a new milestone.
+This section records the historical v0.8.3 stabilization fix.
 
 Brain META now includes `internal_sensor_contract` when the transferred
 structured graph/pattern data contains internal-domain knowledge. Detection
@@ -182,9 +184,7 @@ protect physiological/resource policy boundaries and observer inertness.
 - Full joint internal trajectory distributions or long-horizon survival guarantee.
 - Neural interoception, a world redesign, or observer UI redesign.
 
-A possible v0.8.4 scope is controlled multi-observation delay experiments,
-calibration of competing internal-state predictions, and longer physical
-training/ablation protocols. This milestone does not claim improved survival.
+The later v0.8.4 milestone implements controlled delayed prediction and calibration; see its separate contract. Neither milestone claims improved survival.
 
 ## Stabilization verification and changed files
 
@@ -209,8 +209,7 @@ was required: topology is optional META metadata. Legacy internal knowledge
 without that metadata cannot safely migrate and is rejected; external-only
 legacy knowledge still loads. Physical plumbing and coarse marginal behavior
 are covered without adding a new probabilistic model or functional milestone.
-v0.8.4 remains planned for multi-observation delay, competing-bin calibration,
-longer physical curricula and learned-knowledge ablations.
+At stabilization these were planned; v0.8.4 now implements controlled delayed experiments, competing-bin calibration and acquired-knowledge ablations. Full curriculum remains v0.8.5 scope.
 
 ## Historical initial v0.8.3 verification and changed files
 

@@ -9,6 +9,19 @@ class Settings:
     WORLD_FIELDS = ("world_width", "world_height", "object_count", "max_objects")
 
     def __post_init__(self) -> None:
+        if not isinstance(self.delayed_homeostatic_prediction_enabled, bool):
+            raise ValueError("delayed prediction flag must be boolean")
+        if type(self.planning_passive_prediction_depth) is not int or not 0 <= self.planning_passive_prediction_depth <= 8:
+            raise ValueError("passive prediction depth must be bounded")
+        for value in (self.planning_prediction_time_horizon, self.planning_time_discount, self.planning_temporal_probability_floor):
+            if type(value) not in (int, float) or not isfinite(value):
+                raise ValueError("temporal settings must be finite numbers")
+        if not isfinite(self.planning_prediction_time_horizon) or not 0 < self.planning_prediction_time_horizon <= 10000:
+            raise ValueError("prediction WorldTime horizon must be bounded")
+        if not isfinite(self.planning_time_discount) or not 0 <= self.planning_time_discount <= 100:
+            raise ValueError("temporal discount must be bounded")
+        if not isfinite(self.planning_temporal_probability_floor) or not 0 < self.planning_temporal_probability_floor <= 1:
+            raise ValueError("temporal probability floor must be bounded")
         if not isinstance(self.homeostatic_valuation_enabled, bool):
             raise ValueError("homeostatic valuation flag must be boolean")
         if not isinstance(self.interoception_enabled,bool) or not isinstance(self.interoception_bins,int) or isinstance(self.interoception_bins,bool) or not 2 <= self.interoception_bins <= 32:
@@ -54,6 +67,11 @@ class Settings:
     interoception_enabled: bool = False
     interoception_bins: int = 8
     homeostatic_valuation_enabled: bool = False
+    delayed_homeostatic_prediction_enabled: bool = False
+    planning_passive_prediction_depth: int = 3
+    planning_prediction_time_horizon: float = 30.0
+    planning_time_discount: float = 0.1
+    planning_temporal_probability_floor: float = 0.01
     # ORGANISM PHYSIOLOGY (WorldTime only; authoritative owner is Simulation)
     physiology_max_energy: float = 100.0
     physiology_max_nutrients: float = 100.0

@@ -1,6 +1,13 @@
 # Synthetic-Life Architecture
 
-**Current architecture: v0.8.3 opt-in learned trajectory valuation on the frozen v0.8.0 foundation.**
+**Current architecture: v0.8.4 delayed and calibrated homeostatic consequence learning.**
+
+Existing SELF_ACTION roots and generic SEQUENTIAL passive successors carry observed
+WorldTime delay moments. Native graph owns numeric evidence; bounded beam search
+multiplies chain confidence, accumulates simulated delay and discounts calibrated
+internal-bin endpoint progress. No reward propagation or physical planner access
+is added. Default OFF preserves v0.8.3 behavior. See
+[the delayed-learning contract](docs/V0_8_4_DELAYED_HOMEOSTATIC_LEARNING.md).
 
 v0.8.3 stabilization: brain META carries a versioned internal sensor encoding
 contract. Structured internal-pattern inspection and topology validation run
@@ -380,7 +387,7 @@ Observer не:
 ```text
 .sebrain v6       durable learned cognition/native brain
 .seworld v10      interoception-enabled exact World + physiology + scheduler + episode/frontiers
-native graph v3   binary authoritative numeric graph
+native graph v3/v4 binary authoritative numeric graph; v4 adds observed timing moments
 ```
 
 `.seworld` сохраняет exact continuation, включая pending scheduler/cognition/
