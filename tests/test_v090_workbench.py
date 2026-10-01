@@ -181,6 +181,16 @@ def test_host_rejects_full_runtime_inbox_without_crashing():
     assert "inbox is full" in r.last_editor_result
 
 
+def test_host_export_has_no_runtime_causal_id(tmp_path):
+    r=runtime();controller=WorkbenchController(r);controller.paused=True
+    before=causal(r)
+    controller.commands.submit_export(str(tmp_path/"empty.sescenario"),"Empty",123)
+    controller.poll()
+    assert causal(r)==before and r.next_editor_command_id==1
+    assert "saved" in r.last_workbench_notice
+    assert not r.last_dialogue_notice
+
+
 def test_brain_artifact_has_no_workbench_episode_state(tmp_path):
     r=runtime();r.accept_editor_command("PLACE_FOOD",x=0,y=0)
     path=tmp_path/"brain.sebrain";r.simulation.save_brain(path)

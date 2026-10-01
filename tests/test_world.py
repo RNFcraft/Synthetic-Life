@@ -4,7 +4,8 @@ from world import Action, ActionResult, ActionType, World
 
 
 def test_spawn_has_no_overlap() -> None:
-    world = World(Settings(), Random(7))
+    # Historical 25-object geometry fixture, independent of interactive defaults.
+    world = World(Settings(object_count=25, max_objects=25), Random(7))
     positions = [world.body.position] + [o.position for o in world.objects]
     assert len(set(positions)) == 26
     assert world.grid.width == world.grid.height == 30

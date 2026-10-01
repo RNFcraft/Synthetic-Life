@@ -1,6 +1,17 @@
 # Testing and Repository Verification
 
-**Current implementation: v0.9.0 workbench; cognitive foundation v0.8.4 frozen.**
+**Current implementation: v0.9.1 scenarios; cognitive foundation v0.8.4 frozen.**
+
+Scenario suite: `tests/test_v091_scenarios.py`; strict artifacts/configuration,
+initial reserves and derived values, geometry/IDs/holding/resources, counterfactuals,
+clean RNG, canonical ordering, hash seeds, export inertness/gates, shared factory,
+manifest resolution/provenance and brain overlay/receiving authority.
+Native tests exercise popup Save and queue-error ownership alongside prior gates.
+Actual v0.9.1 acceptance: **676 pytest PASS; Release CTest 2/2 PASS;
+observer-OFF CTest 1/1 PASS; six targeted suites 206 PASS**. Details are recorded in
+[the scenario contract](V0_9_1_REPRODUCIBLE_SCENARIOS.md).
+
+The following workbench results are historical v0.9.0 acceptance.
 
 The workbench suite is `tests/test_v090_workbench.py`. It checks explicit
 editor commands, physical presets, status immutability, observer/RNG cadence

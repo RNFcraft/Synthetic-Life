@@ -1474,15 +1474,18 @@ The cognitive foundation remains v0.8.4 DONE / FROZEN. This milestone changes
 experimental interaction and observation infrastructure.
 See [the workbench contract](docs/V0_9_0_EXPERIMENTAL_WORKBENCH.md).
 
-## v0.9.1 — Reproducible Curriculum / Scenario Infrastructure
+## v0.9.1 — Reproducible Scenario Infrastructure
 
-**Status: PLANNED**
+**Status: DONE — 676 pytest PASS; Release CTest 2/2 PASS (2026-10-01)**
 
-Reusable scenario descriptions, scenario save/load, curriculum definitions,
-deterministic episode resets, headless scenario runner, compatibility between
-UI-created scenarios and headless experiments, and experiment manifests.
-No complete scenario/curriculum format or batch experiment runner is part of
-v0.9.0.
+Versioned physical `.sescenario`, normalized t=0 bootstrap, full causal Settings,
+authoritative initial physiology, free/held objects and native resources,
+deterministic fresh reconstruction, shared interactive/headless factory,
+safe host-only Workbench export, single-run `.semanifest` and provenance digest.
+v0.9.0 error ownership/visual polish is included in v0.9.1 stabilization.
+Automatic curriculum progression, training loops, batch/multi-seed survival
+statistics and survival superiority claims remain v0.9.2 scope.
+See [the scenario contract](docs/V0_9_1_REPRODUCIBLE_SCENARIOS.md).
 
 ---
 

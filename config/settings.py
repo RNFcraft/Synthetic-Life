@@ -38,8 +38,8 @@ class Settings:
     # WORLD
     world_width: int = 30
     world_height: int = 30
-    object_count: int = 25
-    max_objects: int = 25
+    object_count: int = 3
+    max_objects: int = 150
     entity_count: int = 1
     perception_radius: int = 4
     # v0.6.4 optional embodied neural sensory physiology. Disabled preserves

@@ -1,6 +1,12 @@
 # Synthetic-Life Developer Guide
 
-Практический guide для **v0.9.0 workbench** поверх frozen v0.8.4 cognition.
+Практический guide для **v0.9.1 scenario infrastructure / workbench** поверх frozen v0.8.4 cognition.
+
+Scenario/manifest contracts и CLI: [v0.9.1](docs/V0_9_1_REPRODUCIBLE_SCENARIOS.md).
+Settings ownership остаётся в `simulation/persisted_settings.py`; не дублируйте
+field lists. Initial worlds создаются напрямую, не через editor history.
+Для isolated observer-OFF сборки extension используйте CMake
+`-DSE_NATIVE_OUTPUT_DIRECTORY=<isolated-directory>`, не перезаписывая live module.
 
 Перед архитектурными изменениями прочитайте:
 

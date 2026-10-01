@@ -22,7 +22,8 @@ struct WorkbenchStatusSnapshot {
       homeostatic_component{}, prediction_confidence{}, predicted_delay{},
       ambiguity{};
   double food_payload{}, water_payload{};
-  std::string current_action, last_command_result;
+  std::string current_action, last_command_result, dialogue_notice;
+  std::uint64_t seed{};
   std::vector<std::string> planned_actions;
 };
 class WorkbenchStatusChannel {

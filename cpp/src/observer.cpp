@@ -77,6 +77,7 @@ public:
   float scale{1.f};
   WorkbenchUIState ui;
   std::string capture_path;
+  std::uint64_t capture_min_frames{3};
 };
 NativeObserver::NativeObserver(int width, int height)
     : impl_(std::make_unique<Impl>(width, height)) {
@@ -98,10 +99,12 @@ void NativeObserver::attach_workbench(
   status_ = std::move(status);
   commands_ = std::move(commands);
 }
-void NativeObserver::capture_next_frame(std::string path) {
+void NativeObserver::capture_next_frame(std::string path, bool scenario_popup) {
   if (running_)
     throw std::runtime_error("request capture before starting observer");
   impl_->capture_path = std::move(path);
+  impl_->ui.open_scenario_popup = scenario_popup;
+  impl_->capture_min_frames = scenario_popup ? 6 : 3;
 }
 bool NativeObserver::is_open() const { return impl_ && impl_->open; }
 bool NativeObserver::pump_events() {
@@ -139,7 +142,7 @@ void NativeObserver::render(const RenderSnapshot &snapshot) {
   glClearColor(.055f, .075f, .094f, 1);
   glClear(GL_COLOR_BUFFER_BIT);
   ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
-  if (!impl_->capture_path.empty() && frames_ >= 3) {
+  if (!impl_->capture_path.empty() && frames_ >= impl_->capture_min_frames) {
     std::vector<unsigned char> pixels(std::size_t(width) * height * 4);
     glReadPixels(0, 0, width, height, GL_RGBA, GL_UNSIGNED_BYTE, pixels.data());
     for (int y = 0; y < height / 2; ++y)

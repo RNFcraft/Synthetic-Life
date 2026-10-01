@@ -1,10 +1,18 @@
 # Synthetic-Life — Current Status
 
-## Current implementation: v0.9.0
+## Current implementation: v0.9.1
 
 Cognitive foundation: **v0.8.4 DONE / FROZEN**.
 Experimental workbench: **v0.9.0 DONE**.
-Acceptance on 2026-10-01: **613 pytest passed; Release CTest 2/2 passed**
+Reproducible scenario infrastructure: **v0.9.1 DONE**.
+Current acceptance: **676 pytest PASS; Release CTest 2/2 PASS;
+observer-OFF CTest 1/1 PASS; six targeted suites 206 PASS** (2026-10-01).
+Survival proof: **v0.9.2 PLANNED**; long-run stability/freeze: **v0.9.3 PLANNED**.
+Canonical scenario v1, single-run manifest v1, clean RNG bootstrap, host-only
+workbench export and the shared interactive/headless factory are described in
+[the v0.9.1 contract](docs/V0_9_1_REPRODUCIBLE_SCENARIOS.md).
+
+Historical v0.9.0 acceptance on 2026-10-01: **613 pytest passed; Release CTest 2/2 passed**
 via `python tools/verify.py --full`; required targeted suites **154 passed**.
 Observer-OFF native engine/oracle build and CTest **1/1 passed**. Native visual
 fixture inspected at 1100×700, 1440×900 and 1920×1080; font/layout tests cover
@@ -13,8 +21,7 @@ Native ImGui desktop, World editor, physical presets, physiology/interoception,
 planner and brain inspectors, dialogue input, deterministic command boundary
 and pending-command `.seworld` v11 continuation are described in
 [the workbench contract](docs/V0_9_0_EXPERIMENTAL_WORKBENCH.md).
-v0.9.1 scenario infrastructure, v0.9.2 survival proof and v0.9.3 long-run freeze
-remain planned. The following counts document the historical cognitive freeze.
+The following counts document the historical cognitive freeze.
 
 Stabilization/freeze closure verified on 2026-10-01: **583 pytest passed;
 CTest Release 2/2 passed** via `python tools/verify.py --full`. Required targeted

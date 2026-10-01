@@ -27,8 +27,14 @@ class ContinuousRuntime(WorkbenchRuntimeMixin):
     """
     ACTION_DURATION=.15
     INTERNAL_SENSORY_PAYLOAD=1
-    def __init__(self,seed=12345,settings:Settings|None=None):
-        self.simulation=Simulation(seed,settings,backend="native")
+    def __init__(self,seed=12345,settings:Settings|None=None,_scenario=None):
+        initial = _scenario.sections["INITIAL"] if _scenario is not None else None
+        self.simulation=Simulation(seed,settings,backend="native",_initial_world=initial)
+        if initial is not None:
+            for name, value in initial["physiology"].items():
+                setattr(self.simulation.physiology, name, value)
+            self.simulation.physiology._validate()
+            self.simulation.core.homeostatic_projection=self.simulation.physiology.snapshot()
         self.scheduler=EventScheduler()
         self._init_workbench()
         self.observation_ordinal=0
@@ -63,6 +69,18 @@ class ContinuousRuntime(WorkbenchRuntimeMixin):
         self.scheduler.schedule(float(interval),RuntimeEventType.MAINTENANCE);self.scheduler.schedule(0.,RuntimeEventType.SENSORY_CHANGE);self.peak_scheduler_queue=self.scheduler.peak_size
     @property
     def world_time(self):return self.scheduler.now
+    @classmethod
+    def from_scenario(cls, scenario, brain=None):
+        from .scenario import ScenarioDefinition, load_scenario
+        definition = scenario if isinstance(scenario, ScenarioDefinition) else load_scenario(scenario)
+        runtime = cls(definition.seed, definition.settings, _scenario=definition)
+        if brain is not None:
+            runtime.simulation.load_brain(brain)
+            runtime.simulation.core.homeostatic_projection = runtime.simulation.physiology.snapshot()
+            if runtime.neural_sensory is not None:
+                runtime.neural_sensory = NeuralSensoryTransducer(runtime.simulation.settings,
+                    runtime.simulation.core.backend.engine.neurodynamic_substrate())
+        return runtime
     def _process(self,event):
         """Обработать один event без изменения native `(time, id)` порядка."""
         now,kind=event.time,event.type
@@ -221,6 +239,30 @@ class ContinuousRuntime(WorkbenchRuntimeMixin):
         return tuple(cells),tuple(body)
     def _action_in_flight(self):
         return any(e.type==RuntimeEventType.WORLD_ACTION_COMPLETE for e in self.scheduler.snapshot())
+    def reach_scenario_boundary(self, guard=100000):
+        """Явное host-продвижение: завершить физику, не начинать новый sensory cycle.
+
+        Не вызывается exporter-ом. Порядок/действия обычного scheduler сохраняются.
+        Export после этого остаётся чистым чтением.
+        """
+        from .scenario import export_rejection
+        processed = 0
+        while export_rejection(self, True):
+            if not self.scheduler.size:
+                raise ValueError("no scheduler event can reach a safe export boundary")
+            first = self.scheduler.snapshot()[0]
+            for event in self.scheduler.pop_ready(first.time):
+                self._process(event)
+                self.scheduler_events_processed += 1
+                self.peak_scheduler_queue = max(self.peak_scheduler_queue, self.scheduler.peak_size)
+                if event.type in (RuntimeEventType.SENSORY_CHANGE,RuntimeEventType.COGNITION_WAKE,RuntimeEventType.COGNITION_CONTINUE,RuntimeEventType.MAINTENANCE,RuntimeEventType.LANGUAGE_INPUT,RuntimeEventType.LANGUAGE_CONTINUE,RuntimeEventType.NEURAL_BRIDGE):
+                    self.publish_brain_snapshot(self.simulation.core.last_language_result.wave.active_ids if event.type in (RuntimeEventType.LANGUAGE_INPUT,RuntimeEventType.LANGUAGE_CONTINUE) and self.simulation.core.last_language_result else None)
+                processed += 1
+                if processed > guard:raise self._runaway_error()
+        self.simulation.world.advance_world_time(self.world_time)
+        self.simulation.world_time = WorldTime(self.world_time)
+        self.simulation.core.homeostatic_projection = self.simulation.physiology.snapshot()
+        return processed
     def run_until(self,until,guard=100000):
         """Продвинуть causal runtime до абсолютного WorldTime ``until``."""
         processed=0

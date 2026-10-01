@@ -207,7 +207,8 @@ def test_repeated_materialization_does_not_duplicate_lifecycle_work():
 
 
 def test_snapshot_restore_across_relation_deletion_horizon_is_exact(tmp_path):
-    settings=replace(SETTINGS,relation_max_idle=100,relation_death_threshold=.99)
+    # Freeze this historical deletion-horizon geometry, not the workbench defaults.
+    settings=replace(SETTINGS,object_count=25,max_objects=25,relation_max_idle=100,relation_death_threshold=.99)
     continuous=ContinuousRuntime(6614,settings);cycled=ContinuousRuntime(6614,settings)
     for runtime in (continuous,cycled):
         core=runtime.simulation.core;source=core.graph.add_cognit().id;target=core.graph.add_cognit().id

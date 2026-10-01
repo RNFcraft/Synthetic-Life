@@ -202,6 +202,47 @@ def causal_configuration(settings):
             for label, fields in CAUSAL_GROUPS.items()}
 
 
+def scenario_configuration(settings):
+    """Полный initial-condition contract; исторический world wire не меняется."""
+    return {**causal_configuration(settings),
+            "physiology": {name: getattr(settings, name) for name in Physiology.CONFIG_FIELDS}}
+
+
+def restore_scenario_settings(configuration):
+    from math import isfinite
+    groups = {**CAUSAL_GROUPS, "physiology": Physiology.CONFIG_FIELDS}
+    if not isinstance(configuration, dict) or set(configuration) != set(groups):
+        raise ValueError("invalid scenario configuration groups")
+    defaults = Settings()
+    for group, names in groups.items():
+        values = configuration[group]
+        if not isinstance(values, dict) or set(values) != set(names):
+            raise ValueError(f"invalid scenario {group} configuration")
+        for name, value in values.items():
+            reference = getattr(defaults, name)
+            if isinstance(reference, bool):
+                valid = type(value) is bool
+            elif isinstance(reference, int):
+                valid = type(value) is int and 0 <= value <= 1_000_000
+            else:
+                valid = type(value) in (int, float) and isfinite(value) and 0 <= value <= 1_000_000
+            if not valid:
+                raise ValueError(f"invalid scenario setting {name}")
+    settings = restore_settings({"causal_config": {k: configuration[k] for k in CAUSAL_GROUPS},
+                                 "physiology": {"config": configuration["physiology"]}})
+    if not (1 <= settings.world_width <= 4096 and 1 <= settings.world_height <= 4096
+            and settings.world_width * settings.world_height <= 1_000_000
+            and 1 <= settings.entity_count <= 64 and settings.max_objects <= 10000
+            and settings.object_count <= settings.max_objects
+            and settings.spawn_interval_min >= 1 and settings.spawn_interval_max >= settings.spawn_interval_min
+            and settings.continuous_maintenance_interval_seconds > 0
+            and settings.world_tick_interval > 0 and settings.max_wave_propagation_steps > 0
+            and settings.wave_max_steps > 0 and settings.max_cognits > 0):
+        raise ValueError("scenario Settings limits invalid")
+    Physiology(settings)
+    return settings
+
+
 def restore_settings(state, explicit=None, sensory=None):
     sources = (("physiology", state.get("physiology", {}).get("config"), Physiology.CONFIG_FIELDS),
                ("resources", state.get("resource_config"), Settings.RESOURCE_FIELDS),

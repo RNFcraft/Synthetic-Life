@@ -8,6 +8,7 @@ int main(int argc, char **argv) {
   int width = 1440, height = 900;
   double seconds = 0;
   std::string capture;
+  bool scenario_popup = false;
   for (int i = 1; i + 1 < argc; i += 2) {
     std::string arg = argv[i];
     if (arg == "--width")
@@ -18,6 +19,8 @@ int main(int argc, char **argv) {
       seconds = std::stod(argv[i + 1]);
     else if (arg == "--capture")
       capture = argv[i + 1];
+    else if (arg == "--scenario-popup")
+      scenario_popup = std::stoi(argv[i + 1]) != 0;
   }
   auto worlds = std::make_shared<se::RenderSnapshotChannel>();
   auto brains = std::make_shared<se::BrainSnapshotChannel>();
@@ -57,6 +60,7 @@ int main(int argc, char **argv) {
   status.world_time = 74.25;
   status.event_sequence = 418;
   status.paused = true;
+  status.seed = 9100;
   status.actions_completed = 91;
   status.pending_events = 3;
   status.energy = 72;
@@ -96,7 +100,7 @@ int main(int argc, char **argv) {
   se::NativeObserver observer(worlds, brains, dialogue, width, height);
   observer.attach_workbench(statuses, commands);
   if (!capture.empty())
-    observer.capture_next_frame(capture);
+    observer.capture_next_frame(capture, scenario_popup);
   observer.start();
   auto started = std::chrono::steady_clock::now();
   while (observer.is_running() &&

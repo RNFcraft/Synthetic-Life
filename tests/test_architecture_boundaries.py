@@ -249,3 +249,26 @@ def test_brain_backend_check_precedes_snapshot_activation():
     assert any(isinstance(node,ast.Raise) for node in ast.walk(guard))
     assert all(guard.lineno < node.lineno for node in ast.walk(load) if isinstance(node,ast.Call)
                and isinstance(node.func,ast.Attribute) and node.func.attr in {'snapshot_data','load','load_graph'})
+
+
+def test_scenario_dependencies_are_directional_and_metadata_not_policy():
+    for path in (ROOT/'consciousness').rglob('*.py'):
+        assert not any(name.startswith(('simulation.scenario','experiments.scenario_runner')) for name in _imports(path))
+    for path in (ROOT/'simulation/scenario.py', ROOT/'experiments/scenario_runner.py'):
+        assert not any(name.startswith(('ui','pygame','imgui','OpenGL','se.observer')) for name in _imports(path))
+    source=(ROOT/'simulation/scenario.py').read_text(encoding='utf-8')
+    assert 'SCENARIO_SETTING_NAMES' not in source
+    assert 'scenario_configuration' in source and 'restore_scenario_settings' in source
+    tree=ast.parse(source)
+    export=next(n for n in ast.walk(tree) if isinstance(n,ast.FunctionDef) and n.name=='export_scenario')
+    attrs={n.attr for n in ast.walk(export) if isinstance(n,ast.Attribute)}
+    assert not attrs & {'schedule','next','advance_to','apply_action','record_action_outcome','load_brain','run_until','inject_utterance'}
+
+
+def test_native_error_ownership_and_host_export_boundary():
+    dialogue=(ROOT/'cpp/src/workbench_dialogue_view.cpp').read_text(encoding='utf-8')
+    world=(ROOT/'cpp/src/workbench_world_view.cpp').read_text(encoding='utf-8')
+    assert 'workbench_notice' not in dialogue and 'dialogue_error' not in world
+    assert 'input_error' not in (ROOT/'cpp/include/se/workbench_ui.hpp').read_text(encoding='utf-8')
+    from simulation.workbench import CAUSAL_COMMANDS
+    assert 'EXPORT_SCENARIO' not in CAUSAL_COMMANDS

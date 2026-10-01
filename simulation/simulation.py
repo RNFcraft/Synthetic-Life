@@ -30,11 +30,11 @@ class Simulation:
     discrete/reference API, поэтому его public signatures и snapshot payloads
     являются compatibility contract.
     """
-    def __init__(self,seed:int=12345,settings:Settings|None=None,backend:str="python")->None:
+    def __init__(self,seed:int=12345,settings:Settings|None=None,backend:str="python",_initial_world=None)->None:
         self.seed=seed;self.settings=settings or Settings();self.rng=Random(seed)
         if backend=="native":
             from world.native_world import NativeWorld
-            self.world=NativeWorld(self.settings,self.rng)
+            self.world=NativeWorld(self.settings,self.rng,initial=_initial_world) if _initial_world is not None else NativeWorld(self.settings,self.rng)
         else:
             self.world=World(self.settings,self.rng)
         self.core=SyntheticEntityCore(self.settings,backend);self.clock=SimulationClock();self.world_time=WorldTime();self.event_sequence=EventSequence();self.telemetry=Telemetry(self.settings.telemetry_history)
@@ -191,6 +191,15 @@ class Simulation:
             raise ValueError("incompatible brain numeric_backend; cross-backend transfer is unsupported")
         blank=self.snapshot_data(semantic_graph=bool(self.core.backend));blank["cognitive_graph"]={**data["COGN"],**data["RELA"]};core=blank["core"]
         core["memory"]=data["SPAT"];core["prototypes"]=data["PATT"]["prototypes"];saved=data["PATT"]["composites"];core["composites"].update(saved);core["composites"]["recent"]=[];core["composites"]["candidates"]=[]
+        # Preserve learned memory ages while moving them to the receiving episode's clock.
+        # Negative timestamps are valid: they represent evidence predating this episode.
+        memory=core["memory"];source_time=memory.get("world_time_seconds")
+        if source_time is not None:
+            offset=self.world_time.seconds-source_time
+            memory["world_time_seconds"]=self.world_time.seconds
+            for record in [*memory.get("places",[]),*memory.get("structures",[])]:
+                for field in ("last_confirmed_time_seconds","last_touch_time_seconds"):
+                    if record.get(field) is not None:record[field]+=offset
         core["perception"]["transforms"]=data["LEAR"]["transforms"];core["relation_diagnostics"]=data["LEAR"]["relation_diagnostics"];core["calibration"]=data["LEAR"]["calibration"];core["affordances"]=data["LEAR"].get("affordances",[]);core["memory"]["current_place_id"]=None;core["relational"]["nodes"]=data["LEAR"].get("relational_nodes",[]);core["relational"]["belief_scene"]=data.get("BELS",{})
         core.pop("native_temporal",None);core.pop("temporal_episode",None);core["transitions"]={"timings":data["LEAR"].get("timings",[])}
         # A transferred brain begins a new episode: no track, goal, trace, plan cursor or active state survives.

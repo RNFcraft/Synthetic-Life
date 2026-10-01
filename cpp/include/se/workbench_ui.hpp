@@ -21,7 +21,11 @@ struct WorkbenchUIState {
   float left_fraction{.23f}, right_fraction{.25f};
   int relation_filter{};
   std::array<char, 4097> input{};
-  std::string input_error;
+  std::string dialogue_error, workbench_notice;
+  std::array<char, 4097> scenario_path{"scenarios/my_case.sescenario"};
+  std::array<char, 257> scenario_name{"My scenario"};
+  std::uint64_t scenario_seed{};
+  bool open_scenario_popup{};
   std::shared_ptr<const BrainSnapshot> cached_brain;
   BrainDrawData graph;
   int graph_width{}, graph_height{};
@@ -39,6 +43,7 @@ void draw_brain_view(WorkbenchUIState &, std::shared_ptr<const BrainSnapshot>);
 void draw_status_view(const WorkbenchStatusSnapshot *, const WorkbenchUIState &,
                       const RenderSnapshot &);
 void draw_dialogue_view(WorkbenchUIState &, const DialogueSnapshot *,
-                        WorkbenchCommandChannel *);
+                        WorkbenchCommandChannel *,
+                        const std::string &notice = {});
 std::string format_world_time(double seconds);
 } // namespace se

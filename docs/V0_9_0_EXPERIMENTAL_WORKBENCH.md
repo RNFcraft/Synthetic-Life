@@ -1,5 +1,12 @@
 # v0.9.0 — Experimental Workbench & Observer Redesign
 
+Historical milestone contract. Current project v0.9.1 adds
+[reproducible scenarios](V0_9_1_REPRODUCIBLE_SCENARIOS.md) and stabilization:
+separate dialogue/editor notices, compact Scenario popup and host-only export.
+READ remains snapshots; causal WRITE remains scheduler commands; host WRITE
+exports a normalized scenario without changing causal state. Historical counts
+below refer to the v0.9.0 acceptance, not current full-suite totals.
+
 The cognitive foundation is v0.8.4 DONE / FROZEN. v0.9.0 provides a native
 experimental desktop for inspecting and intervening in that organism. Survival
 curriculum moved behind this prerequisite: v0.9.1 scenario infrastructure,

@@ -16,20 +16,30 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--headless", action="store_true", help="run the continuous runtime without a window")
     parser.add_argument("--seconds", type=float, help="simulated seconds to execute (headless default: 100)")
     parser.add_argument("--speed", type=float, default=1.0, help="live simulated-time multiplier")
-    parser.add_argument("--seed", type=int, default=12345)
+    parser.add_argument("--seed", type=int, default=None)
     parser.add_argument("--paused", action="store_true", help="start the interactive workbench paused for world editing")
     parser.add_argument("--save", metavar="PATH", help="write a continuous .seworld snapshot after execution")
     parser.add_argument("--load", metavar="PATH", help="load a continuous .seworld snapshot before execution")
+    parser.add_argument("--scenario", metavar="PATH", help="start a normalized t=0 .sescenario")
+    parser.add_argument("--brain", metavar="PATH", help="overlay compatible durable knowledge on a scenario")
     parser.add_argument("--telemetry", metavar="PATH", help="deprecated legacy tick telemetry; unavailable in production continuous mode")
     args=parser.parse_args(argv)
+    if args.scenario and args.load:parser.error("--scenario and --load are mutually exclusive")
+    if args.scenario and args.seed is not None:parser.error("scenario seed is authoritative; --seed cannot override it")
+    if args.brain and not args.scenario:parser.error("--brain requires --scenario")
     if args.seconds is not None and args.seconds<0:parser.error("--seconds must be non-negative")
     if args.speed<=0:parser.error("--speed must be positive")
     if args.telemetry:parser.error("--telemetry is legacy tick-only and is not available in the continuous production entrypoint")
     return args
 
 
-def create_runtime(seed:int=12345,load_path:str|None=None)->ContinuousRuntime:
-    return ContinuousRuntime.load_world(load_path) if load_path else ContinuousRuntime(seed=seed)
+def create_runtime(seed:int|None=None,load_path:str|None=None,scenario_path=None,brain_path=None)->ContinuousRuntime:
+    if scenario_path:
+        if load_path:raise ValueError("scenario and checkpoint are mutually exclusive")
+        if seed is not None:raise ValueError("scenario seed is authoritative")
+        return ContinuousRuntime.from_scenario(scenario_path,brain_path)
+    if brain_path:raise ValueError("brain overlay requires a scenario")
+    return ContinuousRuntime.load_world(load_path) if load_path else ContinuousRuntime(seed=12345 if seed is None else seed)
 
 
 def run_headless(runtime:ContinuousRuntime,seconds:float)->ContinuousRuntime:
@@ -80,7 +90,7 @@ def create_native_observer(runtime:ContinuousRuntime):
 
 
 def main(argv:list[str]|None=None)->None:
-    args=parse_args(argv);runtime=create_runtime(args.seed,args.load);started=time.perf_counter()
+    args=parse_args(argv);runtime=create_runtime(args.seed,args.load,args.scenario,args.brain);started=time.perf_counter()
     if args.headless:
         seconds=100.0 if args.seconds is None else args.seconds;run_headless(runtime,seconds)
     else:

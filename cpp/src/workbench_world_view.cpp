@@ -166,7 +166,9 @@ void draw_world_view(WorkbenchUIState &ui, const RenderSnapshot &s,
               commands->submit(kinds[ui.tool - 1], x, y,
                                object == s.objects.end() ? 0 : object->id);
           if (!id)
-            ui.input_error = "Command queue full";
+            ui.workbench_notice = "Editor command queue full";
+          else
+            ui.workbench_notice.clear();
         }
       }
     }

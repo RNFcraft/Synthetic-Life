@@ -4,7 +4,8 @@
 #include <imgui.h>
 namespace se {
 void draw_dialogue_view(WorkbenchUIState &ui, const DialogueSnapshot *s,
-                        WorkbenchCommandChannel *commands) {
+                        WorkbenchCommandChannel *commands,
+                        const std::string &notice) {
   float reserved = ImGui::GetFrameHeightWithSpacing() +
                    ImGui::GetTextLineHeightWithSpacing() * 2;
   ImGui::BeginChild(
@@ -56,15 +57,17 @@ void draw_dialogue_view(WorkbenchUIState &ui, const DialogueSnapshot *s,
     if (text.find_first_not_of(" \t\r\n") != std::string::npos) {
       if (commands->submit(WorkbenchCommandKind::SendDialogue, 0, 0, 0, text)) {
         ui.input[0] = 0;
-        ui.input_error.clear();
+        ui.dialogue_error.clear();
       } else
-        ui.input_error = "Queue full; message retained";
+        ui.dialogue_error = "Queue full; message retained";
     }
   }
   ImGui::EndDisabled();
-  if (ui.input_error.empty())
+  if (ui.dialogue_error.empty() && notice.empty())
     ImGui::TextWrapped("Enter: send / external causal input");
   else
-    ImGui::TextWrapped("%s", ui.input_error.c_str());
+    ImGui::TextWrapped("%s", ui.dialogue_error.empty()
+                                 ? notice.c_str()
+                                 : ui.dialogue_error.c_str());
 }
 } // namespace se

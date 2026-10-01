@@ -38,11 +38,19 @@ void bar(const char *label, double value, double maximum, ImVec4 color) {
 } // namespace
 void draw_status_view(const WorkbenchStatusSnapshot *s,
                       const WorkbenchUIState &ui, const RenderSnapshot &world) {
+  if (!ui.workbench_notice.empty()) {
+    ImGui::TextWrapped("%s", ui.workbench_notice.c_str());
+    ImGui::Separator();
+  }
   if (!s) {
     ImGui::TextDisabled("STATUS");
     ImGui::TextWrapped(
         "Attach a runtime status channel to inspect physiology and planning.");
     return;
+  }
+  if (!s->last_command_result.empty()) {
+    ImGui::TextWrapped("%s", s->last_command_result.c_str());
+    ImGui::Separator();
   }
   if (ImGui::CollapsingHeader("PHYSIOLOGY", ImGuiTreeNodeFlags_DefaultOpen)) {
     bar("Energy", s->energy, s->energy_max, {.18f, .62f, .85f, 1});
@@ -73,7 +81,7 @@ void draw_status_view(const WorkbenchStatusSnapshot *s,
       count("Cognits", s->cognits);
       count("Relations", s->relations);
       count("Active Cognits", s->active_cognits);
-      metric("Active Relations", "not exported");
+      metric("Active Relations", "—");
       count("Micro Cognits", s->micro_cognits);
       count("Micro Relations", s->micro_relations);
       count("Assemblies", s->assemblies);
@@ -115,10 +123,6 @@ void draw_status_view(const WorkbenchStatusSnapshot *s,
       number("UI FPS (wall clock)", ImGui::GetIO().Framerate);
       ImGui::EndTable();
     }
-  }
-  if (!s->last_command_result.empty()) {
-    ImGui::Separator();
-    ImGui::TextWrapped("%s", s->last_command_result.c_str());
   }
   if (ui.selected_object || ui.body_selected) {
     ImGui::Separator();

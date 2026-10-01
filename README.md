@@ -1,14 +1,29 @@
 # Synthetic-Life
 
-Current implementation: **v0.9.0 — Experimental Workbench & Observer Redesign**.
+Current implementation: **v0.9.1 — Reproducible Scenario Infrastructure**.
+See [scenario schema, export and runner workflows](docs/V0_9_1_REPRODUCIBLE_SCENARIOS.md).
 See [the workbench contract](docs/V0_9_0_EXPERIMENTAL_WORKBENCH.md).
-Acceptance: **613 pytest PASS; Release CTest 2/2 PASS** (`python tools/verify.py --full`).
+Current v0.9.1 acceptance: **676 pytest PASS; Release CTest 2/2 PASS**.
+Historical v0.9.0 acceptance: **613 pytest PASS; Release CTest 2/2 PASS**.
 v0.8.4 homeostatic learning remains the current cognitive foundation, DONE / FROZEN.
 v0.9.0 changes experimental interaction/observation infrastructure, not the intelligence mechanism.
 v0.8.0 = frozen physiology; v0.8.1 = consumables; v0.8.2 = interoception;
 v0.8.3 = learned trajectory valuation; v0.8.4 = learned passive delays and calibration.
-Interoception, valuation and delayed prediction default OFF. Scenario infrastructure,
-survival proof and long-run survival freeze remain planned as v0.9.1–v0.9.3.
+Interoception, valuation and delayed prediction default OFF. v0.9.0 workbench is
+implemented; v0.9.1 adds normalized t=0 `.sescenario` and single-run `.semanifest`.
+Survival proof and long-run survival freeze remain planned as v0.9.2/v0.9.3.
+
+```text
+python main.py --paused
+# Scenario → Finish action & pause if needed → Save
+python main.py --scenario scenarios/examples/workbench_smoke.sescenario --paused
+python -m experiments.scenario_runner --scenario scenarios/examples/workbench_smoke.sescenario --seconds .6
+python -m experiments.scenario_runner --manifest experiments/manifests/workbench_smoke.semanifest
+```
+
+`.sescenario` = reproducible initial condition; `.seworld` = exact ongoing causal
+continuation; `.sebrain` = durable cognition. Optional `--brain-in/--brain-out`
+supports future experienced trials without implementing a training loop.
 
 Historical v0.8.4 stabilization/freeze closure verified on 2026-10-01: **583 pytest passed;
 CTest Release 2/2 passed** via `python tools/verify.py --full`. Required targeted

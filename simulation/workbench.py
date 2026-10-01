@@ -59,6 +59,8 @@ class WorkbenchStatusSnapshot:
     food_payload: float
     water_payload: float
     last_command_result: str
+    seed: int = 12345
+    dialogue_notice: str = ""
 
 
 class WorkbenchRuntimeMixin:
@@ -68,6 +70,8 @@ class WorkbenchRuntimeMixin:
         self.editor_inbox = {}
         self.next_editor_command_id = 1
         self.last_editor_result = ""
+        self.last_workbench_notice = ""
+        self.last_dialogue_notice = ""
         self.workbench_channel = None
 
     def accept_editor_command(self, kind, *, x=0, y=0, object_id=0, text=""):
@@ -118,9 +122,15 @@ class WorkbenchRuntimeMixin:
                 # Preserve an in-flight action, using its completion observation.
                 if not self._action_in_flight() and not any(e.type == RuntimeEventType.SENSORY_CHANGE and not e.payload for e in self.scheduler.snapshot()):
                     self.scheduler.schedule(event.time, RuntimeEventType.SENSORY_CHANGE)
-            self.last_editor_result = f"#{command.id} {command.kind}: accepted"
+            if command.kind == "SEND_DIALOGUE":
+                self.last_dialogue_notice = ""
+            else:
+                self.last_editor_result = f"#{command.id} {command.kind}: accepted"
         except (ValueError, TypeError) as error:
-            self.last_editor_result = f"#{command.id} {command.kind}: rejected ({error})"
+            if command.kind == "SEND_DIALOGUE":
+                self.last_dialogue_notice = f"Dialogue rejected: {error}"
+            else:
+                self.last_editor_result = f"#{command.id} {command.kind}: rejected ({error})"
         del self.editor_inbox[command.id]
 
     def _editor_state(self):
@@ -181,7 +191,9 @@ class WorkbenchRuntimeMixin:
             diagnostics.get("homeostatic_plan_component", 0.), diagnostics.get("homeostatic_prediction_confidence", 0.),
             configured.delayed_homeostatic_prediction_enabled, bool(temporal.get("usable")),
             temporal.get("passive_depth", 0), temporal.get("elapsed", 0.), temporal.get("ambiguity", 0.),
-            configured.resource_nutrient_payload, configured.resource_hydration_payload, self.last_editor_result)
+            configured.resource_nutrient_payload, configured.resource_hydration_payload,
+            self.last_workbench_notice or self.last_editor_result,
+            sim.seed if 0 <= sim.seed <= 2**63-1 else 0, self.last_dialogue_notice)
 
     def publish_workbench_status(self, paused=False):
         value = self.workbench_status(paused)
@@ -210,7 +222,8 @@ class WorkbenchController:
 
     def poll(self):
         stepped = False
-        for _, kind, x, y, object_id, text in self.commands.drain():
+        for row in self.commands.drain():
+            _, kind, x, y, object_id, text = row[:6]
             name = kind.name
             if name == "PAUSE":
                 self.paused = True
@@ -220,11 +233,30 @@ class WorkbenchController:
                 if self.paused:
                     self.runtime.step_causal_boundary()
                     stepped = True
+            elif name == "REACH_SCENARIO_BOUNDARY":
+                if self.paused:
+                    self.runtime.reach_scenario_boundary()
+                    self.runtime.last_workbench_notice = "Safe physical boundary reached; Save does not advance time"
+                    stepped = True
+                else:
+                    self.runtime.last_workbench_notice = "Pause before finishing the current action"
+            elif name == "EXPORT_SCENARIO":
+                from .scenario import export_scenario
+                try:
+                    if len(row) != 9:
+                        raise ValueError("missing scenario export payload")
+                    path, scenario_name, seed = row[6:]
+                    export_scenario(self.runtime, path, seed=seed, name=scenario_name, paused=self.paused)
+                    self.runtime.last_workbench_notice = f"Scenario saved: {path}"
+                except (ValueError, OSError, TypeError) as error:
+                    self.runtime.last_workbench_notice = f"Scenario export rejected: {error}"
             else:
                 try:
+                    if name != "SEND_DIALOGUE":self.runtime.last_workbench_notice = ""
                     self.runtime.accept_editor_command(name, x=x, y=y, object_id=object_id, text=text)
                 except (ValueError, TypeError) as error:
-                    self.runtime.last_editor_result = f"{name}: rejected ({error})"
+                    if name == "SEND_DIALOGUE":self.runtime.last_dialogue_notice = str(error)
+                    else:self.runtime.last_editor_result = f"{name}: rejected ({error})"
         if self.paused and self.runtime.editor_inbox:
             # Editing a paused world applies only its current causal timestamp.
             self.runtime.run_to_quiescence()

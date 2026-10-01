@@ -17,12 +17,27 @@ class NativeWorld:
     """Normal native runtime: Python World physical methods are never called."""
     is_native = True
     python_physical_calls=0
-    def __init__(self,settings:Settings,rng:Random)->None:
+    def __init__(self,settings:Settings,rng:Random,initial=None)->None:
         self.settings,self.rng=settings,rng;self.grid=Grid(settings.world_width,settings.world_height);n=max(1,settings.entity_count)
-        positions=rng.sample([(x,y) for y in range(self.grid.height) for x in range(self.grid.width)],min(settings.object_count,settings.max_objects)+n)
-        self.native=WorldRuntime(self.grid.width,self.grid.height,settings.perception_radius);self.native.initialize_multi([(i,*positions[i],"N",i+1) for i in range(n)],[(i+1,*p,0) for i,p in enumerate(positions[n:])])
+        self.native=WorldRuntime(self.grid.width,self.grid.height,settings.perception_radius)
+        if initial is None:
+            positions=rng.sample([(x,y) for y in range(self.grid.height) for x in range(self.grid.width)],min(settings.object_count,settings.max_objects)+n)
+            self.native.initialize_multi([(i,*positions[i],"N",i+1) for i in range(n)],[(i+1,*p,0) for i,p in enumerate(positions[n:])])
+        else:
+            bodies=[(b["id"],b["x"],b["y"],SHORT[b["orientation"]],b["appearance"]) for b in initial["bodies"]]
+            objects=[(o["id"],o["x"],o["y"],o["state"]) for o in initial["objects"]]
+            held=[(o["owner_id"],o["id"],o["x"],o["y"],o["state"]) for o in initial["held_objects"]]
+            next_id=max((o["id"] for o in initial["objects"]+initial["held_objects"]),default=0)+1
+            self.native.restore(bodies,objects,held,[0.]*n,0,None,next_id,0,0,[0]*n,0.,0,settings.max_objects)
         self.native.configure_resource_limit(settings.resource_max_live)
+        if initial is not None:
+            self.native.restore_resources([(o["id"],o["resource_channel"],o["nutrients"],o["hydration"]) for o in initial["objects"]+initial["held_objects"] if o["resource_channel"]],0.,0.)
         self.world_tick_count=0;self.next_object_id=min(settings.object_count,settings.max_objects)+1;self.next_spawn_tick=self._sample_next_spawn(0) if min(settings.object_count,settings.max_objects)<settings.max_objects else None;self.native.configure_spawning(settings.max_objects,self.next_spawn_tick,self.next_object_id)
+        if initial is not None:
+            # Сценарная геометрия не расходует RNG. Единственный draw здесь —
+            # обычное расписание будущего spawn, независимо от records/order.
+            self.next_object_id=next_id
+            self.native.configure_spawning(settings.max_objects,self.next_spawn_tick,next_id)
         self.last_resistance=0.;self.last_outcome="INITIAL";self.state_change_count=0;self.body_resistance={i:0. for i in range(n)};self.body_outcomes={i:"INITIAL" for i in range(n)};self.fairness_wins={i:0 for i in range(n)};self.conflict_cursor=0;self.conflict_count=0
         self.action_counts={"push_attempts":0,"successful_pushes":0,"grab_attempts":0,"successful_grabs":0,"release_attempts":0,"successful_releases":0,"interaction_attempts":0,"successful_interactions":0,"blind_grabs":0,"blind_interactions":0}
         self._refresh();self.spawn_records=[self._spawn_record(o,0) for o in self.objects]

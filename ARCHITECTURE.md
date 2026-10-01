@@ -1,11 +1,25 @@
 # Synthetic-Life Architecture
 
-**Current architecture: v0.9.0 experimental workbench on frozen v0.8.4 cognition.**
+**Current architecture: v0.9.1 scenarios and workbench on frozen v0.8.4 cognition.**
+
+## Scenario Boundary
+
+Scenario artifact → validated immutable definition → fresh runtime bootstrap →
+physical World / Physiology / causal Settings → ordinary first sensory observation.
+Optional `.sebrain` → existing compatibility preflight → durable knowledge only.
+Interactive main and headless runner use `ContinuousRuntime.from_scenario`.
+No scenario metadata, resource labels or manifest fields enter cognition.
+Scenario geometry does not consume placement RNG; future scheduling uses its seed.
+`.seworld` remains exact continuation; scenario/manifest schemas are independent v1.
+See [schema, ownership, security and limits](docs/V0_9_1_REPRODUCIBLE_SCENARIOS.md).
 
 ## Workbench Boundary
 
 READ: runtime → immutable value-owned snapshot → native SDL3/OpenGL/ImGui UI.
 WRITE: UI → explicit bounded command queue → host poll → runtime scheduler → authority.
+WRITE host: UI → EXPORT_SCENARIO → host exporter → `.sescenario`, without scheduler input.
+Safe export requires pause and completed physical transactions. A separate explicit
+Finish action & pause control can reach that boundary; Save never advances time.
 Place/remove/send are external causal interventions; pause/resume/step are host
 controls. Direct mutation of World, Physiology, Cognit graph or micro substrate
 from UI is forbidden. Commands use WorldTime and scheduler sequence, never FPS.

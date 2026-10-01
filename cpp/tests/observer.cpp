@@ -11,6 +11,7 @@
 #include <cassert>
 #include <cmath>
 #include <imgui.h>
+#include <imgui_internal.h>
 #include <numeric>
 #include <thread>
 #include <unordered_set>
@@ -96,6 +97,42 @@ int main() {
   assert(dialogue_input.size() == 1 &&
          dialogue_input[0].kind == se::WorkbenchCommandKind::SendDialogue &&
          dialogue_input[0].text == "dax");
+  io.AddKeyEvent(ImGuiKey_Enter, false);
+  frame();
+  for (unsigned i = 0; i < 256; ++i)
+    inputs.submit(se::WorkbenchCommandKind::Pause);
+  io.AddMousePosEvent(700, 400);
+  frame();
+  io.AddMouseButtonEvent(0, true);
+  frame();
+  assert(!interaction.workbench_notice.empty() &&
+         interaction.dialogue_error.empty());
+  inputs.drain();
+  io.AddMouseButtonEvent(0, false);
+  frame();
+  io.AddMousePosEvent(760, 25);
+  frame();
+  io.AddMouseButtonEvent(0, true);
+  frame();
+  io.AddMouseButtonEvent(0, false);
+  frame();
+  assert(!ImGui::GetCurrentContext()->OpenPopupStack.empty());
+  frame();
+  frame(); // popup auto-fit stabilizes independently of input cadence.
+  auto *popup = ImGui::GetCurrentContext()->OpenPopupStack.back().Window;
+  assert(popup && popup->Size.x < 600 && popup->Size.y < 450);
+  io.AddMousePosEvent(popup->DC.CursorStartPos.x + 20,
+                      popup->DC.CursorPosPrevLine.y + 10);
+  frame();
+  io.AddMouseButtonEvent(0, true);
+  frame();
+  io.AddMouseButtonEvent(0, false);
+  frame();
+  auto exported = inputs.drain();
+  assert(exported.size() == 1 &&
+         exported[0].kind == se::WorkbenchCommandKind::ExportScenario);
+  assert(exported[0].scenario_path == "scenarios/my_case.sescenario" &&
+         exported[0].scenario_name == "My scenario");
   ImGui::DestroyContext();
   for (auto [w, h] :
        std::vector<std::pair<int, int>>{{1100, 700}, {1440, 900}, {1920, 1080}})
@@ -256,8 +293,8 @@ int main() {
   engine.publish_brain_snapshot(2.5, 7, 4, active);
   auto graph = engine.brain_snapshot_channel()->latest();
   assert(graph->nodes.size() == 3 && graph->edges.size() == 1 &&
-         graph->nodes[0].id == 1 && graph->nodes[0].activity == .9 && graph->edges[0].source == 0 &&
-         graph->edges[0].target == 1);
+         graph->nodes[0].id == 1 && graph->nodes[0].activity == .9 &&
+         graph->edges[0].source == 0 && graph->edges[0].target == 1);
   auto graph_draw = se::prepare_brain_draw_data(*graph, 300, 240);
   assert(graph_draw.nodes.size() == 3 && graph_draw.edges.size() == 1);
   auto graph_repeat = se::prepare_brain_draw_data(*graph, 300, 240);

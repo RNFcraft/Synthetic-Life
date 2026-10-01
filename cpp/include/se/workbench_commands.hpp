@@ -15,7 +15,9 @@ enum class WorkbenchCommandKind : std::uint8_t {
   SendDialogue,
   Pause,
   Resume,
-  Step
+  Step,
+  ExportScenario,
+  ReachScenarioBoundary
 };
 struct WorkbenchCommand {
   std::uint64_t id{};
@@ -23,6 +25,8 @@ struct WorkbenchCommand {
   int x{}, y{};
   std::uint32_t object_id{};
   std::string text;
+  std::string scenario_path, scenario_name;
+  std::uint64_t scenario_seed{};
 };
 // UI producer / host consumer. No callbacks, GIL, or runtime pointers.
 class WorkbenchCommandChannel {
@@ -34,10 +38,30 @@ public:
     if (closed_ || queue_.size() >= capacity || text.size() > max_text_bytes)
       return 0;
     const auto raw = static_cast<unsigned>(kind);
-    if (raw < 1 || raw > 8)
+    if (raw < 1 || raw > 10)
       throw std::invalid_argument("invalid workbench command kind");
     const auto id = next_id_++;
     queue_.push_back({id, kind, x, y, object_id, std::move(text)});
+    return id;
+  }
+  std::uint64_t submit_export(std::string path, std::string name,
+                              std::uint64_t seed) {
+    std::lock_guard lock(mutex_);
+    if (closed_ || queue_.size() >= capacity || path.size() > max_text_bytes ||
+        name.size() > 256)
+      return 0;
+    if (seed > INT64_MAX)
+      throw std::invalid_argument("invalid scenario seed");
+    const auto id = next_id_++;
+    queue_.push_back({id,
+                      WorkbenchCommandKind::ExportScenario,
+                      0,
+                      0,
+                      0,
+                      {},
+                      std::move(path),
+                      std::move(name),
+                      seed});
     return id;
   }
   std::vector<WorkbenchCommand> drain() {

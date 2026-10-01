@@ -8,7 +8,7 @@ WorkbenchLayout workbench_layout(float w, float h, float scale, float left,
                                  float right) {
   w = std::max(1.f, w);
   h = std::max(1.f, h);
-  float gap = 4.f * scale, top = std::min(60.f * scale, h * .18f),
+  float gap = 4.f * scale, top = std::min(56.f * scale, h * .18f),
         body = std::max(1.f, h - top - gap);
   left = std::clamp(left, .16f, .30f);
   right = std::clamp(right, .20f, .32f);
@@ -41,6 +41,13 @@ void tooltip(const char *text) {
   if (ImGui::IsItemHovered(ImGuiHoveredFlags_DelayShort))
     ImGui::SetTooltip("%s", text);
 }
+void send_host(WorkbenchUIState &ui, WorkbenchCommandChannel *commands,
+               WorkbenchCommandKind kind) {
+  if (!commands->submit(kind))
+    ui.workbench_notice = "Workbench command queue full";
+  else
+    ui.workbench_notice.clear();
+}
 } // namespace
 void draw_workbench(WorkbenchUIState &ui, const RenderSnapshot &world,
                     std::shared_ptr<const BrainSnapshot> brain,
@@ -63,12 +70,13 @@ void draw_workbench(WorkbenchUIState &ui, const RenderSnapshot &world,
       ui.selected_node = UINT32_MAX;
     }
     if (commands && status && ImGui::IsKeyPressed(ImGuiKey_Space))
-      commands->submit(status->paused ? WorkbenchCommandKind::Resume
-                                      : WorkbenchCommandKind::Pause);
+      send_host(ui, commands,
+                status->paused ? WorkbenchCommandKind::Resume
+                               : WorkbenchCommandKind::Pause);
     if (commands && status && status->paused &&
         (ImGui::IsKeyPressed(ImGuiKey_Period) ||
          ImGui::IsKeyPressed(ImGuiKey_N)))
-      commands->submit(WorkbenchCommandKind::Step);
+      send_host(ui, commands, WorkbenchCommandKind::Step);
   }
   pane("Toolbar", layout.toolbar);
   ImGui::BeginChild("Tools", {0, 0}, ImGuiChildFlags_None,
@@ -111,14 +119,15 @@ void draw_workbench(WorkbenchUIState &ui, const RenderSnapshot &world,
   ImGui::SameLine();
   ImGui::BeginDisabled(!commands || !status);
   if (ImGui::Button(status && status->paused ? "Run" : "Pause"))
-    commands->submit(status && status->paused ? WorkbenchCommandKind::Resume
-                                              : WorkbenchCommandKind::Pause);
+    send_host(ui, commands,
+              status && status->paused ? WorkbenchCommandKind::Resume
+                                       : WorkbenchCommandKind::Pause);
   tooltip(
       "Space: pause host advancement; causal clocks stay at their frontier");
   ImGui::SameLine();
   ImGui::BeginDisabled(!status || !status->paused);
   if (ImGui::Button("Step"))
-    commands->submit(WorkbenchCommandKind::Step);
+    send_host(ui, commands, WorkbenchCommandKind::Step);
   tooltip("N / . : next scheduler timestamp, including its zero-time "
           "continuations");
   ImGui::EndDisabled();
@@ -130,12 +139,59 @@ void draw_workbench(WorkbenchUIState &ui, const RenderSnapshot &world,
                      "%s", status && status->paused ? "PAUSED" : "RUNNING");
   ImGui::SameLine();
   ImGui::TextUnformatted(format_world_time(world.world_time).c_str());
+  ImGui::SameLine(0, 16 * scale);
+  if (ImGui::Button("Scenario") || (ui.open_scenario_popup && ImGui::GetFrameCount() >= 3)) {
+    ui.open_scenario_popup = false;
+    if (status)
+      ui.scenario_seed = status->seed;
+    ImGui::OpenPopup("Save Scenario");
+  }
+  ImGui::SetNextWindowSize({420 * scale, 0}, ImGuiCond_Always);
+  if (ImGui::BeginPopup("Save Scenario")) {
+    ImGui::TextDisabled("NORMALIZED INITIAL CONDITION / t = 0");
+    ImGui::SetNextItemWidth(340 * scale);
+    ImGui::InputTextWithHint("Path", "case.sescenario", ui.scenario_path.data(),
+                             ui.scenario_path.size());
+    ImGui::SetNextItemWidth(260 * scale);
+    ImGui::InputText("Name", ui.scenario_name.data(), ui.scenario_name.size());
+    ImGui::SetNextItemWidth(180 * scale);
+    ImGui::InputScalar("Seed", ImGuiDataType_U64, &ui.scenario_seed);
+    ImGui::TextWrapped("Physical scene + physiology + Settings. No checkpoint "
+                       "or learned brain.");
+    ImGui::BeginDisabled(!commands || !status || !status->paused);
+    if (ImGui::Button("Finish action & pause")) {
+      if (!commands->submit(WorkbenchCommandKind::ReachScenarioBoundary))
+        ui.workbench_notice = "Workbench command queue full";
+    }
+    tooltip("Explicitly advances ordinary events to a safe physical boundary. "
+            "Save itself never advances time.");
+    if (ImGui::Button("Save")) {
+      if (ui.scenario_seed > INT64_MAX)
+        ui.workbench_notice = "Invalid scenario seed";
+      else if (!commands->submit_export(ui.scenario_path.data(),
+                                        ui.scenario_name.data(),
+                                        ui.scenario_seed))
+        ui.workbench_notice = "Scenario export queue full; path retained";
+      else {
+        ui.workbench_notice.clear();
+        ImGui::CloseCurrentPopup();
+      }
+    }
+    ImGui::EndDisabled();
+    ImGui::SameLine();
+    if (ImGui::Button("Cancel"))
+      ImGui::CloseCurrentPopup();
+    if (!status || !status->paused)
+      ImGui::TextDisabled("Pause to export the scenario");
+    ImGui::EndPopup();
+  }
   ImGui::EndChild();
   ImGui::End();
   pane("Dialogue", layout.dialogue);
   ImGui::TextDisabled("DIALOGUE");
   ImGui::Separator();
-  draw_dialogue_view(ui, dialogue.get(), commands);
+  draw_dialogue_view(ui, dialogue.get(), commands,
+                     status ? status->dialogue_notice : "");
   ImGui::End();
   pane("World", layout.world);
   ImGui::TextDisabled("WORLD");

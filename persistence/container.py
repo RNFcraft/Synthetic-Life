@@ -5,7 +5,7 @@ from pathlib import Path
 from typing import Any
 
 HEADER=struct.Struct(">8sHHI")
-MAGICS={"brain":b"SEBRAIN1","world":b"SEWORLD1"}
+MAGICS={"brain":b"SEBRAIN1","world":b"SEWORLD1","scenario":b"SESCEN01","manifest":b"SEMANF01"}
 
 class ContainerError(ValueError):pass
 

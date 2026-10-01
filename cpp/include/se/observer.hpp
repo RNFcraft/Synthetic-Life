@@ -74,7 +74,7 @@ public:
     void run(const SnapshotSource& source);
     bool start();
     void attach_workbench(std::shared_ptr<WorkbenchStatusChannel> status,std::shared_ptr<WorkbenchCommandChannel> commands);
-    void capture_next_frame(std::string path); // presentation fixture / visual audit
+    void capture_next_frame(std::string path, bool scenario_popup = false); // presentation fixture / visual audit
     void stop();
     bool is_running() const noexcept;
     std::uint64_t frames_rendered() const noexcept;

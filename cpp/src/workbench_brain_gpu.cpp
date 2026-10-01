@@ -86,7 +86,7 @@ public:
         "}else{if((filter==1&&state.x<.4)||(filter==2&&int(state.z)!=5)||("
         "filter==3&&int(state.z)!=2))discard;vec3 "
         "c=int(state.z)==5?vec3(.72,.59,.36):vec3(.34,.56,.67);color=vec4(c,."
-        "12+state.x*.43);}}";
+        "07+state.x*.43);}}";
     auto shader = [&](GLenum kind, const char *text) {
       auto id = create_shader(kind);
       source(id, 1, &text, nullptr);
