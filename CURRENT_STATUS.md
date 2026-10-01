@@ -2,6 +2,11 @@
 
 ## Current implementation: v0.8.3
 
+v0.8.3 stabilization fix adds fail-closed brain internal sensor topology
+compatibility. Learned knowledge transfers only with a matching encoding
+contract; current body and episode state do not transfer. See
+[the stabilization contract](docs/V0_8_3_HOMEOSTATIC_VALUATION.md#v083-stabilization-fix-brain-sensor-compatibility).
+
 v0.8.0 is the frozen physiological foundation; v0.8.1 physical consumables,
 v0.8.2 non-semantic interoception, and v0.8.3 learned trajectory-level
 homeostatic valuation are implemented. Valuation defaults OFF. Supported
@@ -12,7 +17,7 @@ Snapshot v7 / continuous .seworld v10 apply with interoception;
 .sebrain v6 and native graph v3 are unchanged. Additive causal configuration
 restores non-default topology, cadence and cognitive settings before construction.
 
-Full verification on 2026-10-01: **491 pytest passed; CTest Release 2/2 passed**.
+Stabilization full verification on 2026-10-01: **516 pytest passed; CTest Release 2/2 passed**.
 `python tools/verify.py --full` completed successfully, including native observer
 build, import/headless smokes, full pytest and CTest.
 Details: [testing](docs/TESTING.md).

@@ -5,7 +5,12 @@ valuation. See [the v0.8.3 contract](docs/V0_8_3_HOMEOSTATIC_VALUATION.md).
 v0.8.0 = frozen physiological foundation; v0.8.1 = physical consumables;
 v0.8.2 = non-semantic interoception; v0.8.3 = learned trajectory valuation.
 Both interoception and dedicated valuation default to OFF.
-Verified on 2026-10-01: 491 pytest passed, CTest Release 2/2 passed.
+v0.8.3 stabilization verified on 2026-10-01: 516 pytest passed, CTest Release 2/2 passed.
+
+v0.8.3 stabilization fix adds fail-closed brain internal sensor topology
+compatibility. Learned knowledge transfers only with a matching encoding
+contract; current body and episode state do not transfer. See
+[the stabilization contract](docs/V0_8_3_HOMEOSTATIC_VALUATION.md#v083-stabilization-fix-brain-sensor-compatibility).
 
 Synthetic-Life — экспериментальная embodied cognitive architecture на основе
 динамического графа Cognits (`κ`) и Relations (`ρ`). Проект не является

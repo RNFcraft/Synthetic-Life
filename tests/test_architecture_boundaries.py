@@ -125,3 +125,35 @@ def test_spatial_candidate_path_uses_sensor_domain_predicate():
                    and any(isinstance(t, ast.Name) and t.id == "movable" for t in node.targets))
     assert any(isinstance(node, ast.Call) and isinstance(node.func, ast.Name)
                and node.func.id == "is_spatial_primitive" for node in ast.walk(movable))
+
+
+def test_brain_compatibility_preflight_precedes_graph_loading():
+    tree = ast.parse((ROOT / "simulation" / "simulation.py").read_text(encoding="utf-8"))
+    load = next(node for node in ast.walk(tree) if isinstance(node,ast.FunctionDef)
+                and node.name == "load_brain")
+    checks = [node for node in ast.walk(load) if isinstance(node,ast.Call)
+              and isinstance(node.func,ast.Name) and node.func.id == "validate_brain_sensor_contract"]
+    assert len(checks) == 1
+    activation = [node for node in ast.walk(load) if isinstance(node,ast.Call)
+                  and isinstance(node.func,ast.Attribute)
+                  and node.func.attr in {"snapshot_data","load","load_graph"}]
+    assert activation and all(checks[0].lineno < node.lineno for node in activation)
+    path = ROOT / "simulation" / "brain_sensor_contract.py"
+    helper = ast.parse(path.read_text(encoding="utf-8"))
+    assert any(isinstance(node,ast.Call) and isinstance(node.func,ast.Name)
+               and node.func.id == "is_internal_primitive" for node in ast.walk(helper))
+    # Compatibility only compares contracts. It cannot rewrite or rescale bins.
+    assert not any(isinstance(node,ast.BinOp) for node in ast.walk(helper))
+    assert not any(isinstance(node,ast.Assign) and any(isinstance(t,ast.Subscript)
+               for t in node.targets) for node in ast.walk(helper))
+
+
+def test_brain_sensor_metadata_has_no_episode_state_access():
+    tree = ast.parse((ROOT / "physiology" / "interoception.py").read_text(encoding="utf-8"))
+    contract = next(node for node in ast.walk(tree) if isinstance(node,ast.FunctionDef)
+                    and node.name == "sensor_contract")
+    attributes = {node.attr for node in ast.walk(contract) if isinstance(node,ast.Attribute)}
+    assert attributes == {"ENCODING","CHANNELS","interoception_bins"}
+    returns = [node for node in ast.walk(contract) if isinstance(node,ast.Return)]
+    assert len(returns) == 1 and isinstance(returns[0].value,ast.Dict)
+    assert {key.value for key in returns[0].value.keys} == {"schema","encoding","channels","bins"}

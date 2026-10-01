@@ -2,6 +2,13 @@
 
 **Current architecture: v0.8.3 opt-in learned trajectory valuation on the frozen v0.8.0 foundation.**
 
+v0.8.3 stabilization: brain META carries a versioned internal sensor encoding
+contract. Structured internal-pattern inspection and topology validation run
+before graph activation. Same encoding transfers learned cognition; incompatible
+or missing legacy internal contracts fail closed. No episode reserves or sensory
+activation are metadata, and no bin remapping occurs. Brain v6 is unchanged.
+See [the contract](docs/V0_8_3_HOMEOSTATIC_VALUATION.md#v083-stabilization-fix-brain-sensor-compatibility).
+
 The physiology owner feeds a pure numeric transducer at the external frame's
 WorldTime. Three bounded levels enter ordinary pattern learning; spatial
 perception sees only external primitives. Only learned action-conditioned internal predictions contribute to an opt-in

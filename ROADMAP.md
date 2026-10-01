@@ -1089,7 +1089,12 @@ extension without relying on commit history or external conversations.
 
 # v0.8 — Homeostatic Motivation and First Survival Learning
 
-**Status: IN PROGRESS — v0.8.0 FROZEN**
+**Status: IN PROGRESS - v0.8.0 FROZEN; v0.8.1-v0.8.3 IMPLEMENTED; v0.8.4 PLANNED**
+
+The broad research design before the milestone sections below is prospective.
+Its continuous integral objective is not the current planner implementation:
+v0.8.3 uses bounded target-bin progress. The implemented/planned sections below
+and docs/V0_8_3_HOMEOSTATIC_VALUATION.md define the current implementation.
 
 v0.8 открывает первую ветку, в которой у Synthetic-Life появляется собственное непрерывное физиологическое состояние и впервые возникает внутренний критерий функциональной полезности последствий поведения.
 
@@ -1230,8 +1235,9 @@ J = Σ γ^k * Δt_k * T_k
 Implemented as a separate runtime-owned subsystem with bounded energy,
 nutrients and hydration; WorldTime-only metabolism and digestion; deterministic
 action costs and brownout; immutable core/planner/observer projections; exact
-`.seworld v8` continuation and v7 migration. It does not yet identify
-consumables, inject interoception, or score planner trajectories. Design and
+`.seworld v8` continuation and v7 migration at the historical v0.8.0 freeze.
+Consumables, interoception and learned trajectory valuation subsequently
+arrived in v0.8.1-v0.8.3. Design and
 acceptance evidence: [`docs/V0_8_HOMEOSTASIS_DESIGN.md`](docs/V0_8_HOMEOSTASIS_DESIGN.md).
 
 Цель — добавить минимальную deterministic physiology, существующую только в causal simulation time.
@@ -1339,272 +1345,97 @@ Persistence должна сохранять exact physiological continuation.
 
 ---
 
-## v0.8.1 — Consumable World Objects and External Food Spawn
+## v0.8.1 - Physical Consumables
 
-**Status: PLANNED**
+**Status: IMPLEMENTED**
 
-Цель — добавить простейший физический источник nutrient reserve.
+Native World owns opt-in physical consumables and deterministic resource
+spawning. Successful ordinary interaction consumes a resource and delivers its
+physical consequence to runtime-owned Physiology. Nutrient reserve and/or
+hydration change; digestion can subsequently convert nutrients into energy.
+Python World remains the differential oracle. Resource payloads and semantic
+food/water labels do not cross the planner sensory boundary. Exact pending
+consequence/spawn continuation is persisted. Interactive editor commands remain
+future UI work, not a requirement of the implemented milestone.
 
-Первый consumable object остаётся обычным кубиком World, но получает физическое свойство nutrient content. Это свойство принадлежит World physics и не передаётся cognition как слова `food`, `edible`, `nutrition`, `reward` или evaluator label.
-
-Физический путь:
-
-```text
-visible/touchable cube
-→ ordinary movement / interaction
-→ successful consume event
-→ cube disappears or becomes consumed
-→ N rises immediately
-→ digestion later converts N into E
-```
-
-Immediate изменение `N` намеренно создаёт наблюдаемый причинный физиологический consequence самого consumption, тогда как energy restoration остаётся отложенной. Это не reward shortcut: `N` является частью физического организма и также участвует в homeostatic state.
-
-Для интерактивного curriculum observer/editor должен позволять создавать consumable cube нажатием на клетку, но UI не мутирует World или physiology напрямую.
-
-Допустимый путь:
-
-```text
-mouse click / experiment command
-→ explicit external World command
-→ EventScheduler
-→ deterministic FOOD_SPAWN / object-spawn event
-→ native World mutation
-→ ordinary sensory consequence
-```
-
-Spawn должен иметь causal timestamp/sequence и участвовать в deterministic replay/save-load semantics.
+See [the consumables contract](docs/V0_8_1_CONSUMABLES.md).
 
 ---
 
-## v0.8.2 — Non-Semantic Interoception
+## v0.8.2 - Non-Semantic Interoception
 
-**Status: IMPLEMENTED (opt-in ordinary pattern path; neural micro-path deferred).**
+**Status: IMPLEMENTED (opt-in ordinary pattern path)**
 
-The implementation contract is [docs/V0_8_2_INTEROCEPTION.md](docs/V0_8_2_INTEROCEPTION.md).
-The conceptual neural-substrate path below remains a future extension.
+Runtime Physiology -> bounded InteroceptiveTransducer -> three ordered numeric
+`internal_*` channels -> ordinary Patterns/Cognits/Relations. These channels
+quantize energy, nutrient and hydration reserve/max ratios, without cognitive
+hunger/thirst labels. Singleton and mixed non-spatial evidence can learn;
+internal primitives never anchor retinotopic translation or enter spatial
+percept tracking. Interoception defaults OFF. Neural micro-interoception remains
+deferred; current physiology is runtime-owned, not a new native neural module.
 
-Цель — дать организму возможность чувствовать собственную physiology без загрузки готового значения этих ощущений.
-
-Минимальные bounded channels могут отражать:
-
-- energy level;
-- nutrient reserve;
-- hunger/deficit magnitude;
-- coarse homeostatic deviation при необходимости.
-
-Но через sensory boundary никогда не передаются semantic labels:
-
-```text
-I_AM_HUNGRY
-FOOD_NEEDED
-LOW_ENERGY_MEANS_FIND_FOOD
-THIS_OBJECT_RESTORES_ENERGY
-```
-
-Предпочтительный production path:
-
-```text
-native physiology
-→ bounded non-semantic interoceptive receptors
-→ neural substrate
-→ Assembly
-→ ordinary Cognit
-```
-
-Interoception следует тем же принципам, что v0.6.4 sensory transduction:
-
-- stable receptor identity;
-- bounded topology;
-- same-time deterministic injection;
-- no object IDs;
-- no Action semantics;
-- no direct Goal creation;
-- no direct planner score injection.
-
-Interoceptive Cognits являются ordinary learned representations и могут участвовать в context, memory, TransitionEvidence, Relations и prediction так же, как другие experience-derived Cognits.
+See [the interoception contract](docs/V0_8_2_INTEROCEPTION.md).
 
 ---
 
-## v0.8.3 — Homeostatic Motivation and Planner Valuation
+## v0.8.3 - Learned Trajectory-Level Homeostatic Valuation
 
-**Status: PLANNED**
+**Status: IMPLEMENTED (valuation defaults OFF)**
 
-Цель — сделать физиологическую устойчивость общей мотивационной функцией, не превращая её в hardcoded policy.
+The target of homeostasis is innate. The action model is learned.
 
-`HomeostaticEvaluator` получает только physiological state или predicted physiological state и возвращает bounded `T`.
-
-Он НЕ должен:
-
-- видеть object type `FOOD`;
-- выбирать Action;
-- создавать Goal на конкретный object;
-- искать еду;
-- читать coordinates;
-- назначать reward;
-- изменять learned graph.
-
-Planner получает homeostatic contribution только после того, как существующий prediction/imagination path построил predicted internal state.
-
-Правильный шов:
+Implemented path:
 
 ```text
-Action candidate
-→ ordinary learned prediction
-→ predicted interoceptive / physiological consequence
-→ HomeostaticEvaluator(predicted state)
-→ T_k
-→ trajectory objective J
-→ ordinary planner comparison
+ordinary external/internal sensory Cognits + previous action
+-> existing transition evidence and SELF_ACTION Relation materialization
+-> predicted internal sensory bins
+-> confidence-weighted bounded target-bin progress
+-> ordinary beam trajectory valuation
 ```
 
-Неправильный шов:
+Runtime supplies neutral target bins. Planner queries acquired SELF_ACTION rho;
+unpredicted mass means unchanged internal state. The bounded trajectory term
+is 0.8 times cumulative predicted progress, with prefix confidence weighting.
+It does not read raw Physiology, WorldObject or resource payloads. Without
+learned evidence, the dedicated component is zero. There are no food/water
+semantics, reward, special homeostatic Goal or general delayed credit assignment.
+Short learned two-action trajectories already work. Cognitive intrinsic
+`internal_tension` remains separate from physiological deviation.
 
-```text
-hunger
-→ special HOMEOSTATIC Goal pointing to food
-→ hardcoded action
-```
+The v0.8.3 stabilization fix adds a versioned internal sensor contract to brain
+META. Compatible learned knowledge transfers without current body/sensory/plan
+state; incompatible or unverifiable legacy internal topology fails closed.
+Brain v6 and native graph v3 remain unchanged. Competing bins retain the
+existing coarse marginal approximation, not a calibrated joint distribution.
 
-В v0.8 homeostatic drive не моделируется как специальный `HOMEOSTATIC Goal`, если для этого требуется встроенное знание способа удовлетворения потребности. Existing Goals могут продолжать существовать для других задач, но physiology предоставляет общий valuation layer для imagined consequences.
+Controlled regression now also covers native physical INTERACT -> consequence
+-> Physiology -> next ordinary interoceptive observation -> learned internal
+SELF_ACTION evidence. It is a plumbing regression, not autonomous survival proof.
 
-Основная planner objective:
-
-```text
-J = Σ γ^k * Δt_k * T_k
-    + γ^n * τ_terminal * T_terminal
-```
-
-Planner предпочитает меньший expected `J` среди доступных predicted trajectories.
+See [implementation and stabilization details](docs/V0_8_3_HOMEOSTATIC_VALUATION.md)
+and [verification](docs/TESTING.md).
 
 ---
 
-## v0.8.4 — Learned Homeostatic Consequences
+## v0.8.4 - Delayed and Calibrated Homeostatic Consequence Learning
 
-**Status: PLANNED**
+**Status: PLANNED - not implemented by the stabilization fix**
 
-Цель — связать существующее causal learning с внутренними physiological outcomes без отдельной HomeostaticMemory и без нового reward-learning subsystem.
+Build on the already implemented SELF_ACTION -> internal prediction -> beam
+valuation path. Remaining research scope:
 
-Долгосрочное знание должно жить в обычном κ/ρ graph.
+- Multi-observation delayed-consequence experiments, including digestion.
+- Confidence calibration and uncertainty for competing predicted internal bins.
+- Longer controlled physical-interaction curricula and full physical experience
+  -> learning -> planner-ranking experiments.
+- Ablations over acquired homeostatic causal knowledge, with ordinary external
+  World knowledge and physiology retained.
 
-Interoceptive experience создаёт ordinary Cognits, поэтому learning path имеет вид:
-
-```text
-external context Cognits
-+
-interoceptive Cognits
-+
-Action
-→ TransitionEvidence
-→ ordinary action-conditioned Relations / SELF_ACTION evidence
-→ later external and interoceptive Cognits
-```
-
-Например после реального опыта система может приобрести knowledge вида:
-
-```text
-visual/context A
-+ low-reserve interoceptive representation
-+ INTERACT
-→ high-reserve interoceptive representation
-```
-
-Но сама Relation не содержит label `good`, `food` или числовой reward. Её значение для поведения возникает только тогда, когда prediction приводит к physiological state с меньшим `T`.
-
-### Persistence of physiological knowledge
-
-Долговременная память о последствиях не создаётся отдельным `food_value` или `HomeostaticMemory` store.
-
-После materialization learned causal knowledge является обычными Relations и сохраняется тем же durable brain persistence, что и остальные приобретённые Relations.
-
-Episode memory при необходимости может помогать recall/context, но не является единственным authoritative carrier значения пищи.
-
-### Delayed consequence / multi-step credit contract
-
-v0.8 НЕ вводит temporal-difference reward backpropagation.
-
-Отдалённая полезность раннего действия появляется через уже существующую model-based multi-step imagination.
-
-Опыт отдельно учит переходы:
-
-```text
-State A + MOVE_RIGHT
-→ State B
-
-State B + INTERACT
-→ N rises
-```
-
-Затем planner способен imagined trajectory:
-
-```text
-A
-↓ MOVE_RIGHT
-B
-↓ INTERACT
-N ↑
-↓ digestion
-E ↑
-T ↓
-```
-
-и оценивает всю траекторию через discounted integral `J`.
-
-Таким образом, первому MOVE не присваивается искусственный delayed reward. Оно становится предпочтительным, если learned transition model показывает, что через него достижимо последующее состояние с меньшей homeostatic cost.
-
-Первоначальный bounded horizon должен быть достаточен для Stage 2 curriculum. Если текущий planner не способен связать даже короткую двух- или трёхшаговую цепочку без нового RL subsystem, это фиксируется как architecture blocker, а не маскируется immediate reward hack.
-
-### Required ablations
-
-Нужны разные ablation, потому что они доказывают разные звенья causal chain.
-
-#### Primary — homeostatic consequence knowledge ablation
-
-Сохраняются:
-
-- World knowledge;
-- perception;
-- memory;
-- ordinary non-homeostatic Relations;
-- interoception;
-- physiology;
-- HomeostaticEvaluator;
-- planner.
-
-Отключается только использование learned action-conditioned prediction, которое ведёт к interoceptive/physiological outcomes.
-
-То есть organism по-прежнему может знать геометрию и внешний мир, но перестаёт знать, какие действия приводят к улучшению внутреннего состояния.
-
-Это главный causal proof v0.8.
-
-#### Secondary — motivation ablation
-
-Learned prediction полностью сохраняется, включая knowledge:
-
-```text
-INTERACT/context → N rises
-```
-
-но homeostatic valuation выключается:
-
-```text
-homeostatic planner weight = 0
-```
-
-Это проверяет, что одно знание consequence без intrinsic physiological valuation не объясняет acquired preference.
-
-#### Diagnostic — broad prediction ablation
-
-Дополнительно допустимо отключить весь learned prediction path, но это слишком широкая ablation и не является главным доказательством homeostatic learning.
-
-Главные controls:
-
-```text
-FRESH
-EXPERIENCED
-EXPERIENCED + homeostatic-consequence ablation
-EXPERIENCED + motivation ablation
-```
+Current competing predictions are coarse marginals; expanding or calibrating
+that approximation needs a separate design and experiments. No TD learning,
+reward propagation, HomeostaticMemory store, semantic food/water shortcut or
+survival guarantee is implied. This section describes future work only.
 
 ---
 

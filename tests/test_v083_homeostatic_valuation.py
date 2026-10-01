@@ -9,12 +9,13 @@ import sys
 import pytest
 from config import Settings
 from consciousness.cognit import Cognit
-from consciousness.patterns import CognitPattern, SensoryEventKind, is_spatial_primitive
+from consciousness.patterns import CognitPattern, SensoryEventKind, is_spatial_primitive, is_internal_primitive
+from consciousness.relation import RelationType
 from consciousness.sensory import SensoryPatternTracker
 from physiology.interoception import InteroceptiveFrame
 from simulation import Simulation
 from simulation.continuous import ContinuousRuntime
-from world import Action, ActionType
+from world import Action, ActionType, ActionResult
 
 
 def configured(**changes):
@@ -267,3 +268,80 @@ def test_diagnostics_are_detached_observations():
     changed = sim.core.planner.homeostatic_diagnostics()
     changed["homeostatic_plan_component"] = -100
     assert sim.core.planner.homeostatic_diagnostics() == original
+
+
+def test_native_physical_interaction_enters_ordinary_internal_relation_learning():
+    sim = Simulation(40, configured(physiology_initial_hydration=15.,
+        cognit_birth_threshold=0., proto_min_occurrences=1, max_new_cognits_per_tick=40,
+        homeostasis_input_gain=0., sensory_activation=1.), "native")
+    core = sim.core
+    sim.world.native.set_body_state(0,3,4,"N")
+    sim.world._refresh()
+    for trial in range(24):
+        # Controlled trial precondition. Only the subsequent real World
+        # interaction supplies the improving consequence used for learning.
+        sim.physiology.hydration = 15.
+        time = trial * .3
+        sim.physiology.advance_to(time)
+        sim.world.advance_world_time(time)
+        if not sim.world.resource_count():
+            event = sim.world.native.time_state()[1] + 1
+            sim.world.spawn_resource((3,3),2,0.,65.,time,event)
+        core.previous_action = ActionType.IDLE
+        before = sim.interoception.sample(sim.physiology.snapshot())
+        core.step(sim.world.perceive(2*trial), internal=before)
+        prior = set(core.previous_active)
+        action = ActionType.INTERACT_UP if trial % 2 else ActionType.IDLE
+        reserve = sim.physiology.hydration
+        result = sim.world.apply_action(Action(action))
+        assert result is ActionResult.SUCCESS
+        sim.physiology.apply_action(action, True)
+        sim.apply_world_consequence()
+        if action is ActionType.INTERACT_UP:
+            assert sim.physiology.hydration == reserve + 65.
+            assert sim.world.resource_count() == 0
+        else:
+            assert sim.physiology.hydration == reserve
+        assert sim.world.take_consequence() == (0.,0.)
+        sim.physiology.advance_to(time+.15)
+        sim.world.advance_world_time(time+.15)
+        after = sim.interoception.sample(sim.physiology.snapshot())
+        core.previous_action = action
+        core.step(sim.world.perceive(2*trial+1), internal=after)
+    assert after.levels[2] > before.levels[2]
+    assert any(p.channel == "internal_2" and p.previous_value == before.levels[2]
+               and p.value == after.levels[2] for p in core.patterns.last_events)
+    targets = {node.id for node in core.graph.nodes.values() if node.pattern
+        and len(node.pattern.participants) == 1
+        and is_internal_primitive(node.pattern.participants[0])
+        and node.pattern.participants[0][2] == "internal_2"
+        and node.pattern.participants[0][3] == after.levels[2]}
+    effects = core.planner.homeostatic_effects(core,prior,ActionType.INTERACT_UP)
+    assert any(effects.get(target,0.) > 0 for target in targets)
+    acquired = [relation for source in prior for relation in core.graph.outgoing(source)
+        if relation.target_id in targets and relation.relation_type is RelationType.SELF_ACTION
+        and relation.context_id == ActionType.INTERACT_UP.value]
+    assert any(r.support >= sim.settings.relation_provisional_support
+               and r.prediction_probability > 0 for r in acquired)
+    assert core.backend.full_graph_sync_calls == 0
+
+
+def test_competing_internal_bins_use_existing_coarse_marginal_normalization():
+    from consciousness.graph import CognitiveGraph
+    from consciousness.valuation import internal_estimate
+    graph = CognitiveGraph()
+    ids = [graph.add_cognit(Cognit(graph.next_id,
+        pattern=CognitPattern(((0,0,"internal_2",level,1),)))).id for level in (1,6,6)]
+    # Two distinct event Cognits for the same bin do not count twice; total
+    # mass > 1 is normalized across competing bins, not a joint distribution.
+    probabilities = {ids[0]:.8, ids[1]:.8, ids[2]:.6}
+    estimate = internal_estimate(graph,probabilities,(6,4,1),(6,4,6),8)
+    assert estimate.levels == pytest.approx((6,4,3.5))
+    assert estimate.progress == pytest.approx(2.5/21)
+    assert estimate.confidence == pytest.approx(1/3)
+    assert estimate.predictions == 2
+    assert estimate == internal_estimate(graph,dict(reversed(list(probabilities.items()))),
+                                        (6,4,1),(6,4,6),8)
+    partial = internal_estimate(graph,{ids[1]:.2},(6,4,1),(6,4,6),8)
+    assert partial.levels == pytest.approx((6,4,2))
+    assert partial.progress == pytest.approx(1/21)

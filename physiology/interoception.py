@@ -10,6 +10,16 @@ class InteroceptiveFrame:
 
 
 class InteroceptiveTransducer:
+    # Changing channel order or quantization requires a new encoding contract.
+    CHANNELS = ("internal_0", "internal_1", "internal_2")
+    ENCODING = "reserve-ratio-floor-v1"
+
+    @classmethod
+    def sensor_contract(cls, settings):
+        """Durable representation topology, never organism episode state."""
+        return {"schema": 1, "encoding": cls.ENCODING,
+                "channels": list(cls.CHANNELS), "bins": settings.interoception_bins}
+
     def __init__(self, settings):
         self.bins = settings.interoception_bins
         self.targets = (settings.physiology_energy_target, settings.physiology_nutrient_target, settings.physiology_hydration_target)

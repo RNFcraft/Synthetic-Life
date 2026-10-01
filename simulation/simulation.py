@@ -20,6 +20,7 @@ from persistence import load_container,save_container
 from physiology import Physiology
 from physiology.interoception import InteroceptiveTransducer
 from .persisted_settings import restore_settings, causal_configuration
+from .brain_sensor_contract import brain_sensor_metadata, validate_brain_sensor_contract
 
 
 class Simulation:
@@ -164,6 +165,7 @@ class Simulation:
         patterns={"prototypes":core["prototypes"],"composites":{"composites":core["composites"]["composites"],"dependencies":core["composites"]["dependencies"],"created_total":core["composites"]["created_total"],"deleted_total":core["composites"]["deleted_total"]}}
         learned={"transforms":core["perception"]["transforms"],"relation_diagnostics":core["relation_diagnostics"],"calibration":core["calibration"],"affordances":core["affordances"],"relational_nodes":core["relational"]["nodes"]}
         sections={"META":{"schema":"synthetic-entity-brain","version":6 if self.core.backend else 4,"episode_boundary":True,"numeric_backend":self.core.backend_name},"COGN":{"next_id":graph["next_id"],"nodes":graph["nodes"]},"RELA":{"relations":graph["relations"]},"PATT":patterns,"SPAT":core["memory"],"BELS":core["relational"]["belief_scene"],"LEAR":learned,"LANG":{"lexicon":self.core.language.to_dict(),"grounding":self.core.grounding_context.durable_dict()}}
+        sections["META"].update(brain_sensor_metadata(graph, patterns, self.settings))
         if self.core.backend:
             fd,tmp=tempfile.mkstemp(suffix='.native');os.close(fd)
             try:self.core.backend.engine.save_graph(tmp);sections["NBRN"]={"encoding":"base64","data":base64.b64encode(open(tmp,'rb').read()).decode('ascii')}
@@ -175,7 +177,9 @@ class Simulation:
     def load_brain(self,path:str)->None:
         import tempfile,os
         import base64
-        data=load_container(path,"brain",{"META","COGN","RELA","PATT","SPAT","BELS","LEAR","LANG","NBRN"});blank=self.snapshot_data(semantic_graph=bool(self.core.backend));blank["cognitive_graph"]={**data["COGN"],**data["RELA"]};core=blank["core"]
+        data=load_container(path,"brain",{"META","COGN","RELA","PATT","SPAT","BELS","LEAR","LANG","NBRN"})
+        validate_brain_sensor_contract(data, self.settings)
+        blank=self.snapshot_data(semantic_graph=bool(self.core.backend));blank["cognitive_graph"]={**data["COGN"],**data["RELA"]};core=blank["core"]
         core["memory"]=data["SPAT"];core["prototypes"]=data["PATT"]["prototypes"];saved=data["PATT"]["composites"];core["composites"].update(saved);core["composites"]["recent"]=[];core["composites"]["candidates"]=[]
         core["perception"]["transforms"]=data["LEAR"]["transforms"];core["relation_diagnostics"]=data["LEAR"]["relation_diagnostics"];core["calibration"]=data["LEAR"]["calibration"];core["affordances"]=data["LEAR"].get("affordances",[]);core["memory"]["current_place_id"]=None;core["relational"]["nodes"]=data["LEAR"].get("relational_nodes",[]);core["relational"]["belief_scene"]=data.get("BELS",{})
         # A transferred brain begins a new episode: no track, goal, trace, plan cursor or active state survives.

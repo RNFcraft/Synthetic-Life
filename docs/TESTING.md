@@ -2,16 +2,30 @@
 
 **Current implementation: v0.8.3 opt-in learned trajectory valuation; historical audit below.**
 
+v0.8.3 stabilization adds `tests/test_brain_sensor_contract.py`, structured
+preflight/metadata guards, a controlled native physical vertical regression,
+and coverage of competing-bin marginal normalization. Stabilization verification on 2026-10-01:
+**516 pytest passed; CTest Release 2/2 passed** via `python tools/verify.py --full`.
+Native Release observer build, import/headless smokes and `git diff --check`
+passed. The required targeted suite plus brain compatibility tests passed
+**89 tests**:
+
+```
+python -m pytest -q tests/test_v081_persistence_security.py tests/test_v081_consumables.py tests/test_v082_interoception.py tests/test_v083_homeostatic_valuation.py tests/test_architecture_boundaries.py tests/test_brain_sensor_contract.py
+```
+
+Earlier acceptance counts below are explicitly historical.
+
 The focused tests are `tests/test_v082_interoception.py` and
 `tests/test_v083_homeostatic_valuation.py`. Full verification is
 `python tools/verify.py --full`; its outcome is separate from the historical
 v0.7.5 audit count below.
 
-Full verification on 2026-10-01: **491 pytest passed; CTest Release 2/2 passed**.
+Historical initial v0.8.3 full verification on 2026-10-01: **491 pytest passed; CTest Release 2/2 passed**.
 `python tools/verify.py --full` completed successfully, including native observer
 build, import/headless smokes, full pytest and CTest.
 
-Targeted verification: 64 passed across v0.8.1 persistence/security, consumables,
+Historical initial v0.8.3 targeted verification: 64 passed across v0.8.1 persistence/security, consumables,
 v0.8.2 interoception, v0.8.3 valuation and architecture boundaries. Historical
 pre-v0.8.3 full run: 465 pytest passed; CTest Release 2/2 passed.
 
