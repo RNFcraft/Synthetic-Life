@@ -2,6 +2,18 @@
 
 **Current architecture: v0.8.4 delayed and calibrated homeostatic consequence learning.**
 
+v0.8.4 DONE / FROZEN after stabilization/freeze closure: ordinary action predictions are preserved
+when timing is absent or filtered. Explicit temporal state merging retains
+unmodified external Cognits and replaces changed internal channels, including
+stale mixed patterns. MAINTENANCE compares coarse sensor levels and schedules
+SENSORY_CHANGE payload 1 for passive acquisition using the cached external frame.
+It bypasses neural transduction and preserves the committed action frontier.
+Physical action attempts retain their source context across internal observations.
+Failed trials contradict existing SELF_ACTION expectations without positive targets.
+Passive sentinel 0 never duplicates real IDLE evidence. Brain transfer supports
+matching numeric backends only and validates before activation. No new settings
+or schema versions are introduced by this closure.
+
 Existing SELF_ACTION roots and generic SEQUENTIAL passive successors carry observed
 WorldTime delay moments. Native graph owns numeric evidence; bounded beam search
 multiplies chain confidence, accumulates simulated delay and discounts calibrated

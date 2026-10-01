@@ -136,6 +136,10 @@ class NativeGraphBackend:
             effects={action:{target+1:value for target,value in row} for action,row in zip(actions,effect_rows)}
             result[state]=(predictions,effects)
         return result
+    def update_failed_action(self,before,action,tick):
+        s=self.settings
+        self.engine.update_failed_action([i-1 for i in sorted(before)],action.value,tick,
+            s.relation_confirmation_rate,s.relation_contradiction_rate,s.relation_utility_rate,s.relation_consolidated_confidence)
     def update_outcomes(self,before,current,action,tick):
         s=self.settings
         self.engine.update_outcomes([i-1 for i in before],[i-1 for i in current],action.value if action else -1,tick,s.relation_confirmation_rate,s.relation_contradiction_rate,s.relation_utility_rate,s.relation_consolidated_confidence)

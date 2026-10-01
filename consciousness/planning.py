@@ -187,14 +187,15 @@ class DeliberativePlanner:
                     causes.setdefault(relation.target_id, []).append(q)
         return {target: 1. - prod(1. - q for q in values) for target, values in sorted(causes.items())}
 
-    def homeostatic_estimate(self, core, state, action, levels=None, elapsed=0.):
+    def homeostatic_estimate(self, core, state, action, levels=None, elapsed=0., baseline_state=()):
         targets = getattr(core, "homeostatic_target_levels", ())
         observed = core.patterns.layer.previous_internal
         if not (self.settings.interoception_enabled and self.settings.homeostatic_valuation_enabled and targets and observed is not None):
             return None
         if self.settings.delayed_homeostatic_prediction_enabled:
             from .temporal_prediction import delayed_estimate
-            estimate, diagnostics = delayed_estimate(core, state, action, observed if levels is None else levels, elapsed)
+            estimate, diagnostics = delayed_estimate(core, state, action, observed if levels is None else levels, elapsed,
+                                                     self.homeostatic_effects(core,state,action), baseline_state)
             self.temporal_diagnostics = diagnostics
             return estimate
         return internal_estimate(core.graph, self.homeostatic_effects(core, state, action),
@@ -250,10 +251,11 @@ class DeliberativePlanner:
                     if key not in epistemic_cache:epistemic_cache[key]=core.affordances.epistemic(state,action)
                     if key not in progress_cache:progress_cache[key]=core.predicted_target_progress(set(state),action)
                     epistemic=epistemic_cache[key];progress=progress_cache[key];value=score+alignment+.1*conf+.12*memory_conf+.45*epistemic+.8*progress-.12*loop-.03*len(actions)
-                    estimate=self.homeostatic_estimate(core,state,action,levels,elapsed)
-                    next_levels=levels;next_component=component;next_elapsed=elapsed
+                    estimate=self.homeostatic_estimate(core,state,action,levels,elapsed,next_state)
+                    next_levels=levels;next_component=component;next_elapsed=elapsed;timed_refinement=False
                     if estimate is not None:
-                        if self.settings.delayed_homeostatic_prediction_enabled:
+                        if self.settings.delayed_homeostatic_prediction_enabled and self.temporal_diagnostics["usable"]:
+                            timed_refinement=True
                             next_elapsed=self.temporal_diagnostics["elapsed"]
                             next_state=frozenset(self.temporal_diagnostics["projected_state"])
                             if estimate.predictions:conf=min(conf,estimate.confidence)
@@ -262,7 +264,7 @@ class DeliberativePlanner:
                         next_levels=estimate.levels
                         next_component=max(-1.,min(1.,component+confidence*estimate.progress))
                         value+=.8*(next_component-component)
-                    next_confidence=confidence*(max(0.,conf) if self.settings.delayed_homeostatic_prediction_enabled else max(.05,conf))
+                    next_confidence=confidence*(max(0.,conf) if timed_refinement else max(.05,conf))
                     expanded.append((actions+(action,),next_state,states+(next_state,),value,next_confidence,action_values+(action.value,),next_levels,next_component,next_elapsed))
             if not expanded:break
             beam=nsmallest(self.settings.planning_beam_width,expanded,key=lambda x:(-x[3],x[5]))

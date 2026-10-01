@@ -1089,7 +1089,7 @@ extension without relying on commit history or external conversations.
 
 # v0.8 — Homeostatic Motivation and First Survival Learning
 
-**Status: IN PROGRESS - v0.8.0 FROZEN; v0.8.1-v0.8.4 IMPLEMENTED; v0.8.5 PLANNED**
+**Status: IN PROGRESS - v0.8.0 FROZEN; v0.8.1-v0.8.3 IMPLEMENTED; v0.8.4 DONE / FROZEN; v0.8.5 PLANNED**
 
 The broad research design before the milestone sections below is prospective.
 Its continuous integral objective is not the current planner implementation:
@@ -1420,7 +1420,22 @@ and [verification](docs/TESTING.md).
 
 ## v0.8.4 - Delayed and Calibrated Homeostatic Consequence Learning
 
-**Status: IMPLEMENTED - controlled delayed consequence vertical slice**
+**Status: DONE / FROZEN - v0.8.4 stabilization / freeze closure**
+
+Stabilization/freeze closure verified on 2026-10-01: **583 pytest passed;
+CTest Release 2/2 passed** via `python tools/verify.py --full`. Required targeted
+suites: **156 passed**. Separate production/runtime freeze gates: **10 passed**.
+Native Release/observer build, import/headless smokes and `git diff --check` passed.
+Current version remains **v0.8.4 ? DONE / FROZEN**; this is not a new milestone.
+
+Production freeze acceptance now uses ContinuousRuntime rather than manual delayed
+core.step: maintenance detects coarse internal changes after real digestion and
+schedules passive acquisition without duplicate actions or neural injections.
+Ordinary/legacy action predictions survive absent or filtered timing; temporal
+state evolution retains external context. Failed actions contradict stale effects,
+IDLE and passive sentinel 0 are distinct, and brain timing transfer fails closed
+across numeric backends. Exact world continuation is tested around queued internal
+observations. This is stabilization of v0.8.4, not a new research milestone.
 
 Existing SELF_ACTION and SEQUENTIAL Relations now support observed WorldTime delay
 moments, bounded passive prediction between actions, multiplicative chain confidence,

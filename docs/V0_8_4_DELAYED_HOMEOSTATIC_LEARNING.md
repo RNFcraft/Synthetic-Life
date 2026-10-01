@@ -1,7 +1,8 @@
 # v0.8.4 Delayed and calibrated homeostatic consequence learning
 
-Implemented on the v0.8.3 stabilization baseline. This is a controlled
-model-based learning milestone; v0.8.5 survival curriculum remains planned.
+Current version remains v0.8.4. This is a stabilization/freeze closure, not a
+new milestone. Production delayed-observation acceptance and full verification pass:
+**v0.8.4 DONE / FROZEN**. v0.8.5 survival curriculum remains planned.
 Interoception, homeostatic valuation and delayed prediction all default OFF.
 
 ## Fixed / innate versus learned
@@ -35,10 +36,18 @@ and the existing bounded observation window. The timing map is capped at four
 times the configured relation capacity. Admission is deterministic.
 
 An actual completed action supplies its kind and success to acquisition.
-Unsuccessful actions skip that observation transition. A later passive
-observation cannot retroactively attach an unrelated improvement to the failed
-action. Successful IDLE also provides passive timing evidence. Observations
-without a newly completed action provide passive evidence directly.
+Failed actions provide contradiction evidence but never positive consequence evidence.
+An unsuccessful attempt updates existing SELF_ACTION outcomes and records an empty
+target trial in the existing evidence window. Confidence and effective q fall; later
+success can recover them. Neither an unrelated improving observation nor a failed
+trial creates target timing or materializes positive rho. SEQUENTIAL hypotheses are
+not contradicted merely because the action failed.
+
+Action attempts preserve their observed source IDs and start time across intermediate
+internal observations. Completion evidence is consumed by the actual full observation.
+Sentinel 0 means passive/no completed action; every real ActionType value is positive.
+IDLE remains a real action with its own SELF_ACTION timing. It is no longer duplicated
+into passive channel 0. Passive observations are learned independently.
 
 Only directly matched sensor patterns and observed semantic context become
 timed learning endpoints. Propagated guesses and recalled internal states do
@@ -67,6 +76,22 @@ combined as independent trials. Cycles, depth, arrival time and probability
 are bounded. The planner follows an action projection, zero or more passive
 steps, then another candidate action from the projected state. Arrival time
 continues across actions in the beam.
+
+Delayed prediction refines ordinary model-based state prediction;
+absence of timing evidence never deletes the baseline prediction.
+Ordinary action prediction and immediate learned valuation are computed first.
+No usable timed root (absent support, floor or horizon filtering) keeps the exact
+v0.8.3 state/estimate/confidence convention, including transferred legacy rho.
+Unknown timing is not fabricated. Supported timing supplies a bounded refinement
+and replaces known root timing instead of counting the same untimed effect twice.
+
+Passive transitions preserve unmodified external cognitive context conservatively.
+`merge_projected_state` retains prior external Cognits, adds supported targets and
+replaces only affected internal channels. Stale mixed patterns carrying those
+channels are removed; their separately represented external context remains.
+Competing supported singleton bins enter calibration. No external disappearance
+is inferred from a missing outgoing edge, and no new absence model is introduced.
+A second action acquired from external B remains available after B -> internal C.
 
 For each internal channel, singleton Cognits form a coarse bin marginal.
 Duplicate Cognits for the same bin use maximum evidence. Let `m` be total bin
@@ -101,16 +126,24 @@ All five belong to persisted causal runtime configuration. Explicit receiver
 mismatches reject before construction. The complete pre-v0.8.4 runtime group
 migrates to the new defaults; partially missing new groups fail closed. OFF
 uses the original v0.8.3 acquisition and valuation path. Old knowledge without
-timing evidence supplies no delayed bonus.
+timing evidence retains its immediate valuation and ordinary state; no learned delay is invented.
 
 `.seworld` restores timing moments, native transition history, actual observed
-endpoint/time and pending completed action, alongside the existing scheduler,
+endpoint/time, attempted action context and pending completion, alongside the existing scheduler,
 cognition frontier and planning session. Exact continuous continuation is
-tested with non-default parameters at multiple frontier phases.
+tested before an internal change, with its same-time event queued, after the passive
+observation and mid-deliberation after a later actual action. Last coarse frame and
+optional internal observation count survive checkpoints. Existing world v10 and
+native graph v3/v4 formats remain; no event enum or additional cadence setting is needed.
 
 `.sebrain` transfers materialized graph and timing knowledge but no observation
 window, pending action, last sensory time, active state, plan or body reserves.
-Internal sensor topology validation remains unchanged and fail-closed.
+Supported timing transfer is native -> native and Python -> Python. Cross-backend
+brain transfer is unsupported and fails closed on META numeric_backend before any
+graph activation; missing legacy metadata identifies the historical Python backend.
+Python -> native and native -> Python cannot silently lose timing. Durable timing
+survives an OFF receiver saving its brain again. Internal sensor topology validation
+remains unchanged and fail-closed.
 Native binary graph v4 appends timing rows to the v3 payload; v3 remains readable
 and is still written when no timing knowledge exists. Outer brain v6/reference
 v4 and continuous world v10 container schemas remain unchanged. Python timings
@@ -121,32 +154,66 @@ Diagnostics are detached: homeostatic component/confidence plus passive depth,
 cumulative elapsed time, ambiguity, witness count and projected Cognit IDs.
 There are no planner reads of raw Physiology, resource payload or object policy.
 
-## Controlled physical acceptance
+## Production interoceptive observation
 
-The native fixture repeats 32 interleaved interaction/IDLE trials with a resource
-next to the body. Initial energy is 15, nutrients zero. Real successful INTERACT
-adds 60 nutrients but does not immediately raise the energy bin. After two
-WorldTime seconds, real Physiology digestion raises energy to 75. Both immediate
-and delayed frames pass through the real transducer, `core.step`, ordinary
-pattern births and relation materialization. Probabilities are never initialized
-by the test.
+Passive physiological changes are observed by the production runtime
+when the coarse interoceptive representation changes.
 
-The counterfactual has the same appearance and position but no nutrient payload.
-Both resources carry one unit of hydration because World forbids an entirely
-empty resource. Hydration starts at 80, so this payload does not cross a sensor
-bin. Only the nutritive case learns positive delayed energy progress and changes
-planner ranking. Setting passive depth to zero removes its positive valuation;
-there is no direct SELF_ACTION shortcut to the delayed energy improvement.
-Fixture rates, actions, placement and trial resets are controlled. This proves
-the physical-to-model-to-choice slice, not autonomous discovery or survival.
+With delayed prediction enabled, MAINTENANCE uses the existing
+`continuous_maintenance_interval_seconds`. Simulation owns Physiology/transducer
+sampling; runtime compares `last_internal.levels` to the sampled coarse levels.
+Raw drift within a bin produces no event. A change queues ordinary SENSORY_CHANGE
+with payload 1, deduplicated against pending sensory events. The handler rechecks
+levels, uses the cached external frame with a fresh observation ordinal and calls
+ordinary `_observe` in observation-only mode. It performs sensory pattern learning,
+materialization and generic prediction without generating an action frontier.
 
-Additional tests cover weak/consistent/50-50/contradictory evidence, failed
-actions, duplicates, unknown mass, temporal horizon, chain confidence, equal
-improvement at different delays, passive propagation before another action,
-OFF equivalence, settings migration, Python/native parity, hash seeds 1/777,
-brain transfer and exact continuous persistence. Architecture guards prohibit
-physical and resource access in the new predictor and homeostatic semantics
-in the native temporal evidence code.
+No World movement, RNG consumption or neural transduction is introduced. The closed
+frontier receives the updated observation state and retains its committed action and
+session; an in-flight physical action remains unique. Active deliberation/language
+boundaries defer internal processing in deterministic scheduler order. At same-time
+physical completion, the actual full observation owns completion evidence; an
+internal event never consumes it against a stale cached external frame.
+
+## Controlled production physical freeze acceptance
+
+`production_physical` runs ContinuousRuntime with NativeWorld for 32 interleaved
+INTERACT/IDLE interventions beside an identically placed resource. One real scheduled
+physical action is permitted per trial, then further physical actions are held while
+the production scheduler runs. Placement, initial reserves, actions and trial resets
+are controlled; no delayed phase calls core.step, samples a manual cognition frame,
+or initializes Relation probabilities.
+
+Initial energy is 15, nutrients zero and hydration 80. The nutritive resource supplies
+60 nutrients and one hydration unit. Real INTERACT completes at trial time +0.15 s;
+its ordinary observation has bins `(1,4,6)`, with energy unchanged. The engineered
+fixture digestion rate is 1500 units/s, efficiency one and basal/cost rates zero.
+At the next 0.05 s maintenance boundary, real digestion has raised energy to 75 and
+bins become `(6,0,6)`. The observed passive interval is learned, not encoded in
+cognition. Production maintenance generates exactly 16 internal observations, one
+for each nutritive interaction; 32 real action completions occur.
+
+The counterfactual uses the same appearance/channel/placement and hydration payload,
+but zero nutrients. World forbids an entirely empty resource; one hydration unit
+stays within the same coarse bin. Energy stays at bin 1 and the runtime generates
+zero additional internal observations. Learned delayed progress exceeds control.
+With the same acquired graph, delayed prediction selects INTERACT_UP; passive depth
+zero selects IDLE. Delayed OFF and delayed ON without timing produce identical
+ordinary plans. The latter retains baseline knowledge without inventing delayed value.
+
+An independent in-flight test observes exactly one internal change while preserving
+one action event and one committed frontier, with neural sensory frame count and RNG
+unchanged. A same-time maintenance/action-completion regression preserves the actual
+external resource-disappearance observation. The earlier manual Simulation/core.step
+fixture remains a historical plumbing regression; it is not the production freeze gate.
+
+Additional tests cover weak/consistent/50-50/contradictory evidence, failures and
+recovery, direct/indirect deduplication, preserved external second-action context,
+untimed legacy brains, horizon/floor fallback, passive/IDLE separation, canonical
+Python/native timing ownership, backend preflight, sensor incompatibility, exact
+checkpoint phases and production hash seeds 1/777. Existing architecture guards
+remain; new AST guards constrain owned internal sampling and forbid physical,
+resource, action-policy, reward and neural-injection shortcuts.
 
 ## Limits
 
@@ -155,16 +222,30 @@ event-time hazard. Timing moments are cumulative while probability evidence
 uses a sliding window; timing adaptation to a changed process is gradual.
 Admission stops at the timing capacity. Passive projection follows bounded
 supported successors, not exhaustive alternatives over every wait duration.
-Per-channel concentration is conservative coarse calibration, not Bayesian
+Conservative external persistence can retain stale context until later ordinary observation; full absence/object persistence is outside this closure. Per-channel concentration is conservative coarse calibration, not Bayesian
 joint inference or a proven reliability guarantee. No survival curriculum,
 reward/TD propagation, semantic food/water rules or raw physiological planner
 simulation was introduced.
 
 ## Verification
 
-Verified on 2026-10-01: **549 pytest passed; CTest Release 2/2 passed** via `python tools/verify.py --full`. Required targeted suites: **122 passed**. Native Release/observer build, import/headless smokes and `git diff --check` passed.
+Stabilization/freeze closure verified on 2026-10-01: **583 pytest passed;
+CTest Release 2/2 passed** via `python tools/verify.py --full`. Required targeted
+suites: **156 passed**. Separate production/runtime freeze gates: **10 passed**.
+Native Release/observer build, import/headless smokes and `git diff --check` passed.
+Current version remains **v0.8.4 ? DONE / FROZEN**; this is not a new milestone.
 
-The new delayed suite contains 32 passing cases; the added temporal architecture guard also passes.
+The stabilized delayed suite has **63 passing cases**. Required commands were executed:
+
+```
+python tools/verify.py --full
+python -B -m pytest -q tests/test_v084_delayed_homeostatic_learning.py -k "production or one_internal_change or exact_world_continuation or same_time_action"
+git diff --check
+```
+
+Historical initial v0.8.4 verification on 2026-10-01: **549 pytest passed; CTest Release 2/2 passed** via `python tools/verify.py --full`. Required targeted suites: **122 passed**. Native Release/observer build, import/headless smokes and `git diff --check` passed.
+
+The initial v0.8.4 suite had 32 cases. Stabilization extends that same test file with production runtime and integration regressions.
 
 ```
 python -B -m pytest -q tests/test_v081_persistence_security.py tests/test_v081_consumables.py tests/test_v082_interoception.py tests/test_v083_homeostatic_valuation.py tests/test_brain_sensor_contract.py tests/test_v084_delayed_homeostatic_learning.py tests/test_architecture_boundaries.py
@@ -179,12 +260,12 @@ Controlled native examples with default discount 0.1:
 | Same consistent improvement, arrival 12.2 s | 0.039540 | 0.187500 | 0 |
 
 Physical bins follow `(1,0,6) -> (1,4,6) -> (6,0,6)` with nutrients; the
-counterfactual remains `(1,0,6)`. Delayed physical progress is 0.086552 versus
+counterfactual remains `(1,0,6)`. Historical manual-fixture delayed physical progress was 0.086552 versus
 zero in the counterfactual. Native planner chooses INTERACT_UP with passive
 prediction and IDLE with depth zero, retaining the acquired external knowledge.
 These values describe the fixed acceptance protocol, not population survival statistics.
 
-## Changed files
+## Historical initial v0.8.4 changed files
 
 - Configuration: `config/settings.py`, `simulation/persisted_settings.py`.
 - Acquisition and prediction: `consciousness/core.py`, `consciousness/core_learning.py`,
@@ -201,3 +282,21 @@ These values describe the fixed acceptance protocol, not population survival sta
 
 Total: 25 files, including three new files. Existing immediate valuation and
 brain sensor compatibility production helpers remain unchanged.
+
+## Stabilization changed files
+
+- Acquisition/state/planning: `consciousness/backends.py`, `consciousness/core.py`,
+  `consciousness/core_learning.py`, `consciousness/learning.py`,
+  `consciousness/planning.py`, `consciousness/temporal_prediction.py`.
+- Native outcome reuse: `cpp/include/se/native_brain_engine.hpp`,
+  `cpp/src/native_brain_engine.cpp`, `cpp/src/bindings.cpp`.
+- Owned runtime/persistence: `simulation/continuous.py`, `simulation/simulation.py`.
+- Regressions/guards: `tests/test_v084_delayed_homeostatic_learning.py`,
+  `tests/test_architecture_boundaries.py`.
+- Documentation: `README.md`, `CURRENT_STATUS.md`, `ARCHITECTURE.md`, `ROADMAP.md`,
+  `docs/TESTING.md`, this document.
+
+No new settings, test-file milestone, reward learner, survival curriculum or schema
+version was added by stabilization. Current version remains v0.8.4.
+
+Stabilization changes **19 existing files**, introduces no new file or milestone, and leaves v0.8.5 planned.

@@ -132,7 +132,7 @@ public:
   std::tuple<std::uint64_t, std::uint64_t, std::uint64_t, std::size_t> evidence_stats() const { return {source_events_, target_events_, candidate_pair_updates_, evidence_reserved_bytes()}; }
   std::tuple<std::uint32_t, double, double, double, double, std::uint32_t> transition_metrics(std::uint32_t source, std::uint32_t target, std::uint8_t action) const;
   std::vector<std::uint32_t> action_trials(std::span<const std::uint32_t> sources, std::span<const std::uint8_t> actions) const;
-  void update_outcomes(std::span<const std::uint32_t> before, std::span<const std::uint32_t> current, int action, std::uint64_t tick, double confirmation, double contradiction, double utility, double consolidated_confidence);
+  void update_outcomes(std::span<const std::uint32_t> before, std::span<const std::uint32_t> current, int action, std::uint64_t tick, double confirmation, double contradiction, double utility, double consolidated_confidence, bool action_only = false);
   std::pair<std::uint32_t, std::uint32_t> lifecycle_step(std::uint64_t world_tick, std::uint64_t max_idle, double death_threshold, double confidence_decay);
   void save_graph(const std::string &path) const;
   void load_graph(const std::string &path);

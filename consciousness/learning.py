@@ -2,6 +2,8 @@ from collections import Counter,defaultdict,deque
 from math import prod
 from world.actions import ActionType
 
+assert all(0 < action.value <= 255 for action in ActionType), "passive sentinel 0 must be disjoint from actions"
+
 
 class TransitionModel:
     """Local sufficient statistics for baseline-corrected temporal/action transitions."""

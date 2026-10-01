@@ -2,7 +2,18 @@
 
 ## Current implementation: v0.8.4
 
-Verified on 2026-10-01: **549 pytest passed; CTest Release 2/2 passed** via `python tools/verify.py --full`. Required targeted suites: **122 passed**. Native Release/observer build, import/headless smokes and `git diff --check` passed.
+Stabilization/freeze closure verified on 2026-10-01: **583 pytest passed;
+CTest Release 2/2 passed** via `python tools/verify.py --full`. Required targeted
+suites: **156 passed**. Separate production/runtime freeze gates: **10 passed**.
+Native Release/observer build, import/headless smokes and `git diff --check` passed.
+Current version remains **v0.8.4 ? DONE / FROZEN**; this is not a new milestone.
+
+v0.8.4 stabilization fix / freeze closure preserves ordinary predictions,
+observes passive internal bin changes through production maintenance events,
+contradicts stale failed-action hypotheses and retains external context.
+The version remains v0.8.4; v0.8.5 remains planned.
+
+Historical initial v0.8.4 verification on 2026-10-01: **549 pytest passed; CTest Release 2/2 passed** via `python tools/verify.py --full`. Required targeted suites: **122 passed**. Native Release/observer build, import/headless smokes and `git diff --check` passed.
 
 v0.8.3 stabilization fix adds fail-closed brain internal sensor topology
 compatibility. Learned knowledge transfers only with a matching encoding

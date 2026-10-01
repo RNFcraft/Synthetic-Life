@@ -135,7 +135,7 @@ class SyntheticEntityCore(CoreLearningMixin):
     def step(self,frame:SensoryFrame,world_time:float|None=None,internal=None)->Action:
         return self._observe(frame,world_time,True,internal=internal)
 
-    def _observe(self,frame:SensoryFrame,world_time:float|None,commit:bool,generation:int=0,internal=None):
+    def _observe(self,frame:SensoryFrame,world_time:float|None,commit:bool,generation:int=0,internal=None,passive_only=False):
         self.world_time_seconds=world_time;self.memory.set_world_time(world_time)
         if world_time is not None and self.backend:self.backend.begin_continuous_time(world_time)
         self.events=[];self.cognitive_tick+=1;cognitive_tick=self.cognitive_tick
@@ -210,6 +210,12 @@ class SyntheticEntityCore(CoreLearningMixin):
             self.transitions.observe(self.previous_active,self.previous_action,current);self._materialize_relations(frame.tick,current)
         self._update_intrinsic_state(current,matched,observation)
         self._update_goal(current)
+        if passive_only:
+            frontier=self.continuous_frontier
+            if frontier is not None and frontier.committed:
+                frontier.frame=frame;frontier.world_time=float(world_time)
+                frontier.current=set(current);frontier.track_ids=tuple(t.id for t in tracks)
+            return current
         if not commit:
             self.continuous_frontier=ContinuousCognitionFrontier(generation,float(world_time),frame,current,tuple(t.id for t in tracks));return None
         self.state.futures=self._imagine(current);action=self._choose_action()
@@ -232,6 +238,15 @@ class SyntheticEntityCore(CoreLearningMixin):
 
     def begin_continuous_observation(self,frame:SensoryFrame,world_time:float,generation:int,internal=None)->None:
         self._observe(frame,world_time,False,generation,internal)
+
+    def observe_passive_internal(self,frame:SensoryFrame,world_time:float,internal)->None:
+        """Ordinary sensory acquisition without creating an action frontier."""
+        previous_action=self.previous_action
+        self.previous_action=None
+        try:
+            self._observe(frame,world_time,False,internal=internal,passive_only=True)
+        finally:
+            self.previous_action=previous_action
 
     def process_language(self,frame):
         context=self.grounding_context.eligible(frame.issued_at_world_time)

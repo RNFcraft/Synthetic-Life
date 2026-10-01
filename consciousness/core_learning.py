@@ -9,6 +9,10 @@ class CoreLearningMixin:
     facade and preserves the original call and iteration order.
     """
 
+    def record_action_attempt(self,action,world_time):
+        if self.settings.delayed_homeostatic_prediction_enabled:
+            self.learning_action_attempt=(set(getattr(self,"timed_previous_ids",set())),float(world_time),action)
+
     def record_action_outcome(self, action, successful):
         """Runtime completion evidence; no world consequence or reserve enters here."""
         if self.settings.delayed_homeostatic_prediction_enabled:
@@ -23,35 +27,46 @@ class CoreLearningMixin:
                 sources, targets = [i-1 for i in sorted(before)], [i-1 for i in sorted(after)]
                 self.backend.update_transition_evidence(sources, action, targets)
                 self.backend.engine.observe_transition_delay(sources, action.value if action else 0, targets, elapsed)
-                if action is not None and action.name == "IDLE":
-                    self.backend.engine.observe_transition_delay(sources, 0, targets, elapsed)
                 self.backend.materialize(tick, sources, action, targets)
             else:
                 self.transitions.observe(before, action, after, elapsed)
-                if action is not None and action.name == "IDLE":
-                    for source in sorted(before):
-                        for target in sorted(after):
-                            if source == target:continue
-                            key=(source,target,0)
-                            if key not in self.transitions.timings and len(self.transitions.timings)>=self.transitions.timing_capacity:continue
-                            n,mean,m2=self.transitions.timings.get(key,(0,0.,0.))
-                            delta=elapsed-mean;n+=1;mean+=delta/n
-                            self.transitions.timings[key]=(n,mean,m2+delta*(elapsed-mean))
                 self._materialize_relations(tick, after)
         finally:
             self.previous_active, self.previous_action = old_active, old_action
+
+    def _contradict_failed_action(self, before, action, tick):
+        """An attempted action is a trial with no positive target observations."""
+        if self.backend:
+            self.backend.update_failed_action(before,action,tick)
+            self.backend.update_transition_evidence([i-1 for i in sorted(before)],action,[])
+        else:
+            self.transitions.observe(before,action,set())
+            for source in sorted(before):
+                for relation in self.graph.outgoing(source):
+                    if relation.relation_type is not RelationType.SELF_ACTION or relation.context_id!=action.value:continue
+                    relation.update_outcome(False,self.settings.relation_confirmation_rate,self.settings.relation_contradiction_rate)
+                    relation.usefulness=max(0.,min(1.,relation.usefulness-self.settings.relation_utility_rate*relation.strength))
+                    relation.last_evidence_world_tick=tick
+                    if relation.status is RelationStatus.CONSOLIDATED and relation.confidence<self.settings.relation_consolidated_confidence*.6:
+                        relation.status=RelationStatus.PROVISIONAL
 
     def _learn_timed_observation(self, observed, now, tick):
         before = getattr(self, "timed_previous_ids", set())
         previous_time = getattr(self, "timed_observation_time", None)
         completion = getattr(self, "pending_learning_action", None)
+        attempt=getattr(self,"learning_action_attempt",None)
+        if completion is not None and attempt is not None and attempt[2] is completion[0]:
+            before,previous_time,_=attempt
         if previous_time is not None:
             if now < previous_time:raise ValueError("learning WorldTime moved backwards")
             if completion is None or completion[1]:
                 self._acquire_timed_transition(before, completion[0] if completion else None,
                                                observed, tick, now-previous_time)
+            else:
+                self._contradict_failed_action(before,completion[0],tick)
         self.timed_previous_ids=set(observed);self.timed_observation_time=now
         self.pending_learning_action=None
+        if completion is not None:self.learning_action_attempt=None
 
     def _prediction_error(self,current:set[int])->None:
         predicted=self.state.predictions;universe=set(predicted)|current

@@ -175,3 +175,48 @@ def test_delayed_prediction_has_only_graph_and_sensor_domain_inputs():
     stop=cpp.index("void NativeBrainEngine::clear_transition_evidence",start)
     block=cpp[start:stop]
     assert not any(word in block for word in ("homeostatic","Goal","reward","digestion","nutrient","hydration"))
+
+
+def test_internal_observation_uses_owned_sensor_boundary_without_action_or_neural_injection():
+    tree=ast.parse((ROOT/'simulation/continuous.py').read_text(encoding='utf-8'))
+    functions={node.name:node for node in ast.walk(tree) if isinstance(node,ast.FunctionDef)}
+    for name in ('_schedule_internal_change','_observe_internal_change'):
+        attributes={node.attr for node in ast.walk(functions[name]) if isinstance(node,ast.Attribute)}
+        assert 'sample_internal_frame' in attributes
+        assert not attributes & {'physiology','world','rng','advance_to','apply_intent','transduce',
+                                 'neural_sensory','commit_continuous_action','begin_continuous_observation'}
+    scheduling=functions['_schedule_internal_change']
+    assert any(isinstance(node,ast.Compare) and isinstance(node.left,ast.Attribute)
+               and node.left.attr=='levels' for node in ast.walk(scheduling))
+    core=ast.parse((ROOT/'consciousness/core.py').read_text(encoding='utf-8'))
+    observation=next(node for node in ast.walk(core) if isinstance(node,ast.FunctionDef)
+                     and node.name=='observe_passive_internal')
+    calls={node.func.attr for node in ast.walk(observation) if isinstance(node,ast.Call)
+           and isinstance(node.func,ast.Attribute)}
+    assert '_observe' in calls
+    assert not calls & {'commit_continuous_action','_choose_action','transduce'}
+
+
+def test_temporal_merge_and_passive_action_contract_are_generic():
+    from world import ActionType
+    assert all(0 < action.value <= 255 for action in ActionType)
+    tree=ast.parse((ROOT/'consciousness/temporal_prediction.py').read_text(encoding='utf-8'))
+    merge=next(node for node in ast.walk(tree) if isinstance(node,ast.FunctionDef)
+               and node.name=='merge_projected_state')
+    attributes={node.attr for node in ast.walk(merge) if isinstance(node,ast.Attribute)}
+    assert not attributes & {'physiology','world','energy','nutrients','hydration','IDLE','INTERACT_UP'}
+    tree=ast.parse((ROOT/'consciousness/core_learning.py').read_text(encoding='utf-8'))
+    acquisition=next(node for node in ast.walk(tree) if isinstance(node,ast.FunctionDef)
+                     and node.name=='_acquire_timed_transition')
+    assert not any(isinstance(node,ast.Constant) and node.value=='IDLE' for node in ast.walk(acquisition))
+    assert not any(module.startswith(('physiology','simulation')) for module in _imports(ROOT/'consciousness/core_learning.py'))
+
+
+def test_brain_backend_check_precedes_snapshot_activation():
+    tree=ast.parse((ROOT/'simulation/simulation.py').read_text(encoding='utf-8'))
+    load=next(node for node in ast.walk(tree) if isinstance(node,ast.FunctionDef) and node.name=='load_brain')
+    guard=next(node for node in ast.walk(load) if isinstance(node,ast.If)
+               and 'saved_backend' in ast.unparse(node.test))
+    assert any(isinstance(node,ast.Raise) for node in ast.walk(guard))
+    assert all(guard.lineno < node.lineno for node in ast.walk(load) if isinstance(node,ast.Call)
+               and isinstance(node.func,ast.Attribute) and node.func.attr in {'snapshot_data','load','load_graph'})

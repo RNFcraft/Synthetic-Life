@@ -113,7 +113,7 @@ void NativeBrainEngine::publish_brain_snapshot(double world_time, std::uint64_t 
   out.truncated = out.truncated || out.edges.size() < out.total_relations;
   brain_channel_->publish(std::move(out));
 }
-void NativeBrainEngine::update_outcomes(std::span<const std::uint32_t> before, std::span<const std::uint32_t> current, int action, std::uint64_t tick, double confirmation, double contradiction, double utility, double consolidated_confidence) {
+void NativeBrainEngine::update_outcomes(std::span<const std::uint32_t> before, std::span<const std::uint32_t> current, int action, std::uint64_t tick, double confirmation, double contradiction, double utility, double consolidated_confidence, bool action_only) {
   auto gen = next_generation();
   for (auto id : current)
     if (cognit_alive(id))
@@ -122,6 +122,7 @@ void NativeBrainEngine::update_outcomes(std::span<const std::uint32_t> before, s
     if (!cognit_alive(s))
       continue;
     graph_.for_each_outgoing(s, [&](Edge &e, RelationHandle h) {
+      if (action_only && e.type != RelationType::SelfAction)return;
       if (e.type == RelationType::SelfAction && e.action != action)
         return;
       effective_relation_confidence(e, h, continuous_relation_decay_);

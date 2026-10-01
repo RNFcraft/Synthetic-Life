@@ -1,5 +1,5 @@
 """Deterministic event-driven v0.5.3 runtime foundation."""
-from dataclasses import asdict
+from dataclasses import asdict, replace
 import base64,math,os,tempfile
 from config import Settings
 from consciousness.native_engine import EventScheduler,RuntimeEvent,RuntimeEventType
@@ -25,6 +25,7 @@ class ContinuousRuntime:
     одинаковое время упорядочивается native sequence.
     """
     ACTION_DURATION=.15
+    INTERNAL_SENSORY_PAYLOAD=1
     def __init__(self,seed=12345,settings:Settings|None=None):
         self.simulation=Simulation(seed,settings,backend="native")
         self.scheduler=EventScheduler()
@@ -36,6 +37,7 @@ class ContinuousRuntime:
         self.cognition_continuations=0
         self.cognition_generation=0
         self.maintenance_ordinal=0
+        self.internal_observations=0
         self.scheduler_events_processed=0
         self.peak_scheduler_queue=0
         self._legacy_monolithic_frontier=False
@@ -63,7 +65,9 @@ class ContinuousRuntime:
         """Обработать один event без изменения native `(time, id)` порядка."""
         now,kind=event.time,event.type
         self.simulation.physiology.advance_to(now);self.simulation.core.homeostatic_projection=self.simulation.physiology.snapshot()
-        if kind==RuntimeEventType.SENSORY_CHANGE:
+        if kind==RuntimeEventType.SENSORY_CHANGE and event.payload==self.INTERNAL_SENSORY_PAYLOAD:
+            self._observe_internal_change(now)
+        elif kind==RuntimeEventType.SENSORY_CHANGE:
             self._legacy_monolithic_frontier=False;self.cognition_generation+=1;generation=self.cognition_generation;self.last_frame=self.simulation.world.perceive(self.observation_ordinal);self.observation_ordinal+=1
             if self.neural_sensory is not None:
                 _,neural_frontier=self.neural_sensory.transduce(self.last_frame,now);self.advance_neural_to(neural_frontier,True)
@@ -75,7 +79,7 @@ class ContinuousRuntime:
             if self._legacy_monolithic_frontier:
                 self._legacy_monolithic_frontier=False;self.cognition_wakes+=1;action=self.simulation.core.deliberate(self.last_frame)
                 if not self.simulation.physiology.can_begin(action.kind):action=Action(ActionType.IDLE)
-                self.scheduler.schedule(now+self.ACTION_DURATION,RuntimeEventType.WORLD_ACTION_COMPLETE,action.kind.value);return
+                self._schedule_action(action,now);return
             if event.payload!=self.cognition_generation:return
             self.cognition_wakes+=1
             if self.simulation.core.begin_continuous_cognition(event.payload):self.scheduler.schedule(now,RuntimeEventType.COGNITION_CONTINUE,event.payload)
@@ -85,7 +89,7 @@ class ContinuousRuntime:
             if quiet:
                 action=self.simulation.core.commit_continuous_action(event.payload)
                 if action is not None and not self.simulation.physiology.can_begin(action.kind):action=Action(ActionType.IDLE)
-                if action is not None:self.scheduler.schedule(now+self.ACTION_DURATION,RuntimeEventType.WORLD_ACTION_COMPLETE,action.kind.value)
+                if action is not None:self._schedule_action(action,now)
             elif quiet is False:self.scheduler.schedule(now,RuntimeEventType.COGNITION_CONTINUE,event.payload)
         elif kind==RuntimeEventType.NEURAL_BRIDGE:
             if not event.payload:
@@ -119,6 +123,7 @@ class ContinuousRuntime:
         elif kind==RuntimeEventType.MAINTENANCE:
             frontier=self.simulation.core.continuous_frontier
             if self.language_frontier is not None or (frontier is not None and frontier.phase in {"OBSERVED","DELIBERATING","QUIESCENT"}):self.scheduler.schedule(now,RuntimeEventType.MAINTENANCE);return
+            self._schedule_internal_change(now)
             self.maintenance_ordinal+=1;self.simulation.core.continuous_maintenance(now,self.maintenance_ordinal)
             self.scheduler.schedule(now+self.simulation.settings.continuous_maintenance_interval_seconds,RuntimeEventType.MAINTENANCE)
         elif kind==RuntimeEventType.LANGUAGE_INPUT:
@@ -140,6 +145,35 @@ class ContinuousRuntime:
                 self.scheduler.schedule(now,RuntimeEventType.LANGUAGE_CONTINUE,event.payload)
             elif frontier.phase=="COMPOSE":
                 core=self.simulation.core;core.world_time_seconds=now;core.memory.set_world_time(now);core.backend.begin_continuous_time(now);core.cognitive_tick+=1;edges,_=core.language.learn_sequence(frontier.processed_symbol_ids);active=frozenset(i for result in frontier.token_results for i in result.wave.active_ids if i in core.graph.nodes and core.graph.nodes[i].kind!="LANGUAGE_SYMBOL");relational=core.language.compose_relational(frontier.frame.tokens,frontier.processed_symbol_ids,frontier.token_results);core.language.learn_request(frontier.frame.tokens,frontier.frame.request_target is not None);request=core.language.compose_request(relational,frontier.token_results);self.last_utterance_result=LanguageUtteranceResult(frontier.frame.message_id,now,frontier.frame.tokens,tuple(frontier.processed_symbol_ids),tuple(frontier.token_results),edges,active,len(frontier.frame.tokens),relational,request);frontier.phase="DONE";self.language_utterances_processed+=1;del self.language_inbox[event.payload];self.language_frontier=None
+    def _schedule_action(self,action,now):
+        if self._action_in_flight():raise RuntimeError("cannot schedule parallel physical actions")
+        self.simulation.core.record_action_attempt(action.kind,now)
+        self.scheduler.schedule(now+self.ACTION_DURATION,RuntimeEventType.WORLD_ACTION_COMPLETE,action.kind.value)
+
+    def _schedule_internal_change(self,now):
+        if not self.simulation.settings.delayed_homeostatic_prediction_enabled:return
+        internal=self.simulation.sample_internal_frame()
+        if internal is None or self.last_internal is None or internal.levels==self.last_internal.levels:return
+        if any(e.type==RuntimeEventType.SENSORY_CHANGE for e in self.scheduler.snapshot()):return
+        self.scheduler.schedule(now,RuntimeEventType.SENSORY_CHANGE,self.INTERNAL_SENSORY_PAYLOAD)
+
+    def _observe_internal_change(self,now):
+        # A normal sensory event after action completion consumes its evidence.
+        # Let that event supply the actual external frame rather than a cached one.
+        if getattr(self.simulation.core,'pending_learning_action',None) is not None:return
+        if any(e.type==RuntimeEventType.SENSORY_CHANGE and not e.payload for e in self.scheduler.snapshot()):return
+        internal=self.simulation.sample_internal_frame()
+        if internal is None or self.last_internal is None or internal.levels==self.last_internal.levels:return
+        frontier=self.simulation.core.continuous_frontier
+        if self.language_frontier is not None or (frontier is not None and not frontier.committed):
+            boundaries=[e.time for e in self.scheduler.snapshot() if e.type in
+                        (RuntimeEventType.COGNITION_WAKE,RuntimeEventType.COGNITION_CONTINUE,RuntimeEventType.LANGUAGE_CONTINUE)]
+            self.scheduler.schedule(min(boundaries,default=now),RuntimeEventType.SENSORY_CHANGE,self.INTERNAL_SENSORY_PAYLOAD);return
+        frame=replace(self.last_frame,tick=self.observation_ordinal)
+        self.observation_ordinal+=1;self.last_frame=frame;self.last_internal=internal
+        self.simulation.core.observe_passive_internal(frame,now,internal)
+        self.internal_observations+=1
+
     def inject_language(self,surface,at_time=None):
         when=self.world_time if at_time is None else float(at_time)
         if when<self.world_time:raise ValueError("language input cannot precede current WorldTime")
@@ -262,7 +296,7 @@ class ContinuousRuntime:
         finally:os.unlink(tmp)
         engine=self.simulation.core.backend.engine;history=engine.transition_history();homeostasis=engine.homeostasis_runtime_state();elapsed=engine.continuous_time_state();elapsed_relations=engine.continuous_relation_time_state();dirty=engine.dirty_relation_state()
         inbox=[[i,f.issued_at_world_time,f.surface if isinstance(f,LanguageFrame) else list(f.tokens),None if isinstance(f,LanguageFrame) else self._structure_dict(f.request_target)] for i,f in sorted(self.language_inbox.items())]
-        save_container(path,"world",{"META":{"schema":"synthetic-entity-continuous-world","version":10 if state["version"]==7 else (9 if state["version"]==6 else 8)},"STATE":state,"CONT":{"scheduler":self.scheduler_state(),"observation_ordinal":self.observation_ordinal,"actions_completed":self.actions_completed,"cognition_wakes":self.cognition_wakes,"cognition_continuations":self.cognition_continuations,"cognition_generation":self.cognition_generation,"maintenance_ordinal":self.maintenance_ordinal,"scheduler_events_processed":self.scheduler_events_processed,"peak_scheduler_queue":self.peak_scheduler_queue,"legacy_monolithic_frontier":self._legacy_monolithic_frontier,"transition_history":history,"homeostasis":homeostasis,"elapsed_cognits":elapsed,"elapsed_relations":elapsed_relations,"dirty_relations":dirty,"frontier":self._frontier_state(),"language":{"lexicon":self.simulation.core.language.to_dict(),"grounding":self.simulation.core.grounding_context.durable_dict(),"context":self.simulation.core.grounding_context.episode_dict(),"next_message_id":self.next_language_message_id,"inbox":inbox,"active_frontier":self._language_frontier_state(),"last_utterance_result":self._utterance_result_state(),"utterances_processed":self.language_utterances_processed,"tokens_processed":self.language_tokens_processed}},"NBRN":{"encoding":"base64","data":native}},{"NBRN"})
+        save_container(path,"world",{"META":{"schema":"synthetic-entity-continuous-world","version":10 if state["version"]==7 else (9 if state["version"]==6 else 8)},"STATE":state,"CONT":{"scheduler":self.scheduler_state(),"observation_ordinal":self.observation_ordinal,"actions_completed":self.actions_completed,"cognition_wakes":self.cognition_wakes,"cognition_continuations":self.cognition_continuations,"cognition_generation":self.cognition_generation,"maintenance_ordinal":self.maintenance_ordinal,**({"internal_observations":self.internal_observations} if self.simulation.settings.delayed_homeostatic_prediction_enabled else {}),"scheduler_events_processed":self.scheduler_events_processed,"peak_scheduler_queue":self.peak_scheduler_queue,"legacy_monolithic_frontier":self._legacy_monolithic_frontier,"transition_history":history,"homeostasis":homeostasis,"elapsed_cognits":elapsed,"elapsed_relations":elapsed_relations,"dirty_relations":dirty,"frontier":self._frontier_state(),"language":{"lexicon":self.simulation.core.language.to_dict(),"grounding":self.simulation.core.grounding_context.durable_dict(),"context":self.simulation.core.grounding_context.episode_dict(),"next_message_id":self.next_language_message_id,"inbox":inbox,"active_frontier":self._language_frontier_state(),"last_utterance_result":self._utterance_result_state(),"utterances_processed":self.language_utterances_processed,"tokens_processed":self.language_tokens_processed}},"NBRN":{"encoding":"base64","data":native}},{"NBRN"})
     @classmethod
     def load_world(cls,path,settings=None):
         data=load_container(path,"world",{"META","STATE","CONT","NBRN"});saved_sensory=data["CONT"]["scheduler"].get("neural_sensory_config")
@@ -275,7 +309,7 @@ class ContinuousRuntime:
             with open(tmp,"wb") as stream:stream.write(base64.b64decode(data["NBRN"]["data"]))
             engine=sim.core.backend.engine;engine.load_graph(tmp);engine.restore_transition_history(data["CONT"].get("transition_history",[]));engine.restore_homeostasis_runtime_state(*data["CONT"]["homeostasis"]);engine.restore_continuous_time_state(*data["CONT"].get("elapsed_cognits",[False,0.0,0.0,[-1.0]*engine.cognit_count,[-1.0]*engine.cognit_count,[.25]*engine.cognit_count,0]));engine.restore_continuous_relation_time_state(*data["CONT"].get("elapsed_relations",[[],0]));engine.restore_dirty_relation_state(data["CONT"]["dirty_relations"]);sim.core.backend.invalidate_state()
         finally:os.unlink(tmp)
-        obj=cls.__new__(cls);obj.simulation=sim;obj.scheduler=EventScheduler();cont=data["CONT"];s=cont["scheduler"];events=[RuntimeEvent(t,i,getattr(RuntimeEventType,name),p) for t,i,name,p in s["events"]];obj.scheduler.restore(s["now"],s["next_id"],events);obj.observation_ordinal=cont["observation_ordinal"];obj.actions_completed=cont["actions_completed"];obj.cognition_wakes=cont["cognition_wakes"];obj.cognition_continuations=cont.get("cognition_continuations",0);obj.cognition_generation=cont.get("cognition_generation",0);obj.maintenance_ordinal=cont.get("maintenance_ordinal",0);obj.scheduler_events_processed=cont.get("scheduler_events_processed",0);obj.peak_scheduler_queue=cont.get("peak_scheduler_queue",len(events));obj._legacy_monolithic_frontier=cont.get("legacy_monolithic_frontier",data["META"].get("version",1)<2 and any(e.type==RuntimeEventType.COGNITION_WAKE for e in events));language=cont.get("language",{});from consciousness.language import LanguageLexicon;sim.core.language=LanguageLexicon.from_dict(sim.core,language.get("lexicon",{}));sim.core.grounding_context.restore_durable(language.get("grounding",{}));sim.core.language.restore_legacy_grounding(sim.core.grounding_context);sim.core.grounding_context.restore_episode(language.get("context",{}));obj.next_language_message_id=int(language.get("next_message_id",1));obj.language_inbox=obj._inbox_load(language.get("inbox",[]));obj.language_utterances_processed=int(language.get("utterances_processed",0));obj.language_tokens_processed=int(language.get("tokens_processed",0));obj.language_frontier=None;obj.last_utterance_result=None;obj.neural_bridge_deliveries=[]
+        obj=cls.__new__(cls);obj.simulation=sim;obj.scheduler=EventScheduler();cont=data["CONT"];s=cont["scheduler"];events=[RuntimeEvent(t,i,getattr(RuntimeEventType,name),p) for t,i,name,p in s["events"]];obj.scheduler.restore(s["now"],s["next_id"],events);obj.observation_ordinal=cont["observation_ordinal"];obj.actions_completed=cont["actions_completed"];obj.cognition_wakes=cont["cognition_wakes"];obj.cognition_continuations=cont.get("cognition_continuations",0);obj.cognition_generation=cont.get("cognition_generation",0);obj.maintenance_ordinal=cont.get("maintenance_ordinal",0);obj.internal_observations=cont.get("internal_observations",0);obj.scheduler_events_processed=cont.get("scheduler_events_processed",0);obj.peak_scheduler_queue=cont.get("peak_scheduler_queue",len(events));obj._legacy_monolithic_frontier=cont.get("legacy_monolithic_frontier",data["META"].get("version",1)<2 and any(e.type==RuntimeEventType.COGNITION_WAKE for e in events));language=cont.get("language",{});from consciousness.language import LanguageLexicon;sim.core.language=LanguageLexicon.from_dict(sim.core,language.get("lexicon",{}));sim.core.grounding_context.restore_durable(language.get("grounding",{}));sim.core.language.restore_legacy_grounding(sim.core.grounding_context);sim.core.grounding_context.restore_episode(language.get("context",{}));obj.next_language_message_id=int(language.get("next_message_id",1));obj.language_inbox=obj._inbox_load(language.get("inbox",[]));obj.language_utterances_processed=int(language.get("utterances_processed",0));obj.language_tokens_processed=int(language.get("tokens_processed",0));obj.language_frontier=None;obj.last_utterance_result=None;obj.neural_bridge_deliveries=[]
         obj.scheduler.restore(s["now"],s["next_id"],events,obj.peak_scheduler_queue)
         obj._neural_target_time=s.get("neural_target_time")
         if "neurodynamic" in s:engine.neurodynamic_substrate().restore(s["neurodynamic"])

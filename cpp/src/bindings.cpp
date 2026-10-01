@@ -803,6 +803,11 @@ PYBIND11_MODULE(_native_brain, m) {
               const std::vector<std::uint8_t> &actions) {
              return e.action_trials(sources, actions);
            })
+      .def("update_failed_action", [](NativeBrainEngine &e,const std::vector<std::uint32_t> &before,int action,
+            std::uint64_t tick,double confirmation,double contradiction,double utility,double consolidated) {
+          py::gil_scoped_release release;
+          e.update_outcomes(before,{},action,tick,confirmation,contradiction,utility,consolidated,true);
+      })
       .def("update_outcomes",
            [](NativeBrainEngine &e, const std::vector<std::uint32_t> &before,
               const std::vector<std::uint32_t> &current, int action,

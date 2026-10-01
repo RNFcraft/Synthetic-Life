@@ -2,13 +2,35 @@
 
 **Current implementation: v0.8.4 delayed and calibrated homeostatic learning.**
 
-Verified on 2026-10-01: **549 pytest passed; CTest Release 2/2 passed** via `python tools/verify.py --full`. Required targeted suites: **122 passed**. Native Release/observer build, import/headless smokes and `git diff --check` passed.
+Stabilization/freeze closure verified on 2026-10-01: **583 pytest passed;
+CTest Release 2/2 passed** via `python tools/verify.py --full`. Required targeted
+suites: **156 passed**. Separate production/runtime freeze gates: **10 passed**.
+Native Release/observer build, import/headless smokes and `git diff --check` passed.
+Current version remains **v0.8.4 ? DONE / FROZEN**; this is not a new milestone.
 
-New acceptance: `tests/test_v084_delayed_homeostatic_learning.py` covers native physical
+v0.8.4 stabilization fix / freeze closure preserves ordinary predictions,
+observes passive internal bin changes through production maintenance events,
+contradicts stale failed-action hypotheses and retains external context.
+The version remains v0.8.4; v0.8.5 remains planned.
+
+Historical initial v0.8.4 verification on 2026-10-01: **549 pytest passed; CTest Release 2/2 passed** via `python tools/verify.py --full`. Required targeted suites: **122 passed**. Native Release/observer build, import/headless smokes and `git diff --check` passed.
+
+Stabilization acceptance: `tests/test_v084_delayed_homeostatic_learning.py` covers production ContinuousRuntime physical
 digestion and counterfactual, ordinary graph acquisition, delayed planner ranking,
 calibration, time/depth/OFF ablations, failures, duplicates, Python/native parity,
 hash seeds 1/777, learned brain timing and exact world/frontier continuation.
 See [the v0.8.4 contract](V0_8_4_DELAYED_HOMEOSTATIC_LEARNING.md).
+
+Controlled production freeze gates can also be run separately:
+
+```
+python -B -m pytest -q tests/test_v084_delayed_homeostatic_learning.py -k "production or one_internal_change or exact_world_continuation or same_time_action"
+```
+
+The scheduler supplies delayed internal observations. Tests cover ordinary/legacy
+fallback, context-preserving second actions, failures/recovery, sentinel/IDLE
+separation, same-backend timing and cross-backend rejection, one-event/no-drift
+guards, neural non-injection, checkpoint phases and production hashseed replay.
 
 Historical v0.8.3 stabilization evidence follows.
 

@@ -43,9 +43,14 @@ class Simulation:
         self.core.homeostatic_target_levels=self.interoception.target_levels if self.interoception else ()
         self.event_log=EventLogger();self.last_action:Action|None=None;self.last_action_result:ActionResult|None=None
 
+    def sample_internal_frame(self):
+        """Runtime-owned sensor boundary; cognition receives only coarse levels."""
+        return self.interoception.sample(self.physiology.snapshot()) if self.interoception else None
+
     def step(self)->TickMetrics:
         tick=self.clock.tick;self.physiology.advance_to(self.world_time.seconds);self.core.homeostatic_projection=self.physiology.snapshot();frame=self.world.perceive(tick);internal=self.interoception.sample(self.core.homeostatic_projection) if self.interoception else None;self.core.step(frame,internal=internal);action=self.core.deliberate(frame)
         if not self.physiology.can_begin(action.kind):action=Action(ActionType.IDLE)
+        self.core.record_action_attempt(action.kind,self.world_time.seconds)
         intent=ActionIntent(action,self.world_time,self.event_sequence.next());result=self.world.apply_intent(intent) if self.world.is_native else self.world.apply_action(intent.action);self.physiology.apply_action(action.kind,result is ActionResult.SUCCESS);self.apply_world_consequence();self.core.record_action_outcome(action.kind,result is ActionResult.SUCCESS);self.core.homeostatic_projection=self.physiology.snapshot()
         self.event_log.emit(tick,f"ACTION {action.kind.name} {result.name}");world_event=None
         if (tick+1)%self.settings.world_tick_interval==0:
@@ -98,7 +103,7 @@ class Simulation:
         return {"version":7 if self.settings.interoception_enabled else (6 if resources else 5),"causal_config":causal_configuration(self.settings),"seed":self.seed,"tick":self.clock.tick,"world_time_seconds":self.world_time.seconds,"event_sequence":self.event_sequence.value,"random_state":encode_random_state(self.rng.getstate()),"world":world_state,"physiology":self.physiology.to_dict(),**({"resource_config":{name:getattr(self.settings,name) for name in Settings.RESOURCE_FIELDS}} if resources else {}),**({"interoception_config":{name:getattr(self.settings,name) for name in Settings.INTEROCEPTION_FIELDS},"world_config":{name:getattr(self.settings,name) for name in Settings.WORLD_FIELDS}} if self.settings.interoception_enabled else {}),
           "cognitive_graph":core.graph.semantic_to_dict() if semantic_graph and core.backend else core.graph.to_dict(),"entity_state":{"last_action":self.last_action.kind.name if self.last_action else None,
           "last_action_result":self.last_action_result.name if self.last_action_result else None},"core":{"transitions":core.transitions.to_dict(),
-          **({"native_temporal":{"history":core.backend.engine.transition_history(),"moments":core.backend.engine.temporal_state()}} if self.settings.delayed_homeostatic_prediction_enabled and core.backend else {}),**({"temporal_episode":{"ids":sorted(getattr(core,"timed_previous_ids",set())),"time":getattr(core,"timed_observation_time",None),"pending":[core.pending_learning_action[0].name,core.pending_learning_action[1]] if getattr(core,"pending_learning_action",None) else None}} if self.settings.delayed_homeostatic_prediction_enabled else {}),"previous_active":sorted(core.previous_active),"previous_action":core.previous_action.name if core.previous_action else None,
+          **({"native_temporal":{"history":core.backend.engine.transition_history(),"moments":core.backend.engine.temporal_state()}} if self.settings.delayed_homeostatic_prediction_enabled and core.backend else {}),**({"temporal_episode":{"attempt":[sorted(core.learning_action_attempt[0]),core.learning_action_attempt[1],core.learning_action_attempt[2].name] if getattr(core,"learning_action_attempt",None) else None,"ids":sorted(getattr(core,"timed_previous_ids",set())),"time":getattr(core,"timed_observation_time",None),"pending":[core.pending_learning_action[0].name,core.pending_learning_action[1]] if getattr(core,"pending_learning_action",None) else None}} if self.settings.delayed_homeostatic_prediction_enabled else {}),"previous_active":sorted(core.previous_active),"previous_action":core.previous_action.name if core.previous_action else None,
           "predictions":core.state.predictions,"goal":goal,"next_goal_id":core.next_goal_id,"goals_generated":core.state.goals_generated,
           "goal_stack":[asdict(x) for x in core.goal_stack],"target_cognit_ids":sorted(core.target_cognit_ids),"goal_metrics":{"subgoals_created":core.state.subgoals_created,"subgoals_completed":core.state.subgoals_completed,"subgoals_failed":core.state.subgoals_failed,"max_goal_depth":core.state.max_goal_depth,"parent_resumptions":core.state.parent_resumptions},
           "cognitive_tick":core.cognitive_tick,
@@ -165,7 +170,8 @@ class Simulation:
         patterns={"prototypes":core["prototypes"],"composites":{"composites":core["composites"]["composites"],"dependencies":core["composites"]["dependencies"],"created_total":core["composites"]["created_total"],"deleted_total":core["composites"]["deleted_total"]}}
         learned={"transforms":core["perception"]["transforms"],"relation_diagnostics":core["relation_diagnostics"],"calibration":core["calibration"],"affordances":core["affordances"],"relational_nodes":core["relational"]["nodes"]}
         sections={"META":{"schema":"synthetic-entity-brain","version":6 if self.core.backend else 4,"episode_boundary":True,"numeric_backend":self.core.backend_name},"COGN":{"next_id":graph["next_id"],"nodes":graph["nodes"]},"RELA":{"relations":graph["relations"]},"PATT":patterns,"SPAT":core["memory"],"BELS":core["relational"]["belief_scene"],"LEAR":learned,"LANG":{"lexicon":self.core.language.to_dict(),"grounding":self.core.grounding_context.durable_dict()}}
-        if self.settings.delayed_homeostatic_prediction_enabled and not self.core.backend:learned["timings"]=core["transitions"].get("timings",[])
+        if not self.core.backend and core["transitions"].get("timings"):
+            learned["timings"]=core["transitions"]["timings"]
         sections["META"].update(brain_sensor_metadata(graph, patterns, self.settings))
         if self.core.backend:
             fd,tmp=tempfile.mkstemp(suffix='.native');os.close(fd)
@@ -180,6 +186,9 @@ class Simulation:
         import base64
         data=load_container(path,"brain",{"META","COGN","RELA","PATT","SPAT","BELS","LEAR","LANG","NBRN"})
         validate_brain_sensor_contract(data, self.settings)
+        saved_backend=data["META"].get("numeric_backend","python")
+        if saved_backend != self.core.backend_name:
+            raise ValueError("incompatible brain numeric_backend; cross-backend transfer is unsupported")
         blank=self.snapshot_data(semantic_graph=bool(self.core.backend));blank["cognitive_graph"]={**data["COGN"],**data["RELA"]};core=blank["core"]
         core["memory"]=data["SPAT"];core["prototypes"]=data["PATT"]["prototypes"];saved=data["PATT"]["composites"];core["composites"].update(saved);core["composites"]["recent"]=[];core["composites"]["candidates"]=[]
         core["perception"]["transforms"]=data["LEAR"]["transforms"];core["relation_diagnostics"]=data["LEAR"]["relation_diagnostics"];core["calibration"]=data["LEAR"]["calibration"];core["affordances"]=data["LEAR"].get("affordances",[]);core["memory"]["current_place_id"]=None;core["relational"]["nodes"]=data["LEAR"].get("relational_nodes",[]);core["relational"]["belief_scene"]=data.get("BELS",{})
@@ -245,7 +254,7 @@ class Simulation:
                 native,_=sim.core.graph.connect(relation.source_id,relation.target_id,relation.relation_type,relation.context_id)
                 for field in ("strength","confidence","prediction_probability","support","lift","last_evidence_world_tick","status","contradiction_evidence","usefulness","confirmations","last_used_cognitive_tick"):setattr(native,field,getattr(relation,field))
             else:sim.core.graph.adjacency[relation.source_id][(relation.target_id,relation.relation_type,relation.context_id)]=relation
-        core=data["core"];episode=core.get("temporal_episode",{});sim.core.timed_previous_ids=set(episode.get("ids",[]));sim.core.timed_observation_time=episode.get("time");pending=episode.get("pending");sim.core.pending_learning_action=(ActionType[pending[0]],pending[1]) if pending else None;sim.core.transitions.restore(core["transitions"]);sim.core.previous_active=set(core["previous_active"])
+        core=data["core"];episode=core.get("temporal_episode",{});attempt=episode.get("attempt");sim.core.learning_action_attempt=(set(attempt[0]),attempt[1],ActionType[attempt[2]]) if attempt else None;sim.core.timed_previous_ids=set(episode.get("ids",[]));sim.core.timed_observation_time=episode.get("time");pending=episode.get("pending");sim.core.pending_learning_action=(ActionType[pending[0]],pending[1]) if pending else None;sim.core.transitions.restore(core["transitions"]);sim.core.previous_active=set(core["previous_active"])
         sim.core.previous_action=ActionType[core["previous_action"]] if core["previous_action"] else None;sim.core.state.predictions={int(k):v for k,v in core["predictions"].items()}
         if core["goal"]:sim.core.state.goal=Goal(**{**core["goal"],"target_cognit_ids":tuple(core["goal"]["target_cognit_ids"]),"target_signature":tuple(tuple(x) for x in core["goal"].get("target_signature",()))})
         sim.core.goal_stack=[Goal(**{**x,"target_cognit_ids":tuple(x["target_cognit_ids"]),"target_signature":tuple(tuple(v) for v in x.get("target_signature",()))}) for x in core.get("goal_stack",[])];sim.core.target_cognit_ids=set(core.get("target_cognit_ids",[]))

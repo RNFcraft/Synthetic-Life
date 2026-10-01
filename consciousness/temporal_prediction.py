@@ -74,23 +74,55 @@ def calibrated_estimate(core, witnesses, levels):
     return InternalEstimate(base.levels,timed.progress,base.confidence,base.predictions),ambiguity
 
 
-def delayed_estimate(core, state, action, levels, start_time=0.):
+def merge_projected_state(graph, baseline, temporal, replaced_internal_channels):
+    """Conservative state evolution; absence is never inferred from missing edges."""
+    replaced=set(replaced_internal_channels)
+    def untouched(node_id):
+        node=graph.nodes.get(node_id);pattern=node.pattern if node else None
+        if not pattern:return True
+        # Mixed sensor patterns also become stale when their internal channel
+        # changes; their external participant is preserved as ordinary context.
+        channels={int(p[2].removeprefix('internal_')) for p in pattern.participants
+                  if is_internal_primitive(p) and p[2].removeprefix('internal_').isdecimal()}
+        return not channels & replaced
+    retained={i for i in baseline if untouched(i)}
+    return frozenset(retained | set(temporal))
+
+
+def _merge_witnesses(graph, previous, following):
+    replaced={internal_channel(graph,i)[0] for i in following if internal_channel(graph,i) is not None}
+    same_bins={internal_channel(graph,i) for i in following if internal_channel(graph,i) is not None}
+    retained={i:value for i,value in previous.items() if internal_channel(graph,i) is None or
+              internal_channel(graph,i)[0] not in replaced or internal_channel(graph,i) in same_bins}
+    for node_id,value in sorted(following.items()):
+        older=retained.get(node_id)
+        if older is None or (value[0],-value[1])>(older[0],-older[1]):retained[node_id]=value
+    return retained,replaced
+
+
+def delayed_estimate(core, state, action, levels, start_time=0., baseline_effects=None, baseline_state=()):
+    baseline_effects=baseline_effects or {}
     frontier=successors(core,{i:(1.,start_time) for i in sorted(state)},action)
-    endpoint=dict(frontier);seen=set(state);depth=0
+    if not frontier:
+        estimate=internal_estimate(core.graph,baseline_effects,levels,core.homeostatic_target_levels,
+                                   core.settings.interoception_bins)
+        return estimate,{"usable":False,"passive_depth":0,"elapsed":start_time,"ambiguity":0.,
+                         "witnesses":0,"projected_state":tuple(sorted(baseline_state))}
+    timed_channels={internal_channel(core.graph,i)[0] for i in frontier if internal_channel(core.graph,i) is not None}
+    endpoint={i:(q,start_time) for i,q in sorted(baseline_effects.items()) if i not in frontier and
+              (internal_channel(core.graph,i) is None or internal_channel(core.graph,i)[0] not in timed_channels)}
+    endpoint,replaced=_merge_witnesses(core.graph,endpoint,frontier)
+    projected=merge_projected_state(core.graph,baseline_state,frontier,replaced)
+    seen=set(state);depth=0
     for depth_index in range(core.settings.planning_passive_prediction_depth):
         following=successors(core,frontier)
         following={i:value for i,value in following.items() if i not in seen}
         if not following:break
         seen.update(frontier);depth=depth_index+1
-        replaced={internal_channel(core.graph,i)[0] for i in following if internal_channel(core.graph,i) is not None}
-        same_bins={internal_channel(core.graph,i) for i in following if internal_channel(core.graph,i) is not None}
-        retained={i:value for i,value in endpoint.items() if internal_channel(core.graph,i) is None or
-                  internal_channel(core.graph,i)[0] not in replaced or internal_channel(core.graph,i) in same_bins}
-        for node_id,value in following.items():
-            previous=retained.get(node_id)
-            if previous is not None and (previous[0],-previous[1])>(value[0],-value[1]):following[node_id]=previous
-        endpoint=retained
-        endpoint.update(following);frontier=following
+        endpoint,replaced=_merge_witnesses(core.graph,endpoint,following)
+        projected=merge_projected_state(core.graph,projected,following,replaced)
+        frontier=following
     estimate,ambiguity=calibrated_estimate(core,endpoint,levels)
-    return estimate,{"passive_depth":depth,"elapsed":max((t for _,t in endpoint.values()),default=0.),
-                     "ambiguity":ambiguity,"witnesses":len(endpoint),"projected_state":tuple(sorted(frontier))}
+    return estimate,{"usable":True,"passive_depth":depth,
+                     "elapsed":max(start_time,max((t for _,t in endpoint.values()),default=start_time)),
+                     "ambiguity":ambiguity,"witnesses":len(endpoint),"projected_state":tuple(sorted(projected))}
