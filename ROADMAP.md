@@ -1087,9 +1087,13 @@ extension without relying on commit history or external conversations.
 
 ---
 
-# v0.8 — Homeostatic Motivation and First Survival Learning
+# v0.8 — Homeostatic Motivation Foundation
 
-**Status: IN PROGRESS - v0.8.0 FROZEN; v0.8.1-v0.8.3 IMPLEMENTED; v0.8.4 DONE / FROZEN; v0.8.5 PLANNED**
+**Status: DONE — v0.8.0 DONE / FROZEN; v0.8.1–v0.8.3 DONE; v0.8.4 DONE / FROZEN**
+
+The v0.8 research branch ends at v0.8.4. Survival curriculum and long-run
+survival research continue as planned v0.9.2/v0.9.3 after the workbench and
+reproducible scenario infrastructure.
 
 The broad research design before the milestone sections below is prospective.
 Its continuous integral objective is not the current planner implementation:
@@ -1454,13 +1458,41 @@ See [implementation, formulas, experiments and limits](docs/V0_8_4_DELAYED_HOMEO
 
 ---
 
-## v0.8.5 — First Training Curriculum and Survival-Learning Proof
+# v0.9 — Experimental Workbench and Survival Research
+
+## v0.9.0 — Experimental Workbench & Observer Redesign
+
+**Status: DONE — 613 pytest PASS; Release CTest 2/2 PASS (2026-10-01)**
+
+Native SDL3/OpenGL/ImGui desktop workbench; redesigned observer; interactive
+World editor; human-readable Food/Water/Neutral physical presets; physiology
+and interoception inspectors; cognition and planner diagnostics; dialogue
+input/output; bounded deterministic brain graph; explicit command queue and
+scheduler boundary; observer causal-inertness regressions.
+
+The cognitive foundation remains v0.8.4 DONE / FROZEN. This milestone changes
+experimental interaction and observation infrastructure.
+See [the workbench contract](docs/V0_9_0_EXPERIMENTAL_WORKBENCH.md).
+
+## v0.9.1 — Reproducible Curriculum / Scenario Infrastructure
+
+**Status: PLANNED**
+
+Reusable scenario descriptions, scenario save/load, curriculum definitions,
+deterministic episode resets, headless scenario runner, compatibility between
+UI-created scenarios and headless experiments, and experiment manifests.
+No complete scenario/curriculum format or batch experiment runner is part of
+v0.9.0.
+
+---
+
+## v0.9.2 — First Survival-Learning Proof
 
 **Status: PLANNED**
 
 Цель — впервые начать систематическое обучение организма на repeated embodied experience и проверить всю цепочку целиком.
 
-### Stage 1 — Discovery beside the organism
+### Stage 1 — Adjacent resource discovery
 
 Consumable cube появляется непосредственно рядом.
 
@@ -1468,7 +1500,7 @@ Consumable cube появляется непосредственно рядом.
 
 До опыта не должно существовать association между appearance кубика, Action и physiological consequence.
 
-### Stage 2 — One-step approach
+### Stage 2 — MOVE → INTERACT
 
 Еда находится так, что требуется минимум:
 
@@ -1538,7 +1570,7 @@ Acceptance требует repeated advantage experienced organism над fresh c
 
 ---
 
-## v0.8.6 — Long-Run Metabolic Stability and Freeze
+## v0.9.3 — Long-Run Survival Stability & Freeze
 
 **Status: PLANNED**
 
@@ -1605,46 +1637,18 @@ physiological need
 
 ---
 
-## v0.9 — Adaptive World & Learning Environment
+## Historical roadmap revision
 
-Goal:
-Transform Synthetic-Life from a reactive organism into a learning organism inside a rich deterministic 2D world.
+The previously planned v0.8.5/v0.8.6 survival scope was moved to
+v0.9.2/v0.9.3 after the experimental workbench became a prerequisite
+for reproducible survival research.
 
-Milestones:
+No historical implementation was skipped or silently renumbered.
 
-v0.9.0 — 2D World Engine Foundation
-- scalable world model
-- dynamic objects
-- interactions
-- persistence
-
-v0.9.1 — Research Observer & World Editor
-- laboratory interface
-- world manipulation tools
-- inspection and timeline
-
-v0.9.2 — Rich Sensory System
-- non-symbolic perception
-- environmental representations
-
-v0.9.3 — Learned Affordances
-- discovering object capabilities through experience
-
-v0.9.4 — Multi-Step Action Learning
-- behavioral sequences
-- reusable patterns
-
-v0.9.5 — Curiosity & Epistemic Motivation
-- uncertainty driven exploration
-
-v0.9.6 — Causal World Model
-- learning environmental cause-effect relations
-
-v0.9.7 — Long-Life Learning Experiments
-- open-ended development experiments
-
-v0.9.8 — Freeze Audit
-- v1.0 preparation
+The earlier planned “Adaptive World & Learning Environment” v0.9 sequence
+was superseded by the four-stage research sequence above. It was a plan, not
+an implemented release. Rich environments and later open-ended learning
+remain future research beyond the current survival-proof milestones.
 
 ---
 

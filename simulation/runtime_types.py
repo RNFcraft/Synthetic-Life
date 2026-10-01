@@ -19,6 +19,9 @@ class RenderObject:
     x: int
     y: int
     state: int
+    presentation_kind: str = "Neutral"
+    nutrients: float = 0.0
+    hydration: float = 0.0
 
 
 @dataclass(frozen=True, slots=True)

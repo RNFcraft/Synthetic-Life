@@ -1,6 +1,6 @@
 # Synthetic-Life Developer Guide
 
-Практический guide для текущей **v0.7.6 FROZEN** architecture.
+Практический guide для **v0.9.0 workbench** поверх frozen v0.8.4 cognition.
 
 Перед архитектурными изменениями прочитайте:
 
@@ -70,7 +70,22 @@ main.py
   -> EventScheduler
 ```
 
-Observer — только read-only consumer snapshots.
+Workbench consumes detached snapshots and produces explicit commands. Runtime
+alone owns their acceptance and physical/language effects. See
+[the v0.9.0 contract](docs/V0_9_0_EXPERIMENTAL_WORKBENCH.md).
+
+Interactive setup:
+
+```powershell
+cmake -S cpp -B cpp/build -DSE_BUILD_OBSERVER=ON
+cmake --build cpp/build --config Release
+python main.py --paused
+```
+
+ImGui v1.91.9b and SDL3 3.2.8 are pinned and fetched only with observer ON.
+Roboto plus its licenses are deployed under binary `assets/`. New UI sources
+are `cpp/src/workbench_*.cpp`; host commands/status live in
+`simulation/workbench.py`. `se_engine` keeps no ImGui/SDL dependency.
 
 ## 4. Где менять код
 

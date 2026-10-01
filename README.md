@@ -1,21 +1,25 @@
 # Synthetic-Life
 
-Current implementation: v0.8.4 opt-in delayed and calibrated homeostatic
-consequence learning. See [the v0.8.4 contract](docs/V0_8_4_DELAYED_HOMEOSTATIC_LEARNING.md).
+Current implementation: **v0.9.0 — Experimental Workbench & Observer Redesign**.
+See [the workbench contract](docs/V0_9_0_EXPERIMENTAL_WORKBENCH.md).
+Acceptance: **613 pytest PASS; Release CTest 2/2 PASS** (`python tools/verify.py --full`).
+v0.8.4 homeostatic learning remains the current cognitive foundation, DONE / FROZEN.
+v0.9.0 changes experimental interaction/observation infrastructure, not the intelligence mechanism.
 v0.8.0 = frozen physiology; v0.8.1 = consumables; v0.8.2 = interoception;
 v0.8.3 = learned trajectory valuation; v0.8.4 = learned passive delays and calibration.
-Interoception, valuation and delayed prediction default OFF. v0.8.5 curriculum remains planned.
+Interoception, valuation and delayed prediction default OFF. Scenario infrastructure,
+survival proof and long-run survival freeze remain planned as v0.9.1–v0.9.3.
 
-Stabilization/freeze closure verified on 2026-10-01: **583 pytest passed;
+Historical v0.8.4 stabilization/freeze closure verified on 2026-10-01: **583 pytest passed;
 CTest Release 2/2 passed** via `python tools/verify.py --full`. Required targeted
 suites: **156 passed**. Separate production/runtime freeze gates: **10 passed**.
 Native Release/observer build, import/headless smokes and `git diff --check` passed.
-Current version remains **v0.8.4 ? DONE / FROZEN**; this is not a new milestone.
+That cognitive freeze remains **v0.8.4 — DONE / FROZEN**.
 
 v0.8.4 stabilization fix / freeze closure preserves ordinary predictions,
 observes passive internal bin changes through production maintenance events,
 contradicts stale failed-action hypotheses and retains external context.
-The version remains v0.8.4; v0.8.5 remains planned.
+Its previously planned v0.8.5 survival scope is now planned v0.9.2.
 
 Historical initial v0.8.4 verification on 2026-10-01: **549 pytest passed; CTest Release 2/2 passed** via `python tools/verify.py --full`. Required targeted suites: **122 passed**. Native Release/observer build, import/headless smokes and `git diff --check` passed.
 
@@ -75,6 +79,7 @@ python -B main.py --headless --seconds 0
 
 ```powershell
 python main.py
+python main.py --paused
 python main.py --speed 10
 python main.py --headless --seconds 100
 python main.py --headless --seconds 100 --save run.seworld
@@ -94,7 +99,7 @@ main.py
   -> SyntheticEntityCore -> NativeGraphBackend -> C++ NativeBrainEngine
   -> NeurodynamicSubstrate
   -> EventScheduler
-  -> NativeObserver (interactive only, read-only)
+  -> Native Workbench (immutable snapshots + explicit command queue)
 ```
 
 Главный causal boundary:

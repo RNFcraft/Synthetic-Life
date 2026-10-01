@@ -106,6 +106,26 @@ std::optional<std::uint32_t> World::apply_spawn_event(std::optional<std::pair<in
  auto[x,y]=*position;if(!contains(x,y)||at(x,y)||occupied_by_body(x,y,UINT32_MAX))throw std::invalid_argument("invalid injected spawn");
  auto id=next_object_id_++;objects_.push_back({id,x,y,0});publish_snapshot();return id;
 }
-RenderSnapshot World::latest_render_snapshot()const{RenderSnapshot s{world_time_,event_sequence_,width_,height_};for(auto const&b:bodies_)s.bodies.push_back({b.id,b.x,b.y,b.orientation,b.appearance,b.held_object_id});for(auto const&o:objects_)s.objects.push_back({o.id,o.x,o.y,o.state});for(std::size_t i=0;i<held_.size();++i)if(held_[i])s.held_objects.push_back({bodies_[i].id,held_[i]->id,held_[i]->state});return s;}
+std::uint32_t World::editor_place_object(std::pair<int,int> position,double time,std::uint64_t event){
+ auto[x,y]=position;
+ if(!std::isfinite(time)||time<world_time_||event!=event_sequence_+1)throw std::invalid_argument("non-monotonic editor event");
+ if(!contains(x,y)||at(x,y)||occupied_by_body(x,y,UINT32_MAX))throw std::invalid_argument("invalid object position");
+ auto count=std::count_if(objects_.begin(),objects_.end(),[](const Object&o){return !o.resource_channel;});
+ for(auto const&o:held_)if(o&&!o->resource_channel)++count;
+ if(count>=max_objects_)throw std::invalid_argument("object capacity reached");
+ auto id=next_object_id_++;objects_.push_back({id,x,y,0});world_time_=time;event_sequence_=event;publish_snapshot();return id;
+}
+void World::editor_remove_object(std::uint32_t id,double time,std::uint64_t event){
+ if(!std::isfinite(time)||time<world_time_||event!=event_sequence_+1)throw std::invalid_argument("non-monotonic editor event");
+ auto it=std::find_if(objects_.begin(),objects_.end(),[id](const Object&o){return o.id==id;});
+ if(it==objects_.end())throw std::invalid_argument("object is absent or held");
+ objects_.erase(it);world_time_=time;event_sequence_=event;publish_snapshot();
+}
+RenderSnapshot World::latest_render_snapshot()const{
+ auto kind=[](const Object&o){return !o.resource_channel?PresentationKind::Neutral:o.nutrients>0&&o.hydration>0?PresentationKind::OtherResource:o.nutrients>0?PresentationKind::Food:PresentationKind::Water;};
+ RenderSnapshot s{world_time_,event_sequence_,width_,height_};for(auto const&b:bodies_)s.bodies.push_back({b.id,b.x,b.y,b.orientation,b.appearance,b.held_object_id});
+ for(auto const&o:objects_)s.objects.push_back({o.id,o.x,o.y,o.state,kind(o),o.nutrients,o.hydration});
+ for(std::size_t i=0;i<held_.size();++i)if(held_[i])s.held_objects.push_back({bodies_[i].id,held_[i]->id,held_[i]->state,kind(*held_[i])});return s;
+}
 void World::publish_snapshot(){snapshot_channel_->publish(latest_render_snapshot());}
 }

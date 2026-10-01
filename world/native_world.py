@@ -123,6 +123,12 @@ class NativeWorld:
         self.spawn_records.append(self._spawn_record(next(o for o in self.objects if o.id==object_id),self.world_tick_count))
         return object_id
     def resource_count(self):return sum(o.resource_channel!=0 for o in self.objects)+sum(o.resource_channel!=0 for o in self.held_objects.values())
+    def editor_place_object(self,position,world_time,event_id):
+        object_id=self.native.editor_place_object(position,world_time,event_id);self._refresh()
+        self.spawn_records.append(self._spawn_record(next(o for o in self.objects if o.id==object_id),self.world_tick_count))
+        return object_id
+    def editor_remove_object(self,object_id,world_time,event_id):
+        self.native.editor_remove_object(object_id,world_time,event_id);self._refresh()
     def take_consequence(self):return self.native.take_consequence()
     def disable_legacy_spawning(self):
         self.native.configure_spawning(self.settings.max_objects,None,self.next_object_id);self._refresh()

@@ -17,6 +17,7 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--seconds", type=float, help="simulated seconds to execute (headless default: 100)")
     parser.add_argument("--speed", type=float, default=1.0, help="live simulated-time multiplier")
     parser.add_argument("--seed", type=int, default=12345)
+    parser.add_argument("--paused", action="store_true", help="start the interactive workbench paused for world editing")
     parser.add_argument("--save", metavar="PATH", help="write a continuous .seworld snapshot after execution")
     parser.add_argument("--load", metavar="PATH", help="load a continuous .seworld snapshot before execution")
     parser.add_argument("--telemetry", metavar="PATH", help="deprecated legacy tick telemetry; unavailable in production continuous mode")
@@ -43,11 +44,23 @@ def drive_live(runtime:ContinuousRuntime,observer,speed:float=1.0,seconds:float|
     if not observer.start():raise RuntimeError("native observer did not start")
     if seconds is not None and seconds<runtime.world_time:raise ValueError("--seconds precedes the loaded WorldTime")
     real_start=monotonic();sim_start=runtime.world_time;deadline=seconds
+    controller=getattr(runtime,"_workbench_controller",None)
+    was_paused=False
     try:
         while observer.is_running:
-            target=sim_start+max(0.0,monotonic()-real_start)*speed
+            now=monotonic()
+            if controller is not None:
+                stepped=controller.poll()
+                if controller.paused or was_paused or stepped:
+                    real_start=now;sim_start=runtime.world_time
+                was_paused=controller.paused
+                if controller.paused:
+                    if deadline is not None and runtime.world_time>=deadline:break
+                    sleep(.005);continue
+            target=sim_start+max(0.0,now-real_start)*speed
             if deadline is not None:target=min(target,deadline)
             if target>runtime.world_time:runtime.run_until(target)
+            if controller is not None:runtime.publish_workbench_status(controller.paused)
             if deadline is not None and runtime.world_time>=deadline:break
             sleep(.005)
     finally:observer.stop()
@@ -59,7 +72,10 @@ def create_native_observer(runtime:ContinuousRuntime):
     if not hasattr(native,"create_observer"):raise RuntimeError(OBSERVER_BUILD_HELP)
     try:
         runtime.publish_brain_snapshot()
-        return native.create_brain_observer(runtime.simulation.core.backend.engine)
+        observer=native.create_brain_observer(runtime.simulation.core.backend.engine)
+        from simulation.workbench import WorkbenchController
+        runtime._workbench_controller=WorkbenchController(runtime,observer)
+        return observer
     except (AttributeError,RuntimeError) as error:raise RuntimeError(OBSERVER_BUILD_HELP) from error
 
 
@@ -69,6 +85,8 @@ def main(argv:list[str]|None=None)->None:
         seconds=100.0 if args.seconds is None else args.seconds;run_headless(runtime,seconds)
     else:
         observer=create_native_observer(runtime)
+        runtime._workbench_controller.paused=args.paused
+        runtime.publish_workbench_status(args.paused)
         try:drive_live(runtime,observer,args.speed,args.seconds)
         except KeyboardInterrupt:pass
     elapsed=time.perf_counter()-started

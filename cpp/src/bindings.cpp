@@ -10,6 +10,7 @@
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
 #include "bindings_scheduler.hpp"
+#include "bindings_workbench.hpp"
 namespace py = pybind11;
 using namespace se;
 PYBIND11_MODULE(_native_brain, m) {
@@ -17,6 +18,7 @@ PYBIND11_MODULE(_native_brain, m) {
   // id: scheduler uint64 sequence, type: RuntimeEventType, payload: opaque
   // uint64]. Python может читать поля, но порядок (time, id) задаёт native queue.
   bind_scheduler(m);
+  bind_workbench(m);
   py::enum_<MicroPolarity>(m, "MicroPolarity").value("EXCITATORY", MicroPolarity::Excitatory).value("INHIBITORY", MicroPolarity::Inhibitory);
   py::class_<NeurodynamicSubstrate>(m, "NeurodynamicSubstrate")
       .def(py::init([](double tm, double ta, double rp, double reset,
@@ -73,6 +75,8 @@ PYBIND11_MODULE(_native_brain, m) {
                              &NeurodynamicSubstrate::micro_kappa_count)
       .def_property_readonly("micro_rho_count",
                              &NeurodynamicSubstrate::micro_rho_count)
+      .def_property_readonly("consolidated_assembly_count",
+                             &NeurodynamicSubstrate::consolidated_assembly_count)
       .def_property_readonly("pending_events",
                              &NeurodynamicSubstrate::pending_events)
       .def_property_readonly("current_time", &NeurodynamicSubstrate::now)
@@ -387,6 +391,7 @@ PYBIND11_MODULE(_native_brain, m) {
       });
 #ifdef SE_WITH_OBSERVER
   py::class_<NativeObserver>(m, "NativeObserver")
+      .def("attach_workbench", &NativeObserver::attach_workbench)
       .def("start", &NativeObserver::start)
       .def("stop",
            [](NativeObserver &o) {
@@ -421,6 +426,8 @@ PYBIND11_MODULE(_native_brain, m) {
     .def("configure_spawning",&World::configure_spawning).def("world_tick",[](World&w,py::object position,py::object next){std::optional<std::pair<int,int>>p;if(!position.is_none())p=position.cast<std::pair<int,int>>();std::optional<std::uint64_t>n;if(!next.is_none())n=next.cast<std::uint64_t>();return w.world_tick(p,n);})
     .def("apply_spawn_event",[](World&w,py::object position,double time,std::uint64_t event){std::optional<std::pair<int,int>>p;if(!position.is_none())p=position.cast<std::pair<int,int>>();auto result=w.apply_spawn_event(p,time,event);return result?py::cast(*result):py::none();})
     .def("spawn_resource",&World::spawn_resource)
+    .def("editor_place_object",&World::editor_place_object)
+    .def("editor_remove_object",&World::editor_remove_object)
     .def("configure_resource_limit",&World::configure_resource_limit)
     .def("restore_resources",&World::restore_resources,py::arg("resources"),py::arg("pending_nutrients")=0.,py::arg("pending_hydration")=0.)
     .def("resource_state",&World::resource_state)

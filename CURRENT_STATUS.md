@@ -1,17 +1,31 @@
 # Synthetic-Life — Current Status
 
-## Current implementation: v0.8.4
+## Current implementation: v0.9.0
+
+Cognitive foundation: **v0.8.4 DONE / FROZEN**.
+Experimental workbench: **v0.9.0 DONE**.
+Acceptance on 2026-10-01: **613 pytest passed; Release CTest 2/2 passed**
+via `python tools/verify.py --full`; required targeted suites **154 passed**.
+Observer-OFF native engine/oracle build and CTest **1/1 passed**. Native visual
+fixture inspected at 1100×700, 1440×900 and 1920×1080; font/layout tests cover
+1×/1.5×/2× scale. Actual hardware at high DPI remains a manual platform gate.
+Native ImGui desktop, World editor, physical presets, physiology/interoception,
+planner and brain inspectors, dialogue input, deterministic command boundary
+and pending-command `.seworld` v11 continuation are described in
+[the workbench contract](docs/V0_9_0_EXPERIMENTAL_WORKBENCH.md).
+v0.9.1 scenario infrastructure, v0.9.2 survival proof and v0.9.3 long-run freeze
+remain planned. The following counts document the historical cognitive freeze.
 
 Stabilization/freeze closure verified on 2026-10-01: **583 pytest passed;
 CTest Release 2/2 passed** via `python tools/verify.py --full`. Required targeted
 suites: **156 passed**. Separate production/runtime freeze gates: **10 passed**.
 Native Release/observer build, import/headless smokes and `git diff --check` passed.
-Current version remains **v0.8.4 ? DONE / FROZEN**; this is not a new milestone.
+The cognitive foundation remains **v0.8.4 — DONE / FROZEN**.
 
 v0.8.4 stabilization fix / freeze closure preserves ordinary predictions,
 observes passive internal bin changes through production maintenance events,
 contradicts stale failed-action hypotheses and retains external context.
-The version remains v0.8.4; v0.8.5 remains planned.
+The old v0.8.5 scope is planned v0.9.2; see the roadmap revision.
 
 Historical initial v0.8.4 verification on 2026-10-01: **549 pytest passed; CTest Release 2/2 passed** via `python tools/verify.py --full`. Required targeted suites: **122 passed**. Native Release/observer build, import/headless smokes and `git diff --check` passed.
 
@@ -24,7 +38,7 @@ v0.8.4 adds learned WorldTime delay moments to existing SELF_ACTION/SEQUENTIAL
 evidence, bounded passive projection between actions, confidence composition,
 competing-bin calibration and temporal discount. Native physical digestion and
 its same-appearance counterfactual verify acquisition through planner ranking.
-All three feature flags default OFF. v0.8.5 survival curriculum remains planned.
+All three feature flags default OFF. v0.9.2 survival curriculum remains planned.
 See [v0.8.4](docs/V0_8_4_DELAYED_HOMEOSTATIC_LEARNING.md).
 
 v0.8.0 is the frozen physiological foundation; v0.8.1 physical consumables,

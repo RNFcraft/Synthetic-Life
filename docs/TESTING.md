@@ -1,17 +1,31 @@
 # Testing and Repository Verification
 
-**Current implementation: v0.8.4 delayed and calibrated homeostatic learning.**
+**Current implementation: v0.9.0 workbench; cognitive foundation v0.8.4 frozen.**
+
+The workbench suite is `tests/test_v090_workbench.py`. It checks explicit
+editor commands, physical presets, status immutability, observer/RNG cadence
+invariance, host control, dialogue and pending-command continuation. Native
+observer tests add layout/DPI, retained status, queue bounds and stable graph
+positions. v0.9.0 acceptance on 2026-10-01: **613 pytest passed; Release
+CTest 2/2 passed** via `python tools/verify.py --full`. Required targeted suites:
+**154 passed**; workbench suite alone contains **28 cases**. Observer-OFF native
+engine/oracle build and CTest **1/1 passed**. Native tests keep assertions enabled
+in Release and exercise actual ImGui text capture, placement, Run and Step.
+Visual captures of the native fixture were inspected at 1100×700, 1440×900 and
+1920×1080. Font atlas/Cyrillic glyph and layout tests cover 1×/1.5×/2× DPI.
+See [the complete execution record and limits](V0_9_0_EXPERIMENTAL_WORKBENCH.md).
+The counts below are historical v0.8.4 acceptance.
 
 Stabilization/freeze closure verified on 2026-10-01: **583 pytest passed;
 CTest Release 2/2 passed** via `python tools/verify.py --full`. Required targeted
 suites: **156 passed**. Separate production/runtime freeze gates: **10 passed**.
 Native Release/observer build, import/headless smokes and `git diff --check` passed.
-Current version remains **v0.8.4 ? DONE / FROZEN**; this is not a new milestone.
+The cognitive foundation remains **v0.8.4 — DONE / FROZEN**.
 
 v0.8.4 stabilization fix / freeze closure preserves ordinary predictions,
 observes passive internal bin changes through production maintenance events,
 contradicts stale failed-action hypotheses and retains external context.
-The version remains v0.8.4; v0.8.5 remains planned.
+The old v0.8.5 scope is now planned v0.9.2.
 
 Historical initial v0.8.4 verification on 2026-10-01: **549 pytest passed; CTest Release 2/2 passed** via `python tools/verify.py --full`. Required targeted suites: **122 passed**. Native Release/observer build, import/headless smokes and `git diff --check` passed.
 

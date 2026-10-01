@@ -1,6 +1,7 @@
 __pycache__/
 *.py[cod]
 consciousness/SDL3.dll
+consciousness/assets/
 .pytest_cache/
 .vscode/
 .idea/
@@ -18,4 +19,3 @@ cpp/build-*/
 CMakeFiles/
 pip-cmake-install.out.log
 pip-cmake-install.err.log
-

@@ -3,6 +3,8 @@
 #include "se/render_snapshot.hpp"
 #include "se/brain_snapshot.hpp"
 #include "se/dialogue_snapshot.hpp"
+#include "se/workbench_snapshot.hpp"
+#include "se/workbench_commands.hpp"
 
 #include <memory>
 #include <atomic>
@@ -59,7 +61,7 @@ private: std::shared_ptr<RenderSnapshotChannel> channel_;
 class NativeObserver {
 public:
     NativeObserver(int width = 960, int height = 720);
-    explicit NativeObserver(std::shared_ptr<RenderSnapshotChannel> channel, std::shared_ptr<BrainSnapshotChannel> brain = {},std::shared_ptr<DialogueSnapshotChannel> dialogue = {}, int width = 1100, int height = 720);
+    explicit NativeObserver(std::shared_ptr<RenderSnapshotChannel> channel, std::shared_ptr<BrainSnapshotChannel> brain = {},std::shared_ptr<DialogueSnapshotChannel> dialogue = {}, int width = 1440, int height = 900);
     ~NativeObserver();
     NativeObserver(const NativeObserver&) = delete;
     NativeObserver& operator=(const NativeObserver&) = delete;
@@ -71,6 +73,8 @@ public:
     void render(const RenderSnapshot& snapshot);
     void run(const SnapshotSource& source);
     bool start();
+    void attach_workbench(std::shared_ptr<WorkbenchStatusChannel> status,std::shared_ptr<WorkbenchCommandChannel> commands);
+    void capture_next_frame(std::string path); // presentation fixture / visual audit
     void stop();
     bool is_running() const noexcept;
     std::uint64_t frames_rendered() const noexcept;
@@ -86,6 +90,8 @@ private:
     std::shared_ptr<SnapshotSource> source_;
     std::shared_ptr<BrainSnapshotChannel> brain_;
     std::shared_ptr<DialogueSnapshotChannel> dialogue_;
+    std::shared_ptr<WorkbenchStatusChannel> status_;
+    std::shared_ptr<WorkbenchCommandChannel> commands_;
     std::thread thread_;
     std::atomic<bool> running_{false};
     std::atomic<std::uint64_t> frames_{0};

@@ -86,6 +86,11 @@ public:
   // bias.
   std::vector<std::array<double, 10>> states(const std::vector<std::uint32_t> &ids) const;
   std::vector<AssemblyRecord> assemblies() const { return assemblies_; }
+  std::size_t consolidated_assembly_count() const noexcept {
+    std::size_t count = 0;
+    for (const auto &assembly : assemblies_) count += assembly.consolidated;
+    return count;
+  }
   std::vector<AssemblyMatch> recent_assembly_matches() const { return recent_matches_; }
   std::vector<AssemblyBridgeEvent> assembly_bridge_events_after(std::uint64_t cursor, std::size_t limit) const;
   NeuroTelemetry telemetry() const { return telemetry_; }

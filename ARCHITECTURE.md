@@ -1,6 +1,17 @@
 # Synthetic-Life Architecture
 
-**Current architecture: v0.8.4 delayed and calibrated homeostatic consequence learning.**
+**Current architecture: v0.9.0 experimental workbench on frozen v0.8.4 cognition.**
+
+## Workbench Boundary
+
+READ: runtime → immutable value-owned snapshot → native SDL3/OpenGL/ImGui UI.
+WRITE: UI → explicit bounded command queue → host poll → runtime scheduler → authority.
+Place/remove/send are external causal interventions; pause/resume/step are host
+controls. Direct mutation of World, Physiology, Cognit graph or micro substrate
+from UI is forbidden. Commands use WorldTime and scheduler sequence, never FPS.
+Food/Water names and payload-derived colors exist only in editor/presentation.
+Pending accepted commands persist in continuous world v11; local UI state and
+unaccepted queue contents do not. See [the workbench contract](docs/V0_9_0_EXPERIMENTAL_WORKBENCH.md).
 
 v0.8.4 DONE / FROZEN after stabilization/freeze closure: ordinary action predictions are preserved
 when timing is absent or filtered. Explicit temporal state merging retains
@@ -375,7 +386,8 @@ Python World остаётся differential oracle.
 
 ## 17. Observer
 
-Native SDL3/OpenGL observer получает только value-owned snapshots.
+Native SDL3/OpenGL/ImGui workbench получает только value-owned snapshots.
+Explicit human commands return through its queue; runtime alone applies them.
 
 ```text
 authoritative state
@@ -399,6 +411,7 @@ Observer не:
 ```text
 .sebrain v6       durable learned cognition/native brain
 .seworld v10      interoception-enabled exact World + physiology + scheduler + episode/frontiers
+.seworld v11      accepted editor commands and their pending causal scheduler events
 native graph v3/v4 binary authoritative numeric graph; v4 adds observed timing moments
 ```
 

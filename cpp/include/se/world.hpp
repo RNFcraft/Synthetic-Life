@@ -32,6 +32,8 @@ public:
   std::optional<std::uint32_t> apply_spawn_event(std::optional<std::pair<int,int>>spawn_position,double event_time,std::uint64_t event_id);
   std::uint32_t spawn_resource(std::pair<int,int> position,int channel,double nutrients,double hydration,double event_time,std::uint64_t event_id);
   void configure_resource_limit(std::uint32_t limit);
+  std::uint32_t editor_place_object(std::pair<int,int> position,double event_time,std::uint64_t event_id);
+  void editor_remove_object(std::uint32_t id,double event_time,std::uint64_t event_id);
   void restore_resources(const std::vector<std::tuple<std::uint32_t,int,double,double>>& resources,double pending_nutrients=0.,double pending_hydration=0.);
   std::vector<std::tuple<std::uint32_t,int,double,double>> resource_state()const;
   std::pair<double,double> take_consequence()noexcept;

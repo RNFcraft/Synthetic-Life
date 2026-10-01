@@ -53,6 +53,35 @@ def test_observer_is_snapshot_only():
         assert forbidden not in source + header, f"observer crossed causal boundary: {forbidden}"
 
 
+def test_workbench_keeps_ui_dependencies_and_commands_out_of_cognition():
+    for path in (ROOT / "consciousness").glob("*.py"):
+        assert not any(module.startswith(("simulation.workbench", "ui.workbench")) for module in _imports(path))
+    for name in ("planning.py", "choice.py", "valuation.py"):
+        tree=ast.parse((ROOT/"consciousness"/name).read_text(encoding="utf-8"))
+        identifiers={n.id for n in ast.walk(tree) if isinstance(n,ast.Name)}
+        identifiers|={n.attr for n in ast.walk(tree) if isinstance(n,ast.Attribute)}
+        assert not identifiers & {"Food","Water","presentation_kind","WorkbenchCommand","WorkbenchStatusSnapshot"}
+    cmake=(ROOT/"cpp/CMakeLists.txt").read_text(encoding="utf-8")
+    engine="\n".join(line for line in cmake[:cmake.index("if(SE_BUILD_OBSERVER)")].splitlines()
+                     if line.startswith(("add_library(se_engine", "target_link_libraries(se_engine", "find_package(", "FetchContent_")))
+    assert "imgui" not in engine.lower() and "OpenGL" not in engine and "SDL3" not in engine
+    assert "GIT_TAG v1.91.9b" in cmake
+    for path in (ROOT/"cpp/src").glob("workbench*.cpp"):
+        text=path.read_text(encoding="utf-8")
+        assert not any(token in text for token in ('#include "se/world.hpp"',"apply_intent", "spawn_resource", "NativeBrainEngine", "NeurodynamicSubstrate", "PyObject", "gil_scoped"))
+
+
+def test_workbench_command_handler_cannot_mutate_cognitive_graph_or_physiology():
+    tree=ast.parse((ROOT/"simulation/workbench.py").read_text(encoding="utf-8"))
+    handler=next(node for node in ast.walk(tree) if isinstance(node,ast.FunctionDef) and node.name=="_process_editor_command")
+    attrs={node.attr for node in ast.walk(handler) if isinstance(node,ast.Attribute)}
+    assert not attrs & {"physiology","add_cognit","connect","delete_cognit","receive","inject_batch","apply_consequence","commit_continuous_action"}
+    for path in (ROOT/"consciousness").glob("*.py"):
+        tree=ast.parse(path.read_text(encoding="utf-8"))
+        attrs={node.attr for node in ast.walk(tree) if isinstance(node,ast.Attribute)}
+        assert not attrs & {"workbench_status","workbench_channel","editor_inbox","presentation_kind"}
+
+
 def test_cognit_bridge_has_no_reverse_micro_injection():
     paths = sorted((ROOT / "cpp" / "src").glob("native_brain*.cpp"))
     assert any(path.name == "native_brain_bridge.cpp" for path in paths)

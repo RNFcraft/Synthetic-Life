@@ -1,0 +1,5 @@
+Roboto Medium
+Copyright 2011 Google Inc. All Rights Reserved.
+Licensed under the Apache License, Version 2.0.
+Unmodified font supplied by Dear ImGui v1.91.9b (misc/fonts/Roboto-Medium.ttf).
+The full license is in LICENSE-Roboto.txt.
