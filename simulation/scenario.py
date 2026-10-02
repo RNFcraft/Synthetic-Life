@@ -193,6 +193,9 @@ def validate_sections(sections):
                 positions.add(position)
     if ordinary > settings.max_objects or resources > settings.resource_max_live:
         raise ValueError("scenario capacity exceeded")
+    remaining = settings.max_objects - ordinary + settings.resource_max_live - resources
+    if max(object_ids, default=0) + max(1, remaining) >= 2**32 - 1:
+        raise ValueError("scenario object ID exhaustion")
     initial["bodies"] = sorted(bodies, key=lambda r: r["id"])
     initial["objects"] = sorted(objects, key=lambda r: r["id"])
     initial["held_objects"] = sorted(held, key=lambda r: (r["owner_id"], r["id"]))

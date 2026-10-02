@@ -99,12 +99,30 @@ void NativeObserver::attach_workbench(
   status_ = std::move(status);
   commands_ = std::move(commands);
 }
-void NativeObserver::capture_next_frame(std::string path, bool scenario_popup) {
+void NativeObserver::reconnect(std::shared_ptr<RenderSnapshotChannel> world,
+                               std::shared_ptr<BrainSnapshotChannel> brain,
+                               std::shared_ptr<DialogueSnapshotChannel> dialogue) {
+  if (thread_.joinable() || running_) throw std::runtime_error("stop observer before reconnect");
+  source_ = std::make_shared<ChannelSnapshotSource>(std::move(world));
+  brain_ = std::move(brain); dialogue_ = std::move(dialogue);
+  status_.reset(); commands_.reset();
+  impl_->ui.cached_brain.reset(); impl_->ui.graph = {};
+  impl_->ui.selected_object = 0; impl_->ui.body_selected = false;
+  impl_->ui.selected_node = UINT32_MAX;
+  impl_->ui.workbench_notice.clear(); impl_->ui.dialogue_error.clear();
+  impl_->ui.open_settings_popup = impl_->ui.open_scenario_popup = false;
+  impl_->ui.world_zoom = impl_->ui.brain_zoom = 1;
+  impl_->ui.world_pan_x = impl_->ui.world_pan_y = 0;
+  impl_->ui.brain_pan_x = impl_->ui.brain_pan_y = 0;
+  frames_ = 0; last_sequence_ = 0; brain_rebuilds_ = 0;
+}
+void NativeObserver::capture_next_frame(std::string path, bool scenario_popup, bool settings_popup) {
   if (running_)
     throw std::runtime_error("request capture before starting observer");
   impl_->capture_path = std::move(path);
   impl_->ui.open_scenario_popup = scenario_popup;
-  impl_->capture_min_frames = scenario_popup ? 6 : 3;
+  impl_->ui.open_settings_popup = settings_popup;
+  impl_->capture_min_frames = (scenario_popup || settings_popup) ? 6 : 3;
 }
 bool NativeObserver::is_open() const { return impl_ && impl_->open; }
 bool NativeObserver::pump_events() {

@@ -47,6 +47,26 @@ def run_headless(runtime:ContinuousRuntime,seconds:float)->ContinuousRuntime:
     runtime.run_until(seconds);return runtime
 
 
+def replace_workbench_runtime(runtime, observer):
+    """Host owns replacement; the render thread is joined before channel changes."""
+    controller = runtime._workbench_controller
+    replacement = controller.replacement
+    if replacement is None:
+        return runtime
+    observer.stop()
+    controller.commands.close()
+    replacement.publish_brain_snapshot()
+    replacement.simulation.world.native.reconnect_observer(observer, replacement.simulation.core.backend.engine)
+    from simulation.workbench import WorkbenchController
+    replacement._workbench_controller = WorkbenchController(replacement, observer)
+    replacement._workbench_controller.paused = True
+    replacement.publish_workbench_status(True)
+    controller.replacement = None
+    if not observer.start():
+        raise RuntimeError("native observer did not restart")
+    return replacement
+
+
 def drive_live(runtime:ContinuousRuntime,observer,speed:float=1.0,seconds:float|None=None,
                monotonic:Callable[[],float]=time.monotonic,sleep:Callable[[float],None]=time.sleep)->ContinuousRuntime:
     if speed<=0:raise ValueError("speed must be positive")
@@ -61,6 +81,12 @@ def drive_live(runtime:ContinuousRuntime,observer,speed:float=1.0,seconds:float|
             now=monotonic()
             if controller is not None:
                 stepped=controller.poll()
+                if controller.replacement is not None:
+                    runtime=replace_workbench_runtime(runtime,observer)
+                    controller=runtime._workbench_controller
+                    real_start=now;sim_start=runtime.world_time
+                    was_paused=True
+                    continue
                 if controller.paused or was_paused or stepped:
                     real_start=now;sim_start=runtime.world_time
                 was_paused=controller.paused
@@ -73,6 +99,9 @@ def drive_live(runtime:ContinuousRuntime,observer,speed:float=1.0,seconds:float|
             if controller is not None:runtime.publish_workbench_status(controller.paused)
             if deadline is not None and runtime.world_time>=deadline:break
             sleep(.005)
+    except KeyboardInterrupt as error:
+        error.runtime=runtime
+        raise
     finally:observer.stop()
     return runtime
 
@@ -97,8 +126,8 @@ def main(argv:list[str]|None=None)->None:
         observer=create_native_observer(runtime)
         runtime._workbench_controller.paused=args.paused
         runtime.publish_workbench_status(args.paused)
-        try:drive_live(runtime,observer,args.speed,args.seconds)
-        except KeyboardInterrupt:pass
+        try:runtime=drive_live(runtime,observer,args.speed,args.seconds)
+        except KeyboardInterrupt as error:runtime=getattr(error,"runtime",runtime)
     elapsed=time.perf_counter()-started
     if args.save:runtime.save_world(args.save)
     print(f"world time:           {runtime.world_time:.6f} s")

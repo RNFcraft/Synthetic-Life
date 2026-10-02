@@ -525,3 +525,25 @@ tension remains separate from physiological deviation. See
 4. `CURRENT_STATUS.md` для актуального acceptance state;
 5. `ROADMAP.md` для будущих milestones;
 6. historical reports только как историческое evidence.
+
+## Configuration ownership (v0.9.1 freeze)
+
+Engine defaults are the source baseline `Settings()` (25/25). A Workbench configuration draft is local
+host/UI state; choosing a preset never changes the current episode. A scenario config is the explicit
+persisted causal initial condition, containing effective Settings, physical scene, physiology and seed.
+Preset labels are human-facing metadata and never enter cognition or scenario authority.
+
+**Causal Settings are immutable for an episode.** To apply a different config, construct a new runtime.
+The bounded primitive `WorkbenchNewWorldConfig` crosses the native command queue as `CREATE_NEW_WORLD`.
+Python validates types, limits and physiology using standard scenario Settings validation, then constructs
+`ContinuousRuntime(seed, settings)`. Main owns replacement: stop/join observer, close the old command queue,
+reconnect shared snapshot channels, attach new status/command channels, publish fresh snapshots and restart.
+The replacement starts paused at WorldTime 0 / event sequence 0 with a fresh RNG and fresh cognition.
+The first sensory observation follows the ordinary scheduler path; no learned graph is cloned.
+
+CAUSAL commands: PLACE_FOOD, PLACE_WATER, PLACE_OBJECT, REMOVE_OBJECT, SEND_DIALOGUE.
+HOST commands: PAUSE, RESUME, STEP, REACH_SCENARIO_BOUNDARY, EXPORT_SCENARIO, CREATE_NEW_WORLD.
+CREATE_NEW_WORLD is not a scheduler event and never creates EXTERNAL_INPUT.
+Workbench grid, tooltips, UI scale and graph visual budget are session preferences, applied directly in
+presentation code without clocks, RNG, scheduler events or cognitive access. Drafts/preferences are not
+serialized into `.seworld`, `.sescenario` or `.sebrain`; those schemas remain unchanged.

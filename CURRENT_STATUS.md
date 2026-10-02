@@ -4,9 +4,9 @@
 
 Cognitive foundation: **v0.8.4 DONE / FROZEN**.
 Experimental workbench: **v0.9.0 DONE**.
-Reproducible scenario infrastructure: **v0.9.1 DONE**.
-Current acceptance: **676 pytest PASS; Release CTest 2/2 PASS;
-observer-OFF CTest 1/1 PASS; six targeted suites 206 PASS** (2026-10-01).
+Reproducible scenario infrastructure: **v0.9.1 DONE / FROZEN**.
+Current freeze acceptance: **711 pytest PASS; Release CTest 2/2 PASS;
+observer-OFF CTest 1/1 PASS; six targeted suites 217 PASS** (2026-10-02).
 Survival proof: **v0.9.2 PLANNED**; long-run stability/freeze: **v0.9.3 PLANNED**.
 Canonical scenario v1, single-run manifest v1, clean RNG bootstrap, host-only
 workbench export and the shared interactive/headless factory are described in
@@ -110,3 +110,16 @@ outside this milestone. See the v0.8.3 limitations and proposed v0.8.4 scope.
 The v0.7.6 architecture freeze remains the structural foundation. No neural,
 Assembly, Relation, language, scheduler-order, brain persistence, or native
 graph contract was changed.
+
+## v0.9.1 stabilization / freeze closure
+
+- Historical engine defaults restored: 25 initial / 25 maximum objects.
+- Settings / New World dialog with World, Resources, Physiology, Cognition and Workbench tabs.
+- Built-in Classic Baseline, Workbench Sparse (3/150), Empty Experiment (0/150) drafts.
+- Host-owned fresh runtime replacement at WorldTime 0, selected seed, no learned-brain transfer.
+- Strict contiguous artifact section validation, including unaccounted trailing-byte rejection.
+- Scenario object-ID exhaustion guard reserves future capacity within the uint32 domain.
+- Workbench preferences remain session-only presentation state; causal settings are immutable during an episode.
+
+See [freeze verification](docs/V0_9_1_FREEZE_CLOSURE.md) for actual executed results.
+v0.9.2 First Survival-Learning Proof remains PLANNED.

@@ -72,8 +72,11 @@ void draw_brain_view(WorkbenchUIState &ui,
                    IM_COL32(14, 19, 24, 255));
   if (snapshot &&
       (snapshot != ui.cached_brain || ui.graph_width != int(size.x) ||
-       ui.graph_height != int(size.y))) {
+       ui.graph_height != int(size.y) || ui.uploaded_edge_budget != ui.brain_edge_budget)) {
     ui.graph = prepare_brain_draw_data(*snapshot, int(size.x), int(size.y));
+    if (ui.graph.edges.size() > std::size_t(ui.brain_edge_budget))
+      ui.graph.edges.resize(ui.brain_edge_budget);
+    ui.uploaded_edge_budget = ui.brain_edge_budget;
     ui.cached_brain = snapshot;
     ui.graph_width = int(size.x);
     ui.graph_height = int(size.y);
@@ -127,7 +130,7 @@ void draw_brain_view(WorkbenchUIState &ui,
       ui.selected_node = hovered->id;
     auto it = std::find_if(snapshot->nodes.begin(), snapshot->nodes.end(),
                            [&](auto &n) { return n.id == hovered->id; });
-    if (it != snapshot->nodes.end()) {
+    if (it != snapshot->nodes.end() && ui.show_tooltips) {
       ImGui::BeginTooltip();
       ImGui::Text("Cognit #%u%s", it->id + 1,
                   it->composite ? " / composite" : "");

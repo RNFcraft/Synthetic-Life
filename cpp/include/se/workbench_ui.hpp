@@ -25,7 +25,11 @@ struct WorkbenchUIState {
   std::array<char, 4097> scenario_path{"scenarios/my_case.sescenario"};
   std::array<char, 257> scenario_name{"My scenario"};
   std::uint64_t scenario_seed{};
-  bool open_scenario_popup{};
+  bool open_scenario_popup{}, open_settings_popup{};
+  WorkbenchNewWorldConfig settings_draft;
+  bool show_grid{true}, show_tooltips{true};
+  float ui_scale{1.f};
+  int brain_edge_budget{20000}, uploaded_edge_budget{-1};
   std::shared_ptr<const BrainSnapshot> cached_brain;
   BrainDrawData graph;
   int graph_width{}, graph_height{};
@@ -45,5 +49,8 @@ void draw_status_view(const WorkbenchStatusSnapshot *, const WorkbenchUIState &,
 void draw_dialogue_view(WorkbenchUIState &, const DialogueSnapshot *,
                         WorkbenchCommandChannel *,
                         const std::string &notice = {});
+void draw_settings_dialog(WorkbenchUIState &, const WorkbenchStatusSnapshot *,
+                          WorkbenchCommandChannel *, float scale);
+void select_settings_preset(WorkbenchUIState &, int preset);
 std::string format_world_time(double seconds);
 } // namespace se

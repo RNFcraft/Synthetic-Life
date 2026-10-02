@@ -1,5 +1,5 @@
 """Presentation and explicit human interventions; never a cognitive input API."""
-from dataclasses import asdict, dataclass
+from dataclasses import asdict, dataclass, field
 from math import isfinite
 
 
@@ -61,6 +61,7 @@ class WorkbenchStatusSnapshot:
     last_command_result: str
     seed: int = 12345
     dialogue_notice: str = ""
+    configuration: dict = field(default_factory=dict)
 
 
 class WorkbenchRuntimeMixin:
@@ -171,6 +172,7 @@ class WorkbenchRuntimeMixin:
     def workbench_status(self, paused=False):
         sim = self.simulation
         core, configured = sim.core, sim.settings
+        from .workbench_settings import configuration_draft
         physical = sim.physiology.snapshot()
         plan = core.planner.plan
         diagnostics = core.planner.homeostatic_diagnostics()
@@ -193,7 +195,8 @@ class WorkbenchRuntimeMixin:
             temporal.get("passive_depth", 0), temporal.get("elapsed", 0.), temporal.get("ambiguity", 0.),
             configured.resource_nutrient_payload, configured.resource_hydration_payload,
             self.last_workbench_notice or self.last_editor_result,
-            sim.seed if 0 <= sim.seed <= 2**63-1 else 0, self.last_dialogue_notice)
+            sim.seed if 0 <= sim.seed <= 2**63-1 else 0, self.last_dialogue_notice,
+            configuration_draft(configured, sim.seed if 0 <= sim.seed <= 2**63-1 else 0))
 
     def publish_workbench_status(self, paused=False):
         value = self.workbench_status(paused)
@@ -214,6 +217,7 @@ class WorkbenchController:
         from consciousness._native_brain import WorkbenchCommandChannel, WorkbenchStatusChannel
         self.runtime = runtime
         self.paused = False
+        self.replacement = None
         self.commands = WorkbenchCommandChannel()
         runtime.workbench_channel = WorkbenchStatusChannel()
         if observer is not None:
@@ -225,7 +229,18 @@ class WorkbenchController:
         for row in self.commands.drain():
             _, kind, x, y, object_id, text = row[:6]
             name = kind.name
-            if name == "PAUSE":
+            if name == "CREATE_NEW_WORLD":
+                from .workbench_settings import create_new_world, PRESETS
+                try:
+                    if len(row) != 7:
+                        raise ValueError("missing new-world configuration")
+                    replacement = create_new_world(row[6], self.runtime.simulation.settings)
+                    replacement.last_workbench_notice = f"New world created - {PRESETS[row[6]['preset']]}, seed {row[6]['seed']}"
+                    self.replacement = replacement
+                    break  # Commands after reset belong to the discarded episode.
+                except (ValueError, TypeError, KeyError, RuntimeError) as error:
+                    self.runtime.last_workbench_notice = f"New world rejected: {error}"
+            elif name == "PAUSE":
                 self.paused = True
             elif name == "RESUME":
                 self.paused = False
@@ -257,6 +272,8 @@ class WorkbenchController:
                 except (ValueError, TypeError) as error:
                     if name == "SEND_DIALOGUE":self.runtime.last_dialogue_notice = str(error)
                     else:self.runtime.last_editor_result = f"{name}: rejected ({error})"
+        if self.replacement is not None:
+            return False
         if self.paused and self.runtime.editor_inbox:
             # Editing a paused world applies only its current causal timestamp.
             self.runtime.run_to_quiescence()

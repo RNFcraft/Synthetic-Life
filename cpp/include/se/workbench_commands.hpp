@@ -1,5 +1,6 @@
 #pragma once
 #include <cstdint>
+#include "se/workbench_settings.hpp"
 #include <deque>
 #include <mutex>
 #include <stdexcept>
@@ -17,7 +18,8 @@ enum class WorkbenchCommandKind : std::uint8_t {
   Resume,
   Step,
   ExportScenario,
-  ReachScenarioBoundary
+  ReachScenarioBoundary,
+  CreateNewWorld
 };
 struct WorkbenchCommand {
   std::uint64_t id{};
@@ -27,6 +29,7 @@ struct WorkbenchCommand {
   std::string text;
   std::string scenario_path, scenario_name;
   std::uint64_t scenario_seed{};
+  WorkbenchNewWorldConfig new_world;
 };
 // UI producer / host consumer. No callbacks, GIL, or runtime pointers.
 class WorkbenchCommandChannel {
@@ -38,8 +41,10 @@ public:
     if (closed_ || queue_.size() >= capacity || text.size() > max_text_bytes)
       return 0;
     const auto raw = static_cast<unsigned>(kind);
-    if (raw < 1 || raw > 10)
+    if (raw < 1 || raw > 11)
       throw std::invalid_argument("invalid workbench command kind");
+    if (kind == WorkbenchCommandKind::CreateNewWorld)
+      throw std::invalid_argument("use submit_new_world with an explicit configuration");
     const auto id = next_id_++;
     queue_.push_back({id, kind, x, y, object_id, std::move(text)});
     return id;
@@ -63,6 +68,18 @@ public:
                       std::move(name),
                       seed});
     return id;
+  }
+  std::uint64_t submit_new_world(WorkbenchNewWorldConfig config) {
+    if (config.seed > INT64_MAX || config.preset < 0 || config.preset > 3)
+      throw std::invalid_argument("invalid new-world configuration");
+    std::lock_guard lock(mutex_);
+    if (closed_ || queue_.size() >= capacity) return 0;
+    WorkbenchCommand command;
+    command.id = next_id_++;
+    command.kind = WorkbenchCommandKind::CreateNewWorld;
+    command.new_world = config;
+    queue_.push_back(std::move(command));
+    return next_id_ - 1;
   }
   std::vector<WorkbenchCommand> drain() {
     std::lock_guard lock(mutex_);

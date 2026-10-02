@@ -438,8 +438,11 @@ PYBIND11_MODULE(_native_brain, m) {
     .def("apply_intent",[](World&w,int action,double issued,std::uint64_t event){return (int)w.apply_intent((ActionType)action,issued,event);})
     .def("advance_world_time",&World::advance_world_time).def("time_state",[](const World&w){return py::make_tuple(w.world_time(),w.event_sequence());})
 #ifdef SE_WITH_OBSERVER
+    .def("reconnect_observer", [](World &w, NativeObserver &o, NativeBrainEngine &e) {
+      o.reconnect(w.snapshot_channel(), e.brain_snapshot_channel(), e.dialogue_snapshot_channel());
+    })
     .def("create_observer",[](World&w){return std::make_unique<NativeObserver>(w.snapshot_channel());})
-    .def("create_brain_observer",[](World&w,NativeBrainEngine&e){return std::make_unique<NativeObserver>(w.snapshot_channel(),e.brain_snapshot_channel(),e.dialogue_snapshot_channel());},py::keep_alive<0,1>(),py::keep_alive<0,2>())
+    .def("create_brain_observer",[](World&w,NativeBrainEngine&e){return std::make_unique<NativeObserver>(w.snapshot_channel(),e.brain_snapshot_channel(),e.dialogue_snapshot_channel());})
 #endif
     .def("latest_render_snapshot",[](const World&w){auto s=w.latest_render_snapshot();py::list bodies,objects,held;for(auto const&b:s.bodies)bodies.append(py::make_tuple(b.id,b.x,b.y,std::string(1,b.orientation),b.appearance,b.held_object_id));for(auto const&o:s.objects)objects.append(py::make_tuple(o.id,o.x,o.y,o.state));for(auto const&h:s.held_objects)held.append(py::make_tuple(h.owner_body_id,h.object_id,h.state));return py::make_tuple(s.world_time,s.event_sequence,s.world_width,s.world_height,bodies,objects,held);})
     .def("state",[](const World&w){py::list objects;for(auto&o:w.objects())objects.append(py::make_tuple(o.id,o.x,o.y,o.state));auto&b=w.body();return py::make_tuple(b.x,b.y,std::string(1,b.orientation),b.held_object_id,objects,w.resistance());})

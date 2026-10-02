@@ -40,7 +40,7 @@ if(SE_BUILD_OBSERVER)
     ${imgui_SOURCE_DIR}/backends/imgui_impl_sdl3.cpp ${imgui_SOURCE_DIR}/backends/imgui_impl_opengl3.cpp)
   target_include_directories(se_imgui PUBLIC ${imgui_SOURCE_DIR} ${imgui_SOURCE_DIR}/backends)
   target_link_libraries(se_imgui PUBLIC SDL3::SDL3 OpenGL::GL)
-  add_library(se_observer src/observer.cpp src/workbench_ui.cpp src/workbench_style.cpp
+  add_library(se_observer src/observer.cpp src/workbench_ui.cpp src/workbench_settings_ui.cpp src/workbench_style.cpp
     src/workbench_world_view.cpp src/workbench_brain_view.cpp src/workbench_brain_gpu.cpp src/workbench_status_view.cpp src/workbench_dialogue_view.cpp)
   target_include_directories(se_observer PUBLIC include)
   target_link_libraries(se_observer PUBLIC se_imgui)

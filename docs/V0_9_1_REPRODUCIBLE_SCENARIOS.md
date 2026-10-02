@@ -231,7 +231,7 @@ Executed gates:
   click Save and verify its typed host command. Queue-error ownership is tested.
 - `git diff --check`: PASS. No commit/push performed.
 
-The user's interactive defaults `object_count=3`, `max_objects=150` are preserved.
+Engine defaults remain the historical 25/25 baseline. The explicit Workbench Sparse preset provides 3/150 for interactive editing.
 Two historical tests now explicitly request their original 25/25 fixture geometry;
 this does not change runtime behavior or the frozen cognitive foundation.
 
@@ -273,3 +273,5 @@ No reward, food-to-action rule, curriculum success signal, survival score,
 semantic resource Goal, or scenario-to-cognition shortcut was introduced.
 
 v0.9.2 remains the first milestone allowed to claim a controlled survival-learning experiment.
+
+Freeze closure details: [configuration UI and artifact hardening](V0_9_1_FREEZE_CLOSURE.md).

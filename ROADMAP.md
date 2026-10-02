@@ -1476,7 +1476,11 @@ See [the workbench contract](docs/V0_9_0_EXPERIMENTAL_WORKBENCH.md).
 
 ## v0.9.1 — Reproducible Scenario Infrastructure
 
-**Status: DONE — 676 pytest PASS; Release CTest 2/2 PASS (2026-10-01)**
+**Status: DONE / FROZEN — 711 pytest PASS; Release CTest 2/2 PASS (2026-10-02)**
+
+Freeze closure restores the historical 25/25 baseline, adds explicit Workbench presets
+and Settings / New World, and hardens artifact layout / ID limits.
+See [freeze verification](docs/V0_9_1_FREEZE_CLOSURE.md).
 
 Versioned physical `.sescenario`, normalized t=0 bootstrap, full causal Settings,
 authoritative initial physiology, free/held objects and native resources,

@@ -3,7 +3,7 @@
 Current implementation: **v0.9.1 — Reproducible Scenario Infrastructure**.
 See [scenario schema, export and runner workflows](docs/V0_9_1_REPRODUCIBLE_SCENARIOS.md).
 See [the workbench contract](docs/V0_9_0_EXPERIMENTAL_WORKBENCH.md).
-Current v0.9.1 acceptance: **676 pytest PASS; Release CTest 2/2 PASS**.
+Current v0.9.1 freeze acceptance: **711 pytest PASS; Release CTest 2/2 PASS**.
 Historical v0.9.0 acceptance: **613 pytest PASS; Release CTest 2/2 PASS**.
 v0.8.4 homeostatic learning remains the current cognitive foundation, DONE / FROZEN.
 v0.9.0 changes experimental interaction/observation infrastructure, not the intelligence mechanism.
@@ -192,3 +192,12 @@ Taxonomy тестов, architecture guards, manual soak и artifact policy:
 `DESIGN_DECISIONS.md` и `COGNITIVE_FORMALISM.md` — исторические/
 фундаментальные материалы. Они не являются источником текущего status, если
 расходятся с живой документацией выше.
+
+### World configuration (v0.9.1 stabilization)
+
+`Settings()` and default `python main.py` retain the historical **25 initial / 25 maximum objects** baseline.
+For interactive editing use **Settings -> Workbench Sparse -> Apply & New World** (3 / 150), or
+**Empty Experiment** (0 / 150). **Classic Baseline** restores engine defaults.
+Presets edit a local draft. Applying causal settings creates a fresh world at t=0 with the chosen seed
+and fresh cognition. Workbench grid, tooltips, UI scale and brain edge budget apply immediately;
+these session preferences never enter artifacts or simulation inputs.

@@ -1,5 +1,6 @@
 #pragma once
 #include <array>
+#include "se/workbench_settings.hpp"
 #include <atomic>
 #include <cstdint>
 #include <memory>
@@ -24,6 +25,7 @@ struct WorkbenchStatusSnapshot {
   double food_payload{}, water_payload{};
   std::string current_action, last_command_result, dialogue_notice;
   std::uint64_t seed{};
+  WorkbenchNewWorldConfig configuration;
   std::vector<std::string> planned_actions;
 };
 class WorkbenchStatusChannel {

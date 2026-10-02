@@ -20,6 +20,7 @@ int main() {
   ImGui::CreateContext();
   auto &io = ImGui::GetIO();
   io.IniFilename = nullptr;
+  io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
   io.DisplaySize = {1440, 900};
   for (float scale : {1.f, 1.5f, 2.f}) {
     se::WorkbenchStyle::apply(scale);
@@ -110,7 +111,7 @@ int main() {
   inputs.drain();
   io.AddMouseButtonEvent(0, false);
   frame();
-  io.AddMousePosEvent(760, 25);
+  io.AddMousePosEvent(840, 25);
   frame();
   io.AddMouseButtonEvent(0, true);
   frame();
@@ -133,6 +134,63 @@ int main() {
          exported[0].kind == se::WorkbenchCommandKind::ExportScenario);
   assert(exported[0].scenario_path == "scenarios/my_case.sescenario" &&
          exported[0].scenario_name == "My scenario");
+  interaction.open_settings_popup = true;
+  frame(); frame(); frame();
+  assert(!ImGui::GetCurrentContext()->OpenPopupStack.empty());
+  auto *settings_popup = ImGui::GetCurrentContext()->OpenPopupStack.back().Window;
+  assert(settings_popup && settings_popup->Size.x <= 620 && settings_popup->Size.y <= 560);
+  auto click = [&](ImVec2 position) {
+    io.AddMousePosEvent(position.x, position.y); frame();
+    io.AddMouseButtonEvent(0, true); frame();
+    io.AddMouseButtonEvent(0, false); frame();
+  };
+  // Open the real preset combo and choose Workbench Sparse by mouse.
+  click({settings_popup->DC.CursorStartPos.x + 80,
+         settings_popup->DC.CursorStartPos.y + 38});
+  assert(ImGui::GetCurrentContext()->OpenPopupStack.size() >= 2);
+  auto *combo_popup = ImGui::GetCurrentContext()->OpenPopupStack.back().Window;
+  assert(combo_popup);
+  auto key = [&](ImGuiKey key) {
+    io.AddKeyEvent(key, true); frame();
+    io.AddKeyEvent(key, false); frame();
+  };
+  key(ImGuiKey_DownArrow); key(ImGuiKey_DownArrow); key(ImGuiKey_Enter);
+  assert(interaction.settings_draft.object_count == 3);
+  assert(interaction.settings_draft.max_objects == 150);
+  assert(inputs.drain().empty());
+  frame();
+  click({settings_popup->DC.CursorPosPrevLine.x - 60,
+         settings_popup->DC.CursorPosPrevLine.y + 10});
+  auto new_world = inputs.drain();
+  assert(new_world.size() == 1 && new_world[0].kind == se::WorkbenchCommandKind::CreateNewWorld);
+  assert(new_world[0].new_world.object_count == 3 && new_world[0].new_world.max_objects == 150);
+  // A learned episode requires confirmation before enqueueing a reset.
+  status->cognits = 5;
+  interaction.open_settings_popup = true;
+  frame(); frame(); frame();
+  settings_popup = ImGui::GetCurrentContext()->OpenPopupStack.back().Window;
+  click({settings_popup->DC.CursorPosPrevLine.x - 60,
+         settings_popup->DC.CursorPosPrevLine.y + 10});
+  assert(inputs.drain().empty());
+  assert(ImGui::GetCurrentContext()->OpenPopupStack.size() >= 2);
+  auto *confirmation = ImGui::GetCurrentContext()->OpenPopupStack.back().Window;
+  assert(confirmation);
+  frame(); frame(); // Let the compact confirmation auto-fit before clicking.
+  click({confirmation->DC.CursorStartPos.x + 60,
+         confirmation->DC.CursorPosPrevLine.y + 10});
+  assert(inputs.drain().size() == 1);
+  auto sequence = status->event_sequence;
+  auto time = world.world_time;
+  interaction.show_grid = false; interaction.show_tooltips = false;
+  interaction.ui_scale = .9f; interaction.brain_edge_budget = 0;
+  frame();
+  assert(inputs.drain().empty() && status->event_sequence == sequence && world.world_time == time);
+  se::select_settings_preset(interaction, 3);
+  assert(interaction.settings_draft.object_count == 0 && interaction.settings_draft.max_objects == 150);
+  se::select_settings_preset(interaction, 1);
+  assert(interaction.settings_draft.object_count == 25 && interaction.settings_draft.max_objects == 25);
+  inputs.close();
+  assert(inputs.submit_new_world(interaction.settings_draft) == 0);
   ImGui::DestroyContext();
   for (auto [w, h] :
        std::vector<std::pair<int, int>>{{1100, 700}, {1440, 900}, {1920, 1080}})

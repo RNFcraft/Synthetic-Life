@@ -26,10 +26,12 @@ public:
   PFNGLSHADERSOURCEPROC source;
   PFNGLCOMPILESHADERPROC compile;
   PFNGLGETSHADERIVPROC shader_info;
+  PFNGLGETSHADERINFOLOGPROC shader_log;
   PFNGLCREATEPROGRAMPROC create_program;
   PFNGLATTACHSHADERPROC attach;
   PFNGLLINKPROGRAMPROC link;
   PFNGLGETPROGRAMIVPROC program_info;
+  PFNGLGETPROGRAMINFOLOGPROC program_log;
   PFNGLDELETESHADERPROC delete_shader;
   PFNGLDELETEPROGRAMPROC delete_program;
   PFNGLUSEPROGRAMPROC use;
@@ -57,10 +59,12 @@ public:
     GL(source, "glShaderSource");
     GL(compile, "glCompileShader");
     GL(shader_info, "glGetShaderiv");
+    GL(shader_log, "glGetShaderInfoLog");
     GL(create_program, "glCreateProgram");
     GL(attach, "glAttachShader");
     GL(link, "glLinkProgram");
     GL(program_info, "glGetProgramiv");
+    GL(program_log, "glGetProgramInfoLog");
     GL(delete_shader, "glDeleteShader");
     GL(delete_program, "glDeleteProgram");
     GL(use, "glUseProgram");
@@ -80,11 +84,11 @@ public:
         "screen.y*2,0,1);gl_PointSize=v.y*2*camera.w;state=v;}";
     const char *fs =
         "#version 330 core\nin vec4 state;uniform int points;uniform int "
-        "filter;out vec4 color;void "
+        "edge_filter;out vec4 color;void "
         "main(){if(points==1){if(state.w<.5&&length(gl_PointCoord-vec2(.5))>.5)"
         "discard;color=vec4(.20+state.x*.29,.38+state.x*.45,.53+state.x*.46,1);"
-        "}else{if((filter==1&&state.x<.4)||(filter==2&&int(state.z)!=5)||("
-        "filter==3&&int(state.z)!=2))discard;vec3 "
+        "}else{if((edge_filter==1&&state.x<.4)||(edge_filter==2&&int(state.z)!=5)||("
+        "edge_filter==3&&int(state.z)!=2))discard;vec3 "
         "c=int(state.z)==5?vec3(.72,.59,.36):vec3(.34,.56,.67);color=vec4(c,."
         "07+state.x*.43);}}";
     auto shader = [&](GLenum kind, const char *text) {
@@ -94,12 +98,25 @@ public:
       GLint valid;
       shader_info(id, GL_COMPILE_STATUS, &valid);
       if (!valid) {
+        GLint length = 0;
+        shader_info(id, GL_INFO_LOG_LENGTH, &length);
+        std::vector<char> log(length > 0 ? length : 1, '\0');
+        shader_log(id, GLsizei(log.size()), nullptr, log.data());
         delete_shader(id);
-        throw std::runtime_error("Brain shader compilation failed");
+        throw std::runtime_error(std::string("Brain ") +
+                                 (kind == GL_VERTEX_SHADER ? "vertex" : "fragment") +
+                                 " shader compilation failed: " + log.data());
       }
       return id;
     };
-    auto v = shader(GL_VERTEX_SHADER, vs), f = shader(GL_FRAGMENT_SHADER, fs);
+    auto v = shader(GL_VERTEX_SHADER, vs);
+    GLuint f;
+    try {
+      f = shader(GL_FRAGMENT_SHADER, fs);
+    } catch (...) {
+      delete_shader(v);
+      throw;
+    }
     program = create_program();
     attach(program, v);
     attach(program, f);
@@ -108,8 +125,15 @@ public:
     delete_shader(f);
     GLint valid;
     program_info(program, GL_LINK_STATUS, &valid);
-    if (!valid)
-      throw std::runtime_error("Brain shader link failed");
+    if (!valid) {
+      GLint length = 0;
+      program_info(program, GL_INFO_LOG_LENGTH, &length);
+      std::vector<char> log(length > 0 ? length : 1, '\0');
+      program_log(program, GLsizei(log.size()), nullptr, log.data());
+      delete_program(program);
+      program = 0;
+      throw std::runtime_error(std::string("Brain shader link failed: ") + log.data());
+    }
     gen_va(1, &vao);
     gen(1, &edges);
     gen(1, &nodes);
@@ -143,7 +167,7 @@ public:
     uniform2(location(program, "screen"), io.DisplaySize.x, io.DisplaySize.y);
     uniform4(location(program, "pane"), origin.x, origin.y, size.x, size.y);
     uniform4(location(program, "camera"), zoom, pan_x, pan_y, scale.x);
-    uniform1(location(program, "filter"), filter);
+    uniform1(location(program, "edge_filter"), filter);
     uniform1(location(program, "points"), 0);
     vertices(edges);
     glDrawArrays(GL_LINES, 0, edge_count);

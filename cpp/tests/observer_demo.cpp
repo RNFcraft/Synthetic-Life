@@ -8,7 +8,7 @@ int main(int argc, char **argv) {
   int width = 1440, height = 900;
   double seconds = 0;
   std::string capture;
-  bool scenario_popup = false;
+  bool scenario_popup = false, settings_popup = false;
   for (int i = 1; i + 1 < argc; i += 2) {
     std::string arg = argv[i];
     if (arg == "--width")
@@ -19,6 +19,8 @@ int main(int argc, char **argv) {
       seconds = std::stod(argv[i + 1]);
     else if (arg == "--capture")
       capture = argv[i + 1];
+    else if (arg == "--settings-popup")
+      settings_popup = std::stoi(argv[i + 1]) != 0;
     else if (arg == "--scenario-popup")
       scenario_popup = std::stoi(argv[i + 1]) != 0;
   }
@@ -100,7 +102,7 @@ int main(int argc, char **argv) {
   se::NativeObserver observer(worlds, brains, dialogue, width, height);
   observer.attach_workbench(statuses, commands);
   if (!capture.empty())
-    observer.capture_next_frame(capture, scenario_popup);
+    observer.capture_next_frame(capture, scenario_popup, settings_popup);
   observer.start();
   auto started = std::chrono::steady_clock::now();
   while (observer.is_running() &&

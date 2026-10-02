@@ -55,9 +55,11 @@ void draw_workbench(WorkbenchUIState &ui, const RenderSnapshot &world,
                     std::shared_ptr<const WorkbenchStatusSnapshot> status,
                     WorkbenchCommandChannel *commands, float scale) {
   auto &io = ImGui::GetIO();
+  io.FontGlobalScale = ui.ui_scale;
+  scale *= ui.ui_scale;
   auto layout = workbench_layout(io.DisplaySize.x, io.DisplaySize.y, scale,
                                  ui.left_fraction, ui.right_fraction);
-  if (!io.WantTextInput && !ImGui::IsAnyItemActive()) {
+  if (!io.WantTextInput && !ImGui::IsAnyItemActive() && !ImGui::IsPopupOpen(nullptr, ImGuiPopupFlags_AnyPopupId)) {
     const ImGuiKey keys[] = {ImGuiKey_1, ImGuiKey_2, ImGuiKey_3, ImGuiKey_4,
                              ImGuiKey_5};
     for (int i = 0; i < 5; ++i)
@@ -140,6 +142,13 @@ void draw_workbench(WorkbenchUIState &ui, const RenderSnapshot &world,
   ImGui::SameLine();
   ImGui::TextUnformatted(format_world_time(world.world_time).c_str());
   ImGui::SameLine(0, 16 * scale);
+  ImGui::SameLine();
+  if (ImGui::Button("Settings") || (ui.open_settings_popup && ImGui::GetFrameCount() >= 3)) {
+    ui.open_settings_popup = false;
+    ui.settings_draft = status ? status->configuration : WorkbenchNewWorldConfig{};
+    ImGui::OpenPopup("SETTINGS / NEW WORLD");
+  }
+  ImGui::SameLine();
   if (ImGui::Button("Scenario") || (ui.open_scenario_popup && ImGui::GetFrameCount() >= 3)) {
     ui.open_scenario_popup = false;
     if (status)
@@ -185,6 +194,7 @@ void draw_workbench(WorkbenchUIState &ui, const RenderSnapshot &world,
       ImGui::TextDisabled("Pause to export the scenario");
     ImGui::EndPopup();
   }
+  draw_settings_dialog(ui, status.get(), commands, scale);
   ImGui::EndChild();
   ImGui::End();
   pane("Dialogue", layout.dialogue);

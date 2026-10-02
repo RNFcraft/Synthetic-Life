@@ -2,8 +2,42 @@
 #include "se/workbench_commands.hpp"
 #include "se/workbench_snapshot.hpp"
 #include <pybind11/stl.h>
+#include <type_traits>
 namespace py = pybind11;
 using namespace se;
+namespace {
+template<class T> T primitive(py::handle value) {
+  if constexpr (std::is_same_v<T, bool>) {
+    if (!py::isinstance<py::bool_>(value)) throw py::value_error("expected boolean setting");
+  } else if constexpr (std::is_integral_v<T>) {
+    if (!py::isinstance<py::int_>(value) || py::isinstance<py::bool_>(value))
+      throw py::value_error("expected integer setting");
+  } else {
+    if ((!py::isinstance<py::float_>(value) && !py::isinstance<py::int_>(value)) ||
+        py::isinstance<py::bool_>(value)) throw py::value_error("expected numeric setting");
+  }
+  return py::cast<T>(value);
+}
+WorkbenchNewWorldConfig read_config(const py::dict &d) {
+  WorkbenchNewWorldConfig c;
+  std::size_t count = 2;
+#define READ(type, name, value) c.name = primitive<type>(d[#name]); ++count;
+  SE_NEW_WORLD_FIELDS(READ)
+#undef READ
+  c.seed = primitive<std::uint64_t>(d["seed"]);
+  c.preset = primitive<int>(d["preset"]);
+  if (d.size() != count) throw py::value_error("invalid new-world fields");
+  return c;
+}
+py::dict config_dict(const WorkbenchNewWorldConfig &c) {
+  py::dict d;
+#define WRITE(type, name, value) d[#name] = c.name;
+  SE_NEW_WORLD_FIELDS(WRITE)
+#undef WRITE
+  d["seed"] = c.seed; d["preset"] = c.preset;
+  return d;
+}
+}
 void bind_workbench(py::module_ &m) {
   py::enum_<WorkbenchCommandKind>(m, "WorkbenchCommandKind")
       .value("PLACE_FOOD", WorkbenchCommandKind::PlaceFood)
@@ -16,7 +50,8 @@ void bind_workbench(py::module_ &m) {
       .value("STEP", WorkbenchCommandKind::Step)
       .value("EXPORT_SCENARIO", WorkbenchCommandKind::ExportScenario)
       .value("REACH_SCENARIO_BOUNDARY",
-             WorkbenchCommandKind::ReachScenarioBoundary);
+             WorkbenchCommandKind::ReachScenarioBoundary)
+      .value("CREATE_NEW_WORLD", WorkbenchCommandKind::CreateNewWorld);
   py::class_<WorkbenchCommandChannel, std::shared_ptr<WorkbenchCommandChannel>>(
       m, "WorkbenchCommandChannel")
       .def(py::init<>())
@@ -25,11 +60,17 @@ void bind_workbench(py::module_ &m) {
            py::arg("text") = "")
       .def("submit_export", &WorkbenchCommandChannel::submit_export,
            py::arg("path"), py::arg("name"), py::arg("seed"))
+      .def("submit_new_world", [](WorkbenchCommandChannel &c, const py::dict &d) {
+        return c.submit_new_world(read_config(d));
+      })
       .def("drain",
            [](WorkbenchCommandChannel &c) {
              py::list out;
              for (auto &v : c.drain()) {
-               if (v.kind == WorkbenchCommandKind::ExportScenario)
+               if (v.kind == WorkbenchCommandKind::CreateNewWorld)
+                 out.append(py::make_tuple(v.id, v.kind, v.x, v.y, v.object_id,
+                                           v.text, config_dict(v.new_world)));
+               else if (v.kind == WorkbenchCommandKind::ExportScenario)
                  out.append(py::make_tuple(v.id, v.kind, v.x, v.y, v.object_id,
                                            v.text, v.scenario_path,
                                            v.scenario_name, v.scenario_seed));
@@ -45,6 +86,7 @@ void bind_workbench(py::module_ &m) {
       .def(py::init<>())
       .def("publish", [](WorkbenchStatusChannel &c, const py::dict &d) {
         WorkbenchStatusSnapshot s;
+        if (d.contains("configuration")) s.configuration = read_config(d["configuration"].cast<py::dict>());
 #define FIELD(name)                                                            \
   if (d.contains(#name))                                                       \
     s.name = d[#name].cast<decltype(s.name)>();

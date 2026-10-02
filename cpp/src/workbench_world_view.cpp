@@ -104,9 +104,9 @@ void draw_world_view(WorkbenchUIState &ui, const RenderSnapshot &s,
   };
   d->AddRectFilled(base, at(s.world_width, s.world_height),
                    IM_COL32(20, 27, 33, 255));
-  for (int x = 0; x <= s.world_width; ++x)
+  if (ui.show_grid) for (int x = 0; x <= s.world_width; ++x)
     d->AddLine(at(x, 0), at(x, s.world_height), IM_COL32(37, 47, 56, 255));
-  for (int y = 0; y <= s.world_height; ++y)
+  if (ui.show_grid) for (int y = 0; y <= s.world_height; ++y)
     d->AddLine(at(0, y), at(s.world_width, y), IM_COL32(37, 47, 56, 255));
   d->AddRect(base, at(s.world_width, s.world_height),
              IM_COL32(76, 92, 106, 255));
@@ -174,12 +174,14 @@ void draw_world_view(WorkbenchUIState &ui, const RenderSnapshot &s,
     }
     if (object != s.objects.end() &&
         ImGui::IsItemHovered(ImGuiHoveredFlags_DelayShort)) {
+      if (ui.show_tooltips) {
       ImGui::BeginTooltip();
       ImGui::Text("Object #%u / cell %d, %d", object->id, x, y);
       ImGui::Text("Appearance %d", object->state);
       ImGui::Text("Nutrients %.1f / hydration %.1f", object->nutrients,
                   object->hydration);
       ImGui::EndTooltip();
+      }
     }
   }
   if (ui.selected_x >= 0 && ui.selected_y >= 0) {

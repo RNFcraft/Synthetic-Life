@@ -31,14 +31,12 @@ def save_container(path:str|Path,kind:str,sections:dict[str,Any],optional:set[st
         raise
 
 def load_container(path:str|Path,kind:str,known:set[str]|None=None)->dict[str,Any]:
-    raw=Path(path).read_bytes()
-    if len(raw)<HEADER.size:raise ContainerError("truncated container header")
-    magic,version,count,table_size=HEADER.unpack(raw[:HEADER.size])
-    if magic!=MAGICS.get(kind):raise ContainerError(f"not a .se{kind} container")
-    if version!=1:raise ContainerError(f"unsupported container version: {version}")
-    try:table=json.loads(raw[HEADER.size:HEADER.size+table_size]);base=HEADER.size+table_size
-    except Exception as exc:raise ContainerError("corrupt section table") from exc
-    if len(table)!=count:raise ContainerError("section count mismatch")
+    raw = Path(path).read_bytes()
+    info = _inspect_raw(raw)
+    if info["magic"].encode("ascii") != MAGICS.get(kind):
+        raise ContainerError(f"not a .se{kind} container")
+    table = info["sections"]
+    base = HEADER.size + HEADER.unpack(raw[:HEADER.size])[-1]
     result={}
     for entry in table:
         name=entry["name"]
@@ -52,7 +50,10 @@ def load_container(path:str|Path,kind:str,known:set[str]|None=None)->dict[str,An
     return result
 
 def inspect_container(path:str|Path)->dict[str,Any]:
-    raw=Path(path).read_bytes()
+    return _inspect_raw(Path(path).read_bytes())
+
+
+def _inspect_raw(raw:bytes)->dict[str,Any]:
     if len(raw)<HEADER.size:raise ContainerError("truncated container header")
     try:magic,version,count,table_size=HEADER.unpack(raw[:HEADER.size])
     except struct.error as exc:raise ContainerError("corrupt container header") from exc
@@ -63,15 +64,20 @@ def inspect_container(path:str|Path)->dict[str,Any]:
     try:table=json.loads(raw[HEADER.size:table_end])
     except (UnicodeDecodeError,json.JSONDecodeError,TypeError) as exc:raise ContainerError("corrupt section table") from exc
     if not isinstance(table,list) or len(table)!=count:raise ContainerError("section count mismatch")
-    names=set();payload_size=len(raw)-table_end
+    names=set();payload_size=len(raw)-table_end;end=0
     for entry in table:
         if not isinstance(entry,dict):raise ContainerError("invalid section entry")
         try:name,offset,size,digest,required=entry["name"],entry["offset"],entry["size"],entry["sha256"],entry.get("required",True)
         except KeyError as exc:raise ContainerError("invalid section entry") from exc
         if not isinstance(name,str) or not name or name in names or type(offset) is not int or type(size) is not int or offset<0 or size<0 or offset+size>payload_size or not isinstance(digest,str) or len(digest)!=64 or not isinstance(required,bool):raise ContainerError("invalid section entry")
+        if offset != end:
+            raise ContainerError("noncanonical section layout: gap, overlap or out-of-order range")
+        end = offset + size
         payload=raw[table_end+offset:table_end+offset+size]
         if hashlib.sha256(payload).hexdigest()!=digest:raise ContainerError(f"corrupt section: {name}")
         names.add(name)
+    if end != payload_size:
+        raise ContainerError("unaccounted trailing container bytes")
     try:magic_name=magic.decode("ascii")
     except UnicodeDecodeError as exc:raise ContainerError("invalid container magic") from exc
     return {"magic":magic_name,"version":version,"sections":table,"size":len(raw),"section_count":count}
