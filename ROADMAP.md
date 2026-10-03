@@ -1495,7 +1495,11 @@ See [the scenario contract](docs/V0_9_1_REPRODUCIBLE_SCENARIOS.md).
 
 ## v0.9.2 — First Survival-Learning Proof
 
-**Status: PLANNED**
+**Status: EXPERIMENT COMPLETED / PROOF NOT ESTABLISHED**
+
+See [the locked experiment](docs/V0_9_2_SURVIVAL_LEARNING_PROOF.md) and
+[complete results](docs/V0_9_2_RESULTS.md). Cognitive policy and acceptance thresholds
+remain frozen; proof acceptance is separate from infrastructure completion.
 
 Цель — впервые начать систематическое обучение организма на repeated embodied experience и проверить всю цепочку целиком.
 
@@ -1576,6 +1580,20 @@ EXPERIENCED + motivation ablation
 Acceptance требует repeated advantage experienced organism над fresh control и причинного исчезновения этого преимущества в соответствующих ablations.
 
 ---
+
+## v0.9.3a — Homeostatic Credit Assignment & Exact Determinism Audit
+
+**Status: AUDIT COMPLETE / REPRESENTATIONAL-TRANSFER LIMIT IDENTIFIED**
+
+Credit foundation: no valid architecture-general repair established. Determinism:
+proven selectivity traversal repair; **64/64 exact reverse-order**, expanded
+hashseed **6/6 exact**. The frozen survival proof remains FAIL.
+
+See [design and evidence](docs/V0_9_3A_HOMEOSTATIC_CREDIT_AUDIT.md).
+This milestone diagnoses the existing information path and exact state divergence.
+It preserves the v0.9.2 FAIL and does not introduce reward, semantic resource policy,
+new representation or threshold tuning. Numeric CMake version is 0.9.3; the research
+label is v0.9.3a. Long-run stability remains a separate planned scope.
 
 ## v0.9.3 — Long-Run Survival Stability & Freeze
 

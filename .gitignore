@@ -19,3 +19,6 @@ cpp/build-*/
 CMakeFiles/
 pip-cmake-install.out.log
 pip-cmake-install.err.log
+
+results/v092/
+results/v093a/

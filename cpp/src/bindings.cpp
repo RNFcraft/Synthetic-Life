@@ -808,6 +808,21 @@ PYBIND11_MODULE(_native_brain, m) {
       .def_property_readonly("evidence_stats",
                              &NativeBrainEngine::evidence_stats)
       .def("transition_metrics", &NativeBrainEngine::transition_metrics)
+      .def("diagnostic_stored_nodes", [](NativeBrainEngine &e) {
+        // Read storage verbatim. Unlike cognit_state_full this must not advance
+        // lazy homeostasis or its materialization frontier.
+        const auto &g = e.graph();
+        py::list rows;
+        for (std::uint32_t id = 0; id < e.cognit_count(); ++id) {
+          if (!e.cognit_alive(id)) continue;
+          rows.append(py::make_tuple(id, g.activity[id], g.threshold[id],
+            g.confidence[id], g.utility[id], g.last_active_cognitive_tick[id],
+            g.refractory[id], g.homeostatic_threshold[id], g.activity_trace[id],
+            g.target_activity[id], g.age[id], g.predictive_contribution[id],
+            g.low_retention_ticks[id]));
+        }
+        return rows;
+      })
       .def("action_trials",
            [](NativeBrainEngine &e, const std::vector<std::uint32_t> &sources,
               const std::vector<std::uint8_t> &actions) {

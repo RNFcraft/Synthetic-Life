@@ -272,3 +272,29 @@ def test_native_error_ownership_and_host_export_boundary():
     assert 'input_error' not in (ROOT/'cpp/include/se/workbench_ui.hpp').read_text(encoding='utf-8')
     from simulation.workbench import CAUSAL_COMMANDS
     assert 'EXPORT_SCENARIO' not in CAUSAL_COMMANDS
+
+
+def test_research_protocol_and_metrics_never_enter_runtime_policy():
+    for folder in ("consciousness", "simulation", "world", "physiology"):
+        if not (ROOT/folder).exists():continue
+        for path in (ROOT/folder).rglob("*.py"):
+            assert not any(name.startswith("experiments") for name in _imports(path)), str(path)
+    for name in ("planning.py", "choice.py", "valuation.py", "core_learning.py"):
+        source=(ROOT/"consciousness"/name).read_text(encoding="utf-8")
+        assert not any(token in source for token in ("securriculum", "censored_time", "energy_spent", "EXPERIENCED_FULL", "paired_win"))
+
+
+def test_v093a_diagnostics_have_no_cognitive_write_or_policy_path():
+    forbidden={"_schedule_action","apply_action","apply_intent","set_body_state",
+        "record_action_outcome","add_cognit","connect","accept_sensation",
+        "schedule","receive","set_cognit_fields","restore_transition_history"}
+    for path in (ROOT/"experiments/v093a").glob("*.py"):
+        tree=ast.parse(path.read_text(encoding="utf-8"))
+        assert not [n for n in ast.walk(tree) if isinstance(n,ast.Call)
+            and isinstance(n.func,ast.Attribute) and n.func.attr in forbidden],str(path)
+    for folder in ("consciousness","simulation","world","physiology"):
+        for path in (ROOT/folder).glob("*.py"):
+            assert not any(name.startswith("experiments.v093a") for name in _imports(path))
+    source=(ROOT/"consciousness/planning.py").read_text(encoding="utf-8")
+    assert "=observer." not in source and "= observer." not in source
+    assert "diagnostic_observer" not in (ROOT/"consciousness/graph.py").read_text(encoding="utf-8")

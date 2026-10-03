@@ -33,6 +33,38 @@ int main() {
   se::WorkbenchStyle::load_font(1);
   assert(io.Fonts->Build());
   se::WorkbenchUIState interaction;
+  interaction.tool = 4;
+  interaction.selected_x = interaction.selected_y = 3;
+  interaction.selected_object = interaction.selected_body = 99;
+  interaction.selected_node = 7;
+  interaction.body_selected = true;
+  se::reset_episode_selection(interaction);
+  assert(interaction.tool == 0 && interaction.selected_x == -1 && interaction.selected_y == -1);
+  assert(interaction.selected_object == 0 && interaction.selected_body == 0);
+  assert(interaction.selected_node == UINT32_MAX && !interaction.body_selected);
+  static_assert(se::WorkbenchUIState::max_brain_edges == 2048);
+  io.DeltaTime = .2f;
+  for (bool enabled : {false, true}) {
+    interaction.show_tooltips = enabled;
+    for (int index = 0; index < 6; ++index) {
+      io.AddMousePosEvent(20, 20);
+      ImGui::NewFrame();
+      ImGui::SetNextWindowPos({0, 0});
+      ImGui::SetNextWindowSize({200, 100});
+      ImGui::Begin("Tooltip toggle regression", nullptr, ImGuiWindowFlags_NoTitleBar);
+      ImGui::Button("Hover target", {120, 40});
+      const bool hovered = ImGui::IsItemHovered(ImGuiHoveredFlags_DelayShort);
+      if (index == 5)
+        assert(hovered);
+      se::optional_tooltip(interaction, "optional tooltip");
+      if (index == 5)
+        assert((ImGui::GetCurrentContext()->TooltipPreviousWindow != nullptr) == enabled);
+      ImGui::End();
+      ImGui::Render();
+    }
+  }
+  io.DeltaTime = 1.f / 60.f;
+  io.AddMousePosEvent(-100, -100);
   se::WorkbenchCommandChannel inputs;
   auto status = std::make_shared<se::WorkbenchStatusSnapshot>();
   status->paused = true;

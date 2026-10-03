@@ -107,8 +107,7 @@ void NativeObserver::reconnect(std::shared_ptr<RenderSnapshotChannel> world,
   brain_ = std::move(brain); dialogue_ = std::move(dialogue);
   status_.reset(); commands_.reset();
   impl_->ui.cached_brain.reset(); impl_->ui.graph = {};
-  impl_->ui.selected_object = 0; impl_->ui.body_selected = false;
-  impl_->ui.selected_node = UINT32_MAX;
+  reset_episode_selection(impl_->ui);
   impl_->ui.workbench_notice.clear(); impl_->ui.dialogue_error.clear();
   impl_->ui.open_settings_popup = impl_->ui.open_scenario_popup = false;
   impl_->ui.world_zoom = impl_->ui.brain_zoom = 1;

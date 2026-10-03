@@ -27,6 +27,15 @@ class ContinuousRuntime(WorkbenchRuntimeMixin):
     """
     ACTION_DURATION=.15
     INTERNAL_SENSORY_PAYLOAD=1
+    diagnostic_observer = None
+
+    def _dispatch(self, event):
+        observer = self.diagnostic_observer
+        if observer is not None:
+            observer.event(self, event, "before")
+        self._process(event)
+        if observer is not None:
+            observer.event(self, event, "after")
     def __init__(self,seed=12345,settings:Settings|None=None,_scenario=None):
         initial = _scenario.sections["INITIAL"] if _scenario is not None else None
         self.simulation=Simulation(seed,settings,backend="native",_initial_world=initial)
@@ -252,7 +261,7 @@ class ContinuousRuntime(WorkbenchRuntimeMixin):
                 raise ValueError("no scheduler event can reach a safe export boundary")
             first = self.scheduler.snapshot()[0]
             for event in self.scheduler.pop_ready(first.time):
-                self._process(event)
+                self._dispatch(event)
                 self.scheduler_events_processed += 1
                 self.peak_scheduler_queue = max(self.peak_scheduler_queue, self.scheduler.peak_size)
                 if event.type in (RuntimeEventType.SENSORY_CHANGE,RuntimeEventType.COGNITION_WAKE,RuntimeEventType.COGNITION_CONTINUE,RuntimeEventType.MAINTENANCE,RuntimeEventType.LANGUAGE_INPUT,RuntimeEventType.LANGUAGE_CONTINUE,RuntimeEventType.NEURAL_BRIDGE):
@@ -271,7 +280,7 @@ class ContinuousRuntime(WorkbenchRuntimeMixin):
             first=self.scheduler.snapshot()[0]
             if first.time>until:break
             for event in self.scheduler.pop_ready(first.time):
-                self._process(event)
+                self._dispatch(event)
                 self.scheduler_events_processed+=1;self.peak_scheduler_queue=max(self.peak_scheduler_queue,self.scheduler.size)
                 if event.type in (RuntimeEventType.SENSORY_CHANGE,RuntimeEventType.COGNITION_WAKE,RuntimeEventType.COGNITION_CONTINUE,RuntimeEventType.MAINTENANCE,RuntimeEventType.LANGUAGE_INPUT,RuntimeEventType.LANGUAGE_CONTINUE,RuntimeEventType.NEURAL_BRIDGE):self.publish_brain_snapshot(self.simulation.core.last_language_result.wave.active_ids if event.type in (RuntimeEventType.LANGUAGE_INPUT,RuntimeEventType.LANGUAGE_CONTINUE) and self.simulation.core.last_language_result else None)
                 processed+=1
@@ -283,7 +292,7 @@ class ContinuousRuntime(WorkbenchRuntimeMixin):
         while self.scheduler.size and self.scheduler.snapshot()[0].time<=now:
             self.peak_scheduler_queue=max(self.peak_scheduler_queue,self.scheduler.peak_size)
             for event in self.scheduler.pop_ready(now):
-                self._process(event)
+                self._dispatch(event)
                 self.scheduler_events_processed+=1;self.peak_scheduler_queue=max(self.peak_scheduler_queue,self.scheduler.size)
                 if event.type in (RuntimeEventType.SENSORY_CHANGE,RuntimeEventType.COGNITION_WAKE,RuntimeEventType.COGNITION_CONTINUE,RuntimeEventType.MAINTENANCE,RuntimeEventType.LANGUAGE_INPUT,RuntimeEventType.LANGUAGE_CONTINUE,RuntimeEventType.NEURAL_BRIDGE):self.publish_brain_snapshot(self.simulation.core.last_language_result.wave.active_ids if event.type in (RuntimeEventType.LANGUAGE_INPUT,RuntimeEventType.LANGUAGE_CONTINUE) and self.simulation.core.last_language_result else None)
                 processed+=1

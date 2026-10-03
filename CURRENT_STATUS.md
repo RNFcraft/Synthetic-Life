@@ -1,13 +1,30 @@
 # Synthetic-Life — Current Status
 
-## Current implementation: v0.9.1
+
+v0.9.2 final validation (2026-10-02): **746 pytest PASS; full verify PASS; Release CTest 2/2 PASS; observer-OFF CTest 1/1 PASS and 157 Python cases; six targeted suites 242 PASS**. Scientific proof **FAIL**; reverse-order full-record determinism also failed (46/64), with measured metrics identical and hashseed 1/777 exact check passed.
+## Current milestone: v0.9.3a audit (numeric version 0.9.3)
+
+**AUDIT COMPLETE / REPRESENTATIONAL-TRANSFER LIMIT IDENTIFIED.**
+Validation on 2026-10-03: **754 pytest PASS; full verify PASS; focused 203 PASS;
+forensic/architecture 29 PASS; Release CTest 2/2; observer-OFF CTest 1/1 and 164
+Python cases; reverse-order 64/64 exact; expanded hashseed 6/6 exact; zero graph
+sync**. Detailed evidence: [v0.9.3a results](docs/V0_9_3A_RESULTS.md).
+
+The [credit/determinism audit](docs/V0_9_3A_HOMEOSTATIC_CREDIT_AUDIT.md)
+localizes sensor-Cognit admission and fresh-episode subthreshold evidence loss.
+No credit-assignment threshold or representation change is introduced. A proven
+hashseed-dependent selectivity reduction is repaired by canonical matched-Cognit
+traversal. Scientific survival acceptance remains a separate, frozen FAIL.
+
+Fixed curriculum and metrics: [v0.9.2 experiment contract](docs/V0_9_2_SURVIVAL_LEARNING_PROOF.md).
+Full per-seed/group evidence: [research results](docs/V0_9_2_RESULTS.md).
 
 Cognitive foundation: **v0.8.4 DONE / FROZEN**.
 Experimental workbench: **v0.9.0 DONE**.
 Reproducible scenario infrastructure: **v0.9.1 DONE / FROZEN**.
-Current freeze acceptance: **711 pytest PASS; Release CTest 2/2 PASS;
+Historical v0.9.1 freeze acceptance: **711 pytest PASS; Release CTest 2/2 PASS;
 observer-OFF CTest 1/1 PASS; six targeted suites 217 PASS** (2026-10-02).
-Survival proof: **v0.9.2 PLANNED**; long-run stability/freeze: **v0.9.3 PLANNED**.
+Survival experiment: **v0.9.2 EXPERIMENT COMPLETED / PROOF NOT ESTABLISHED**; long-run stability/freeze: **v0.9.3 PLANNED**.
 Canonical scenario v1, single-run manifest v1, clean RNG bootstrap, host-only
 workbench export and the shared interactive/headless factory are described in
 [the v0.9.1 contract](docs/V0_9_1_REPRODUCIBLE_SCENARIOS.md).

@@ -31,7 +31,7 @@ BrainDrawData prepare_brain_draw_data(const BrainSnapshot &s, int width,
                              s.cognitive_tick != 0});
   }
   for (auto const &e : s.edges) {
-    if (out.edges.size() >= std::min<std::size_t>(2048, budget * 4))
+    if (out.edges.size() >= std::min<std::size_t>(WorkbenchUIState::max_brain_edges, budget * 4))
       break;
     auto a = positions.find(e.source), b = positions.find(e.target);
     if (a == positions.end() || b == positions.end())

@@ -265,6 +265,14 @@ class DeliberativePlanner:
                         next_component=max(-1.,min(1.,component+confidence*estimate.progress))
                         value+=.8*(next_component-component)
                     next_confidence=confidence*(max(0.,conf) if timed_refinement else max(.05,conf))
+                    observer = core.diagnostic_observer
+                    if observer is not None:
+                        observer.plan_candidate(core, actions+(action,), state, next_state,
+                            {"prior":score,"alignment":alignment,"confidence":.1*transition_cache[key][2],
+                             "memory":.12*memory_conf,"epistemic":.45*epistemic,"target_progress":.8*progress,
+                             "loop":-.12*loop,"depth":-.03*len(actions),
+                             "homeostatic":.8*(next_component-component),"total":value},
+                            next_confidence, estimate, timed_refinement)
                     expanded.append((actions+(action,),next_state,states+(next_state,),value,next_confidence,action_values+(action.value,),next_levels,next_component,next_elapsed))
             if not expanded:break
             beam=nsmallest(self.settings.planning_beam_width,expanded,key=lambda x:(-x[3],x[5]))

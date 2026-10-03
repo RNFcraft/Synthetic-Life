@@ -29,7 +29,8 @@ struct WorkbenchUIState {
   WorkbenchNewWorldConfig settings_draft;
   bool show_grid{true}, show_tooltips{true};
   float ui_scale{1.f};
-  int brain_edge_budget{20000}, uploaded_edge_budget{-1};
+  static constexpr int max_brain_edges = 2048;
+  int brain_edge_budget{max_brain_edges}, uploaded_edge_budget{-1};
   std::shared_ptr<const BrainSnapshot> cached_brain;
   BrainDrawData graph;
   int graph_width{}, graph_height{};
@@ -49,6 +50,8 @@ void draw_status_view(const WorkbenchStatusSnapshot *, const WorkbenchUIState &,
 void draw_dialogue_view(WorkbenchUIState &, const DialogueSnapshot *,
                         WorkbenchCommandChannel *,
                         const std::string &notice = {});
+void reset_episode_selection(WorkbenchUIState &);
+void optional_tooltip(const WorkbenchUIState &, const char *);
 void draw_settings_dialog(WorkbenchUIState &, const WorkbenchStatusSnapshot *,
                           WorkbenchCommandChannel *, float scale);
 void select_settings_preset(WorkbenchUIState &, int preset);

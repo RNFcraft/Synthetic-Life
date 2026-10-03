@@ -5,7 +5,8 @@ Verification date: 2026-10-02, Windows x64, Python 3.12, MSVC Release.
 ## Repository and version
 
 - Base HEAD: `19e558ecd5a029d08a64ddc8de973f24235dc086`.
-- Final HEAD: `19e558ecd5a029d08a64ddc8de973f24235dc086` (unchanged; implementation is in the working tree).
+- Freeze implementation commit: `aea4e1171a2f35e8320e5bc75decf1e5fe7b9a65`.
+- Freeze base HEAD for v0.9.2: `aea4e1171a2f35e8320e5bc75decf1e5fe7b9a65`; v0.9.2 implementation follows from this frozen base.
 - Branch: `main`. CMake/project version remains **0.9.1**.
 - v0.9.1: **DONE / FROZEN**. v0.9.2 First Survival-Learning Proof: **PLANNED**.
 - Existing user whitespace edit to `entity_count` and the prior shader correction were preserved.

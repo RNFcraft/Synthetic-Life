@@ -1,6 +1,38 @@
 # Testing and Repository Verification
 
-**Current implementation: v0.9.1 scenarios; cognitive foundation v0.8.4 frozen.**
+v0.9.3a instrumentation/regressions: `tests/test_v093a_forensics.py` checks disabled
+defaults, raw-read inertness, streaming retention, exact event/leaf differences,
+same-time scheduler order, transferred-brain trace equivalence and the actual
+26-second-onset hashseed selectivity failure in a 30-second physical trial.
+Architecture guards keep diagnostics out of policy and graph metadata.
+Forensic reproduction and final validation are in
+[the audit](V0_9_3A_HOMEOSTATIC_CREDIT_AUDIT.md).
+
+Final v0.9.3a validation (2026-10-03): **754 pytest PASS; full verify PASS;
+forensic/architecture 29 PASS; focused nine suites 203 PASS; Release CTest 2/2;
+observer-OFF CTest 1/1 and 164 Python cases; 64/64 exact reverse-order;
+expanded hashseed 6/6 exact; zero full graph synchronization**.
+
+
+v0.9.2 final validation (2026-10-02): **746 pytest PASS; full verify PASS; Release CTest 2/2 PASS; observer-OFF CTest 1/1 PASS and 157 Python cases; six targeted suites 242 PASS**. Scientific proof **FAIL**; reverse-order full-record determinism also failed (46/64), with measured metrics identical and hashseed 1/777 exact check passed.
+**Current implementation: v0.9.2 experiment infrastructure; cognitive foundation v0.8.4 frozen.**
+
+The research suite is `tests/test_v092_survival_learning.py`. It covers strict
+protocol validation, locked checksum, metric formulas and censoring, read-only
+recorder equivalence, fresh physical episodes with durable brains, actual autonomous
+consumption in a reduced production curriculum, a separately controlled acquired
+MOVE/INTERACT model, whitelist-only ablations, metadata/object-ID independence,
+serialized hashseed/group-order independence and zero full graph synchronization.
+Native tests verify reconnect selection reset, edge cap and optional tooltips with
+an actually hovered control (both enabled and disabled).
+
+Normal pytest uses a fixed 22-episode prefix for autonomous physical consumption; it never runs
+the full scientific curriculum. Full proof acceptance is a separate command, and
+scientific FAIL is a completed experiment with exit 0 (`--require-proof`: exit 2).
+See [reproduction and locked gates](V0_9_2_SURVIVAL_LEARNING_PROOF.md) and
+[actual results and validation](V0_9_2_RESULTS.md).
+
+The following v0.9.1 results are historical acceptance.
 
 Scenario suite: `tests/test_v091_scenarios.py`; strict artifacts/configuration,
 initial reserves and derived values, geometry/IDs/holding/resources, counterfactuals,

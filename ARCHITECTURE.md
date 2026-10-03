@@ -1,6 +1,41 @@
 # Synthetic-Life Architecture
 
-**Current architecture: v0.9.1 scenarios and workbench on frozen v0.8.4 cognition.**
+v0.9.3a adds optional output-only event, acquisition, selectivity and planner
+observers. Production code imports no research module. The observer is None by
+default and is absent from persistence and causal metadata. The native
+`diagnostic_stored_nodes` API reads storage without lazy materialization. Traces
+stream to host-owned JSONL; physical IDs stay in measurement records. Matched
+Cognits now traverse canonical IDs before numeric updates, repairing a proven
+hashseed-dependent selectivity reduction without changing its formula.
+See [forensic audit](docs/V0_9_3A_HOMEOSTATIC_CREDIT_AUDIT.md).
+
+**Current architecture: v0.9.3a forensic observers and deterministic traversal on v0.9.2 research infrastructure, v0.8.4 cognitive formulas and v0.9.1 scenarios.**
+
+## Research Boundary
+
+Strict declarative curriculum and checksummed scenarios create normal production
+runtime episodes. Training carries only durable `.sebrain` knowledge into fresh
+physical episodes. Evaluation loads an immutable checkpoint independently per
+seed/group; only two whitelisted bootstrap flags define the ablations.
+
+```mermaid
+flowchart LR
+  P[Curriculum v1] --> S[Scenario v1 and optional brain]
+  S --> R[Fresh production ContinuousRuntime]
+  R --> O[Read-only event recorder]
+  O --> M[Offline physical metrics and paired gates]
+  M --> T[Complete research report]
+```
+
+There is no return path from metrics/protocol/results into cognition, physiology,
+World, scheduling, TieResolver or planner. No production module imports experiments.
+Raw reserves, resource IDs and labels are observer measurements; cognition receives
+normal relative sensory patterns and coarse interoception. J remains offline.
+The recorder uses existing runtime scheduler boundaries and native timing/relation
+read APIs, with zero full graph synchronization. `.securriculum` has its own schema
+version 1 and does not change brain/world/scenario artifact versions.
+
+See [protocol, gates and reproduction](docs/V0_9_2_SURVIVAL_LEARNING_PROOF.md).
 
 ## Scenario Boundary
 

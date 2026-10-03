@@ -1,9 +1,12 @@
 # Synthetic-Life
 
-Current implementation: **v0.9.1 — Reproducible Scenario Infrastructure**.
+Current milestone: **v0.9.3a — Homeostatic Credit Assignment & Exact Determinism Audit**
+(numeric build version 0.9.3; audit status, not the long-run stability release).
+See [the forensic design and evidence](docs/V0_9_3A_HOMEOSTATIC_CREDIT_AUDIT.md).
+See [the fixed curriculum and reproduction command](docs/V0_9_2_SURVIVAL_LEARNING_PROOF.md).
 See [scenario schema, export and runner workflows](docs/V0_9_1_REPRODUCIBLE_SCENARIOS.md).
 See [the workbench contract](docs/V0_9_0_EXPERIMENTAL_WORKBENCH.md).
-Current v0.9.1 freeze acceptance: **711 pytest PASS; Release CTest 2/2 PASS**.
+Historical v0.9.1 freeze acceptance: **711 pytest PASS; Release CTest 2/2 PASS**.
 Historical v0.9.0 acceptance: **613 pytest PASS; Release CTest 2/2 PASS**.
 v0.8.4 homeostatic learning remains the current cognitive foundation, DONE / FROZEN.
 v0.9.0 changes experimental interaction/observation infrastructure, not the intelligence mechanism.
@@ -11,7 +14,8 @@ v0.8.0 = frozen physiology; v0.8.1 = consumables; v0.8.2 = interoception;
 v0.8.3 = learned trajectory valuation; v0.8.4 = learned passive delays and calibration.
 Interoception, valuation and delayed prediction default OFF. v0.9.0 workbench is
 implemented; v0.9.1 adds normalized t=0 `.sescenario` and single-run `.semanifest`.
-Survival proof and long-run survival freeze remain planned as v0.9.2/v0.9.3.
+v0.9.2 status: **EXPERIMENT COMPLETED / PROOF NOT ESTABLISHED**. Evidence is recorded in
+[the complete research report](docs/V0_9_2_RESULTS.md). v0.9.3 long-run stability remains planned.
 
 ```text
 python main.py --paused

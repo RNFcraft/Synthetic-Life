@@ -9,6 +9,8 @@ class CoreLearningMixin:
     facade and preserves the original call and iteration order.
     """
 
+    diagnostic_observer = None
+
     def record_action_attempt(self,action,world_time):
         if self.settings.delayed_homeostatic_prediction_enabled:
             self.learning_action_attempt=(set(getattr(self,"timed_previous_ids",set())),float(world_time),action)
@@ -59,11 +61,16 @@ class CoreLearningMixin:
             before,previous_time,_=attempt
         if previous_time is not None:
             if now < previous_time:raise ValueError("learning WorldTime moved backwards")
+            observer = self.diagnostic_observer
+            if observer is not None:
+                observer.learning(self, before, completion, observed, now, now-previous_time, "before")
             if completion is None or completion[1]:
                 self._acquire_timed_transition(before, completion[0] if completion else None,
                                                observed, tick, now-previous_time)
             else:
                 self._contradict_failed_action(before,completion[0],tick)
+            if observer is not None:
+                observer.learning(self, before, completion, observed, now, now-previous_time, "after")
         self.timed_previous_ids=set(observed);self.timed_observation_time=now
         self.pending_learning_action=None
         if completion is not None:self.learning_action_attempt=None

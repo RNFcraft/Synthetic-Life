@@ -28,6 +28,15 @@ std::string format_world_time(double value) {
                 (ms / 60000) % 60, (ms / 1000) % 60, ms % 1000);
   return out;
 }
+void reset_episode_selection(WorkbenchUIState &ui) {
+  ui.tool = 0; ui.selected_x = ui.selected_y = -1;
+  ui.selected_object = ui.selected_body = 0;
+  ui.body_selected = false; ui.selected_node = UINT32_MAX;
+}
+void optional_tooltip(const WorkbenchUIState &ui, const char *text) {
+  if (ui.show_tooltips && ImGui::IsItemHovered(ImGuiHoveredFlags_DelayShort))
+    ImGui::SetTooltip("%s", text);
+}
 namespace {
 constexpr auto flags = ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove |
                        ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse |
@@ -36,10 +45,6 @@ void pane(const char *name, const PaneRect &r) {
   ImGui::SetNextWindowPos({r.x, r.y});
   ImGui::SetNextWindowSize({r.width, r.height});
   ImGui::Begin(name, nullptr, flags);
-}
-void tooltip(const char *text) {
-  if (ImGui::IsItemHovered(ImGuiHoveredFlags_DelayShort))
-    ImGui::SetTooltip("%s", text);
 }
 void send_host(WorkbenchUIState &ui, WorkbenchCommandChannel *commands,
                WorkbenchCommandKind kind) {
@@ -113,7 +118,7 @@ void draw_workbench(WorkbenchUIState &ui, const RenderSnapshot &world,
     ImGui::PopStyleColor();
     if (selected)
       ImGui::PopStyleColor();
-    tooltip(tips[i]);
+    optional_tooltip(ui, tips[i]);
     ImGui::EndDisabled();
     ImGui::SameLine();
   }
@@ -124,13 +129,13 @@ void draw_workbench(WorkbenchUIState &ui, const RenderSnapshot &world,
     send_host(ui, commands,
               status && status->paused ? WorkbenchCommandKind::Resume
                                        : WorkbenchCommandKind::Pause);
-  tooltip(
+  optional_tooltip(ui,
       "Space: pause host advancement; causal clocks stay at their frontier");
   ImGui::SameLine();
   ImGui::BeginDisabled(!status || !status->paused);
   if (ImGui::Button("Step"))
     send_host(ui, commands, WorkbenchCommandKind::Step);
-  tooltip("N / . : next scheduler timestamp, including its zero-time "
+  optional_tooltip(ui, "N / . : next scheduler timestamp, including its zero-time "
           "continuations");
   ImGui::EndDisabled();
   ImGui::EndDisabled();
@@ -172,7 +177,7 @@ void draw_workbench(WorkbenchUIState &ui, const RenderSnapshot &world,
       if (!commands->submit(WorkbenchCommandKind::ReachScenarioBoundary))
         ui.workbench_notice = "Workbench command queue full";
     }
-    tooltip("Explicitly advances ordinary events to a safe physical boundary. "
+    optional_tooltip(ui, "Explicitly advances ordinary events to a safe physical boundary. "
             "Save itself never advances time.");
     if (ImGui::Button("Save")) {
       if (ui.scenario_seed > INT64_MAX)

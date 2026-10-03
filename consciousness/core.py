@@ -336,7 +336,10 @@ class SyntheticEntityCore(CoreLearningMixin):
     def _match_and_birth(self,observation:frozenset[PrimitiveKey],protos:list, tick:int)->dict[int,float]:
         candidate_ids=set()
         for primitive in observation:candidate_ids.update(self.primitive_index.get(primitive,set()))
-        matched={i:self.graph.nodes[i].pattern.match(observation) for i in candidate_ids if self.graph.nodes[i].pattern}
+        # Primitive iteration can change a set's collision layout even for
+        # integer IDs. Matched order drives selectivity reductions and native
+        # receive batches, so establish its causal order before either update.
+        matched={i:self.graph.nodes[i].pattern.match(observation) for i in sorted(candidate_ids) if self.graph.nodes[i].pattern}
         matched={i:m for i,m in matched.items() if m>=self.settings.pattern_match_threshold}
         births=0
         for proto,score in sorted(protos,key=lambda item:(-item[1],item[0].translation_tolerant,item[0].participants)):
@@ -351,6 +354,8 @@ class SyntheticEntityCore(CoreLearningMixin):
         for node_id,match in matched.items():
             pattern=self.graph.nodes[node_id].pattern
             if pattern:
+                observer=self.diagnostic_observer
+                if observer is not None:selectivity_before=self._selectivity_sum
                 counted=pattern.selectivity_trials>0;old=pattern.match_selectivity
                 pattern.occurrence_count+=1;pattern.stability=0.98*pattern.stability+0.02*match
                 background=pattern.match(getattr(self,"previous_observation",frozenset())) if getattr(self,"previous_observation",None) else 0.0
@@ -358,6 +363,8 @@ class SyntheticEntityCore(CoreLearningMixin):
                 if counted:self._selectivity_sum-=old
                 else:self._selectivity_count+=1
                 self._selectivity_sum+=pattern.match_selectivity
+                if observer is not None:
+                    observer.selectivity(self,node_id,selectivity_before,self._selectivity_sum,old,pattern.match_selectivity)
         self.previous_observation=observation
         return matched
 
