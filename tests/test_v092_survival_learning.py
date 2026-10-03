@@ -160,10 +160,16 @@ def test_reduced_autonomous_training_observes_physical_consumption_and_bins(tmp_
     assert sum(r["internal_bin_changes"] for r in rows)>0
     assert rows[-1]["evidence"]["timing_observations"]>0
     # Timing collection alone does not imply a supported beneficial relation.
-    detail=json.loads((tmp_path/rows[-1]["trajectory_reference"]).read_text())
-    first=detail["consumptions"][0]
-    assert first["nutrient_gain"]>0 and first["observed_internal"][1]>first["previous_internal"][1]
-    assert first["ids"] and first["actions"]>0
+    # The scientific requirement concerns the declared 22-episode prefix.
+    # Production never promises physical consumption in precisely episode 22.
+    consuming=[row for row in rows if row["consumptions"]]
+    assert consuming
+    for row in consuming:
+        detail=json.loads((tmp_path/row["trajectory_reference"]).read_text())
+        for consumption in detail["consumptions"]:
+            assert consumption["nutrient_gain"]>0
+            assert consumption["observed_internal"][1]>consumption["previous_internal"][1]
+            assert consumption["ids"] and consumption["actions"]>0
 
 
 def test_production_scarcity_fallback_remains_nutritive():

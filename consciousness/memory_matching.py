@@ -16,8 +16,10 @@ def weighted_similarity(a: tuple, b: tuple, weights=None) -> float:
     if not union:
         return 1.0
     table = weights or {}
-    return sum(table.get(item, 1.0) for item in left & right) / max(
-        1e-9, sum(table.get(item, 1.0) for item in union)
+    # Feature keys contain strings: hashseed changes their set traversal order.
+    # Fix the reduction order before values can affect place selection.
+    return sum(table.get(item, 1.0) for item in sorted(left & right)) / max(
+        1e-9, sum(table.get(item, 1.0) for item in sorted(union))
     )
 
 

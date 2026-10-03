@@ -10,6 +10,11 @@
 #include <thread>
 namespace se {
 static std::size_t workload_bucket(double units){std::size_t b=0;while(units>=2. && b<23){units/=2.;++b;}return b;}
+static std::size_t planner_shape_bucket(const WorkloadShape&w) {
+  const auto states=w.states<2?0:w.states<4?1:w.states<8?2:3;
+  const auto degree=w.average_degree<=4?0:w.average_degree<=16?1:w.average_degree<=64?2:3;
+  return states*4+degree;
+}
 void ComputeDispatcher::calibrate(KernelClass k,const ReductionBatch& batch) {
   gpu_available=cuda_compute_available(gpu_free_bytes);
   auto expected=reduce_absence(batch,ComputeBackend::CPU_SERIAL);
@@ -25,12 +30,16 @@ void ComputeDispatcher::calibrate(KernelClass k,const ReductionBatch& batch) {
     }
   }
 }
-void ComputeDispatcher::sample(KernelClass k, ComputeBackend b, double us, double units) {
+void ComputeDispatcher::sample(KernelClass k, ComputeBackend b, double us, double units, const WorkloadShape*shape) {
   if (!std::isfinite(us) || us<0 || !std::isfinite(units) || units<=0) throw std::invalid_argument("invalid performance sample");
+  kernels_[std::size_t(k)].last_us=us;kernels_[std::size_t(k)].last_units=units;
+  if(shape)kernels_[std::size_t(k)].last_shape=*shape;
   auto &e=kernels_[std::size_t(k)].estimates[std::size_t(b)];
   e.ema_us=e.count ? .8*e.ema_us+.2*us : us;
   e.units=e.count ? .8*e.units+.2*units : units; ++e.count;
-  auto &bucket=costs_[std::size_t(k)][workload_bucket(units)][std::size_t(b)];
+  auto &bucket=k==KernelClass::PLANNER_TRANSITION_BATCH && shape && shape->states?
+      planner_costs_[workload_bucket(units)][planner_shape_bucket(*shape)][std::size_t(b)]:
+      costs_[std::size_t(k)][workload_bucket(units)][std::size_t(b)];
   bucket.ema_us=bucket.count ? .8*bucket.ema_us+.2*us : us;
   bucket.units=bucket.count ? .8*bucket.units+.2*units : units;++bucket.count;
 }
@@ -42,9 +51,12 @@ ComputeBackend ComputeDispatcher::select(KernelClass k, const WorkloadShape& w) 
   auto change=[&](ComputeBackend b){if(t.selected!=b){++t.switches;t.selected=b;}t.streak=0;};
   if(mode!=ComputeMode::AUTO){change(forced);t.reason="forced host mode";return forced;}
   if(t.selected==ComputeBackend::GPU && !gpu_ok){change(ComputeBackend::CPU_SERIAL);t.reason="GPU memory/revision/device fallback";}
-  const double units=double(std::max<std::size_t>(1,w.pairs));
-  if(!costs_[std::size_t(k)][workload_bucket(units)][std::size_t(t.selected)].count && t.selected!=ComputeBackend::CPU_SERIAL){change(ComputeBackend::CPU_SERIAL);t.reason="uncalibrated workload bucket: CPU serial";}
-  auto cost=[&](ComputeBackend b){const auto&e=costs_[std::size_t(k)][workload_bucket(units)][std::size_t(b)];return e.count ? e.ema_us*units/e.units+(b==ComputeBackend::GPU?w.transfer_us+w.synchronization_us+w.queue_us:0.) : 1e300;};
+  const double units=double(std::max<std::size_t>(1,w.numeric_units?w.numeric_units:w.pairs));
+  const auto &estimates=k==KernelClass::PLANNER_TRANSITION_BATCH && w.states?
+      planner_costs_[workload_bucket(units)][planner_shape_bucket(w)]:costs_[std::size_t(k)][workload_bucket(units)];
+  if(!estimates[std::size_t(ComputeBackend::CPU_SERIAL)].count){change(ComputeBackend::CPU_SERIAL);t.reason="uncalibrated serial baseline for workload shape";return t.selected;}
+  if(!estimates[std::size_t(t.selected)].count && t.selected!=ComputeBackend::CPU_SERIAL){change(ComputeBackend::CPU_SERIAL);t.reason="uncalibrated workload bucket: CPU serial";}
+  auto cost=[&](ComputeBackend b){const auto&e=estimates[std::size_t(b)];return e.count ? e.ema_us*units/e.units+(b==ComputeBackend::GPU?w.transfer_us+w.synchronization_us+w.queue_us:0.) : 1e300;};
   auto best=t.selected;
   for(auto b:{ComputeBackend::CPU_SERIAL,ComputeBackend::CPU_PARALLEL,ComputeBackend::GPU})
     if((b!=ComputeBackend::GPU||gpu_ok) && cost(b)<cost(best))best=b;

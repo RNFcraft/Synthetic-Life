@@ -1,0 +1,303 @@
+{
+  "provenance": {
+    "head": "774ada8d80050ee5a3e58ea300a037a524ec388e",
+    "branch": "main",
+    "working_tree_status": " M consciousness/memory.py\n M consciousness/memory_matching.py\n M consciousness/planning.py\n M cpp/include/se/native_brain_engine.hpp\n M cpp/src/bindings.cpp\n M cpp/src/native_brain_engine.cpp\n M docs/V0_9_3B_RESULTS.md\n M telemetry/performance.py\n M tests/test_v092_survival_learning.py\n M tools/benchmark_v093b.py\n M tools/differential_v093b.py\n?? runs/v093b-phase2-before.json\n?? runs/v093b-phase2-planner-after.json\n?? runs/v093b-phase2-planner-before.json\n?? runs/v093b-phase2-planner-trained.json\n?? runs/v093b-phase2-trained-calls-before.json\n?? telemetry/planner_profile.py\n?? telemetry/provenance.py\n?? tests/fixtures/\n?? tests/test_v093b_hashseed.py\n?? tests/test_v093b_planner_batch.py\n?? tools/audit_hashseed_v093b.py\n?? tools/profile_planner_v093b.py\n",
+    "dirty": true,
+    "tracked_diff_sha256": "913433e84f4605bec4801b46f89fe525b031d561bff33b6cc19393d27c9d84ad",
+    "untracked_sha256": {
+      "runs/v093b-phase2-before.json": "72f343c90d4d1f3e2c93541108cba924c20bd37fe80b148effb042f8ac762209",
+      "runs/v093b-phase2-planner-after.json": "9396ad25381e92e5956a1d8c112dffad5fc433b201a9ba51c20fa4f82ba995e1",
+      "runs/v093b-phase2-planner-before.json": "b581260ed4b7bc66025224a6903a2c51f547526d0afb923114b57286a3a6fe64",
+      "runs/v093b-phase2-planner-trained.json": "2b88f44d0275e5edcfb2d33a6094068ddb8147efef1a070a172279d2006f7166",
+      "runs/v093b-phase2-trained-calls-before.json": "f2dd87202b26669a530e4be112cc5dc743b86874f74ca34c7a50d5c95439cf8e",
+      "telemetry/planner_profile.py": "4c87b73c1444ecb08e53a2093eaa04c3042781e8696e6bf08beb9a47c2f1a90f",
+      "telemetry/provenance.py": "e3ae05a4836342ee973f6e8a9376692fef2f1ab19251be64eaf596f344bd8183",
+      "tests/fixtures/planner_search_774ada8.py.txt": "3ea1432841bb4c5564d39908e67103143eb8f08ff585e4171149b8b08972d462",
+      "tests/test_v093b_hashseed.py": "9b476b51e51d5f82f5a49437df1a7f3a8e61378b1bc83e55a0861d1fd381d08b",
+      "tests/test_v093b_planner_batch.py": "c413f2b4cd650bb83f3cfc184c8cb361b14608a4e1d2fa369fa02012744f1e6d",
+      "tools/audit_hashseed_v093b.py": "39a9c91d83e5327901fede0ce17c3afd4612f372bcbe2a5cc3a52e66633935ed",
+      "tools/profile_planner_v093b.py": "763c960f40b8854cdbcad5a5ed18d6495dfd2fd8e5a3f48ad0c80ae86e31b2ec"
+    },
+    "native_module_sha256": "b2eea41c1dbdb0af1a87fdfcce19e724eeb3fe7ba99594839d8c6206a455c8cf",
+    "python": "3.11.9",
+    "platform": "Windows-10-10.0.26200-SP0",
+    "hashseed": "1"
+  },
+  "seconds": 6.0,
+  "scenario": "scenarios/v092/train_adjacent_north.sescenario",
+  "brain": "results/v093b/phase2-canonical1/brains/episode_022.sebrain",
+  "reference_search": false,
+  "actions": 39,
+  "events": 285,
+  "causal_digest": "ecba58913a6e35f1a33d637442b21179634d84c786b2f8c2f8629efe2ce229d8",
+  "ffi_calls": 1485,
+  "ffi_calls_per_completed_action": 38.07692307692308,
+  "native_method_calls": 0,
+  "native_method_calls_per_completed_action": 0.0,
+  "planner": {
+    "instrumented": true,
+    "timing_unit": "line intervals; nested calls included",
+    "searches": 40,
+    "states_expanded": 1000,
+    "state_action_pairs": 17000,
+    "stages": {
+      "candidate_generation": {
+        "count": 160,
+        "total_us": 1299.5999999999995,
+        "ema_us": 10.088023506914524,
+        "max_us": 29.0,
+        "work_units": 160,
+        "p50_us": 3.0,
+        "p95_us": 18.7
+      },
+      "state_action_expansion": {
+        "count": 19160,
+        "total_us": 8311.499999998578,
+        "ema_us": 0.3868618475677243,
+        "max_us": 4.9,
+        "work_units": 19160,
+        "p50_us": 0.4,
+        "p95_us": 0.6
+      },
+      "prediction_request_preparation": {
+        "count": 2315,
+        "total_us": 1051.299999999973,
+        "ema_us": 0.7236979137527089,
+        "max_us": 9.5,
+        "work_units": 2315,
+        "p50_us": 0.3,
+        "p95_us": 1.1
+      },
+      "native_batch_call": {
+        "count": 359,
+        "total_us": 68344.4,
+        "ema_us": 323.31490652727064,
+        "max_us": 3820.8,
+        "work_units": 359,
+        "p50_us": 0.6,
+        "p95_us": 650.4
+      },
+      "future_state_construction": {
+        "count": 20468,
+        "total_us": 64229.00000000581,
+        "ema_us": 1.0424363856181051,
+        "max_us": 60.8,
+        "work_units": 20468,
+        "p50_us": 1.0,
+        "p95_us": 17.6
+      },
+      "score_decomposition": {
+        "count": 68373,
+        "total_us": 58942.69999999138,
+        "ema_us": 0.9517047311101521,
+        "max_us": 20.0,
+        "work_units": 68373,
+        "p50_us": 0.6,
+        "p95_us": 2.1
+      },
+      "loop_epistemic": {
+        "count": 68040,
+        "total_us": 274295.2999999847,
+        "ema_us": 0.8158294343864361,
+        "max_us": 238.9,
+        "work_units": 68040,
+        "p50_us": 0.7,
+        "p95_us": 1.0
+      },
+      "homeostatic_estimate": {
+        "count": 17000,
+        "total_us": 906833.2000000008,
+        "ema_us": 36.89073825375053,
+        "max_us": 1029.2,
+        "work_units": 17000,
+        "p50_us": 31.0,
+        "p95_us": 287.2
+      },
+      "candidate_object_creation": {
+        "count": 17040,
+        "total_us": 26954.50000000047,
+        "ema_us": 3.4388270960656433,
+        "max_us": 10.5,
+        "work_units": 17040,
+        "p50_us": 1.6,
+        "p95_us": 1.9
+      },
+      "beam_sorting_and_ties": {
+        "count": 160,
+        "total_us": 9333.999999999996,
+        "ema_us": 63.132025922408104,
+        "max_us": 119.2,
+        "work_units": 160,
+        "p50_us": 68.5,
+        "p95_us": 76.8
+      },
+      "deduplication": {
+        "count": 1000,
+        "total_us": 608.7000000000007,
+        "ema_us": 0.6540685403070635,
+        "max_us": 6.2,
+        "work_units": 1000,
+        "p50_us": 0.6,
+        "p95_us": 1.0
+      },
+      "other": {
+        "count": 225088,
+        "total_us": 108878.40000006024,
+        "ema_us": 0.5055054030704741,
+        "max_us": 23.5,
+        "work_units": 225088,
+        "p50_us": 0.4,
+        "p95_us": 1.1
+      }
+    },
+    "tie_handling": "included in unchanged beam_sorting_and_ties",
+    "deduplication": "request state deduplication; no candidate deduplication exists"
+  },
+  "host": {
+    "homeostasis_numeric_boundary": {
+      "count": 40,
+      "total_us": 265.9,
+      "ema_us": 6.723209046560965,
+      "max_us": 11.5,
+      "work_units": 40,
+      "p50_us": 6.5,
+      "p95_us": 7.7
+    },
+    "memory_recall": {
+      "count": 80,
+      "total_us": 2585.6999999999994,
+      "ema_us": 31.5292276010875,
+      "max_us": 57.6,
+      "work_units": 80,
+      "p50_us": 29.7,
+      "p95_us": 45.7
+    },
+    "micro_neural_boundary": {
+      "count": 0,
+      "total_us": 0.0,
+      "ema_us": 0.0,
+      "max_us": 0.0,
+      "work_units": 0,
+      "p50_us": 0.0,
+      "p95_us": 0.0
+    },
+    "pattern_matching_birth": {
+      "count": 40,
+      "total_us": 16232.8,
+      "ema_us": 378.2853863031943,
+      "max_us": 550.5,
+      "work_units": 40,
+      "p50_us": 398.0,
+      "p95_us": 519.7
+    },
+    "physiology_numeric_update": {
+      "count": 286,
+      "total_us": 2132.499999999999,
+      "ema_us": 7.794585701826673,
+      "max_us": 23.4,
+      "work_units": 286,
+      "p50_us": 6.5,
+      "p95_us": 10.7
+    },
+    "planner_beam_refinement": {
+      "count": 40,
+      "total_us": 1856551.1,
+      "ema_us": 47659.07720200243,
+      "max_us": 57689.6,
+      "work_units": 40,
+      "p50_us": 47467.1,
+      "p95_us": 53132.9
+    },
+    "planner_transition_batch_boundary": {
+      "count": 155,
+      "total_us": 67384.30000000005,
+      "ema_us": 872.2845802253671,
+      "max_us": 3814.2,
+      "work_units": 155,
+      "p50_us": 352.0,
+      "p95_us": 752.9
+    },
+    "prediction_batch": {
+      "count": 160,
+      "total_us": 20993.100000000002,
+      "ema_us": 117.87233853050125,
+      "max_us": 365.3,
+      "work_units": 160,
+      "p50_us": 53.1,
+      "p95_us": 258.4
+    },
+    "presentation_snapshot_preparation": {
+      "count": 246,
+      "total_us": 2134.1999999999985,
+      "ema_us": 9.334487390566295,
+      "max_us": 21.2,
+      "work_units": 246,
+      "p50_us": 8.1,
+      "p95_us": 12.0
+    },
+    "relation_evidence": {
+      "count": 39,
+      "total_us": 843.0999999999998,
+      "ema_us": 21.781148772098927,
+      "max_us": 51.8,
+      "work_units": 39,
+      "p50_us": 19.8,
+      "p95_us": 32.0
+    },
+    "relation_lifecycle_boundary": {
+      "count": 0,
+      "total_us": 0.0,
+      "ema_us": 0.0,
+      "max_us": 0.0,
+      "work_units": 0,
+      "p50_us": 0.0,
+      "p95_us": 0.0
+    },
+    "relation_materialization": {
+      "count": 17,
+      "total_us": 1326.5,
+      "ema_us": 104.9184952598443,
+      "max_us": 205.5,
+      "work_units": 17,
+      "p50_us": 83.0,
+      "p95_us": 128.7
+    },
+    "scheduler_dispatch": {
+      "count": 285,
+      "total_us": 3065571.0,
+      "ema_us": 13618.754305701073,
+      "max_us": 58190.7,
+      "work_units": 285,
+      "p50_us": 115.7,
+      "p95_us": 49621.3
+    },
+    "sensory_decomposition": {
+      "count": 40,
+      "total_us": 17694.899999999998,
+      "ema_us": 414.44170288650236,
+      "max_us": 621.6,
+      "work_units": 40,
+      "p50_us": 415.8,
+      "p95_us": 585.9
+    },
+    "wave_propagation": {
+      "count": 109,
+      "total_us": 2537.0,
+      "ema_us": 28.061882040113012,
+      "max_us": 50.0,
+      "work_units": 109,
+      "p50_us": 20.9,
+      "p95_us": 41.1
+    },
+    "world_action_completion": {
+      "count": 39,
+      "total_us": 1927.6000000000001,
+      "ema_us": 46.301410127738265,
+      "max_us": 76.5,
+      "work_units": 39,
+      "p50_us": 48.9,
+      "p95_us": 57.5
+    }
+  }
+}

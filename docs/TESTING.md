@@ -5,6 +5,11 @@ optional CUDA ordered reductions, persistent GPU ID layout and picking, and
 bounded output-only profiling. See [design](V0_9_3B_ADAPTIVE_COMPUTE.md)
 and [measured results](V0_9_3B_RESULTS.md). Scientific conclusions below are preserved.
 
+[Phase 2 results](V0_9_3B_PHASE2_RESULTS.md): immutable native state-action rows, one CPU worker-pool
+job per batch, exact planner caches, and canonical hashseed-independent memory
+matching. Full numeric score migration, persistent compute graph residency and
+native presentation journal/GPU graph mirror remain unfinished; no freeze is declared.
+
 v0.9.3a instrumentation/regressions: `tests/test_v093a_forensics.py` checks disabled
 defaults, raw-read inertness, streaming retention, exact event/leaf differences,
 same-time scheduler order, transferred-brain trace equivalence and the actual
@@ -319,3 +324,15 @@ git status --short
 
 Если изменение касается ordering/persistence/native wire, дополнительно
 запускаются соответствующие targeted tests/manual audit workloads до freeze.
+
+
+## v0.9.3b Phase 2 verification ? 2026-10-03
+
+Final observer-ON/CUDA-OFF full verify, hashseed unset: **789 pytest PASS,
+2 CUDA skips, CTest 3/3**. Isolated observer-ON/CUDA-ON build: **36 focused
+pytest PASS, CTest 3/3**. OpenGL 3.3 graphics test PASS. Final 16-case calibrated
+matrix at hashseed 777: 128/128 exact modes ? observer, zero full graph syncs.
+The 40-workload native graph benchmark checks serial/parallel/stateless CUDA
+exactness; it does not establish persistent compute graph or presentation
+journal contracts. Full evidence and reproduction tools:
+[Phase 2 results](V0_9_3B_PHASE2_RESULTS.md).

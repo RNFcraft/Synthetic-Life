@@ -127,9 +127,9 @@ class NativeGraphBackend:
     def action_effects(self,active,action):self.ffi_calls+=1;return {target+1:value for target,value in self.engine.action_effects([i-1 for i in active],action.value,self.settings.prediction_probability_floor)}
     def action_effects_batch(self,active,actions):
         self.ffi_calls+=1;rows=self.engine.action_effects_batch([i-1 for i in active],[a.value for a in actions],self.settings.prediction_probability_floor);return {action:{target+1:value for target,value in row} for action,row in zip(actions,rows)}
-    def planner_transition_batch(self,states,actions):
+    def planner_transition_batch(self,states,actions,prediction_needed=None):
         self.ffi_calls+=1
-        rows=self.engine.planner_transition_batch([[i-1 for i in state] for state in states],[a.value for a in actions],getattr(self,"prediction_tick",0),self.settings.relation_confidence_decay,self.settings.prediction_probability_floor)
+        rows=self.engine.planner_transition_batch([[i-1 for i in state] for state in states],[a.value for a in actions],getattr(self,"prediction_tick",0),self.settings.relation_confidence_decay,self.settings.prediction_probability_floor,[] if prediction_needed is None else prediction_needed)
         result={}
         for state,(prediction_rows,effect_rows) in zip(states,rows):
             predictions={action:{target+1:value for target,value in row} for action,row in zip(actions,prediction_rows)}

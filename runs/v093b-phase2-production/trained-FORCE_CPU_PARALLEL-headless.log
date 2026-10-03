@@ -1,0 +1,1 @@
+{"seconds": 6.0, "mode": "FORCE_CPU_PARALLEL", "observer": false, "scenario": "scenarios/v092/train_adjacent_north.sescenario", "brain": "results/v093b/phase2-canonical1/brains/episode_022.sebrain", "reference_search": false, "median_worldtime_per_second": 6.053419000749852}

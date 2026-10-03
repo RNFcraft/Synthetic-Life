@@ -466,12 +466,22 @@ PYBIND11_MODULE(_native_brain, m) {
         py::gil_scoped_release release;
         e.compute_dispatcher().calibrate(KernelClass::ACTION_PREDICTION_BATCH,b);
         e.compute_dispatcher().calibrate(KernelClass::ACTION_EFFECT_BATCH,b);
+        e.calibrate_planner_compute();
       },py::arg("outputs")=4096,py::arg("degree")=16)
+      .def("calibrate_planner_compute",[](NativeBrainEngine&e,unsigned repeats){py::gil_scoped_release release;e.calibrate_planner_compute(repeats);},py::arg("repeats")=4)
       .def("compute_telemetry", [](NativeBrainEngine &e) {
         py::list rows;
         for(std::size_t i=0;i<std::size_t(KernelClass::COUNT);++i){
           const auto&t=e.compute_dispatcher().telemetry(KernelClass(i));py::dict row;
           row["kernel"]=i;row["backend"]=int(t.selected);row["switches"]=t.switches;row["reason"]=t.reason;
+          row["last_us"]=t.last_us;row["last_work_units"]=t.last_units;
+          const auto &w=t.last_shape;py::dict shape;
+          shape["cognits"]=w.cognits;shape["relations"]=w.relations;shape["source_visits"]=w.frontier;
+          shape["states"]=w.states;shape["actions"]=w.actions;shape["state_action_pairs"]=w.pairs;
+          shape["average_active_degree"]=w.average_degree;shape["relations_traversed"]=w.traversed_relations;
+          shape["factors_reduced"]=w.factors;shape["prediction_and_effect_targets"]=w.targets;
+          shape["numeric_work_units"]=w.numeric_units;shape["gpu_memory_upper_bound"]=w.bytes;
+          row["workload"]=shape;
           py::list estimates;for(const auto&v:t.estimates)estimates.append(py::make_tuple(v.count,v.ema_us,v.units));
           row["estimates"]=estimates;rows.append(row);
         }return rows;
@@ -667,18 +677,19 @@ PYBIND11_MODULE(_native_brain, m) {
            [](NativeBrainEngine &e,
               const std::vector<std::vector<std::uint32_t>> &states,
               const std::vector<std::uint8_t> &actions, std::uint64_t tick,
-              double decay, double floor) {
+              double decay, double floor, const std::vector<std::uint8_t> &prediction_needed) {
              std::vector<PlannerTransition> rows;
              {
                py::gil_scoped_release release;
                rows = e.planner_transition_batch(states, actions, tick, decay,
-                                                 floor);
+                                                 floor,prediction_needed);
              }
              py::list out;
              for (auto &row : rows)
                out.append(py::make_tuple(row.predictions, row.effects));
              return out;
-           })
+           },py::arg("states"),py::arg("actions"),py::arg("tick"),py::arg("decay"),py::arg("floor"),py::arg("prediction_needed")=std::vector<std::uint8_t>{})
+      .def_property_readonly("planner_numeric_launches", &NativeBrainEngine::planner_numeric_launches)
       .def("propagate",
            [](NativeBrainEngine &e, const std::vector<std::uint32_t> &seeds,
               std::uint64_t tick) {

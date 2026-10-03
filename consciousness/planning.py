@@ -187,18 +187,19 @@ class DeliberativePlanner:
                     causes.setdefault(relation.target_id, []).append(q)
         return {target: 1. - prod(1. - q for q in values) for target, values in sorted(causes.items())}
 
-    def homeostatic_estimate(self, core, state, action, levels=None, elapsed=0., baseline_state=()):
+    def homeostatic_estimate(self, core, state, action, levels=None, elapsed=0., baseline_state=(), effects=None, numeric_cache=None):
         targets = getattr(core, "homeostatic_target_levels", ())
         observed = core.patterns.layer.previous_internal
         if not (self.settings.interoception_enabled and self.settings.homeostatic_valuation_enabled and targets and observed is not None):
             return None
+        if effects is None:effects=self.homeostatic_effects(core,state,action)
         if self.settings.delayed_homeostatic_prediction_enabled:
             from .temporal_prediction import delayed_estimate
             estimate, diagnostics = delayed_estimate(core, state, action, observed if levels is None else levels, elapsed,
-                                                     self.homeostatic_effects(core,state,action), baseline_state)
+                                                     effects, baseline_state, numeric_cache)
             self.temporal_diagnostics = diagnostics
             return estimate
-        return internal_estimate(core.graph, self.homeostatic_effects(core, state, action),
+        return internal_estimate(core.graph, effects,
                                  observed if levels is None else levels, targets, self.settings.interoception_bins)
 
     def _search(self,core,current:set[int],tick:int,semantic_cache=None,initial_predictions=None)->Plan:
@@ -211,18 +212,25 @@ class DeliberativePlanner:
                 for node_id in (memory.cognit_id,memory.place_cognit_id):memory_index[node_id]=max(memory_index.get(node_id,float('-inf')),memory.confidence)
             shared_memory.update(memory_index)
         best=beam[0]
+        effect_cache={}
+        needs_homeostatic_effects=bool(self.settings.interoception_enabled and self.settings.homeostatic_valuation_enabled and getattr(core,"homeostatic_target_levels",()) and core.patterns.layer.previous_internal is not None)
         self.homeostatic_predictions_considered=0;self.homeostatic_prediction_confidence=0.;self.homeostatic_plan_component=0.
         for _ in range(self.settings.planning_horizon):
             expanded=[]
+            # Raw timed rows are immutable only inside this layer. The next
+            # native prediction batch may materialize confidence for new sources.
+            temporal_numeric_cache={}
+            homeostatic_numeric_cache={}
             if core.backend:
                 layer_states=[];seen=set()
                 for _,state,_,_,_,_,_,_,_ in beam:
                     needs_predictions=state not in prediction_cache
-                    needs_effects=core.target_structure is not None and any((state,action) not in progress_cache for action in core.available_actions)
+                    needs_effects=(needs_homeostatic_effects and state not in effect_cache) or (core.target_structure is not None and any((state,action) not in progress_cache for action in core.available_actions))
                     if (needs_predictions or needs_effects) and state not in seen:seen.add(state);layer_states.append(state)
                 if layer_states:
                     core.backend.prediction_tick=core.trace.entries[-1].tick+1 if core.trace.entries else 0
-                    for state,(predictions,effects) in core.backend.planner_transition_batch(layer_states,core.available_actions).items():
+                    for state,(predictions,effects) in core.backend.planner_transition_batch(layer_states,core.available_actions,[state not in prediction_cache for state in layer_states]).items():
+                        effect_cache[state]=effects
                         if state not in prediction_cache:prediction_cache[state]=predictions
                         if core.target_structure is not None:
                             for candidate_action,values in effects.items():
@@ -251,7 +259,16 @@ class DeliberativePlanner:
                     if key not in epistemic_cache:epistemic_cache[key]=core.affordances.epistemic(state,action)
                     if key not in progress_cache:progress_cache[key]=core.predicted_target_progress(set(state),action)
                     epistemic=epistemic_cache[key];progress=progress_cache[key];value=score+alignment+.1*conf+.12*memory_conf+.45*epistemic+.8*progress-.12*loop-.03*len(actions)
-                    estimate=self.homeostatic_estimate(core,state,action,levels,elapsed,next_state)
+                    estimate=None
+                    if needs_homeostatic_effects:
+                        estimate_key=(state,action,tuple(levels) if levels is not None else None,elapsed,next_state)
+                        cached=homeostatic_numeric_cache.get(estimate_key)
+                        if cached is None:
+                            estimate=self.homeostatic_estimate(core,state,action,levels,elapsed,next_state,effect_cache.get(state,{}).get(action),temporal_numeric_cache)
+                            homeostatic_numeric_cache[estimate_key]=(estimate,dict(self.temporal_diagnostics) if self.settings.delayed_homeostatic_prediction_enabled else None)
+                        else:
+                            estimate,diagnostics=cached
+                            if diagnostics is not None:self.temporal_diagnostics=dict(diagnostics)
                     next_levels=levels;next_component=component;next_elapsed=elapsed;timed_refinement=False
                     if estimate is not None:
                         if self.settings.delayed_homeostatic_prediction_enabled and self.temporal_diagnostics["usable"]:

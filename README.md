@@ -5,6 +5,11 @@ optional CUDA ordered reductions, persistent GPU ID layout and picking, and
 bounded output-only profiling. See [design](docs/V0_9_3B_ADAPTIVE_COMPUTE.md)
 and [measured results](docs/V0_9_3B_RESULTS.md). Scientific conclusions below are preserved.
 
+[Phase 2 results](docs/V0_9_3B_PHASE2_RESULTS.md): immutable native state-action rows, one CPU worker-pool
+job per batch, exact planner caches, and canonical hashseed-independent memory
+matching. Full numeric score migration, persistent compute graph residency and
+native presentation journal/GPU graph mirror remain unfinished; no freeze is declared.
+
 Current milestone: **v0.9.3a — Homeostatic Credit Assignment & Exact Determinism Audit**
 (numeric build version 0.9.3; audit status, not the long-run stability release).
 See [the forensic design and evidence](docs/V0_9_3A_HOMEOSTATIC_CREDIT_AUDIT.md).

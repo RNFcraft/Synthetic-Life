@@ -1,0 +1,1070 @@
+{
+  "provenance": {
+    "head": "774ada8d80050ee5a3e58ea300a037a524ec388e",
+    "branch": "main",
+    "working_tree_status": " M consciousness/backends.py\n M consciousness/memory.py\n M consciousness/memory_matching.py\n M consciousness/planning.py\n M consciousness/temporal_prediction.py\n M cpp/CMakeLists.txt\n M cpp/include/se/compute_runtime.hpp\n M cpp/include/se/native_brain_engine.hpp\n M cpp/src/bindings.cpp\n M cpp/src/compute_runtime.cpp\n M cpp/src/native_brain_engine.cpp\n M cpp/tests/compute.cpp\n M docs/V0_9_3B_RESULTS.md\n M telemetry/performance.py\n M tests/test_v092_survival_learning.py\n M tests/test_v093b_compute.py\n M tools/benchmark_v093b.py\n M tools/differential_v093b.py\n?? cpp/tests/planner_benchmark.cpp\n?? runs/v093b-phase2-before.json\n?? runs/v093b-phase2-calibration-cpu-build.log\n?? runs/v093b-phase2-calibration-cuda-build.log\n?? runs/v093b-phase2-compute-final-cpu-build.log\n?? runs/v093b-phase2-compute-final-cuda-build.log\n?? runs/v093b-phase2-cpu-build-final.log\n?? runs/v093b-phase2-cpu-build.log\n?? runs/v093b-phase2-cuda-build-final.log\n?? runs/v093b-phase2-cuda-build.log\n?? runs/v093b-phase2-full-hash2-correct.log\n?? runs/v093b-phase2-full-hash2.log\n?? runs/v093b-phase2-matrix-final.json\n?? runs/v093b-phase2-matrix-final.log\n?? runs/v093b-phase2-matrix.json\n?? runs/v093b-phase2-matrix.log\n?? runs/v093b-phase2-native-planner-full.csv\n?? runs/v093b-phase2-native-planner-full.json\n?? runs/v093b-phase2-native-planner.csv\n?? runs/v093b-phase2-native-planner.json\n?? runs/v093b-phase2-planner-after.json\n?? runs/v093b-phase2-planner-before.json\n?? runs/v093b-phase2-planner-trained.json\n?? runs/v093b-phase2-production/\n?? runs/v093b-phase2-profile-reference-final.json\n?? runs/v093b-phase2-shaped-cpu-build.log\n?? runs/v093b-phase2-shaped-cuda-build.log\n?? runs/v093b-phase2-small-after.json\n?? runs/v093b-phase2-stable-trained-reference.json\n?? runs/v093b-phase2-trained-after.json\n?? runs/v093b-phase2-trained-before.json\n?? runs/v093b-phase2-trained-cache-after.json\n?? runs/v093b-phase2-trained-calls-after.json\n?? runs/v093b-phase2-trained-calls-before.json\n?? runs/v093b-phase2-trained-dedup-after.json\n?? runs/v093b-phase2-trained-native-after.json\n?? runs/v093b-phase2-trained-native-before.json\n?? telemetry/planner_profile.py\n?? telemetry/provenance.py\n?? tests/fixtures/\n?? tests/test_v093b_hashseed.py\n?? tests/test_v093b_historical_padding.py\n?? tests/test_v093b_planner_batch.py\n?? tools/audit_hashseed_v093b.py\n?? tools/benchmark_native_v093b.py\n?? tools/benchmark_production_v093b.py\n?? tools/determinism_matrix_v093b.py\n?? tools/profile_planner_v093b.py\n",
+    "dirty": true,
+    "tracked_diff_sha256": "fe47b8062a8e5a38718f3b2eab8131f4afc32b8cf092dbd6b78fccc7c6e5f993",
+    "untracked_sha256": {
+      "cpp/tests/planner_benchmark.cpp": "e3574f39425c8a6fe1e088a754f789ae0d1fa1d3c5bb91a37b8f65ad6653fc5f",
+      "runs/v093b-phase2-before.json": "72f343c90d4d1f3e2c93541108cba924c20bd37fe80b148effb042f8ac762209",
+      "runs/v093b-phase2-calibration-cpu-build.log": "1e21f8ede0b3b2ccdc80de6a78545eaf0587fa5d56eb496cda6bd5987dff4a95",
+      "runs/v093b-phase2-calibration-cuda-build.log": "fc03b35d3401032a1603f27ee50e3d6a629e9603c762184008639f9299102edd",
+      "runs/v093b-phase2-compute-final-cpu-build.log": "328cd07b3513ac02f3eda20d30abf8c321a003b5d6f655ef2bc20612715818b9",
+      "runs/v093b-phase2-compute-final-cuda-build.log": "87bf286e9748791463fcc0d245a79fc3b361f160fca582ad509613d142094594",
+      "runs/v093b-phase2-cpu-build-final.log": "ee19f02d330ddf31b4d11629ffead4d866152064d88754fde385cca1e7ef3ce6",
+      "runs/v093b-phase2-cpu-build.log": "4d8139b3fc2c0651c163c2068451e0f5b572fea1be98786640e03940b751d895",
+      "runs/v093b-phase2-cuda-build-final.log": "45d201a92e9fe09f3ae7dd0e690f5d00f49f008c836aa86234fdfd11d2a21c6f",
+      "runs/v093b-phase2-cuda-build.log": "ca9f7ce3b6f26f37730947021a13609755c7856c74a14562b19c990c4f459107",
+      "runs/v093b-phase2-full-hash2-correct.log": "1dd97419378c9b438cc1ac030c407b8896bdb879e3f3c757930b21c7a15b9b25",
+      "runs/v093b-phase2-full-hash2.log": "2b54dd0c27fcf146753cf781e6d853ca0aaed056730f1f6f2ed276b2d11864f3",
+      "runs/v093b-phase2-matrix-final.json": "8e219ce651cbd9e3b27c4541c5db4f8ec9e66b159051a39b8ab6329c45073ab2",
+      "runs/v093b-phase2-matrix-final.log": "8ec3fbac4244eef32ee89474bb8e5c4af45740da1483a3c00677eac685095ec7",
+      "runs/v093b-phase2-matrix.json": "47f54764cc239bbe7b0c38aca9eb97f13aa19b6d13b581cfec2e49cd183ea3ea",
+      "runs/v093b-phase2-matrix.log": "78dae35485e8dc5512e05e2229100e027c0994e44ed864c0aa37e8cd7d40055d",
+      "runs/v093b-phase2-native-planner-full.csv": "83c6fefe686c7977c0d0d69f35d8592541aeadc834dbe17df3e946c7a7ecfe67",
+      "runs/v093b-phase2-native-planner-full.json": "47027cec92f41b0a57bf99defc85c2d13913d0921f11efc843723ef3bb0f0334",
+      "runs/v093b-phase2-native-planner.csv": "07db1f7955bcd600573d6f5c297af22ab342de6cec253dd49cdb83b58015eb2f",
+      "runs/v093b-phase2-native-planner.json": "2c7d0d7f18abbdbc479195dce7adf4f6932002e65f1b397cfec603afae7951b9",
+      "runs/v093b-phase2-planner-after.json": "9396ad25381e92e5956a1d8c112dffad5fc433b201a9ba51c20fa4f82ba995e1",
+      "runs/v093b-phase2-planner-before.json": "b581260ed4b7bc66025224a6903a2c51f547526d0afb923114b57286a3a6fe64",
+      "runs/v093b-phase2-planner-trained.json": "2b88f44d0275e5edcfb2d33a6094068ddb8147efef1a070a172279d2006f7166",
+      "runs/v093b-phase2-production/small-AUTO-headless.json": "270a3cb852683713caee181a17deaaedb409c42297f036c8895b1d40e677d126",
+      "runs/v093b-phase2-production/small-AUTO-headless.log": "25bb6d6aaf051d7073ae8ed40c8f75e9309cf10e923754a95d5abf2c11923de4",
+      "runs/v093b-phase2-production/small-AUTO-observer.json": "fbd0008c0c85956a34961a69a72165836b4157cd2a0d5573766765784ac499a7",
+      "runs/v093b-phase2-production/small-AUTO-observer.log": "c124388931ed95eb9615d4080376eaa12b06ebe1a7ba12fcabb76e6d41f686a0",
+      "runs/v093b-phase2-production/small-FORCE_CPU_PARALLEL-headless.json": "e376c822c47afb57b1f2af97b57381e5dc4facc565d22fab344ffba1510886d3",
+      "runs/v093b-phase2-production/small-FORCE_CPU_PARALLEL-headless.log": "384f7ac731d6bb6c1ce52e5bfb8a2bac2d8209a583e1b3181ba9e0907fb02a78",
+      "runs/v093b-phase2-production/small-FORCE_CPU_PARALLEL-observer.json": "c7bf648c25c21597072fcac34a575c46ae5b95eaa49436c5150477668d3cc972",
+      "runs/v093b-phase2-production/small-FORCE_CPU_PARALLEL-observer.log": "af824d6834867d34765ebcc048d9c260171ac8dbdb15a9b9104561c7cceadbd3",
+      "runs/v093b-phase2-production/small-FORCE_CPU_SERIAL-headless.json": "79c06e3d7f6993326cea8910597a64237a08b1742bfe6d4f713bc207faf63154",
+      "runs/v093b-phase2-production/small-FORCE_CPU_SERIAL-headless.log": "53a7720eec8108942cb05f3da7ffac53d7170456957d438c6d561efd5780311b",
+      "runs/v093b-phase2-production/small-FORCE_CPU_SERIAL-observer.json": "fc21f09a84d170e7e0a6d57372b91e4f1b0b99bba4bd3d76e5569a2ae465a3d4",
+      "runs/v093b-phase2-production/small-FORCE_CPU_SERIAL-observer.log": "c4c10c67c7108fb22bd290013993107ad858a71d5b17505caa280612b73653fa",
+      "runs/v093b-phase2-production/small-FORCE_GPU-headless.json": "8be321758843fcda5171b84266ba520925f03238dc6f6d24850f46e1dcefc7b1",
+      "runs/v093b-phase2-production/small-FORCE_GPU-headless.log": "720da94384c418d2d1912f1b4f6ab960d7b27c18cf594e882330968ce474649a",
+      "runs/v093b-phase2-production/small-FORCE_GPU-observer.json": "d74a704be654e38ccb59fdd3f30ea3440f68d5ee3ab7b64920fa6a0a6c0d12fe",
+      "runs/v093b-phase2-production/small-FORCE_GPU-observer.log": "071b99269a02e42dac222f2db2eb3c07a2da9ddf6337e254e5493f5e500066f7",
+      "runs/v093b-phase2-production/summary.json": "366f2eae0ae6299888c4226dc1c5e52dfa502f585f7cf13f378f41fab8d41dda",
+      "runs/v093b-phase2-production/trained-AUTO-headless.json": "4c042571bbdc35995501fc0e1fcb5982724dcf39d940fe55dfb2a49f81628e44",
+      "runs/v093b-phase2-production/trained-AUTO-headless.log": "b6e180c0b67d72520ca28547f73f256a7fa87c2d971ca8154a7f29f9c0e533a8",
+      "runs/v093b-phase2-production/trained-AUTO-observer.json": "5885be9ab63b9678f76679a3a4b7ed7436df60e3944776de8ca8bd9d5b702770",
+      "runs/v093b-phase2-production/trained-AUTO-observer.log": "e01bf718380e1cf2629cba3c23931e19d667fc0c18857e68c99b9ad06a6b0fa8",
+      "runs/v093b-phase2-production/trained-FORCE_CPU_PARALLEL-headless.json": "94bea7579852f39b329b116ee9be37dace1f789908c3c1ae565a96423851f539",
+      "runs/v093b-phase2-production/trained-FORCE_CPU_PARALLEL-headless.log": "70f61a01fcca0e9312628f0f4a14ad5c2debedeb18115944e3d98b9ad9bf7330",
+      "runs/v093b-phase2-production/trained-FORCE_CPU_PARALLEL-observer.json": "4befc2f418a354e6afed72b80478720b88d19dfb4f56f7113c8bb2f8518c4451",
+      "runs/v093b-phase2-production/trained-FORCE_CPU_PARALLEL-observer.log": "cf015e708c920355e383405b874125b6a35f370183caa521f738635ab8547a38",
+      "runs/v093b-phase2-production/trained-FORCE_CPU_SERIAL-headless.json": "693dee3f38ec4ffa6915c55bda23ab82f7b24293bfbb9a70df0b3720878a73cd",
+      "runs/v093b-phase2-production/trained-FORCE_CPU_SERIAL-headless.log": "b69580c03da144ffc59e3031fa5397ef3d8a06f3d1747f84148ce77ead5c5b62",
+      "runs/v093b-phase2-production/trained-FORCE_CPU_SERIAL-observer.json": "d1b2e98ce1808b2be5c2ffcc6702d07b8b963779f656e12bfc0359a3ed927976",
+      "runs/v093b-phase2-production/trained-FORCE_CPU_SERIAL-observer.log": "c8b49796c039ece6673092fc0b158a3a9fbc26ee71cd0b16b702883124a8f1b8",
+      "runs/v093b-phase2-production/trained-FORCE_GPU-headless.json": "73709c700908909a8276aeb36451ac230257283f704ad9dcd49bcdcfa0310742",
+      "runs/v093b-phase2-production/trained-FORCE_GPU-headless.log": "6b5135ce0b30ed31f0d95296d3238a2a843fdfb0ec3fac9f73f24d24b5a36a89",
+      "runs/v093b-phase2-production/trained-FORCE_GPU-observer.json": "1c660c80b26579721a366a6d6047c53c9fe20f3bc5fa59e42a5e187ef60063d9",
+      "runs/v093b-phase2-production/trained-FORCE_GPU-observer.log": "69d885f24b28cae65ad09f86cb0447584820bae31b3aeaa8ca18fe97f318fda3",
+      "runs/v093b-phase2-profile-reference-final.json": "01af9c13a07cea0ca08c05e2305e7b1509d15257c200ba8c1eaa183c34d2a67e",
+      "runs/v093b-phase2-shaped-cpu-build.log": "5d4f98e860ebaf17f77d9e70de2fc560ef0311b00b461cd1e1fce930ab698a20",
+      "runs/v093b-phase2-shaped-cuda-build.log": "dddee063b4e0d35ec9c6a123ed73cd111de4602f5d2b1a491a29e66e8123bd26",
+      "runs/v093b-phase2-small-after.json": "36ce0979a378a774acb3c4a5ffd283131bf84ecb42b93b31e34c48f4bee067e4",
+      "runs/v093b-phase2-stable-trained-reference.json": "e17178137934ad823072bef90ad5a23ae966a628d3a50cad8fd6fa12dd0dbfdd",
+      "runs/v093b-phase2-trained-after.json": "9b59ac9f482f3427a6cc5320fe1284381c5aec94decbec4e5b538d9fcc44677d",
+      "runs/v093b-phase2-trained-before.json": "aabc867302520d64f4a73bc205faa11e7d87e53d2f959686bd7e90c35eb94b60",
+      "runs/v093b-phase2-trained-cache-after.json": "5252731257444063d4ede8400d47e604add5b5a3fa57e9cc35a05929228e7f98",
+      "runs/v093b-phase2-trained-calls-after.json": "e6cf2fff45394f42a63a79448376dc25dcb7b66deece8fa4be61259c8a7c54f6",
+      "runs/v093b-phase2-trained-calls-before.json": "f2dd87202b26669a530e4be112cc5dc743b86874f74ca34c7a50d5c95439cf8e",
+      "runs/v093b-phase2-trained-dedup-after.json": "4327bbccd98c600f017cd94e7d9338c1de099afec7fff43036d4cc578ca6a5a6",
+      "runs/v093b-phase2-trained-native-after.json": "2c41906bb0343a164cdf19be5d96525d938ee1255a90f89d3a40472b0e1a6c66",
+      "runs/v093b-phase2-trained-native-before.json": "8d134ce9e4f8a3d476885ba614651e0f248778383bc99142666dceb2dba2164d",
+      "telemetry/planner_profile.py": "25b193528cc173a95ad63cd36c2d37a0278dbd20b4ec8b49de2c7f05e4c7343b",
+      "telemetry/provenance.py": "b4f5082f3f83419ff862e9a0f686ed024f2e2b93ada4ea4d09d865a4b9046931",
+      "tests/fixtures/native_brain_d173280.json": "efcbbc04e23f8640eb8581ceff1924dbc263eb3a528a617e1f668a335e32e3c4",
+      "tests/fixtures/planner_search_774ada8.py.txt": "3ea1432841bb4c5564d39908e67103143eb8f08ff585e4171149b8b08972d462",
+      "tests/test_v093b_hashseed.py": "9b476b51e51d5f82f5a49437df1a7f3a8e61378b1bc83e55a0861d1fd381d08b",
+      "tests/test_v093b_historical_padding.py": "1efdd7d21b001af47cadc93047054b05bfe76e1134ae0333a6840fb85584f644",
+      "tests/test_v093b_planner_batch.py": "fe6c7d4254cf983f8e667547047c104e8271571c0a9dba72c9775d953d9ae1c3",
+      "tools/audit_hashseed_v093b.py": "39a9c91d83e5327901fede0ce17c3afd4612f372bcbe2a5cc3a52e66633935ed",
+      "tools/benchmark_native_v093b.py": "0ff86eb07570ff765cc0f9fa5bed9ac2f7184a853e8c5003f1abc5398e302120",
+      "tools/benchmark_production_v093b.py": "cc6657abc5f2646ff0935f3e47e723f0849cbdc0b5df3afb6f4cc9451c0cdb9e",
+      "tools/determinism_matrix_v093b.py": "0ea9b723c81bf7057364e73470cdb660aad4944ec5b66bf93931cedfc1e67aec",
+      "tools/profile_planner_v093b.py": "507bfc0d271574cc7c3f1a1afcdeb8c55a092fd8ceb567badd5c7061df87ecda"
+    },
+    "native_module_sha256": "8a8b3d7b9f55cd879970ae8949019528289583fe03d321734073dad220d603f7",
+    "native_module_path": "D:\\projects\\synth_life\\consciousness\\_native_brain.cp311-win_amd64.pyd",
+    "deployed_native_module_sha256": "8a8b3d7b9f55cd879970ae8949019528289583fe03d321734073dad220d603f7",
+    "python": "3.11.9",
+    "platform": "Windows-10-10.0.26200-SP0",
+    "hashseed": "1"
+  },
+  "seconds": 6.0,
+  "scenario": "scenarios/v092/train_adjacent_north.sescenario",
+  "brain": "results/v093b/phase2-canonical1/brains/episode_022.sebrain",
+  "reference_search": false,
+  "actions": 39,
+  "events": 285,
+  "causal_digest": "ecba58913a6e35f1a33d637442b21179634d84c786b2f8c2f8629efe2ce229d8",
+  "ffi_calls": 1485,
+  "ffi_calls_per_completed_action": 38.07692307692308,
+  "native_method_calls": 5851,
+  "native_method_calls_per_completed_action": 150.02564102564102,
+  "decisions": 40,
+  "planner_native_method_calls": 4031,
+  "planner_native_calls_per_decision": 100.775,
+  "planner": {
+    "instrumented": true,
+    "timing_unit": "line intervals; nested calls included",
+    "searches": 40,
+    "states_expanded": 1000,
+    "state_action_pairs": 17000,
+    "stages": {
+      "candidate_generation": {
+        "count": 160,
+        "total_us": 1390.1,
+        "ema_us": 11.246421228127339,
+        "max_us": 49.1,
+        "work_units": 160,
+        "p50_us": 2.5,
+        "p95_us": 24.1
+      },
+      "state_action_expansion": {
+        "count": 19160,
+        "total_us": 7971.199999999481,
+        "ema_us": 0.5066314106841319,
+        "max_us": 32.0,
+        "work_units": 19160,
+        "p50_us": 0.4,
+        "p95_us": 0.7
+      },
+      "prediction_request_preparation": {
+        "count": 2315,
+        "total_us": 1087.5999999999744,
+        "ema_us": 0.7010041856318528,
+        "max_us": 3.5,
+        "work_units": 2315,
+        "p50_us": 0.4,
+        "p95_us": 1.2
+      },
+      "native_batch_call": {
+        "count": 359,
+        "total_us": 57323.000000000044,
+        "ema_us": 172.53968518445842,
+        "max_us": 1286.4,
+        "work_units": 359,
+        "p50_us": 0.6,
+        "p95_us": 649.5
+      },
+      "future_state_construction": {
+        "count": 20468,
+        "total_us": 65728.90000000616,
+        "ema_us": 1.614843065759817,
+        "max_us": 51.1,
+        "work_units": 20468,
+        "p50_us": 1.0,
+        "p95_us": 17.1
+      },
+      "score_decomposition": {
+        "count": 68373,
+        "total_us": 57224.00000000454,
+        "ema_us": 1.5298142159917494,
+        "max_us": 45.3,
+        "work_units": 68373,
+        "p50_us": 0.6,
+        "p95_us": 2.9
+      },
+      "loop_epistemic": {
+        "count": 68040,
+        "total_us": 286502.79999998957,
+        "ema_us": 1.198227169207537,
+        "max_us": 278.2,
+        "work_units": 68040,
+        "p50_us": 0.8,
+        "p95_us": 1.4
+      },
+      "homeostatic_estimate": {
+        "count": 57460,
+        "total_us": 416267.79999999487,
+        "ema_us": 0.9794506966932695,
+        "max_us": 3250.2,
+        "work_units": 57460,
+        "p50_us": 0.7,
+        "p95_us": 18.7
+      },
+      "candidate_object_creation": {
+        "count": 17040,
+        "total_us": 26222.300000000334,
+        "ema_us": 4.352021149340924,
+        "max_us": 152.1,
+        "work_units": 17040,
+        "p50_us": 1.5,
+        "p95_us": 2.5
+      },
+      "beam_sorting_and_ties": {
+        "count": 160,
+        "total_us": 9943.500000000004,
+        "ema_us": 74.56372528807964,
+        "max_us": 170.9,
+        "work_units": 160,
+        "p50_us": 69.3,
+        "p95_us": 92.6
+      },
+      "deduplication": {
+        "count": 1000,
+        "total_us": 628.6000000000004,
+        "ema_us": 0.7277736803408704,
+        "max_us": 6.6,
+        "work_units": 1000,
+        "p50_us": 0.6,
+        "p95_us": 1.1
+      },
+      "other": {
+        "count": 286948,
+        "total_us": 123151.80000006926,
+        "ema_us": 0.6682104111763645,
+        "max_us": 73.0,
+        "work_units": 286948,
+        "p50_us": 0.5,
+        "p95_us": 1.4
+      }
+    },
+    "tie_handling": "included in unchanged beam_sorting_and_ties",
+    "deduplication": "request state deduplication; no candidate deduplication exists"
+  },
+  "host": {
+    "homeostasis_numeric_boundary": {
+      "count": 40,
+      "total_us": 268.3,
+      "ema_us": 6.935836813853682,
+      "max_us": 11.8,
+      "work_units": 40,
+      "p50_us": 6.6,
+      "p95_us": 9.3
+    },
+    "memory_recall": {
+      "count": 80,
+      "total_us": 3113.6999999999985,
+      "ema_us": 34.24572974319619,
+      "max_us": 85.6,
+      "work_units": 80,
+      "p50_us": 36.4,
+      "p95_us": 57.8
+    },
+    "micro_neural_boundary": {
+      "count": 0,
+      "total_us": 0.0,
+      "ema_us": 0.0,
+      "max_us": 0.0,
+      "work_units": 0,
+      "p50_us": 0.0,
+      "p95_us": 0.0
+    },
+    "native_call.action_effects": {
+      "count": 0,
+      "total_us": 0.0,
+      "ema_us": 0.0,
+      "max_us": 0.0,
+      "work_units": 0,
+      "p50_us": 0.0,
+      "p95_us": 0.0
+    },
+    "native_call.action_effects_batch": {
+      "count": 0,
+      "total_us": 0.0,
+      "ema_us": 0.0,
+      "max_us": 0.0,
+      "work_units": 0,
+      "p50_us": 0.0,
+      "p95_us": 0.0
+    },
+    "native_call.action_trials": {
+      "count": 40,
+      "total_us": 410.0,
+      "ema_us": 13.035861181728215,
+      "max_us": 16.3,
+      "work_units": 40,
+      "p50_us": 10.9,
+      "p95_us": 14.9
+    },
+    "native_call.add_cognit": {
+      "count": 6,
+      "total_us": 57.1,
+      "ema_us": 11.096480000000003,
+      "max_us": 18.3,
+      "work_units": 6,
+      "p50_us": 6.8,
+      "p95_us": 11.7
+    },
+    "native_call.add_cognits": {
+      "count": 0,
+      "total_us": 0.0,
+      "ema_us": 0.0,
+      "max_us": 0.0,
+      "work_units": 0,
+      "p50_us": 0.0,
+      "p95_us": 0.0
+    },
+    "native_call.add_relation": {
+      "count": 17,
+      "total_us": 81.39999999999999,
+      "ema_us": 3.7820324736270345,
+      "max_us": 10.9,
+      "work_units": 17,
+      "p50_us": 4.3,
+      "p95_us": 6.3
+    },
+    "native_call.assembly_bridge_state": {
+      "count": 0,
+      "total_us": 0.0,
+      "ema_us": 0.0,
+      "max_us": 0.0,
+      "work_units": 0,
+      "p50_us": 0.0,
+      "p95_us": 0.0
+    },
+    "native_call.assembly_cognit_mapping": {
+      "count": 0,
+      "total_us": 0.0,
+      "ema_us": 0.0,
+      "max_us": 0.0,
+      "work_units": 0,
+      "p50_us": 0.0,
+      "p95_us": 0.0
+    },
+    "native_call.begin_continuous_time": {
+      "count": 46,
+      "total_us": 203.3,
+      "ema_us": 4.207680174242331,
+      "max_us": 11.2,
+      "work_units": 46,
+      "p50_us": 3.8,
+      "p95_us": 7.0
+    },
+    "native_call.calibrate_compute": {
+      "count": 0,
+      "total_us": 0.0,
+      "ema_us": 0.0,
+      "max_us": 0.0,
+      "work_units": 0,
+      "p50_us": 0.0,
+      "p95_us": 0.0
+    },
+    "native_call.calibrate_planner_compute": {
+      "count": 0,
+      "total_us": 0.0,
+      "ema_us": 0.0,
+      "max_us": 0.0,
+      "work_units": 0,
+      "p50_us": 0.0,
+      "p95_us": 0.0
+    },
+    "native_call.clear_transition_evidence": {
+      "count": 0,
+      "total_us": 0.0,
+      "ema_us": 0.0,
+      "max_us": 0.0,
+      "work_units": 0,
+      "p50_us": 0.0,
+      "p95_us": 0.0
+    },
+    "native_call.cognit_alive": {
+      "count": 0,
+      "total_us": 0.0,
+      "ema_us": 0.0,
+      "max_us": 0.0,
+      "work_units": 0,
+      "p50_us": 0.0,
+      "p95_us": 0.0
+    },
+    "native_call.cognit_elapsed_times": {
+      "count": 96,
+      "total_us": 86.19999999999996,
+      "ema_us": 1.2214467219615261,
+      "max_us": 2.7,
+      "work_units": 96,
+      "p50_us": 0.8,
+      "p95_us": 1.7
+    },
+    "native_call.cognit_state": {
+      "count": 0,
+      "total_us": 0.0,
+      "ema_us": 0.0,
+      "max_us": 0.0,
+      "work_units": 0,
+      "p50_us": 0.0,
+      "p95_us": 0.0
+    },
+    "native_call.cognit_state_full": {
+      "count": 234,
+      "total_us": 316.50000000000034,
+      "ema_us": 1.3231714295656636,
+      "max_us": 14.1,
+      "work_units": 234,
+      "p50_us": 0.9,
+      "p95_us": 2.7
+    },
+    "native_call.cognit_state_masked": {
+      "count": 120,
+      "total_us": 1088.4000000000003,
+      "ema_us": 8.529359233326957,
+      "max_us": 22.3,
+      "work_units": 120,
+      "p50_us": 8.3,
+      "p95_us": 17.0
+    },
+    "native_call.compute_telemetry": {
+      "count": 0,
+      "total_us": 0.0,
+      "ema_us": 0.0,
+      "max_us": 0.0,
+      "work_units": 0,
+      "p50_us": 0.0,
+      "p95_us": 0.0
+    },
+    "native_call.configure_compute_policy": {
+      "count": 0,
+      "total_us": 0.0,
+      "ema_us": 0.0,
+      "max_us": 0.0,
+      "work_units": 0,
+      "p50_us": 0.0,
+      "p95_us": 0.0
+    },
+    "native_call.continuous_relation_time_state": {
+      "count": 0,
+      "total_us": 0.0,
+      "ema_us": 0.0,
+      "max_us": 0.0,
+      "work_units": 0,
+      "p50_us": 0.0,
+      "p95_us": 0.0
+    },
+    "native_call.continuous_time_state": {
+      "count": 0,
+      "total_us": 0.0,
+      "ema_us": 0.0,
+      "max_us": 0.0,
+      "work_units": 0,
+      "p50_us": 0.0,
+      "p95_us": 0.0
+    },
+    "native_call.diagnostic_stored_nodes": {
+      "count": 0,
+      "total_us": 0.0,
+      "ema_us": 0.0,
+      "max_us": 0.0,
+      "work_units": 0,
+      "p50_us": 0.0,
+      "p95_us": 0.0
+    },
+    "native_call.dialogue_snapshot": {
+      "count": 0,
+      "total_us": 0.0,
+      "ema_us": 0.0,
+      "max_us": 0.0,
+      "work_units": 0,
+      "p50_us": 0.0,
+      "p95_us": 0.0
+    },
+    "native_call.dirty_relation_state": {
+      "count": 0,
+      "total_us": 0.0,
+      "ema_us": 0.0,
+      "max_us": 0.0,
+      "work_units": 0,
+      "p50_us": 0.0,
+      "p95_us": 0.0
+    },
+    "native_call.homeostasis_runtime_state": {
+      "count": 0,
+      "total_us": 0.0,
+      "ema_us": 0.0,
+      "max_us": 0.0,
+      "work_units": 0,
+      "p50_us": 0.0,
+      "p95_us": 0.0
+    },
+    "native_call.homeostatic_step": {
+      "count": 40,
+      "total_us": 435.99999999999994,
+      "ema_us": 11.397813695891948,
+      "max_us": 19.4,
+      "work_units": 40,
+      "p50_us": 10.6,
+      "p95_us": 14.2
+    },
+    "native_call.latest_brain_snapshot": {
+      "count": 0,
+      "total_us": 0.0,
+      "ema_us": 0.0,
+      "max_us": 0.0,
+      "work_units": 0,
+      "p50_us": 0.0,
+      "p95_us": 0.0
+    },
+    "native_call.lifecycle_step": {
+      "count": 0,
+      "total_us": 0.0,
+      "ema_us": 0.0,
+      "max_us": 0.0,
+      "work_units": 0,
+      "p50_us": 0.0,
+      "p95_us": 0.0
+    },
+    "native_call.load_graph": {
+      "count": 0,
+      "total_us": 0.0,
+      "ema_us": 0.0,
+      "max_us": 0.0,
+      "work_units": 0,
+      "p50_us": 0.0,
+      "p95_us": 0.0
+    },
+    "native_call.materialize_cognits_at": {
+      "count": 0,
+      "total_us": 0.0,
+      "ema_us": 0.0,
+      "max_us": 0.0,
+      "work_units": 0,
+      "p50_us": 0.0,
+      "p95_us": 0.0
+    },
+    "native_call.materialize_current": {
+      "count": 17,
+      "total_us": 1270.5,
+      "ema_us": 101.07836505397135,
+      "max_us": 200.2,
+      "work_units": 17,
+      "p50_us": 77.1,
+      "p95_us": 125.6
+    },
+    "native_call.materialize_relations": {
+      "count": 0,
+      "total_us": 0.0,
+      "ema_us": 0.0,
+      "max_us": 0.0,
+      "work_units": 0,
+      "p50_us": 0.0,
+      "p95_us": 0.0
+    },
+    "native_call.neurodynamic_substrate": {
+      "count": 0,
+      "total_us": 0.0,
+      "ema_us": 0.0,
+      "max_us": 0.0,
+      "work_units": 0,
+      "p50_us": 0.0,
+      "p95_us": 0.0
+    },
+    "native_call.observe_transition_delay": {
+      "count": 17,
+      "total_us": 4981.8,
+      "ema_us": 301.7881921565564,
+      "max_us": 519.4,
+      "work_units": 17,
+      "p50_us": 267.7,
+      "p95_us": 439.6
+    },
+    "native_call.outgoing": {
+      "count": 0,
+      "total_us": 0.0,
+      "ema_us": 0.0,
+      "max_us": 0.0,
+      "work_units": 0,
+      "p50_us": 0.0,
+      "p95_us": 0.0
+    },
+    "native_call.outgoing_targets": {
+      "count": 158,
+      "total_us": 525.0999999999996,
+      "ema_us": 2.5185739433052223,
+      "max_us": 15.5,
+      "work_units": 158,
+      "p50_us": 1.8,
+      "p95_us": 11.2
+    },
+    "native_call.planner_transition_batch": {
+      "count": 155,
+      "total_us": 22920.5,
+      "ema_us": 177.755766652724,
+      "max_us": 639.7,
+      "work_units": 155,
+      "p50_us": 139.7,
+      "p95_us": 334.8
+    },
+    "native_call.predict": {
+      "count": 0,
+      "total_us": 0.0,
+      "ema_us": 0.0,
+      "max_us": 0.0,
+      "work_units": 0,
+      "p50_us": 0.0,
+      "p95_us": 0.0
+    },
+    "native_call.predict_actions_batch": {
+      "count": 0,
+      "total_us": 0.0,
+      "ema_us": 0.0,
+      "max_us": 0.0,
+      "work_units": 0,
+      "p50_us": 0.0,
+      "p95_us": 0.0
+    },
+    "native_call.predict_actions_batch_at": {
+      "count": 160,
+      "total_us": 10604.600000000002,
+      "ema_us": 57.570471441302296,
+      "max_us": 186.4,
+      "work_units": 160,
+      "p50_us": 49.2,
+      "p95_us": 143.3
+    },
+    "native_call.predict_compact": {
+      "count": 0,
+      "total_us": 0.0,
+      "ema_us": 0.0,
+      "max_us": 0.0,
+      "work_units": 0,
+      "p50_us": 0.0,
+      "p95_us": 0.0
+    },
+    "native_call.process_assembly_bridge": {
+      "count": 0,
+      "total_us": 0.0,
+      "ema_us": 0.0,
+      "max_us": 0.0,
+      "work_units": 0,
+      "p50_us": 0.0,
+      "p95_us": 0.0
+    },
+    "native_call.propagate": {
+      "count": 109,
+      "total_us": 1398.4000000000008,
+      "ema_us": 13.729511734018947,
+      "max_us": 39.6,
+      "work_units": 109,
+      "p50_us": 10.3,
+      "p95_us": 26.9
+    },
+    "native_call.publish_brain_snapshot": {
+      "count": 246,
+      "total_us": 454.29999999999995,
+      "ema_us": 1.927905197548208,
+      "max_us": 4.8,
+      "work_units": 246,
+      "p50_us": 1.7,
+      "p95_us": 3.3
+    },
+    "native_call.publish_dialogue_line": {
+      "count": 0,
+      "total_us": 0.0,
+      "ema_us": 0.0,
+      "max_us": 0.0,
+      "work_units": 0,
+      "p50_us": 0.0,
+      "p95_us": 0.0
+    },
+    "native_call.receive": {
+      "count": 0,
+      "total_us": 0.0,
+      "ema_us": 0.0,
+      "max_us": 0.0,
+      "work_units": 0,
+      "p50_us": 0.0,
+      "p95_us": 0.0
+    },
+    "native_call.receive_batch": {
+      "count": 150,
+      "total_us": 975.8000000000002,
+      "ema_us": 5.768315235969827,
+      "max_us": 18.5,
+      "work_units": 150,
+      "p50_us": 6.0,
+      "p95_us": 10.6
+    },
+    "native_call.relation_handle_valid": {
+      "count": 0,
+      "total_us": 0.0,
+      "ema_us": 0.0,
+      "max_us": 0.0,
+      "work_units": 0,
+      "p50_us": 0.0,
+      "p95_us": 0.0
+    },
+    "native_call.relation_state": {
+      "count": 17,
+      "total_us": 43.3,
+      "ema_us": 2.306745832958198,
+      "max_us": 3.1,
+      "work_units": 17,
+      "p50_us": 2.6,
+      "p95_us": 3.1
+    },
+    "native_call.remove_cognit": {
+      "count": 0,
+      "total_us": 0.0,
+      "ema_us": 0.0,
+      "max_us": 0.0,
+      "work_units": 0,
+      "p50_us": 0.0,
+      "p95_us": 0.0
+    },
+    "native_call.remove_relation": {
+      "count": 0,
+      "total_us": 0.0,
+      "ema_us": 0.0,
+      "max_us": 0.0,
+      "work_units": 0,
+      "p50_us": 0.0,
+      "p95_us": 0.0
+    },
+    "native_call.restore_assembly_bridge_state": {
+      "count": 0,
+      "total_us": 0.0,
+      "ema_us": 0.0,
+      "max_us": 0.0,
+      "work_units": 0,
+      "p50_us": 0.0,
+      "p95_us": 0.0
+    },
+    "native_call.restore_continuous_relation_time_state": {
+      "count": 0,
+      "total_us": 0.0,
+      "ema_us": 0.0,
+      "max_us": 0.0,
+      "work_units": 0,
+      "p50_us": 0.0,
+      "p95_us": 0.0
+    },
+    "native_call.restore_continuous_time_state": {
+      "count": 0,
+      "total_us": 0.0,
+      "ema_us": 0.0,
+      "max_us": 0.0,
+      "work_units": 0,
+      "p50_us": 0.0,
+      "p95_us": 0.0
+    },
+    "native_call.restore_dirty_relation_state": {
+      "count": 0,
+      "total_us": 0.0,
+      "ema_us": 0.0,
+      "max_us": 0.0,
+      "work_units": 0,
+      "p50_us": 0.0,
+      "p95_us": 0.0
+    },
+    "native_call.restore_homeostasis_runtime_state": {
+      "count": 0,
+      "total_us": 0.0,
+      "ema_us": 0.0,
+      "max_us": 0.0,
+      "work_units": 0,
+      "p50_us": 0.0,
+      "p95_us": 0.0
+    },
+    "native_call.restore_temporal_state": {
+      "count": 0,
+      "total_us": 0.0,
+      "ema_us": 0.0,
+      "max_us": 0.0,
+      "work_units": 0,
+      "p50_us": 0.0,
+      "p95_us": 0.0
+    },
+    "native_call.restore_transition_history": {
+      "count": 0,
+      "total_us": 0.0,
+      "ema_us": 0.0,
+      "max_us": 0.0,
+      "work_units": 0,
+      "p50_us": 0.0,
+      "p95_us": 0.0
+    },
+    "native_call.save_graph": {
+      "count": 0,
+      "total_us": 0.0,
+      "ema_us": 0.0,
+      "max_us": 0.0,
+      "work_units": 0,
+      "p50_us": 0.0,
+      "p95_us": 0.0
+    },
+    "native_call.set_activity": {
+      "count": 0,
+      "total_us": 0.0,
+      "ema_us": 0.0,
+      "max_us": 0.0,
+      "work_units": 0,
+      "p50_us": 0.0,
+      "p95_us": 0.0
+    },
+    "native_call.set_cognit_fields": {
+      "count": 178,
+      "total_us": 740.6000000000001,
+      "ema_us": 3.607475274738971,
+      "max_us": 20.1,
+      "work_units": 178,
+      "p50_us": 3.0,
+      "p95_us": 8.7
+    },
+    "native_call.set_cognit_states": {
+      "count": 6,
+      "total_us": 50.2,
+      "ema_us": 8.574816000000002,
+      "max_us": 15.3,
+      "work_units": 6,
+      "p50_us": 6.2,
+      "p95_us": 10.7
+    },
+    "native_call.set_compute_mode": {
+      "count": 0,
+      "total_us": 0.0,
+      "ema_us": 0.0,
+      "max_us": 0.0,
+      "work_units": 0,
+      "p50_us": 0.0,
+      "p95_us": 0.0
+    },
+    "native_call.set_evidence_window": {
+      "count": 0,
+      "total_us": 0.0,
+      "ema_us": 0.0,
+      "max_us": 0.0,
+      "work_units": 0,
+      "p50_us": 0.0,
+      "p95_us": 0.0
+    },
+    "native_call.set_refractory": {
+      "count": 0,
+      "total_us": 0.0,
+      "ema_us": 0.0,
+      "max_us": 0.0,
+      "work_units": 0,
+      "p50_us": 0.0,
+      "p95_us": 0.0
+    },
+    "native_call.set_relation_capacity": {
+      "count": 0,
+      "total_us": 0.0,
+      "ema_us": 0.0,
+      "max_us": 0.0,
+      "work_units": 0,
+      "p50_us": 0.0,
+      "p95_us": 0.0
+    },
+    "native_call.temporal_state": {
+      "count": 0,
+      "total_us": 0.0,
+      "ema_us": 0.0,
+      "max_us": 0.0,
+      "work_units": 0,
+      "p50_us": 0.0,
+      "p95_us": 0.0
+    },
+    "native_call.timed_successors": {
+      "count": 3876,
+      "total_us": 27814.69999999996,
+      "ema_us": 9.029640792816009,
+      "max_us": 80.7,
+      "work_units": 3876,
+      "p50_us": 5.7,
+      "p95_us": 16.2
+    },
+    "native_call.transition_history": {
+      "count": 0,
+      "total_us": 0.0,
+      "ema_us": 0.0,
+      "max_us": 0.0,
+      "work_units": 0,
+      "p50_us": 0.0,
+      "p95_us": 0.0
+    },
+    "native_call.transition_metrics": {
+      "count": 0,
+      "total_us": 0.0,
+      "ema_us": 0.0,
+      "max_us": 0.0,
+      "work_units": 0,
+      "p50_us": 0.0,
+      "p95_us": 0.0
+    },
+    "native_call.update_failed_action": {
+      "count": 22,
+      "total_us": 164.0,
+      "ema_us": 7.674441551336284,
+      "max_us": 13.2,
+      "work_units": 22,
+      "p50_us": 6.9,
+      "p95_us": 10.2
+    },
+    "native_call.update_outcomes": {
+      "count": 17,
+      "total_us": 829.0000000000001,
+      "ema_us": 50.50844080829302,
+      "max_us": 77.9,
+      "work_units": 17,
+      "p50_us": 47.5,
+      "p95_us": 68.2
+    },
+    "native_call.update_relation": {
+      "count": 85,
+      "total_us": 114.3,
+      "ema_us": 0.9638136336143933,
+      "max_us": 8.8,
+      "work_units": 85,
+      "p50_us": 0.9,
+      "p95_us": 2.6
+    },
+    "native_call.update_transition_evidence": {
+      "count": 39,
+      "total_us": 731.8,
+      "ema_us": 16.73951412111122,
+      "max_us": 47.4,
+      "work_units": 39,
+      "p50_us": 16.8,
+      "p95_us": 28.9
+    },
+    "native_call.upsert_relation_states_batch": {
+      "count": 0,
+      "total_us": 0.0,
+      "ema_us": 0.0,
+      "max_us": 0.0,
+      "work_units": 0,
+      "p50_us": 0.0,
+      "p95_us": 0.0
+    },
+    "pattern_matching_birth": {
+      "count": 40,
+      "total_us": 16482.700000000004,
+      "ema_us": 380.9551820623123,
+      "max_us": 522.1,
+      "work_units": 40,
+      "p50_us": 408.3,
+      "p95_us": 510.2
+    },
+    "physiology_numeric_update": {
+      "count": 286,
+      "total_us": 2340.200000000002,
+      "ema_us": 8.816541115099318,
+      "max_us": 22.3,
+      "work_units": 286,
+      "p50_us": 7.0,
+      "p95_us": 12.4
+    },
+    "planner_beam_refinement": {
+      "count": 40,
+      "total_us": 1451987.2999999996,
+      "ema_us": 35510.68977336124,
+      "max_us": 45234.8,
+      "work_units": 40,
+      "p50_us": 36537.5,
+      "p95_us": 43531.6
+    },
+    "planner_native_call.planner_transition_batch": {
+      "count": 155,
+      "total_us": 22920.5,
+      "ema_us": 177.755766652724,
+      "max_us": 639.7,
+      "work_units": 155,
+      "p50_us": 139.7,
+      "p95_us": 334.8
+    },
+    "planner_native_call.timed_successors": {
+      "count": 3876,
+      "total_us": 27814.69999999996,
+      "ema_us": 9.029640792816009,
+      "max_us": 80.7,
+      "work_units": 3876,
+      "p50_us": 5.7,
+      "p95_us": 16.2
+    },
+    "planner_transition_batch_boundary": {
+      "count": 155,
+      "total_us": 56249.299999999996,
+      "ema_us": 420.17217184117635,
+      "max_us": 1274.6,
+      "work_units": 155,
+      "p50_us": 333.6,
+      "p95_us": 761.6
+    },
+    "prediction_batch": {
+      "count": 160,
+      "total_us": 23859.199999999986,
+      "ema_us": 128.38024239053246,
+      "max_us": 415.2,
+      "work_units": 160,
+      "p50_us": 78.3,
+      "p95_us": 323.1
+    },
+    "presentation_snapshot_preparation": {
+      "count": 246,
+      "total_us": 2744.9000000000015,
+      "ema_us": 12.204134936415612,
+      "max_us": 27.0,
+      "work_units": 246,
+      "p50_us": 10.0,
+      "p95_us": 16.7
+    },
+    "relation_evidence": {
+      "count": 39,
+      "total_us": 974.0000000000001,
+      "ema_us": 23.047844862663855,
+      "max_us": 56.8,
+      "work_units": 39,
+      "p50_us": 22.9,
+      "p95_us": 36.0
+    },
+    "relation_lifecycle_boundary": {
+      "count": 0,
+      "total_us": 0.0,
+      "ema_us": 0.0,
+      "max_us": 0.0,
+      "work_units": 0,
+      "p50_us": 0.0,
+      "p95_us": 0.0
+    },
+    "relation_materialization": {
+      "count": 17,
+      "total_us": 1389.8000000000002,
+      "ema_us": 108.09952605846507,
+      "max_us": 206.5,
+      "work_units": 17,
+      "p50_us": 83.4,
+      "p95_us": 133.0
+    },
+    "scheduler_dispatch": {
+      "count": 285,
+      "total_us": 2695540.900000001,
+      "ema_us": 10625.632185411783,
+      "max_us": 45921.6,
+      "work_units": 285,
+      "p50_us": 130.7,
+      "p95_us": 38021.4
+    },
+    "sensory_decomposition": {
+      "count": 40,
+      "total_us": 18965.0,
+      "ema_us": 447.84502092815876,
+      "max_us": 952.1,
+      "work_units": 40,
+      "p50_us": 429.1,
+      "p95_us": 780.6
+    },
+    "wave_propagation": {
+      "count": 109,
+      "total_us": 3222.799999999999,
+      "ema_us": 32.13709555035477,
+      "max_us": 73.9,
+      "work_units": 109,
+      "p50_us": 26.1,
+      "p95_us": 50.7
+    },
+    "world_action_completion": {
+      "count": 39,
+      "total_us": 2098.8999999999996,
+      "ema_us": 52.86036804224459,
+      "max_us": 85.9,
+      "work_units": 39,
+      "p50_us": 50.7,
+      "p95_us": 77.8
+    }
+  }
+}

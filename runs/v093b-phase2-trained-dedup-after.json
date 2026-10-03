@@ -1,0 +1,975 @@
+{
+  "provenance": {
+    "head": "774ada8d80050ee5a3e58ea300a037a524ec388e",
+    "branch": "main",
+    "working_tree_status": " M consciousness/memory.py\n M consciousness/memory_matching.py\n M consciousness/planning.py\n M consciousness/temporal_prediction.py\n M cpp/include/se/native_brain_engine.hpp\n M cpp/src/bindings.cpp\n M cpp/src/native_brain_engine.cpp\n M docs/V0_9_3B_RESULTS.md\n M telemetry/performance.py\n M tests/test_v092_survival_learning.py\n M tools/benchmark_v093b.py\n M tools/differential_v093b.py\n?? runs/v093b-phase2-before.json\n?? runs/v093b-phase2-planner-after.json\n?? runs/v093b-phase2-planner-before.json\n?? runs/v093b-phase2-planner-trained.json\n?? runs/v093b-phase2-trained-cache-after.json\n?? runs/v093b-phase2-trained-calls-after.json\n?? runs/v093b-phase2-trained-calls-before.json\n?? runs/v093b-phase2-trained-native-after.json\n?? runs/v093b-phase2-trained-native-before.json\n?? telemetry/planner_profile.py\n?? telemetry/provenance.py\n?? tests/fixtures/\n?? tests/test_v093b_hashseed.py\n?? tests/test_v093b_historical_padding.py\n?? tests/test_v093b_planner_batch.py\n?? tools/audit_hashseed_v093b.py\n?? tools/profile_planner_v093b.py\n",
+    "dirty": true,
+    "tracked_diff_sha256": "1db70d92417ecaa21cc7a0e76a18bdc4730e8692c6282b2b1fca569cd964f8f4",
+    "untracked_sha256": {
+      "runs/v093b-phase2-before.json": "72f343c90d4d1f3e2c93541108cba924c20bd37fe80b148effb042f8ac762209",
+      "runs/v093b-phase2-planner-after.json": "9396ad25381e92e5956a1d8c112dffad5fc433b201a9ba51c20fa4f82ba995e1",
+      "runs/v093b-phase2-planner-before.json": "b581260ed4b7bc66025224a6903a2c51f547526d0afb923114b57286a3a6fe64",
+      "runs/v093b-phase2-planner-trained.json": "2b88f44d0275e5edcfb2d33a6094068ddb8147efef1a070a172279d2006f7166",
+      "runs/v093b-phase2-trained-cache-after.json": "5252731257444063d4ede8400d47e604add5b5a3fa57e9cc35a05929228e7f98",
+      "runs/v093b-phase2-trained-calls-after.json": "e6cf2fff45394f42a63a79448376dc25dcb7b66deece8fa4be61259c8a7c54f6",
+      "runs/v093b-phase2-trained-calls-before.json": "f2dd87202b26669a530e4be112cc5dc743b86874f74ca34c7a50d5c95439cf8e",
+      "runs/v093b-phase2-trained-native-after.json": "2c41906bb0343a164cdf19be5d96525d938ee1255a90f89d3a40472b0e1a6c66",
+      "runs/v093b-phase2-trained-native-before.json": "8d134ce9e4f8a3d476885ba614651e0f248778383bc99142666dceb2dba2164d",
+      "telemetry/planner_profile.py": "4c87b73c1444ecb08e53a2093eaa04c3042781e8696e6bf08beb9a47c2f1a90f",
+      "telemetry/provenance.py": "e3ae05a4836342ee973f6e8a9376692fef2f1ab19251be64eaf596f344bd8183",
+      "tests/fixtures/native_brain_d173280.json": "efcbbc04e23f8640eb8581ceff1924dbc263eb3a528a617e1f668a335e32e3c4",
+      "tests/fixtures/planner_search_774ada8.py.txt": "3ea1432841bb4c5564d39908e67103143eb8f08ff585e4171149b8b08972d462",
+      "tests/test_v093b_hashseed.py": "9b476b51e51d5f82f5a49437df1a7f3a8e61378b1bc83e55a0861d1fd381d08b",
+      "tests/test_v093b_historical_padding.py": "1efdd7d21b001af47cadc93047054b05bfe76e1134ae0333a6840fb85584f644",
+      "tests/test_v093b_planner_batch.py": "c413f2b4cd650bb83f3cfc184c8cb361b14608a4e1d2fa369fa02012744f1e6d",
+      "tools/audit_hashseed_v093b.py": "39a9c91d83e5327901fede0ce17c3afd4612f372bcbe2a5cc3a52e66633935ed",
+      "tools/profile_planner_v093b.py": "763c960f40b8854cdbcad5a5ed18d6495dfd2fd8e5a3f48ad0c80ae86e31b2ec"
+    },
+    "native_module_sha256": "b2eea41c1dbdb0af1a87fdfcce19e724eeb3fe7ba99594839d8c6206a455c8cf",
+    "python": "3.11.9",
+    "platform": "Windows-10-10.0.26200-SP0",
+    "hashseed": "1"
+  },
+  "seconds": 6.0,
+  "scenario": "scenarios/v092/train_adjacent_north.sescenario",
+  "brain": "results/v093b/phase2-canonical1/brains/episode_022.sebrain",
+  "reference_search": false,
+  "actions": 39,
+  "events": 285,
+  "causal_digest": "ecba58913a6e35f1a33d637442b21179634d84c786b2f8c2f8629efe2ce229d8",
+  "ffi_calls": 1485,
+  "ffi_calls_per_completed_action": 38.07692307692308,
+  "native_method_calls": 5851,
+  "native_method_calls_per_completed_action": 150.02564102564102,
+  "planner": {
+    "instrumented": true,
+    "timing_unit": "line intervals; nested calls included",
+    "searches": 40,
+    "states_expanded": 1000,
+    "state_action_pairs": 17000,
+    "stages": {
+      "candidate_generation": {
+        "count": 160,
+        "total_us": 1005.3999999999993,
+        "ema_us": 10.754579188611526,
+        "max_us": 28.4,
+        "work_units": 160,
+        "p50_us": 1.6,
+        "p95_us": 13.4
+      },
+      "state_action_expansion": {
+        "count": 19160,
+        "total_us": 7655.599999999446,
+        "ema_us": 0.44502003064806156,
+        "max_us": 15.2,
+        "work_units": 19160,
+        "p50_us": 0.4,
+        "p95_us": 0.9
+      },
+      "prediction_request_preparation": {
+        "count": 2315,
+        "total_us": 996.8999999999716,
+        "ema_us": 0.7571968213365217,
+        "max_us": 2.4,
+        "work_units": 2315,
+        "p50_us": 0.3,
+        "p95_us": 1.0
+      },
+      "native_batch_call": {
+        "count": 359,
+        "total_us": 62183.1,
+        "ema_us": 199.21460323381436,
+        "max_us": 1028.4,
+        "work_units": 359,
+        "p50_us": 0.6,
+        "p95_us": 629.7
+      },
+      "future_state_construction": {
+        "count": 20468,
+        "total_us": 63357.200000008044,
+        "ema_us": 1.3468981089795178,
+        "max_us": 123.7,
+        "work_units": 20468,
+        "p50_us": 1.0,
+        "p95_us": 18.9
+      },
+      "score_decomposition": {
+        "count": 68373,
+        "total_us": 56244.40000000179,
+        "ema_us": 0.9323904587850551,
+        "max_us": 8.6,
+        "work_units": 68373,
+        "p50_us": 0.6,
+        "p95_us": 2.0
+      },
+      "loop_epistemic": {
+        "count": 68040,
+        "total_us": 272515.799999997,
+        "ema_us": 0.8107940825511311,
+        "max_us": 175.0,
+        "work_units": 68040,
+        "p50_us": 0.8,
+        "p95_us": 1.1
+      },
+      "homeostatic_estimate": {
+        "count": 6460,
+        "total_us": 340849.2000000002,
+        "ema_us": 25.084865784718193,
+        "max_us": 3121.9,
+        "work_units": 6460,
+        "p50_us": 32.2,
+        "p95_us": 262.5
+      },
+      "candidate_object_creation": {
+        "count": 17040,
+        "total_us": 24110.600000000657,
+        "ema_us": 3.6334896586616807,
+        "max_us": 80.1,
+        "work_units": 17040,
+        "p50_us": 1.5,
+        "p95_us": 3.3
+      },
+      "beam_sorting_and_ties": {
+        "count": 160,
+        "total_us": 9026.3,
+        "ema_us": 65.03291709189945,
+        "max_us": 91.0,
+        "work_units": 160,
+        "p50_us": 67.6,
+        "p95_us": 71.6
+      },
+      "deduplication": {
+        "count": 1000,
+        "total_us": 588.8,
+        "ema_us": 0.6231284681623863,
+        "max_us": 6.5,
+        "work_units": 1000,
+        "p50_us": 0.6,
+        "p95_us": 0.9
+      },
+      "other": {
+        "count": 337948,
+        "total_us": 154757.9999998699,
+        "ema_us": 0.49800268909720324,
+        "max_us": 42.1,
+        "work_units": 337948,
+        "p50_us": 0.4,
+        "p95_us": 1.2
+      }
+    },
+    "tie_handling": "included in unchanged beam_sorting_and_ties",
+    "deduplication": "request state deduplication; no candidate deduplication exists"
+  },
+  "host": {
+    "homeostasis_numeric_boundary": {
+      "count": 40,
+      "total_us": 237.79999999999998,
+      "ema_us": 7.408891520478362,
+      "max_us": 16.3,
+      "work_units": 40,
+      "p50_us": 5.7,
+      "p95_us": 6.9
+    },
+    "memory_recall": {
+      "count": 80,
+      "total_us": 2550.2999999999997,
+      "ema_us": 30.91541664552933,
+      "max_us": 49.9,
+      "work_units": 80,
+      "p50_us": 30.1,
+      "p95_us": 41.8
+    },
+    "micro_neural_boundary": {
+      "count": 0,
+      "total_us": 0.0,
+      "ema_us": 0.0,
+      "max_us": 0.0,
+      "work_units": 0,
+      "p50_us": 0.0,
+      "p95_us": 0.0
+    },
+    "native_call.action_effects": {
+      "count": 0,
+      "total_us": 0.0,
+      "ema_us": 0.0,
+      "max_us": 0.0,
+      "work_units": 0,
+      "p50_us": 0.0,
+      "p95_us": 0.0
+    },
+    "native_call.action_effects_batch": {
+      "count": 0,
+      "total_us": 0.0,
+      "ema_us": 0.0,
+      "max_us": 0.0,
+      "work_units": 0,
+      "p50_us": 0.0,
+      "p95_us": 0.0
+    },
+    "native_call.action_trials": {
+      "count": 40,
+      "total_us": 350.2,
+      "ema_us": 10.610353406040346,
+      "max_us": 18.0,
+      "work_units": 40,
+      "p50_us": 9.1,
+      "p95_us": 14.2
+    },
+    "native_call.add_cognit": {
+      "count": 6,
+      "total_us": 44.89999999999999,
+      "ema_us": 8.251488000000002,
+      "max_us": 12.0,
+      "work_units": 6,
+      "p50_us": 6.3,
+      "p95_us": 9.9
+    },
+    "native_call.add_cognits": {
+      "count": 0,
+      "total_us": 0.0,
+      "ema_us": 0.0,
+      "max_us": 0.0,
+      "work_units": 0,
+      "p50_us": 0.0,
+      "p95_us": 0.0
+    },
+    "native_call.add_relation": {
+      "count": 17,
+      "total_us": 54.199999999999996,
+      "ema_us": 3.0379305363164377,
+      "max_us": 6.1,
+      "work_units": 17,
+      "p50_us": 3.0,
+      "p95_us": 3.8
+    },
+    "native_call.assembly_bridge_state": {
+      "count": 0,
+      "total_us": 0.0,
+      "ema_us": 0.0,
+      "max_us": 0.0,
+      "work_units": 0,
+      "p50_us": 0.0,
+      "p95_us": 0.0
+    },
+    "native_call.assembly_cognit_mapping": {
+      "count": 0,
+      "total_us": 0.0,
+      "ema_us": 0.0,
+      "max_us": 0.0,
+      "work_units": 0,
+      "p50_us": 0.0,
+      "p95_us": 0.0
+    },
+    "native_call.begin_continuous_time": {
+      "count": 46,
+      "total_us": 174.4,
+      "ema_us": 3.6613956168881683,
+      "max_us": 9.3,
+      "work_units": 46,
+      "p50_us": 3.7,
+      "p95_us": 4.1
+    },
+    "native_call.calibrate_compute": {
+      "count": 0,
+      "total_us": 0.0,
+      "ema_us": 0.0,
+      "max_us": 0.0,
+      "work_units": 0,
+      "p50_us": 0.0,
+      "p95_us": 0.0
+    },
+    "native_call.clear_transition_evidence": {
+      "count": 0,
+      "total_us": 0.0,
+      "ema_us": 0.0,
+      "max_us": 0.0,
+      "work_units": 0,
+      "p50_us": 0.0,
+      "p95_us": 0.0
+    },
+    "native_call.cognit_alive": {
+      "count": 0,
+      "total_us": 0.0,
+      "ema_us": 0.0,
+      "max_us": 0.0,
+      "work_units": 0,
+      "p50_us": 0.0,
+      "p95_us": 0.0
+    },
+    "native_call.cognit_elapsed_times": {
+      "count": 96,
+      "total_us": 74.60000000000011,
+      "ema_us": 0.709067152898085,
+      "max_us": 1.8,
+      "work_units": 96,
+      "p50_us": 0.7,
+      "p95_us": 1.6
+    },
+    "native_call.cognit_state": {
+      "count": 0,
+      "total_us": 0.0,
+      "ema_us": 0.0,
+      "max_us": 0.0,
+      "work_units": 0,
+      "p50_us": 0.0,
+      "p95_us": 0.0
+    },
+    "native_call.cognit_state_full": {
+      "count": 234,
+      "total_us": 244.0000000000007,
+      "ema_us": 0.8201829686546152,
+      "max_us": 4.9,
+      "work_units": 234,
+      "p50_us": 0.9,
+      "p95_us": 2.1
+    },
+    "native_call.cognit_state_masked": {
+      "count": 120,
+      "total_us": 791.1000000000001,
+      "ema_us": 5.866256016441172,
+      "max_us": 18.3,
+      "work_units": 120,
+      "p50_us": 6.4,
+      "p95_us": 11.8
+    },
+    "native_call.compute_telemetry": {
+      "count": 0,
+      "total_us": 0.0,
+      "ema_us": 0.0,
+      "max_us": 0.0,
+      "work_units": 0,
+      "p50_us": 0.0,
+      "p95_us": 0.0
+    },
+    "native_call.configure_compute_policy": {
+      "count": 0,
+      "total_us": 0.0,
+      "ema_us": 0.0,
+      "max_us": 0.0,
+      "work_units": 0,
+      "p50_us": 0.0,
+      "p95_us": 0.0
+    },
+    "native_call.continuous_relation_time_state": {
+      "count": 0,
+      "total_us": 0.0,
+      "ema_us": 0.0,
+      "max_us": 0.0,
+      "work_units": 0,
+      "p50_us": 0.0,
+      "p95_us": 0.0
+    },
+    "native_call.continuous_time_state": {
+      "count": 0,
+      "total_us": 0.0,
+      "ema_us": 0.0,
+      "max_us": 0.0,
+      "work_units": 0,
+      "p50_us": 0.0,
+      "p95_us": 0.0
+    },
+    "native_call.diagnostic_stored_nodes": {
+      "count": 0,
+      "total_us": 0.0,
+      "ema_us": 0.0,
+      "max_us": 0.0,
+      "work_units": 0,
+      "p50_us": 0.0,
+      "p95_us": 0.0
+    },
+    "native_call.dialogue_snapshot": {
+      "count": 0,
+      "total_us": 0.0,
+      "ema_us": 0.0,
+      "max_us": 0.0,
+      "work_units": 0,
+      "p50_us": 0.0,
+      "p95_us": 0.0
+    },
+    "native_call.dirty_relation_state": {
+      "count": 0,
+      "total_us": 0.0,
+      "ema_us": 0.0,
+      "max_us": 0.0,
+      "work_units": 0,
+      "p50_us": 0.0,
+      "p95_us": 0.0
+    },
+    "native_call.homeostasis_runtime_state": {
+      "count": 0,
+      "total_us": 0.0,
+      "ema_us": 0.0,
+      "max_us": 0.0,
+      "work_units": 0,
+      "p50_us": 0.0,
+      "p95_us": 0.0
+    },
+    "native_call.homeostatic_step": {
+      "count": 40,
+      "total_us": 370.50000000000006,
+      "ema_us": 11.223418499749053,
+      "max_us": 22.5,
+      "work_units": 40,
+      "p50_us": 9.0,
+      "p95_us": 10.2
+    },
+    "native_call.latest_brain_snapshot": {
+      "count": 0,
+      "total_us": 0.0,
+      "ema_us": 0.0,
+      "max_us": 0.0,
+      "work_units": 0,
+      "p50_us": 0.0,
+      "p95_us": 0.0
+    },
+    "native_call.lifecycle_step": {
+      "count": 0,
+      "total_us": 0.0,
+      "ema_us": 0.0,
+      "max_us": 0.0,
+      "work_units": 0,
+      "p50_us": 0.0,
+      "p95_us": 0.0
+    },
+    "native_call.load_graph": {
+      "count": 0,
+      "total_us": 0.0,
+      "ema_us": 0.0,
+      "max_us": 0.0,
+      "work_units": 0,
+      "p50_us": 0.0,
+      "p95_us": 0.0
+    },
+    "native_call.materialize_cognits_at": {
+      "count": 0,
+      "total_us": 0.0,
+      "ema_us": 0.0,
+      "max_us": 0.0,
+      "work_units": 0,
+      "p50_us": 0.0,
+      "p95_us": 0.0
+    },
+    "native_call.materialize_current": {
+      "count": 17,
+      "total_us": 1284.7000000000003,
+      "ema_us": 111.452583093211,
+      "max_us": 201.3,
+      "work_units": 17,
+      "p50_us": 76.5,
+      "p95_us": 193.4
+    },
+    "native_call.materialize_relations": {
+      "count": 0,
+      "total_us": 0.0,
+      "ema_us": 0.0,
+      "max_us": 0.0,
+      "work_units": 0,
+      "p50_us": 0.0,
+      "p95_us": 0.0
+    },
+    "native_call.neurodynamic_substrate": {
+      "count": 0,
+      "total_us": 0.0,
+      "ema_us": 0.0,
+      "max_us": 0.0,
+      "work_units": 0,
+      "p50_us": 0.0,
+      "p95_us": 0.0
+    },
+    "native_call.observe_transition_delay": {
+      "count": 17,
+      "total_us": 4769.099999999999,
+      "ema_us": 303.8682624516903,
+      "max_us": 446.1,
+      "work_units": 17,
+      "p50_us": 265.6,
+      "p95_us": 423.7
+    },
+    "native_call.outgoing": {
+      "count": 0,
+      "total_us": 0.0,
+      "ema_us": 0.0,
+      "max_us": 0.0,
+      "work_units": 0,
+      "p50_us": 0.0,
+      "p95_us": 0.0
+    },
+    "native_call.outgoing_targets": {
+      "count": 158,
+      "total_us": 345.4000000000001,
+      "ema_us": 1.9180731600991852,
+      "max_us": 9.4,
+      "work_units": 158,
+      "p50_us": 1.4,
+      "p95_us": 5.3
+    },
+    "native_call.planner_transition_batch": {
+      "count": 155,
+      "total_us": 27473.799999999992,
+      "ema_us": 256.1780982598094,
+      "max_us": 483.1,
+      "work_units": 155,
+      "p50_us": 149.6,
+      "p95_us": 324.0
+    },
+    "native_call.predict": {
+      "count": 0,
+      "total_us": 0.0,
+      "ema_us": 0.0,
+      "max_us": 0.0,
+      "work_units": 0,
+      "p50_us": 0.0,
+      "p95_us": 0.0
+    },
+    "native_call.predict_actions_batch": {
+      "count": 0,
+      "total_us": 0.0,
+      "ema_us": 0.0,
+      "max_us": 0.0,
+      "work_units": 0,
+      "p50_us": 0.0,
+      "p95_us": 0.0
+    },
+    "native_call.predict_actions_batch_at": {
+      "count": 160,
+      "total_us": 8782.099999999995,
+      "ema_us": 58.88113100488285,
+      "max_us": 178.1,
+      "work_units": 160,
+      "p50_us": 24.0,
+      "p95_us": 117.6
+    },
+    "native_call.predict_compact": {
+      "count": 0,
+      "total_us": 0.0,
+      "ema_us": 0.0,
+      "max_us": 0.0,
+      "work_units": 0,
+      "p50_us": 0.0,
+      "p95_us": 0.0
+    },
+    "native_call.process_assembly_bridge": {
+      "count": 0,
+      "total_us": 0.0,
+      "ema_us": 0.0,
+      "max_us": 0.0,
+      "work_units": 0,
+      "p50_us": 0.0,
+      "p95_us": 0.0
+    },
+    "native_call.propagate": {
+      "count": 109,
+      "total_us": 1035.3000000000002,
+      "ema_us": 10.837741119464473,
+      "max_us": 23.8,
+      "work_units": 109,
+      "p50_us": 8.6,
+      "p95_us": 18.1
+    },
+    "native_call.publish_brain_snapshot": {
+      "count": 246,
+      "total_us": 372.8000000000003,
+      "ema_us": 1.7850326562006416,
+      "max_us": 4.5,
+      "work_units": 246,
+      "p50_us": 1.4,
+      "p95_us": 2.2
+    },
+    "native_call.publish_dialogue_line": {
+      "count": 0,
+      "total_us": 0.0,
+      "ema_us": 0.0,
+      "max_us": 0.0,
+      "work_units": 0,
+      "p50_us": 0.0,
+      "p95_us": 0.0
+    },
+    "native_call.receive": {
+      "count": 0,
+      "total_us": 0.0,
+      "ema_us": 0.0,
+      "max_us": 0.0,
+      "work_units": 0,
+      "p50_us": 0.0,
+      "p95_us": 0.0
+    },
+    "native_call.receive_batch": {
+      "count": 150,
+      "total_us": 763.4999999999999,
+      "ema_us": 4.986288612312048,
+      "max_us": 12.7,
+      "work_units": 150,
+      "p50_us": 4.9,
+      "p95_us": 6.8
+    },
+    "native_call.relation_handle_valid": {
+      "count": 0,
+      "total_us": 0.0,
+      "ema_us": 0.0,
+      "max_us": 0.0,
+      "work_units": 0,
+      "p50_us": 0.0,
+      "p95_us": 0.0
+    },
+    "native_call.relation_state": {
+      "count": 17,
+      "total_us": 32.099999999999994,
+      "ema_us": 1.889029705866937,
+      "max_us": 2.4,
+      "work_units": 17,
+      "p50_us": 1.9,
+      "p95_us": 2.1
+    },
+    "native_call.remove_cognit": {
+      "count": 0,
+      "total_us": 0.0,
+      "ema_us": 0.0,
+      "max_us": 0.0,
+      "work_units": 0,
+      "p50_us": 0.0,
+      "p95_us": 0.0
+    },
+    "native_call.remove_relation": {
+      "count": 0,
+      "total_us": 0.0,
+      "ema_us": 0.0,
+      "max_us": 0.0,
+      "work_units": 0,
+      "p50_us": 0.0,
+      "p95_us": 0.0
+    },
+    "native_call.restore_assembly_bridge_state": {
+      "count": 0,
+      "total_us": 0.0,
+      "ema_us": 0.0,
+      "max_us": 0.0,
+      "work_units": 0,
+      "p50_us": 0.0,
+      "p95_us": 0.0
+    },
+    "native_call.restore_continuous_relation_time_state": {
+      "count": 0,
+      "total_us": 0.0,
+      "ema_us": 0.0,
+      "max_us": 0.0,
+      "work_units": 0,
+      "p50_us": 0.0,
+      "p95_us": 0.0
+    },
+    "native_call.restore_continuous_time_state": {
+      "count": 0,
+      "total_us": 0.0,
+      "ema_us": 0.0,
+      "max_us": 0.0,
+      "work_units": 0,
+      "p50_us": 0.0,
+      "p95_us": 0.0
+    },
+    "native_call.restore_dirty_relation_state": {
+      "count": 0,
+      "total_us": 0.0,
+      "ema_us": 0.0,
+      "max_us": 0.0,
+      "work_units": 0,
+      "p50_us": 0.0,
+      "p95_us": 0.0
+    },
+    "native_call.restore_homeostasis_runtime_state": {
+      "count": 0,
+      "total_us": 0.0,
+      "ema_us": 0.0,
+      "max_us": 0.0,
+      "work_units": 0,
+      "p50_us": 0.0,
+      "p95_us": 0.0
+    },
+    "native_call.restore_temporal_state": {
+      "count": 0,
+      "total_us": 0.0,
+      "ema_us": 0.0,
+      "max_us": 0.0,
+      "work_units": 0,
+      "p50_us": 0.0,
+      "p95_us": 0.0
+    },
+    "native_call.restore_transition_history": {
+      "count": 0,
+      "total_us": 0.0,
+      "ema_us": 0.0,
+      "max_us": 0.0,
+      "work_units": 0,
+      "p50_us": 0.0,
+      "p95_us": 0.0
+    },
+    "native_call.save_graph": {
+      "count": 0,
+      "total_us": 0.0,
+      "ema_us": 0.0,
+      "max_us": 0.0,
+      "work_units": 0,
+      "p50_us": 0.0,
+      "p95_us": 0.0
+    },
+    "native_call.set_activity": {
+      "count": 0,
+      "total_us": 0.0,
+      "ema_us": 0.0,
+      "max_us": 0.0,
+      "work_units": 0,
+      "p50_us": 0.0,
+      "p95_us": 0.0
+    },
+    "native_call.set_cognit_fields": {
+      "count": 178,
+      "total_us": 629.3000000000008,
+      "ema_us": 2.2489234383321306,
+      "max_us": 8.6,
+      "work_units": 178,
+      "p50_us": 2.4,
+      "p95_us": 7.6
+    },
+    "native_call.set_cognit_states": {
+      "count": 6,
+      "total_us": 38.3,
+      "ema_us": 6.563488000000001,
+      "max_us": 8.5,
+      "work_units": 6,
+      "p50_us": 5.6,
+      "p95_us": 7.8
+    },
+    "native_call.set_compute_mode": {
+      "count": 0,
+      "total_us": 0.0,
+      "ema_us": 0.0,
+      "max_us": 0.0,
+      "work_units": 0,
+      "p50_us": 0.0,
+      "p95_us": 0.0
+    },
+    "native_call.set_evidence_window": {
+      "count": 0,
+      "total_us": 0.0,
+      "ema_us": 0.0,
+      "max_us": 0.0,
+      "work_units": 0,
+      "p50_us": 0.0,
+      "p95_us": 0.0
+    },
+    "native_call.set_refractory": {
+      "count": 0,
+      "total_us": 0.0,
+      "ema_us": 0.0,
+      "max_us": 0.0,
+      "work_units": 0,
+      "p50_us": 0.0,
+      "p95_us": 0.0
+    },
+    "native_call.set_relation_capacity": {
+      "count": 0,
+      "total_us": 0.0,
+      "ema_us": 0.0,
+      "max_us": 0.0,
+      "work_units": 0,
+      "p50_us": 0.0,
+      "p95_us": 0.0
+    },
+    "native_call.temporal_state": {
+      "count": 0,
+      "total_us": 0.0,
+      "ema_us": 0.0,
+      "max_us": 0.0,
+      "work_units": 0,
+      "p50_us": 0.0,
+      "p95_us": 0.0
+    },
+    "native_call.timed_successors": {
+      "count": 3876,
+      "total_us": 22657.50000000001,
+      "ema_us": 7.4261099056511695,
+      "max_us": 61.0,
+      "work_units": 3876,
+      "p50_us": 5.2,
+      "p95_us": 14.6
+    },
+    "native_call.transition_history": {
+      "count": 0,
+      "total_us": 0.0,
+      "ema_us": 0.0,
+      "max_us": 0.0,
+      "work_units": 0,
+      "p50_us": 0.0,
+      "p95_us": 0.0
+    },
+    "native_call.transition_metrics": {
+      "count": 0,
+      "total_us": 0.0,
+      "ema_us": 0.0,
+      "max_us": 0.0,
+      "work_units": 0,
+      "p50_us": 0.0,
+      "p95_us": 0.0
+    },
+    "native_call.update_failed_action": {
+      "count": 22,
+      "total_us": 117.79999999999998,
+      "ema_us": 5.524822776015657,
+      "max_us": 7.2,
+      "work_units": 22,
+      "p50_us": 5.1,
+      "p95_us": 6.2
+    },
+    "native_call.update_outcomes": {
+      "count": 17,
+      "total_us": 698.0,
+      "ema_us": 44.82683388615132,
+      "max_us": 60.3,
+      "work_units": 17,
+      "p50_us": 41.8,
+      "p95_us": 50.6
+    },
+    "native_call.update_relation": {
+      "count": 85,
+      "total_us": 85.9,
+      "ema_us": 1.0320778923368645,
+      "max_us": 4.4,
+      "work_units": 85,
+      "p50_us": 0.8,
+      "p95_us": 1.7
+    },
+    "native_call.update_transition_evidence": {
+      "count": 39,
+      "total_us": 634.4,
+      "ema_us": 15.645177850465696,
+      "max_us": 49.5,
+      "work_units": 39,
+      "p50_us": 14.8,
+      "p95_us": 27.9
+    },
+    "native_call.upsert_relation_states_batch": {
+      "count": 0,
+      "total_us": 0.0,
+      "ema_us": 0.0,
+      "max_us": 0.0,
+      "work_units": 0,
+      "p50_us": 0.0,
+      "p95_us": 0.0
+    },
+    "pattern_matching_birth": {
+      "count": 40,
+      "total_us": 15394.699999999999,
+      "ema_us": 378.87203385961743,
+      "max_us": 498.5,
+      "work_units": 40,
+      "p50_us": 376.4,
+      "p95_us": 482.7
+    },
+    "physiology_numeric_update": {
+      "count": 286,
+      "total_us": 2005.8999999999999,
+      "ema_us": 7.59012301826746,
+      "max_us": 22.5,
+      "work_units": 286,
+      "p50_us": 6.3,
+      "p95_us": 9.5
+    },
+    "planner_beam_refinement": {
+      "count": 40,
+      "total_us": 1372173.5999999999,
+      "ema_us": 34802.26747382711,
+      "max_us": 43649.4,
+      "work_units": 40,
+      "p50_us": 34479.6,
+      "p95_us": 40243.5
+    },
+    "planner_transition_batch_boundary": {
+      "count": 155,
+      "total_us": 61453.2,
+      "ema_us": 489.2847146657501,
+      "max_us": 1023.7,
+      "work_units": 155,
+      "p50_us": 334.1,
+      "p95_us": 665.0
+    },
+    "prediction_batch": {
+      "count": 160,
+      "total_us": 20629.299999999996,
+      "ema_us": 126.8704774034354,
+      "max_us": 386.2,
+      "work_units": 160,
+      "p50_us": 53.8,
+      "p95_us": 256.2
+    },
+    "presentation_snapshot_preparation": {
+      "count": 246,
+      "total_us": 2293.5,
+      "ema_us": 11.019520037981554,
+      "max_us": 23.4,
+      "work_units": 246,
+      "p50_us": 8.8,
+      "p95_us": 12.3
+    },
+    "relation_evidence": {
+      "count": 39,
+      "total_us": 846.9000000000001,
+      "ema_us": 21.64581475354235,
+      "max_us": 54.6,
+      "work_units": 39,
+      "p50_us": 20.4,
+      "p95_us": 32.9
+    },
+    "relation_lifecycle_boundary": {
+      "count": 0,
+      "total_us": 0.0,
+      "ema_us": 0.0,
+      "max_us": 0.0,
+      "work_units": 0,
+      "p50_us": 0.0,
+      "p95_us": 0.0
+    },
+    "relation_materialization": {
+      "count": 17,
+      "total_us": 1396.9,
+      "ema_us": 119.40115149160057,
+      "max_us": 208.2,
+      "work_units": 17,
+      "p50_us": 82.3,
+      "p95_us": 207.7
+    },
+    "scheduler_dispatch": {
+      "count": 285,
+      "total_us": 2572081.1000000006,
+      "ema_us": 10872.371381724935,
+      "max_us": 44149.8,
+      "work_units": 285,
+      "p50_us": 108.6,
+      "p95_us": 36989.2
+    },
+    "sensory_decomposition": {
+      "count": 40,
+      "total_us": 17417.0,
+      "ema_us": 405.7111788633739,
+      "max_us": 583.5,
+      "work_units": 40,
+      "p50_us": 411.9,
+      "p95_us": 561.7
+    },
+    "wave_propagation": {
+      "count": 109,
+      "total_us": 2500.7999999999993,
+      "ema_us": 25.188931220768815,
+      "max_us": 43.7,
+      "work_units": 109,
+      "p50_us": 22.4,
+      "p95_us": 34.4
+    },
+    "world_action_completion": {
+      "count": 39,
+      "total_us": 1793.2999999999997,
+      "ema_us": 42.65356939204307,
+      "max_us": 60.3,
+      "work_units": 39,
+      "p50_us": 47.1,
+      "p95_us": 53.0
+    }
+  }
+}

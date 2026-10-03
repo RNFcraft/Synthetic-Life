@@ -1,0 +1,77 @@
+def _search(self,core,current:set[int],tick:int,semantic_cache=None,initial_predictions=None)->Plan:
+    epistemic_cache,progress_cache,shared_memory=semantic_cache or ({},{},{})
+    initial_state=frozenset(current);goal=set(core.state.goal.target_cognit_ids) if core.state.goal else set();beam=[((),initial_state,(),0.,1.,(),core.patterns.layer.previous_internal,0.,0.)];prediction_cache=({initial_state:initial_predictions} if initial_predictions is not None else {});transition_cache={};loop_cache={};memory_cache={}
+    memory_index={}
+    if shared_memory:memory_index=shared_memory
+    else:
+        for memory in core.memory.structures.values():
+            for node_id in (memory.cognit_id,memory.place_cognit_id):memory_index[node_id]=max(memory_index.get(node_id,float('-inf')),memory.confidence)
+        shared_memory.update(memory_index)
+    best=beam[0]
+    self.homeostatic_predictions_considered=0;self.homeostatic_prediction_confidence=0.;self.homeostatic_plan_component=0.
+    for _ in range(self.settings.planning_horizon):
+        expanded=[]
+        if core.backend:
+            layer_states=[];seen=set()
+            for _,state,_,_,_,_,_,_,_ in beam:
+                needs_predictions=state not in prediction_cache
+                needs_effects=core.target_structure is not None and any((state,action) not in progress_cache for action in core.available_actions)
+                if (needs_predictions or needs_effects) and state not in seen:seen.add(state);layer_states.append(state)
+            if layer_states:
+                core.backend.prediction_tick=core.trace.entries[-1].tick+1 if core.trace.entries else 0
+                for state,(predictions,effects) in core.backend.planner_transition_batch(layer_states,core.available_actions).items():
+                    if state not in prediction_cache:prediction_cache[state]=predictions
+                    if core.target_structure is not None:
+                        for candidate_action,values in effects.items():
+                            key=(state,candidate_action)
+                            if key not in progress_cache:
+                                predicted_ids={i for i,p in values.items() if p>=.25}
+                                progress_cache[key]=core.target_mismatch-core.belief_scene.predicted_mismatch(core.target_structure,predicted_ids)
+        for actions,state,states,score,confidence,action_values,levels,component,elapsed in beam:
+            predictions=prediction_cache.get(state)
+            if predictions is None:
+                predictions=core._graph_predictions_for_actions(set(state),core.available_actions);prediction_cache[state]=predictions
+            if core.backend and core.target_structure is not None and any((state,candidate_action) not in progress_cache for candidate_action in core.available_actions):
+                effects=core.backend.action_effects_batch(state,core.available_actions)
+                for candidate_action,values in effects.items():
+                    predicted_ids={i for i,p in values.items() if p>=.25};progress_cache[(state,candidate_action)]=core.target_mismatch-core.belief_scene.predicted_mismatch(core.target_structure,predicted_ids)
+            for action,p in predictions.items():
+                key=(state,action)
+                if key not in transition_cache:
+                    transition_cache[key]=(frozenset(i for i,v in p.items() if v>=.25),sum(p.get(i,0.) for i in goal)/max(1,len(goal)),sum(p.values())/max(1,len(p)))
+                next_state,alignment,conf=transition_cache[key]
+                if next_state not in memory_cache:
+                    values=[memory_index[i] for i in next_state if i in memory_index];memory_cache[next_state]=max(values) if values else .5
+                memory_conf=memory_cache[next_state]
+                if next_state not in loop_cache:loop_cache[next_state]=core.trace.loop_score(next_state,core.settings.loop_max_period,core.settings.loop_min_repeats) if next_state else 0.
+                loop=loop_cache[next_state]
+                if key not in epistemic_cache:epistemic_cache[key]=core.affordances.epistemic(state,action)
+                if key not in progress_cache:progress_cache[key]=core.predicted_target_progress(set(state),action)
+                epistemic=epistemic_cache[key];progress=progress_cache[key];value=score+alignment+.1*conf+.12*memory_conf+.45*epistemic+.8*progress-.12*loop-.03*len(actions)
+                estimate=self.homeostatic_estimate(core,state,action,levels,elapsed,next_state)
+                next_levels=levels;next_component=component;next_elapsed=elapsed;timed_refinement=False
+                if estimate is not None:
+                    if self.settings.delayed_homeostatic_prediction_enabled and self.temporal_diagnostics["usable"]:
+                        timed_refinement=True
+                        next_elapsed=self.temporal_diagnostics["elapsed"]
+                        next_state=frozenset(self.temporal_diagnostics["projected_state"])
+                        if estimate.predictions:conf=min(conf,estimate.confidence)
+                    self.homeostatic_predictions_considered+=estimate.predictions
+                    self.homeostatic_prediction_confidence=max(self.homeostatic_prediction_confidence,estimate.confidence)
+                    next_levels=estimate.levels
+                    next_component=max(-1.,min(1.,component+confidence*estimate.progress))
+                    value+=.8*(next_component-component)
+                next_confidence=confidence*(max(0.,conf) if timed_refinement else max(.05,conf))
+                observer = core.diagnostic_observer
+                if observer is not None:
+                    observer.plan_candidate(core, actions+(action,), state, next_state,
+                        {"prior":score,"alignment":alignment,"confidence":.1*transition_cache[key][2],
+                         "memory":.12*memory_conf,"epistemic":.45*epistemic,"target_progress":.8*progress,
+                         "loop":-.12*loop,"depth":-.03*len(actions),
+                         "homeostatic":.8*(next_component-component),"total":value},
+                        next_confidence, estimate, timed_refinement)
+                expanded.append((actions+(action,),next_state,states+(next_state,),value,next_confidence,action_values+(action.value,),next_levels,next_component,next_elapsed))
+        if not expanded:break
+        beam=nsmallest(self.settings.planning_beam_width,expanded,key=lambda x:(-x[3],x[5]))
+        if beam[0][3]>best[3]:best=beam[0]
+    actions,state,states,score,confidence,_,_,component,_=best;self.homeostatic_plan_component=.8*component;alignment=len(state&goal)/max(1,len(goal));loop=core.trace.loop_score(state,core.settings.loop_max_period,core.settings.loop_min_repeats) if state else 0.;return Plan(actions,states,score,confidence,alignment,1-confidence,loop,tick,(self.plan.revision+1 if self.plan else 0))

@@ -44,6 +44,7 @@ class NativeBrainEngine {
 public:
   void set_compute_mode(const std::string&);
   ComputeDispatcher& compute_dispatcher() { return compute_; }
+  void calibrate_planner_compute(unsigned repeats=4);
   explicit NativeBrainEngine(std::size_t evidence_window = 512) : evidence_window_(evidence_window), brain_channel_(std::make_shared<BrainSnapshotChannel>()), dialogue_channel_(std::make_shared<DialogueSnapshotChannel>()) {}
   void publish_brain_snapshot(double world_time, std::uint64_t cognitive_tick, std::uint64_t generation, std::span<const std::uint32_t> active, bool force=true);
   std::shared_ptr<BrainSnapshotChannel> brain_snapshot_channel() const { return brain_channel_; }
@@ -103,7 +104,9 @@ public:
   std::vector<std::vector<std::pair<std::uint32_t, double>>> predict_actions_batch_at(std::span<const std::uint32_t> active, std::span<const std::uint8_t> actions, std::uint64_t world_tick, double confidence_decay);
   std::vector<std::pair<std::uint32_t, double>> action_effects(std::span<const std::uint32_t> active, std::uint8_t action, double probability_floor);
   std::vector<std::vector<std::pair<std::uint32_t, double>>> action_effects_batch(std::span<const std::uint32_t> active, std::span<const std::uint8_t> actions, double probability_floor);
-  std::vector<PlannerTransition> planner_transition_batch(const std::vector<std::vector<std::uint32_t>> &states, std::span<const std::uint8_t> actions, std::uint64_t world_tick, double confidence_decay, double probability_floor);
+  std::vector<PlannerTransition> planner_transition_batch(const std::vector<std::vector<std::uint32_t>> &states, std::span<const std::uint8_t> actions, std::uint64_t world_tick, double confidence_decay, double probability_floor, std::span<const std::uint8_t> prediction_needed = {});
+  // Diagnostic counter for actual numeric launches, never persisted.
+  std::uint64_t planner_numeric_launches() const { return planner_numeric_launches_; }
   WaveResult propagate(std::span<const std::uint32_t> seeds, std::uint64_t cognitive_tick, std::uint32_t max_steps = 8, double retention = .72, double refractory_attenuation = .2, std::uint16_t refractory_wave_steps = 2);
   std::vector<double> cognit_state(std::span<const std::uint32_t> ids) const;
   std::vector<double> cognit_state_full(std::span<const std::uint32_t> ids) const;
@@ -151,6 +154,11 @@ public:
 private:
   std::chrono::steady_clock::time_point last_presentation_{};
   ComputeDispatcher compute_;
+  std::uint64_t planner_numeric_launches_{};
+  std::size_t prepared_common_factor_count_{};
+  std::size_t prepare_prediction_factors_at(std::span<const std::uint32_t>, std::span<const std::uint8_t>, std::uint64_t, double);
+  std::size_t prepare_effect_factors(std::span<const std::uint32_t>, std::span<const std::uint8_t>, double);
+  std::vector<std::vector<std::uint32_t>> append_conditioned(ReductionBatch&, std::span<const std::uint8_t>, bool);
   std::vector<std::vector<std::pair<std::uint32_t,double>>> reduce_conditioned(
       std::span<const std::uint8_t> actions, KernelClass kernel, bool common);
   std::shared_ptr<BrainSnapshotChannel> brain_channel_;

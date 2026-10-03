@@ -1,0 +1,296 @@
+{
+  "provenance": {
+    "head": "774ada8d80050ee5a3e58ea300a037a524ec388e",
+    "branch": "main",
+    "working_tree_status": " M consciousness/planning.py\n M cpp/include/se/native_brain_engine.hpp\n M cpp/src/bindings.cpp\n M cpp/src/native_brain_engine.cpp\n M docs/V0_9_3B_RESULTS.md\n M tools/benchmark_v093b.py\n M tools/differential_v093b.py\n?? runs/v093b-phase2-before.json\n?? runs/v093b-phase2-planner-after.json\n?? runs/v093b-phase2-planner-before.json\n?? telemetry/planner_profile.py\n?? telemetry/provenance.py\n?? tests/fixtures/\n?? tests/test_v093b_planner_batch.py\n?? tools/profile_planner_v093b.py\n",
+    "dirty": true,
+    "tracked_diff_sha256": "a2f8a2cf877c0ae9de632fab4147ec2377c50e5159f43cbf64a8f2a31184a337",
+    "untracked_sha256": {
+      "runs/v093b-phase2-before.json": "72f343c90d4d1f3e2c93541108cba924c20bd37fe80b148effb042f8ac762209",
+      "runs/v093b-phase2-planner-after.json": "9396ad25381e92e5956a1d8c112dffad5fc433b201a9ba51c20fa4f82ba995e1",
+      "runs/v093b-phase2-planner-before.json": "b581260ed4b7bc66025224a6903a2c51f547526d0afb923114b57286a3a6fe64",
+      "telemetry/planner_profile.py": "754eaaf4d96b89032cbf166ac15d0048c2f34fde40e45b1cafcaa71c92fb8442",
+      "telemetry/provenance.py": "90e20381de416c19fc6488e2cec897284858969751c08a678f1ef04a9e90e0c7",
+      "tests/fixtures/planner_search_774ada8.py.txt": "3ea1432841bb4c5564d39908e67103143eb8f08ff585e4171149b8b08972d462",
+      "tests/test_v093b_planner_batch.py": "c413f2b4cd650bb83f3cfc184c8cb361b14608a4e1d2fa369fa02012744f1e6d",
+      "tools/profile_planner_v093b.py": "8d889ba28b627482782c4993aeeda6a1074f25ebeddd071dc2fb304363ad5d08"
+    },
+    "native_module_sha256": "b2eea41c1dbdb0af1a87fdfcce19e724eeb3fe7ba99594839d8c6206a455c8cf",
+    "python": "3.11.9",
+    "platform": "Windows-10-10.0.26200-SP0",
+    "hashseed": "1"
+  },
+  "seconds": 6.0,
+  "scenario": "scenarios/v092/train_adjacent_north.sescenario",
+  "brain": "results/v093b/phase2-hash1/brains/episode_022.sebrain",
+  "actions": 39,
+  "events": 285,
+  "causal_digest": "ecba58913a6e35f1a33d637442b21179634d84c786b2f8c2f8629efe2ce229d8",
+  "ffi_calls": 1485,
+  "ffi_calls_per_completed_action": 38.07692307692308,
+  "planner": {
+    "instrumented": true,
+    "timing_unit": "line intervals; nested calls included",
+    "searches": 40,
+    "states_expanded": 1000,
+    "state_action_pairs": 17000,
+    "stages": {
+      "candidate_generation": {
+        "count": 160,
+        "total_us": 165.10000000000028,
+        "ema_us": 0.9747945673805244,
+        "max_us": 2.4,
+        "work_units": 160,
+        "p50_us": 0.9,
+        "p95_us": 1.5
+      },
+      "state_action_expansion": {
+        "count": 19160,
+        "total_us": 19567.600000000675,
+        "ema_us": 0.9589762323589982,
+        "max_us": 22.4,
+        "work_units": 19160,
+        "p50_us": 1.0,
+        "p95_us": 1.2
+      },
+      "prediction_request_preparation": {
+        "count": 2315,
+        "total_us": 2474.1000000000404,
+        "ema_us": 1.214289598076661,
+        "max_us": 5.2,
+        "work_units": 2315,
+        "p50_us": 0.9,
+        "p95_us": 2.0
+      },
+      "native_batch_call": {
+        "count": 359,
+        "total_us": 74537.69999999994,
+        "ema_us": 331.45736697970784,
+        "max_us": 3927.4,
+        "work_units": 359,
+        "p50_us": 1.5,
+        "p95_us": 747.8
+      },
+      "future_state_construction": {
+        "count": 20468,
+        "total_us": 78437.30000000024,
+        "ema_us": 1.5823199817725078,
+        "max_us": 70.2,
+        "work_units": 20468,
+        "p50_us": 1.6,
+        "p95_us": 17.5
+      },
+      "score_decomposition": {
+        "count": 68373,
+        "total_us": 98947.69999998884,
+        "ema_us": 1.4763319554780867,
+        "max_us": 70.8,
+        "work_units": 68373,
+        "p50_us": 1.2,
+        "p95_us": 2.7
+      },
+      "loop_epistemic": {
+        "count": 68040,
+        "total_us": 323207.70000001823,
+        "ema_us": 1.3320976929421509,
+        "max_us": 319.1,
+        "work_units": 68040,
+        "p50_us": 1.3,
+        "p95_us": 1.5
+      },
+      "homeostatic_estimate": {
+        "count": 17000,
+        "total_us": 949045.3999999922,
+        "ema_us": 38.52731403482095,
+        "max_us": 1277.7,
+        "work_units": 17000,
+        "p50_us": 32.7,
+        "p95_us": 287.4
+      },
+      "candidate_object_creation": {
+        "count": 17040,
+        "total_us": 39509.29999999855,
+        "ema_us": 3.9717974151248976,
+        "max_us": 18.5,
+        "work_units": 17040,
+        "p50_us": 2.3,
+        "p95_us": 2.7
+      },
+      "beam_sorting_and_ties": {
+        "count": 160,
+        "total_us": 10372.2,
+        "ema_us": 64.3902179213855,
+        "max_us": 183.6,
+        "work_units": 160,
+        "p50_us": 71.2,
+        "p95_us": 98.2
+      },
+      "deduplication": {
+        "count": 1000,
+        "total_us": 1235.7000000000028,
+        "ema_us": 1.2152385668980776,
+        "max_us": 7.4,
+        "work_units": 1000,
+        "p50_us": 1.1,
+        "p95_us": 2.0
+      },
+      "other": {
+        "count": 225088,
+        "total_us": 241770.4999998221,
+        "ema_us": 1.0307460030259605,
+        "max_us": 42.0,
+        "work_units": 225088,
+        "p50_us": 1.0,
+        "p95_us": 1.7
+      }
+    },
+    "tie_handling": "included in unchanged beam_sorting_and_ties",
+    "deduplication": "request state deduplication; no candidate deduplication exists"
+  },
+  "host": {
+    "homeostasis_numeric_boundary": {
+      "count": 40,
+      "total_us": 292.70000000000005,
+      "ema_us": 7.03366494224741,
+      "max_us": 11.8,
+      "work_units": 40,
+      "p50_us": 7.1,
+      "p95_us": 9.4
+    },
+    "memory_recall": {
+      "count": 80,
+      "total_us": 2878.3999999999996,
+      "ema_us": 31.42722098245376,
+      "max_us": 68.6,
+      "work_units": 80,
+      "p50_us": 33.6,
+      "p95_us": 57.4
+    },
+    "micro_neural_boundary": {
+      "count": 0,
+      "total_us": 0.0,
+      "ema_us": 0.0,
+      "max_us": 0.0,
+      "work_units": 0,
+      "p50_us": 0.0,
+      "p95_us": 0.0
+    },
+    "pattern_matching_birth": {
+      "count": 40,
+      "total_us": 16994.7,
+      "ema_us": 396.3883071488775,
+      "max_us": 865.8,
+      "work_units": 40,
+      "p50_us": 422.0,
+      "p95_us": 539.3
+    },
+    "physiology_numeric_update": {
+      "count": 286,
+      "total_us": 2298.9,
+      "ema_us": 7.752759489848774,
+      "max_us": 22.9,
+      "work_units": 286,
+      "p50_us": 6.8,
+      "p95_us": 11.9
+    },
+    "planner_beam_refinement": {
+      "count": 40,
+      "total_us": 2511323.8,
+      "ema_us": 63524.9787829524,
+      "max_us": 83587.8,
+      "work_units": 40,
+      "p50_us": 63234.8,
+      "p95_us": 70196.1
+    },
+    "planner_transition_batch_boundary": {
+      "count": 155,
+      "total_us": 73177.9,
+      "ema_us": 897.7859555930288,
+      "max_us": 3919.2,
+      "work_units": 155,
+      "p50_us": 393.3,
+      "p95_us": 948.8
+    },
+    "prediction_batch": {
+      "count": 160,
+      "total_us": 22615.399999999994,
+      "ema_us": 116.26672687921318,
+      "max_us": 437.0,
+      "work_units": 160,
+      "p50_us": 84.0,
+      "p95_us": 287.8
+    },
+    "presentation_snapshot_preparation": {
+      "count": 246,
+      "total_us": 2359.9999999999995,
+      "ema_us": 9.023518830728138,
+      "max_us": 28.1,
+      "work_units": 246,
+      "p50_us": 8.5,
+      "p95_us": 14.3
+    },
+    "relation_evidence": {
+      "count": 39,
+      "total_us": 910.7,
+      "ema_us": 22.48237038789253,
+      "max_us": 63.4,
+      "work_units": 39,
+      "p50_us": 22.6,
+      "p95_us": 34.5
+    },
+    "relation_lifecycle_boundary": {
+      "count": 0,
+      "total_us": 0.0,
+      "ema_us": 0.0,
+      "max_us": 0.0,
+      "work_units": 0,
+      "p50_us": 0.0,
+      "p95_us": 0.0
+    },
+    "relation_materialization": {
+      "count": 17,
+      "total_us": 1424.9999999999995,
+      "ema_us": 112.37454512505687,
+      "max_us": 216.0,
+      "work_units": 17,
+      "p50_us": 82.8,
+      "p95_us": 179.0
+    },
+    "scheduler_dispatch": {
+      "count": 285,
+      "total_us": 3654324.999999999,
+      "ema_us": 16269.799296919631,
+      "max_us": 84062.7,
+      "work_units": 285,
+      "p50_us": 120.0,
+      "p95_us": 66886.2
+    },
+    "sensory_decomposition": {
+      "count": 40,
+      "total_us": 18865.2,
+      "ema_us": 424.58090411944374,
+      "max_us": 1097.0,
+      "work_units": 40,
+      "p50_us": 424.3,
+      "p95_us": 609.3
+    },
+    "wave_propagation": {
+      "count": 109,
+      "total_us": 2971.9999999999995,
+      "ema_us": 30.690935262063437,
+      "max_us": 85.4,
+      "work_units": 109,
+      "p50_us": 24.1,
+      "p95_us": 48.7
+    },
+    "world_action_completion": {
+      "count": 39,
+      "total_us": 2009.9999999999995,
+      "ema_us": 49.14272360537546,
+      "max_us": 77.0,
+      "work_units": 39,
+      "p50_us": 51.3,
+      "p95_us": 65.7
+    }
+  }
+}

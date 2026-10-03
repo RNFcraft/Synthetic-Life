@@ -1,0 +1,1815 @@
+{
+  "provenance": {
+    "head": "774ada8d80050ee5a3e58ea300a037a524ec388e",
+    "branch": "main",
+    "working_tree_status": " M consciousness/backends.py\n M consciousness/memory.py\n M consciousness/memory_matching.py\n M consciousness/planning.py\n M consciousness/temporal_prediction.py\n M cpp/CMakeLists.txt\n M cpp/include/se/compute_runtime.hpp\n M cpp/include/se/native_brain_engine.hpp\n M cpp/src/bindings.cpp\n M cpp/src/compute_runtime.cpp\n M cpp/src/native_brain_engine.cpp\n M cpp/tests/compute.cpp\n M docs/V0_9_3B_RESULTS.md\n M telemetry/performance.py\n M tests/test_v092_survival_learning.py\n M tests/test_v093b_compute.py\n M tools/benchmark_v093b.py\n M tools/differential_v093b.py\n?? cpp/tests/planner_benchmark.cpp\n?? runs/v093b-phase2-before.json\n?? runs/v093b-phase2-calibration-cpu-build.log\n?? runs/v093b-phase2-calibration-cuda-build.log\n?? runs/v093b-phase2-compute-final-cpu-build.log\n?? runs/v093b-phase2-compute-final-cuda-build.log\n?? runs/v093b-phase2-cpu-build-final.log\n?? runs/v093b-phase2-cpu-build.log\n?? runs/v093b-phase2-cuda-build-final.log\n?? runs/v093b-phase2-cuda-build.log\n?? runs/v093b-phase2-full-hash2-correct.log\n?? runs/v093b-phase2-full-hash2.log\n?? runs/v093b-phase2-matrix-final.json\n?? runs/v093b-phase2-matrix-final.log\n?? runs/v093b-phase2-matrix.json\n?? runs/v093b-phase2-matrix.log\n?? runs/v093b-phase2-native-planner-full.csv\n?? runs/v093b-phase2-native-planner-full.json\n?? runs/v093b-phase2-native-planner.csv\n?? runs/v093b-phase2-native-planner.json\n?? runs/v093b-phase2-planner-after.json\n?? runs/v093b-phase2-planner-before.json\n?? runs/v093b-phase2-planner-trained.json\n?? runs/v093b-phase2-production/\n?? runs/v093b-phase2-shaped-cpu-build.log\n?? runs/v093b-phase2-shaped-cuda-build.log\n?? runs/v093b-phase2-small-after.json\n?? runs/v093b-phase2-stable-trained-reference.json\n?? runs/v093b-phase2-trained-after.json\n?? runs/v093b-phase2-trained-before.json\n?? runs/v093b-phase2-trained-cache-after.json\n?? runs/v093b-phase2-trained-calls-after.json\n?? runs/v093b-phase2-trained-calls-before.json\n?? runs/v093b-phase2-trained-dedup-after.json\n?? runs/v093b-phase2-trained-native-after.json\n?? runs/v093b-phase2-trained-native-before.json\n?? telemetry/planner_profile.py\n?? telemetry/provenance.py\n?? tests/fixtures/\n?? tests/test_v093b_hashseed.py\n?? tests/test_v093b_historical_padding.py\n?? tests/test_v093b_planner_batch.py\n?? tools/audit_hashseed_v093b.py\n?? tools/benchmark_native_v093b.py\n?? tools/benchmark_production_v093b.py\n?? tools/determinism_matrix_v093b.py\n?? tools/profile_planner_v093b.py\n",
+    "dirty": true,
+    "tracked_diff_sha256": "fe47b8062a8e5a38718f3b2eab8131f4afc32b8cf092dbd6b78fccc7c6e5f993",
+    "untracked_sha256": {
+      "cpp/tests/planner_benchmark.cpp": "e3574f39425c8a6fe1e088a754f789ae0d1fa1d3c5bb91a37b8f65ad6653fc5f",
+      "runs/v093b-phase2-before.json": "72f343c90d4d1f3e2c93541108cba924c20bd37fe80b148effb042f8ac762209",
+      "runs/v093b-phase2-calibration-cpu-build.log": "1e21f8ede0b3b2ccdc80de6a78545eaf0587fa5d56eb496cda6bd5987dff4a95",
+      "runs/v093b-phase2-calibration-cuda-build.log": "fc03b35d3401032a1603f27ee50e3d6a629e9603c762184008639f9299102edd",
+      "runs/v093b-phase2-compute-final-cpu-build.log": "328cd07b3513ac02f3eda20d30abf8c321a003b5d6f655ef2bc20612715818b9",
+      "runs/v093b-phase2-compute-final-cuda-build.log": "87bf286e9748791463fcc0d245a79fc3b361f160fca582ad509613d142094594",
+      "runs/v093b-phase2-cpu-build-final.log": "ee19f02d330ddf31b4d11629ffead4d866152064d88754fde385cca1e7ef3ce6",
+      "runs/v093b-phase2-cpu-build.log": "4d8139b3fc2c0651c163c2068451e0f5b572fea1be98786640e03940b751d895",
+      "runs/v093b-phase2-cuda-build-final.log": "45d201a92e9fe09f3ae7dd0e690f5d00f49f008c836aa86234fdfd11d2a21c6f",
+      "runs/v093b-phase2-cuda-build.log": "ca9f7ce3b6f26f37730947021a13609755c7856c74a14562b19c990c4f459107",
+      "runs/v093b-phase2-full-hash2-correct.log": "1dd97419378c9b438cc1ac030c407b8896bdb879e3f3c757930b21c7a15b9b25",
+      "runs/v093b-phase2-full-hash2.log": "2b54dd0c27fcf146753cf781e6d853ca0aaed056730f1f6f2ed276b2d11864f3",
+      "runs/v093b-phase2-matrix-final.json": "8e219ce651cbd9e3b27c4541c5db4f8ec9e66b159051a39b8ab6329c45073ab2",
+      "runs/v093b-phase2-matrix-final.log": "8ec3fbac4244eef32ee89474bb8e5c4af45740da1483a3c00677eac685095ec7",
+      "runs/v093b-phase2-matrix.json": "47f54764cc239bbe7b0c38aca9eb97f13aa19b6d13b581cfec2e49cd183ea3ea",
+      "runs/v093b-phase2-matrix.log": "78dae35485e8dc5512e05e2229100e027c0994e44ed864c0aa37e8cd7d40055d",
+      "runs/v093b-phase2-native-planner-full.csv": "83c6fefe686c7977c0d0d69f35d8592541aeadc834dbe17df3e946c7a7ecfe67",
+      "runs/v093b-phase2-native-planner-full.json": "47027cec92f41b0a57bf99defc85c2d13913d0921f11efc843723ef3bb0f0334",
+      "runs/v093b-phase2-native-planner.csv": "07db1f7955bcd600573d6f5c297af22ab342de6cec253dd49cdb83b58015eb2f",
+      "runs/v093b-phase2-native-planner.json": "2c7d0d7f18abbdbc479195dce7adf4f6932002e65f1b397cfec603afae7951b9",
+      "runs/v093b-phase2-planner-after.json": "9396ad25381e92e5956a1d8c112dffad5fc433b201a9ba51c20fa4f82ba995e1",
+      "runs/v093b-phase2-planner-before.json": "b581260ed4b7bc66025224a6903a2c51f547526d0afb923114b57286a3a6fe64",
+      "runs/v093b-phase2-planner-trained.json": "2b88f44d0275e5edcfb2d33a6094068ddb8147efef1a070a172279d2006f7166",
+      "runs/v093b-phase2-production/small-AUTO-headless.json": "270a3cb852683713caee181a17deaaedb409c42297f036c8895b1d40e677d126",
+      "runs/v093b-phase2-production/small-AUTO-headless.log": "25bb6d6aaf051d7073ae8ed40c8f75e9309cf10e923754a95d5abf2c11923de4",
+      "runs/v093b-phase2-production/small-AUTO-observer.json": "fbd0008c0c85956a34961a69a72165836b4157cd2a0d5573766765784ac499a7",
+      "runs/v093b-phase2-production/small-AUTO-observer.log": "c124388931ed95eb9615d4080376eaa12b06ebe1a7ba12fcabb76e6d41f686a0",
+      "runs/v093b-phase2-production/small-FORCE_CPU_PARALLEL-headless.json": "e376c822c47afb57b1f2af97b57381e5dc4facc565d22fab344ffba1510886d3",
+      "runs/v093b-phase2-production/small-FORCE_CPU_PARALLEL-headless.log": "384f7ac731d6bb6c1ce52e5bfb8a2bac2d8209a583e1b3181ba9e0907fb02a78",
+      "runs/v093b-phase2-production/small-FORCE_CPU_PARALLEL-observer.json": "c7bf648c25c21597072fcac34a575c46ae5b95eaa49436c5150477668d3cc972",
+      "runs/v093b-phase2-production/small-FORCE_CPU_PARALLEL-observer.log": "af824d6834867d34765ebcc048d9c260171ac8dbdb15a9b9104561c7cceadbd3",
+      "runs/v093b-phase2-production/small-FORCE_CPU_SERIAL-headless.json": "79c06e3d7f6993326cea8910597a64237a08b1742bfe6d4f713bc207faf63154",
+      "runs/v093b-phase2-production/small-FORCE_CPU_SERIAL-headless.log": "53a7720eec8108942cb05f3da7ffac53d7170456957d438c6d561efd5780311b",
+      "runs/v093b-phase2-production/small-FORCE_CPU_SERIAL-observer.json": "fc21f09a84d170e7e0a6d57372b91e4f1b0b99bba4bd3d76e5569a2ae465a3d4",
+      "runs/v093b-phase2-production/small-FORCE_CPU_SERIAL-observer.log": "c4c10c67c7108fb22bd290013993107ad858a71d5b17505caa280612b73653fa",
+      "runs/v093b-phase2-production/small-FORCE_GPU-headless.json": "8be321758843fcda5171b84266ba520925f03238dc6f6d24850f46e1dcefc7b1",
+      "runs/v093b-phase2-production/small-FORCE_GPU-headless.log": "720da94384c418d2d1912f1b4f6ab960d7b27c18cf594e882330968ce474649a",
+      "runs/v093b-phase2-production/small-FORCE_GPU-observer.json": "d74a704be654e38ccb59fdd3f30ea3440f68d5ee3ab7b64920fa6a0a6c0d12fe",
+      "runs/v093b-phase2-production/small-FORCE_GPU-observer.log": "071b99269a02e42dac222f2db2eb3c07a2da9ddf6337e254e5493f5e500066f7",
+      "runs/v093b-phase2-production/trained-FORCE_CPU_SERIAL-headless.json": "693dee3f38ec4ffa6915c55bda23ab82f7b24293bfbb9a70df0b3720878a73cd",
+      "runs/v093b-phase2-production/trained-FORCE_CPU_SERIAL-headless.log": "b69580c03da144ffc59e3031fa5397ef3d8a06f3d1747f84148ce77ead5c5b62",
+      "runs/v093b-phase2-shaped-cpu-build.log": "5d4f98e860ebaf17f77d9e70de2fc560ef0311b00b461cd1e1fce930ab698a20",
+      "runs/v093b-phase2-shaped-cuda-build.log": "dddee063b4e0d35ec9c6a123ed73cd111de4602f5d2b1a491a29e66e8123bd26",
+      "runs/v093b-phase2-small-after.json": "36ce0979a378a774acb3c4a5ffd283131bf84ecb42b93b31e34c48f4bee067e4",
+      "runs/v093b-phase2-stable-trained-reference.json": "e17178137934ad823072bef90ad5a23ae966a628d3a50cad8fd6fa12dd0dbfdd",
+      "runs/v093b-phase2-trained-after.json": "9b59ac9f482f3427a6cc5320fe1284381c5aec94decbec4e5b538d9fcc44677d",
+      "runs/v093b-phase2-trained-before.json": "aabc867302520d64f4a73bc205faa11e7d87e53d2f959686bd7e90c35eb94b60",
+      "runs/v093b-phase2-trained-cache-after.json": "5252731257444063d4ede8400d47e604add5b5a3fa57e9cc35a05929228e7f98",
+      "runs/v093b-phase2-trained-calls-after.json": "e6cf2fff45394f42a63a79448376dc25dcb7b66deece8fa4be61259c8a7c54f6",
+      "runs/v093b-phase2-trained-calls-before.json": "f2dd87202b26669a530e4be112cc5dc743b86874f74ca34c7a50d5c95439cf8e",
+      "runs/v093b-phase2-trained-dedup-after.json": "4327bbccd98c600f017cd94e7d9338c1de099afec7fff43036d4cc578ca6a5a6",
+      "runs/v093b-phase2-trained-native-after.json": "2c41906bb0343a164cdf19be5d96525d938ee1255a90f89d3a40472b0e1a6c66",
+      "runs/v093b-phase2-trained-native-before.json": "8d134ce9e4f8a3d476885ba614651e0f248778383bc99142666dceb2dba2164d",
+      "telemetry/planner_profile.py": "25b193528cc173a95ad63cd36c2d37a0278dbd20b4ec8b49de2c7f05e4c7343b",
+      "telemetry/provenance.py": "b4f5082f3f83419ff862e9a0f686ed024f2e2b93ada4ea4d09d865a4b9046931",
+      "tests/fixtures/native_brain_d173280.json": "efcbbc04e23f8640eb8581ceff1924dbc263eb3a528a617e1f668a335e32e3c4",
+      "tests/fixtures/planner_search_774ada8.py.txt": "3ea1432841bb4c5564d39908e67103143eb8f08ff585e4171149b8b08972d462",
+      "tests/test_v093b_hashseed.py": "9b476b51e51d5f82f5a49437df1a7f3a8e61378b1bc83e55a0861d1fd381d08b",
+      "tests/test_v093b_historical_padding.py": "1efdd7d21b001af47cadc93047054b05bfe76e1134ae0333a6840fb85584f644",
+      "tests/test_v093b_planner_batch.py": "fe6c7d4254cf983f8e667547047c104e8271571c0a9dba72c9775d953d9ae1c3",
+      "tools/audit_hashseed_v093b.py": "39a9c91d83e5327901fede0ce17c3afd4612f372bcbe2a5cc3a52e66633935ed",
+      "tools/benchmark_native_v093b.py": "0ff86eb07570ff765cc0f9fa5bed9ac2f7184a853e8c5003f1abc5398e302120",
+      "tools/benchmark_production_v093b.py": "cc6657abc5f2646ff0935f3e47e723f0849cbdc0b5df3afb6f4cc9451c0cdb9e",
+      "tools/determinism_matrix_v093b.py": "0ea9b723c81bf7057364e73470cdb660aad4944ec5b66bf93931cedfc1e67aec",
+      "tools/profile_planner_v093b.py": "507bfc0d271574cc7c3f1a1afcdeb8c55a092fd8ceb567badd5c7061df87ecda"
+    },
+    "native_module_sha256": "07fcdc0b85eb56a26ba56a4bb1ecb70349796ca7b47998f8fabef0e4e7938d9a",
+    "native_module_path": "D:\\projects\\synth_life\\cpp\\build-v093b-cuda\\module\\_native_brain.cp311-win_amd64.pyd",
+    "deployed_native_module_sha256": "8a8b3d7b9f55cd879970ae8949019528289583fe03d321734073dad220d603f7",
+    "python": "3.11.9",
+    "platform": "Windows-10-10.0.26200-SP0",
+    "hashseed": "1"
+  },
+  "seconds": 6.0,
+  "mode": "FORCE_CPU_SERIAL",
+  "observer": true,
+  "scenario": "scenarios/v092/train_adjacent_north.sescenario",
+  "brain": "results/v093b/phase2-canonical1/brains/episode_022.sebrain",
+  "reference_search": false,
+  "trials": [
+    {
+      "worldtime_per_second": 6.506631721652472,
+      "elapsed_seconds": 0.9221361000090837,
+      "actions": 39,
+      "events": 285,
+      "digest": "ecba58913a6e35f1a33d637442b21179634d84c786b2f8c2f8629efe2ce229d8",
+      "frames": 233,
+      "presentation_telemetry": [
+        41.9,
+        0.8,
+        3.072,
+        519096.0,
+        49056.0,
+        3.0,
+        130.0,
+        0.0
+      ],
+      "compute_telemetry": [
+        {
+          "kernel": 0,
+          "backend": 0,
+          "switches": 0,
+          "reason": "uncalibrated: CPU serial",
+          "last_us": 0.0,
+          "last_work_units": 0.0,
+          "workload": {
+            "cognits": 0,
+            "relations": 0,
+            "source_visits": 0,
+            "states": 0,
+            "actions": 0,
+            "state_action_pairs": 0,
+            "average_active_degree": 0.0,
+            "relations_traversed": 0,
+            "factors_reduced": 0,
+            "prediction_and_effect_targets": 0,
+            "numeric_work_units": 0,
+            "gpu_memory_upper_bound": 0
+          },
+          "estimates": [
+            [
+              0,
+              0.0,
+              0.0
+            ],
+            [
+              0,
+              0.0,
+              0.0
+            ],
+            [
+              0,
+              0.0,
+              0.0
+            ]
+          ]
+        },
+        {
+          "kernel": 1,
+          "backend": 0,
+          "switches": 0,
+          "reason": "forced host mode",
+          "last_us": 0.3,
+          "last_work_units": 63.0,
+          "workload": {
+            "cognits": 0,
+            "relations": 0,
+            "source_visits": 0,
+            "states": 0,
+            "actions": 0,
+            "state_action_pairs": 0,
+            "average_active_degree": 0.0,
+            "relations_traversed": 0,
+            "factors_reduced": 0,
+            "prediction_and_effect_targets": 0,
+            "numeric_work_units": 0,
+            "gpu_memory_upper_bound": 0
+          },
+          "estimates": [
+            [
+              160,
+              0.8139952429044712,
+              347.4128591519003
+            ],
+            [
+              0,
+              0.0,
+              0.0
+            ],
+            [
+              0,
+              0.0,
+              0.0
+            ]
+          ]
+        },
+        {
+          "kernel": 2,
+          "backend": 0,
+          "switches": 0,
+          "reason": "uncalibrated: CPU serial",
+          "last_us": 0.0,
+          "last_work_units": 0.0,
+          "workload": {
+            "cognits": 0,
+            "relations": 0,
+            "source_visits": 0,
+            "states": 0,
+            "actions": 0,
+            "state_action_pairs": 0,
+            "average_active_degree": 0.0,
+            "relations_traversed": 0,
+            "factors_reduced": 0,
+            "prediction_and_effect_targets": 0,
+            "numeric_work_units": 0,
+            "gpu_memory_upper_bound": 0
+          },
+          "estimates": [
+            [
+              0,
+              0.0,
+              0.0
+            ],
+            [
+              0,
+              0.0,
+              0.0
+            ],
+            [
+              0,
+              0.0,
+              0.0
+            ]
+          ]
+        },
+        {
+          "kernel": 3,
+          "backend": 0,
+          "switches": 0,
+          "reason": "forced host mode",
+          "last_us": 94.0,
+          "last_work_units": 2441.0,
+          "workload": {
+            "cognits": 262,
+            "relations": 740,
+            "source_visits": 44,
+            "states": 1,
+            "actions": 17,
+            "state_action_pairs": 17,
+            "average_active_degree": 14.909090909090908,
+            "relations_traversed": 1312,
+            "factors_reduced": 719,
+            "prediction_and_effect_targets": 1038,
+            "numeric_work_units": 2441,
+            "gpu_memory_upper_bound": 36128
+          },
+          "estimates": [
+            [
+              155,
+              91.45058060301338,
+              2244.685906998886
+            ],
+            [
+              0,
+              0.0,
+              0.0
+            ],
+            [
+              0,
+              0.0,
+              0.0
+            ]
+          ]
+        },
+        {
+          "kernel": 4,
+          "backend": 0,
+          "switches": 0,
+          "reason": "uncalibrated: CPU serial",
+          "last_us": 0.0,
+          "last_work_units": 0.0,
+          "workload": {
+            "cognits": 0,
+            "relations": 0,
+            "source_visits": 0,
+            "states": 0,
+            "actions": 0,
+            "state_action_pairs": 0,
+            "average_active_degree": 0.0,
+            "relations_traversed": 0,
+            "factors_reduced": 0,
+            "prediction_and_effect_targets": 0,
+            "numeric_work_units": 0,
+            "gpu_memory_upper_bound": 0
+          },
+          "estimates": [
+            [
+              0,
+              0.0,
+              0.0
+            ],
+            [
+              0,
+              0.0,
+              0.0
+            ],
+            [
+              0,
+              0.0,
+              0.0
+            ]
+          ]
+        },
+        {
+          "kernel": 5,
+          "backend": 0,
+          "switches": 0,
+          "reason": "uncalibrated: CPU serial",
+          "last_us": 0.0,
+          "last_work_units": 0.0,
+          "workload": {
+            "cognits": 0,
+            "relations": 0,
+            "source_visits": 0,
+            "states": 0,
+            "actions": 0,
+            "state_action_pairs": 0,
+            "average_active_degree": 0.0,
+            "relations_traversed": 0,
+            "factors_reduced": 0,
+            "prediction_and_effect_targets": 0,
+            "numeric_work_units": 0,
+            "gpu_memory_upper_bound": 0
+          },
+          "estimates": [
+            [
+              0,
+              0.0,
+              0.0
+            ],
+            [
+              0,
+              0.0,
+              0.0
+            ],
+            [
+              0,
+              0.0,
+              0.0
+            ]
+          ]
+        }
+      ],
+      "decisions_per_second": 43.37754481101648,
+      "planner_numeric_launches": 155,
+      "full_graph_sync_calls": 0
+    },
+    {
+      "worldtime_per_second": 6.026330241939182,
+      "elapsed_seconds": 0.9956308000255376,
+      "actions": 39,
+      "events": 285,
+      "digest": "ecba58913a6e35f1a33d637442b21179634d84c786b2f8c2f8629efe2ce229d8",
+      "frames": 263,
+      "presentation_telemetry": [
+        75.6,
+        0.9,
+        6.144,
+        569904.0,
+        49056.0,
+        3.0,
+        194.0,
+        0.0
+      ],
+      "compute_telemetry": [
+        {
+          "kernel": 0,
+          "backend": 0,
+          "switches": 0,
+          "reason": "uncalibrated: CPU serial",
+          "last_us": 0.0,
+          "last_work_units": 0.0,
+          "workload": {
+            "cognits": 0,
+            "relations": 0,
+            "source_visits": 0,
+            "states": 0,
+            "actions": 0,
+            "state_action_pairs": 0,
+            "average_active_degree": 0.0,
+            "relations_traversed": 0,
+            "factors_reduced": 0,
+            "prediction_and_effect_targets": 0,
+            "numeric_work_units": 0,
+            "gpu_memory_upper_bound": 0
+          },
+          "estimates": [
+            [
+              0,
+              0.0,
+              0.0
+            ],
+            [
+              0,
+              0.0,
+              0.0
+            ],
+            [
+              0,
+              0.0,
+              0.0
+            ]
+          ]
+        },
+        {
+          "kernel": 1,
+          "backend": 0,
+          "switches": 0,
+          "reason": "forced host mode",
+          "last_us": 0.2,
+          "last_work_units": 63.0,
+          "workload": {
+            "cognits": 0,
+            "relations": 0,
+            "source_visits": 0,
+            "states": 0,
+            "actions": 0,
+            "state_action_pairs": 0,
+            "average_active_degree": 0.0,
+            "relations_traversed": 0,
+            "factors_reduced": 0,
+            "prediction_and_effect_targets": 0,
+            "numeric_work_units": 0,
+            "gpu_memory_upper_bound": 0
+          },
+          "estimates": [
+            [
+              160,
+              0.8751436155135176,
+              347.4128591519003
+            ],
+            [
+              0,
+              0.0,
+              0.0
+            ],
+            [
+              0,
+              0.0,
+              0.0
+            ]
+          ]
+        },
+        {
+          "kernel": 2,
+          "backend": 0,
+          "switches": 0,
+          "reason": "uncalibrated: CPU serial",
+          "last_us": 0.0,
+          "last_work_units": 0.0,
+          "workload": {
+            "cognits": 0,
+            "relations": 0,
+            "source_visits": 0,
+            "states": 0,
+            "actions": 0,
+            "state_action_pairs": 0,
+            "average_active_degree": 0.0,
+            "relations_traversed": 0,
+            "factors_reduced": 0,
+            "prediction_and_effect_targets": 0,
+            "numeric_work_units": 0,
+            "gpu_memory_upper_bound": 0
+          },
+          "estimates": [
+            [
+              0,
+              0.0,
+              0.0
+            ],
+            [
+              0,
+              0.0,
+              0.0
+            ],
+            [
+              0,
+              0.0,
+              0.0
+            ]
+          ]
+        },
+        {
+          "kernel": 3,
+          "backend": 0,
+          "switches": 0,
+          "reason": "forced host mode",
+          "last_us": 95.6,
+          "last_work_units": 2441.0,
+          "workload": {
+            "cognits": 262,
+            "relations": 740,
+            "source_visits": 44,
+            "states": 1,
+            "actions": 17,
+            "state_action_pairs": 17,
+            "average_active_degree": 14.909090909090908,
+            "relations_traversed": 1312,
+            "factors_reduced": 719,
+            "prediction_and_effect_targets": 1038,
+            "numeric_work_units": 2441,
+            "gpu_memory_upper_bound": 36128
+          },
+          "estimates": [
+            [
+              155,
+              97.95373559344742,
+              2244.685906998886
+            ],
+            [
+              0,
+              0.0,
+              0.0
+            ],
+            [
+              0,
+              0.0,
+              0.0
+            ]
+          ]
+        },
+        {
+          "kernel": 4,
+          "backend": 0,
+          "switches": 0,
+          "reason": "uncalibrated: CPU serial",
+          "last_us": 0.0,
+          "last_work_units": 0.0,
+          "workload": {
+            "cognits": 0,
+            "relations": 0,
+            "source_visits": 0,
+            "states": 0,
+            "actions": 0,
+            "state_action_pairs": 0,
+            "average_active_degree": 0.0,
+            "relations_traversed": 0,
+            "factors_reduced": 0,
+            "prediction_and_effect_targets": 0,
+            "numeric_work_units": 0,
+            "gpu_memory_upper_bound": 0
+          },
+          "estimates": [
+            [
+              0,
+              0.0,
+              0.0
+            ],
+            [
+              0,
+              0.0,
+              0.0
+            ],
+            [
+              0,
+              0.0,
+              0.0
+            ]
+          ]
+        },
+        {
+          "kernel": 5,
+          "backend": 0,
+          "switches": 0,
+          "reason": "uncalibrated: CPU serial",
+          "last_us": 0.0,
+          "last_work_units": 0.0,
+          "workload": {
+            "cognits": 0,
+            "relations": 0,
+            "source_visits": 0,
+            "states": 0,
+            "actions": 0,
+            "state_action_pairs": 0,
+            "average_active_degree": 0.0,
+            "relations_traversed": 0,
+            "factors_reduced": 0,
+            "prediction_and_effect_targets": 0,
+            "numeric_work_units": 0,
+            "gpu_memory_upper_bound": 0
+          },
+          "estimates": [
+            [
+              0,
+              0.0,
+              0.0
+            ],
+            [
+              0,
+              0.0,
+              0.0
+            ],
+            [
+              0,
+              0.0,
+              0.0
+            ]
+          ]
+        }
+      ],
+      "decisions_per_second": 40.175534946261216,
+      "planner_numeric_launches": 155,
+      "full_graph_sync_calls": 0
+    },
+    {
+      "worldtime_per_second": 4.815003937366323,
+      "elapsed_seconds": 1.246104900026694,
+      "actions": 39,
+      "events": 285,
+      "digest": "ecba58913a6e35f1a33d637442b21179634d84c786b2f8c2f8629efe2ce229d8",
+      "frames": 344,
+      "presentation_telemetry": [
+        69.9,
+        0.7,
+        7.168,
+        692976.0,
+        49056.0,
+        3.0,
+        310.0,
+        0.0
+      ],
+      "compute_telemetry": [
+        {
+          "kernel": 0,
+          "backend": 0,
+          "switches": 0,
+          "reason": "uncalibrated: CPU serial",
+          "last_us": 0.0,
+          "last_work_units": 0.0,
+          "workload": {
+            "cognits": 0,
+            "relations": 0,
+            "source_visits": 0,
+            "states": 0,
+            "actions": 0,
+            "state_action_pairs": 0,
+            "average_active_degree": 0.0,
+            "relations_traversed": 0,
+            "factors_reduced": 0,
+            "prediction_and_effect_targets": 0,
+            "numeric_work_units": 0,
+            "gpu_memory_upper_bound": 0
+          },
+          "estimates": [
+            [
+              0,
+              0.0,
+              0.0
+            ],
+            [
+              0,
+              0.0,
+              0.0
+            ],
+            [
+              0,
+              0.0,
+              0.0
+            ]
+          ]
+        },
+        {
+          "kernel": 1,
+          "backend": 0,
+          "switches": 0,
+          "reason": "forced host mode",
+          "last_us": 0.2,
+          "last_work_units": 63.0,
+          "workload": {
+            "cognits": 0,
+            "relations": 0,
+            "source_visits": 0,
+            "states": 0,
+            "actions": 0,
+            "state_action_pairs": 0,
+            "average_active_degree": 0.0,
+            "relations_traversed": 0,
+            "factors_reduced": 0,
+            "prediction_and_effect_targets": 0,
+            "numeric_work_units": 0,
+            "gpu_memory_upper_bound": 0
+          },
+          "estimates": [
+            [
+              160,
+              1.110908584783241,
+              347.4128591519003
+            ],
+            [
+              0,
+              0.0,
+              0.0
+            ],
+            [
+              0,
+              0.0,
+              0.0
+            ]
+          ]
+        },
+        {
+          "kernel": 2,
+          "backend": 0,
+          "switches": 0,
+          "reason": "uncalibrated: CPU serial",
+          "last_us": 0.0,
+          "last_work_units": 0.0,
+          "workload": {
+            "cognits": 0,
+            "relations": 0,
+            "source_visits": 0,
+            "states": 0,
+            "actions": 0,
+            "state_action_pairs": 0,
+            "average_active_degree": 0.0,
+            "relations_traversed": 0,
+            "factors_reduced": 0,
+            "prediction_and_effect_targets": 0,
+            "numeric_work_units": 0,
+            "gpu_memory_upper_bound": 0
+          },
+          "estimates": [
+            [
+              0,
+              0.0,
+              0.0
+            ],
+            [
+              0,
+              0.0,
+              0.0
+            ],
+            [
+              0,
+              0.0,
+              0.0
+            ]
+          ]
+        },
+        {
+          "kernel": 3,
+          "backend": 0,
+          "switches": 0,
+          "reason": "forced host mode",
+          "last_us": 164.1,
+          "last_work_units": 2441.0,
+          "workload": {
+            "cognits": 262,
+            "relations": 740,
+            "source_visits": 44,
+            "states": 1,
+            "actions": 17,
+            "state_action_pairs": 17,
+            "average_active_degree": 14.909090909090908,
+            "relations_traversed": 1312,
+            "factors_reduced": 719,
+            "prediction_and_effect_targets": 1038,
+            "numeric_work_units": 2441,
+            "gpu_memory_upper_bound": 36128
+          },
+          "estimates": [
+            [
+              155,
+              135.20207585720223,
+              2244.685906998886
+            ],
+            [
+              0,
+              0.0,
+              0.0
+            ],
+            [
+              0,
+              0.0,
+              0.0
+            ]
+          ]
+        },
+        {
+          "kernel": 4,
+          "backend": 0,
+          "switches": 0,
+          "reason": "uncalibrated: CPU serial",
+          "last_us": 0.0,
+          "last_work_units": 0.0,
+          "workload": {
+            "cognits": 0,
+            "relations": 0,
+            "source_visits": 0,
+            "states": 0,
+            "actions": 0,
+            "state_action_pairs": 0,
+            "average_active_degree": 0.0,
+            "relations_traversed": 0,
+            "factors_reduced": 0,
+            "prediction_and_effect_targets": 0,
+            "numeric_work_units": 0,
+            "gpu_memory_upper_bound": 0
+          },
+          "estimates": [
+            [
+              0,
+              0.0,
+              0.0
+            ],
+            [
+              0,
+              0.0,
+              0.0
+            ],
+            [
+              0,
+              0.0,
+              0.0
+            ]
+          ]
+        },
+        {
+          "kernel": 5,
+          "backend": 0,
+          "switches": 0,
+          "reason": "uncalibrated: CPU serial",
+          "last_us": 0.0,
+          "last_work_units": 0.0,
+          "workload": {
+            "cognits": 0,
+            "relations": 0,
+            "source_visits": 0,
+            "states": 0,
+            "actions": 0,
+            "state_action_pairs": 0,
+            "average_active_degree": 0.0,
+            "relations_traversed": 0,
+            "factors_reduced": 0,
+            "prediction_and_effect_targets": 0,
+            "numeric_work_units": 0,
+            "gpu_memory_upper_bound": 0
+          },
+          "estimates": [
+            [
+              0,
+              0.0,
+              0.0
+            ],
+            [
+              0,
+              0.0,
+              0.0
+            ],
+            [
+              0,
+              0.0,
+              0.0
+            ]
+          ]
+        }
+      ],
+      "decisions_per_second": 32.10002624910882,
+      "planner_numeric_launches": 155,
+      "full_graph_sync_calls": 0
+    },
+    {
+      "worldtime_per_second": 5.568100795697472,
+      "elapsed_seconds": 1.0775667000561953,
+      "actions": 39,
+      "events": 285,
+      "digest": "ecba58913a6e35f1a33d637442b21179634d84c786b2f8c2f8629efe2ce229d8",
+      "frames": 301,
+      "presentation_telemetry": [
+        76.1,
+        1.0,
+        3.072,
+        590472.0,
+        49056.0,
+        3.0,
+        224.0,
+        0.0
+      ],
+      "compute_telemetry": [
+        {
+          "kernel": 0,
+          "backend": 0,
+          "switches": 0,
+          "reason": "uncalibrated: CPU serial",
+          "last_us": 0.0,
+          "last_work_units": 0.0,
+          "workload": {
+            "cognits": 0,
+            "relations": 0,
+            "source_visits": 0,
+            "states": 0,
+            "actions": 0,
+            "state_action_pairs": 0,
+            "average_active_degree": 0.0,
+            "relations_traversed": 0,
+            "factors_reduced": 0,
+            "prediction_and_effect_targets": 0,
+            "numeric_work_units": 0,
+            "gpu_memory_upper_bound": 0
+          },
+          "estimates": [
+            [
+              0,
+              0.0,
+              0.0
+            ],
+            [
+              0,
+              0.0,
+              0.0
+            ],
+            [
+              0,
+              0.0,
+              0.0
+            ]
+          ]
+        },
+        {
+          "kernel": 1,
+          "backend": 0,
+          "switches": 0,
+          "reason": "forced host mode",
+          "last_us": 0.2,
+          "last_work_units": 63.0,
+          "workload": {
+            "cognits": 0,
+            "relations": 0,
+            "source_visits": 0,
+            "states": 0,
+            "actions": 0,
+            "state_action_pairs": 0,
+            "average_active_degree": 0.0,
+            "relations_traversed": 0,
+            "factors_reduced": 0,
+            "prediction_and_effect_targets": 0,
+            "numeric_work_units": 0,
+            "gpu_memory_upper_bound": 0
+          },
+          "estimates": [
+            [
+              160,
+              0.7378154788862455,
+              347.4128591519003
+            ],
+            [
+              0,
+              0.0,
+              0.0
+            ],
+            [
+              0,
+              0.0,
+              0.0
+            ]
+          ]
+        },
+        {
+          "kernel": 2,
+          "backend": 0,
+          "switches": 0,
+          "reason": "uncalibrated: CPU serial",
+          "last_us": 0.0,
+          "last_work_units": 0.0,
+          "workload": {
+            "cognits": 0,
+            "relations": 0,
+            "source_visits": 0,
+            "states": 0,
+            "actions": 0,
+            "state_action_pairs": 0,
+            "average_active_degree": 0.0,
+            "relations_traversed": 0,
+            "factors_reduced": 0,
+            "prediction_and_effect_targets": 0,
+            "numeric_work_units": 0,
+            "gpu_memory_upper_bound": 0
+          },
+          "estimates": [
+            [
+              0,
+              0.0,
+              0.0
+            ],
+            [
+              0,
+              0.0,
+              0.0
+            ],
+            [
+              0,
+              0.0,
+              0.0
+            ]
+          ]
+        },
+        {
+          "kernel": 3,
+          "backend": 0,
+          "switches": 0,
+          "reason": "forced host mode",
+          "last_us": 88.6,
+          "last_work_units": 2441.0,
+          "workload": {
+            "cognits": 262,
+            "relations": 740,
+            "source_visits": 44,
+            "states": 1,
+            "actions": 17,
+            "state_action_pairs": 17,
+            "average_active_degree": 14.909090909090908,
+            "relations_traversed": 1312,
+            "factors_reduced": 719,
+            "prediction_and_effect_targets": 1038,
+            "numeric_work_units": 2441,
+            "gpu_memory_upper_bound": 36128
+          },
+          "estimates": [
+            [
+              155,
+              91.876789576328,
+              2244.685906998886
+            ],
+            [
+              0,
+              0.0,
+              0.0
+            ],
+            [
+              0,
+              0.0,
+              0.0
+            ]
+          ]
+        },
+        {
+          "kernel": 4,
+          "backend": 0,
+          "switches": 0,
+          "reason": "uncalibrated: CPU serial",
+          "last_us": 0.0,
+          "last_work_units": 0.0,
+          "workload": {
+            "cognits": 0,
+            "relations": 0,
+            "source_visits": 0,
+            "states": 0,
+            "actions": 0,
+            "state_action_pairs": 0,
+            "average_active_degree": 0.0,
+            "relations_traversed": 0,
+            "factors_reduced": 0,
+            "prediction_and_effect_targets": 0,
+            "numeric_work_units": 0,
+            "gpu_memory_upper_bound": 0
+          },
+          "estimates": [
+            [
+              0,
+              0.0,
+              0.0
+            ],
+            [
+              0,
+              0.0,
+              0.0
+            ],
+            [
+              0,
+              0.0,
+              0.0
+            ]
+          ]
+        },
+        {
+          "kernel": 5,
+          "backend": 0,
+          "switches": 0,
+          "reason": "uncalibrated: CPU serial",
+          "last_us": 0.0,
+          "last_work_units": 0.0,
+          "workload": {
+            "cognits": 0,
+            "relations": 0,
+            "source_visits": 0,
+            "states": 0,
+            "actions": 0,
+            "state_action_pairs": 0,
+            "average_active_degree": 0.0,
+            "relations_traversed": 0,
+            "factors_reduced": 0,
+            "prediction_and_effect_targets": 0,
+            "numeric_work_units": 0,
+            "gpu_memory_upper_bound": 0
+          },
+          "estimates": [
+            [
+              0,
+              0.0,
+              0.0
+            ],
+            [
+              0,
+              0.0,
+              0.0
+            ],
+            [
+              0,
+              0.0,
+              0.0
+            ]
+          ]
+        }
+      ],
+      "decisions_per_second": 37.12067197131648,
+      "planner_numeric_launches": 155,
+      "full_graph_sync_calls": 0
+    },
+    {
+      "worldtime_per_second": 5.007980216218594,
+      "elapsed_seconds": 1.1980878000613302,
+      "actions": 39,
+      "events": 285,
+      "digest": "ecba58913a6e35f1a33d637442b21179634d84c786b2f8c2f8629efe2ce229d8",
+      "frames": 332,
+      "presentation_telemetry": [
+        78.9,
+        1.2,
+        6.144,
+        599928.0,
+        49056.0,
+        3.0,
+        325.0,
+        0.0
+      ],
+      "compute_telemetry": [
+        {
+          "kernel": 0,
+          "backend": 0,
+          "switches": 0,
+          "reason": "uncalibrated: CPU serial",
+          "last_us": 0.0,
+          "last_work_units": 0.0,
+          "workload": {
+            "cognits": 0,
+            "relations": 0,
+            "source_visits": 0,
+            "states": 0,
+            "actions": 0,
+            "state_action_pairs": 0,
+            "average_active_degree": 0.0,
+            "relations_traversed": 0,
+            "factors_reduced": 0,
+            "prediction_and_effect_targets": 0,
+            "numeric_work_units": 0,
+            "gpu_memory_upper_bound": 0
+          },
+          "estimates": [
+            [
+              0,
+              0.0,
+              0.0
+            ],
+            [
+              0,
+              0.0,
+              0.0
+            ],
+            [
+              0,
+              0.0,
+              0.0
+            ]
+          ]
+        },
+        {
+          "kernel": 1,
+          "backend": 0,
+          "switches": 0,
+          "reason": "forced host mode",
+          "last_us": 0.3,
+          "last_work_units": 63.0,
+          "workload": {
+            "cognits": 0,
+            "relations": 0,
+            "source_visits": 0,
+            "states": 0,
+            "actions": 0,
+            "state_action_pairs": 0,
+            "average_active_degree": 0.0,
+            "relations_traversed": 0,
+            "factors_reduced": 0,
+            "prediction_and_effect_targets": 0,
+            "numeric_work_units": 0,
+            "gpu_memory_upper_bound": 0
+          },
+          "estimates": [
+            [
+              160,
+              0.9299063298768939,
+              347.4128591519003
+            ],
+            [
+              0,
+              0.0,
+              0.0
+            ],
+            [
+              0,
+              0.0,
+              0.0
+            ]
+          ]
+        },
+        {
+          "kernel": 2,
+          "backend": 0,
+          "switches": 0,
+          "reason": "uncalibrated: CPU serial",
+          "last_us": 0.0,
+          "last_work_units": 0.0,
+          "workload": {
+            "cognits": 0,
+            "relations": 0,
+            "source_visits": 0,
+            "states": 0,
+            "actions": 0,
+            "state_action_pairs": 0,
+            "average_active_degree": 0.0,
+            "relations_traversed": 0,
+            "factors_reduced": 0,
+            "prediction_and_effect_targets": 0,
+            "numeric_work_units": 0,
+            "gpu_memory_upper_bound": 0
+          },
+          "estimates": [
+            [
+              0,
+              0.0,
+              0.0
+            ],
+            [
+              0,
+              0.0,
+              0.0
+            ],
+            [
+              0,
+              0.0,
+              0.0
+            ]
+          ]
+        },
+        {
+          "kernel": 3,
+          "backend": 0,
+          "switches": 0,
+          "reason": "forced host mode",
+          "last_us": 95.5,
+          "last_work_units": 2441.0,
+          "workload": {
+            "cognits": 262,
+            "relations": 740,
+            "source_visits": 44,
+            "states": 1,
+            "actions": 17,
+            "state_action_pairs": 17,
+            "average_active_degree": 14.909090909090908,
+            "relations_traversed": 1312,
+            "factors_reduced": 719,
+            "prediction_and_effect_targets": 1038,
+            "numeric_work_units": 2441,
+            "gpu_memory_upper_bound": 36128
+          },
+          "estimates": [
+            [
+              155,
+              95.64477497223749,
+              2244.685906998886
+            ],
+            [
+              0,
+              0.0,
+              0.0
+            ],
+            [
+              0,
+              0.0,
+              0.0
+            ]
+          ]
+        },
+        {
+          "kernel": 4,
+          "backend": 0,
+          "switches": 0,
+          "reason": "uncalibrated: CPU serial",
+          "last_us": 0.0,
+          "last_work_units": 0.0,
+          "workload": {
+            "cognits": 0,
+            "relations": 0,
+            "source_visits": 0,
+            "states": 0,
+            "actions": 0,
+            "state_action_pairs": 0,
+            "average_active_degree": 0.0,
+            "relations_traversed": 0,
+            "factors_reduced": 0,
+            "prediction_and_effect_targets": 0,
+            "numeric_work_units": 0,
+            "gpu_memory_upper_bound": 0
+          },
+          "estimates": [
+            [
+              0,
+              0.0,
+              0.0
+            ],
+            [
+              0,
+              0.0,
+              0.0
+            ],
+            [
+              0,
+              0.0,
+              0.0
+            ]
+          ]
+        },
+        {
+          "kernel": 5,
+          "backend": 0,
+          "switches": 0,
+          "reason": "uncalibrated: CPU serial",
+          "last_us": 0.0,
+          "last_work_units": 0.0,
+          "workload": {
+            "cognits": 0,
+            "relations": 0,
+            "source_visits": 0,
+            "states": 0,
+            "actions": 0,
+            "state_action_pairs": 0,
+            "average_active_degree": 0.0,
+            "relations_traversed": 0,
+            "factors_reduced": 0,
+            "prediction_and_effect_targets": 0,
+            "numeric_work_units": 0,
+            "gpu_memory_upper_bound": 0
+          },
+          "estimates": [
+            [
+              0,
+              0.0,
+              0.0
+            ],
+            [
+              0,
+              0.0,
+              0.0
+            ],
+            [
+              0,
+              0.0,
+              0.0
+            ]
+          ]
+        }
+      ],
+      "decisions_per_second": 33.386534774790626,
+      "planner_numeric_launches": 155,
+      "full_graph_sync_calls": 0
+    }
+  ],
+  "median_worldtime_per_second": 5.568100795697472,
+  "profile_trial": {
+    "worldtime_per_second": 2.2401719734684864,
+    "elapsed_seconds": 2.678365800064057,
+    "actions": 39,
+    "events": 285,
+    "digest": "ecba58913a6e35f1a33d637442b21179634d84c786b2f8c2f8629efe2ce229d8",
+    "frames": 687,
+    "presentation_telemetry": [
+      74.6,
+      1.1,
+      11.264,
+      1007112.0,
+      49056.0,
+      3.0,
+      782.0,
+      0.0
+    ],
+    "compute_telemetry": [
+      {
+        "kernel": 0,
+        "backend": 0,
+        "switches": 0,
+        "reason": "uncalibrated: CPU serial",
+        "last_us": 0.0,
+        "last_work_units": 0.0,
+        "workload": {
+          "cognits": 0,
+          "relations": 0,
+          "source_visits": 0,
+          "states": 0,
+          "actions": 0,
+          "state_action_pairs": 0,
+          "average_active_degree": 0.0,
+          "relations_traversed": 0,
+          "factors_reduced": 0,
+          "prediction_and_effect_targets": 0,
+          "numeric_work_units": 0,
+          "gpu_memory_upper_bound": 0
+        },
+        "estimates": [
+          [
+            0,
+            0.0,
+            0.0
+          ],
+          [
+            0,
+            0.0,
+            0.0
+          ],
+          [
+            0,
+            0.0,
+            0.0
+          ]
+        ]
+      },
+      {
+        "kernel": 1,
+        "backend": 0,
+        "switches": 0,
+        "reason": "forced host mode",
+        "last_us": 0.3,
+        "last_work_units": 63.0,
+        "workload": {
+          "cognits": 0,
+          "relations": 0,
+          "source_visits": 0,
+          "states": 0,
+          "actions": 0,
+          "state_action_pairs": 0,
+          "average_active_degree": 0.0,
+          "relations_traversed": 0,
+          "factors_reduced": 0,
+          "prediction_and_effect_targets": 0,
+          "numeric_work_units": 0,
+          "gpu_memory_upper_bound": 0
+        },
+        "estimates": [
+          [
+            160,
+            1.0585353178863306,
+            347.4128591519003
+          ],
+          [
+            0,
+            0.0,
+            0.0
+          ],
+          [
+            0,
+            0.0,
+            0.0
+          ]
+        ]
+      },
+      {
+        "kernel": 2,
+        "backend": 0,
+        "switches": 0,
+        "reason": "uncalibrated: CPU serial",
+        "last_us": 0.0,
+        "last_work_units": 0.0,
+        "workload": {
+          "cognits": 0,
+          "relations": 0,
+          "source_visits": 0,
+          "states": 0,
+          "actions": 0,
+          "state_action_pairs": 0,
+          "average_active_degree": 0.0,
+          "relations_traversed": 0,
+          "factors_reduced": 0,
+          "prediction_and_effect_targets": 0,
+          "numeric_work_units": 0,
+          "gpu_memory_upper_bound": 0
+        },
+        "estimates": [
+          [
+            0,
+            0.0,
+            0.0
+          ],
+          [
+            0,
+            0.0,
+            0.0
+          ],
+          [
+            0,
+            0.0,
+            0.0
+          ]
+        ]
+      },
+      {
+        "kernel": 3,
+        "backend": 0,
+        "switches": 0,
+        "reason": "forced host mode",
+        "last_us": 139.7,
+        "last_work_units": 2441.0,
+        "workload": {
+          "cognits": 262,
+          "relations": 740,
+          "source_visits": 44,
+          "states": 1,
+          "actions": 17,
+          "state_action_pairs": 17,
+          "average_active_degree": 14.909090909090908,
+          "relations_traversed": 1312,
+          "factors_reduced": 719,
+          "prediction_and_effect_targets": 1038,
+          "numeric_work_units": 2441,
+          "gpu_memory_upper_bound": 36128
+        },
+        "estimates": [
+          [
+            155,
+            120.97294279927314,
+            2244.685906998886
+          ],
+          [
+            0,
+            0.0,
+            0.0
+          ],
+          [
+            0,
+            0.0,
+            0.0
+          ]
+        ]
+      },
+      {
+        "kernel": 4,
+        "backend": 0,
+        "switches": 0,
+        "reason": "uncalibrated: CPU serial",
+        "last_us": 0.0,
+        "last_work_units": 0.0,
+        "workload": {
+          "cognits": 0,
+          "relations": 0,
+          "source_visits": 0,
+          "states": 0,
+          "actions": 0,
+          "state_action_pairs": 0,
+          "average_active_degree": 0.0,
+          "relations_traversed": 0,
+          "factors_reduced": 0,
+          "prediction_and_effect_targets": 0,
+          "numeric_work_units": 0,
+          "gpu_memory_upper_bound": 0
+        },
+        "estimates": [
+          [
+            0,
+            0.0,
+            0.0
+          ],
+          [
+            0,
+            0.0,
+            0.0
+          ],
+          [
+            0,
+            0.0,
+            0.0
+          ]
+        ]
+      },
+      {
+        "kernel": 5,
+        "backend": 0,
+        "switches": 0,
+        "reason": "uncalibrated: CPU serial",
+        "last_us": 0.0,
+        "last_work_units": 0.0,
+        "workload": {
+          "cognits": 0,
+          "relations": 0,
+          "source_visits": 0,
+          "states": 0,
+          "actions": 0,
+          "state_action_pairs": 0,
+          "average_active_degree": 0.0,
+          "relations_traversed": 0,
+          "factors_reduced": 0,
+          "prediction_and_effect_targets": 0,
+          "numeric_work_units": 0,
+          "gpu_memory_upper_bound": 0
+        },
+        "estimates": [
+          [
+            0,
+            0.0,
+            0.0
+          ],
+          [
+            0,
+            0.0,
+            0.0
+          ],
+          [
+            0,
+            0.0,
+            0.0
+          ]
+        ]
+      }
+    ],
+    "decisions_per_second": 14.934479823123242,
+    "planner_numeric_launches": 155,
+    "full_graph_sync_calls": 0,
+    "profile": [
+      {
+        "function": "D:\\projects\\synth_life\\simulation\\continuous.py:275:run_until",
+        "calls": 1,
+        "self_seconds": 0.0034415,
+        "cumulative_seconds": 2.6783037000000003
+      },
+      {
+        "function": "D:\\projects\\synth_life\\simulation\\continuous.py:32:_dispatch",
+        "calls": 285,
+        "self_seconds": 0.0004647,
+        "cumulative_seconds": 2.6632015
+      },
+      {
+        "function": "D:\\projects\\synth_life\\simulation\\continuous.py:93:_process",
+        "calls": 285,
+        "self_seconds": 0.0034211000000000003,
+        "cumulative_seconds": 2.6627368000000002
+      },
+      {
+        "function": "D:\\projects\\synth_life\\consciousness\\core.py:239:begin_continuous_observation",
+        "calls": 40,
+        "self_seconds": 0.0003613,
+        "cumulative_seconds": 1.4086158000000002
+      },
+      {
+        "function": "D:\\projects\\synth_life\\consciousness\\core.py:138:_observe",
+        "calls": 40,
+        "self_seconds": 0.0063041,
+        "cumulative_seconds": 1.4082545000000002
+      },
+      {
+        "function": "~:0:<built-in method builtins.max>",
+        "calls": 400649,
+        "self_seconds": 0.0710167,
+        "cumulative_seconds": 1.2325638
+      },
+      {
+        "function": "D:\\projects\\synth_life\\consciousness\\memory.py:128:observe",
+        "calls": 40,
+        "self_seconds": 0.0012623,
+        "cumulative_seconds": 1.2231748
+      },
+      {
+        "function": "D:\\projects\\synth_life\\consciousness\\core.py:271:continue_continuous_cognition",
+        "calls": 160,
+        "self_seconds": 0.00033360000000000003,
+        "cumulative_seconds": 1.2166664
+      },
+      {
+        "function": "D:\\projects\\synth_life\\consciousness\\planning.py:75:continue_continuous",
+        "calls": 160,
+        "self_seconds": 0.006387,
+        "cumulative_seconds": 1.2163328
+      },
+      {
+        "function": "D:\\projects\\synth_life\\consciousness\\planning.py:205:_search",
+        "calls": 40,
+        "self_seconds": 0.18976430000000002,
+        "cumulative_seconds": 1.0775537000000002
+      },
+      {
+        "function": "D:\\projects\\synth_life\\consciousness\\memory.py:170:_reconcile",
+        "calls": 38,
+        "self_seconds": 0.0010707000000000002,
+        "cumulative_seconds": 0.8379296
+      },
+      {
+        "function": "D:\\projects\\synth_life\\consciousness\\memory.py:173:<genexpr>",
+        "calls": 37222,
+        "self_seconds": 0.040747700000000005,
+        "cumulative_seconds": 0.8178661
+      },
+      {
+        "function": "D:\\projects\\synth_life\\consciousness\\memory_matching.py:13:weighted_similarity",
+        "calls": 45508,
+        "self_seconds": 0.1368606,
+        "cumulative_seconds": 0.7368662
+      },
+      {
+        "function": "~:0:<built-in method builtins.sum>",
+        "calls": 139912,
+        "self_seconds": 0.16087590000000002,
+        "cumulative_seconds": 0.5798639
+      },
+      {
+        "function": "D:\\projects\\synth_life\\consciousness\\planning.py:190:homeostatic_estimate",
+        "calls": 6460,
+        "self_seconds": 0.0231769,
+        "cumulative_seconds": 0.44167680000000004
+      },
+      {
+        "function": "D:\\projects\\synth_life\\consciousness\\temporal_prediction.py:107:delayed_estimate",
+        "calls": 6460,
+        "self_seconds": 0.031215100000000003,
+        "cumulative_seconds": 0.41230130000000004
+      },
+      {
+        "function": "D:\\projects\\synth_life\\consciousness\\memory.py:117:_match_place",
+        "calls": 40,
+        "self_seconds": 0.0021596000000000002,
+        "cumulative_seconds": 0.3516213
+      },
+      {
+        "function": "D:\\projects\\synth_life\\consciousness\\memory.py:120:<genexpr>",
+        "calls": 8520,
+        "self_seconds": 0.013713800000000002,
+        "cumulative_seconds": 0.3365079
+      },
+      {
+        "function": "D:\\projects\\synth_life\\consciousness\\memory_matching.py:22:<genexpr>",
+        "calls": 1067044,
+        "self_seconds": 0.2279556,
+        "cumulative_seconds": 0.3164542
+      },
+      {
+        "function": "D:\\projects\\synth_life\\consciousness\\memory_matching.py:4:rotate_signature",
+        "calls": 45508,
+        "self_seconds": 0.2238206,
+        "cumulative_seconds": 0.27735350000000003
+      },
+      {
+        "function": "D:\\projects\\synth_life\\consciousness\\affordance.py:25:epistemic",
+        "calls": 4148,
+        "self_seconds": 0.009910200000000001,
+        "cumulative_seconds": 0.24987440000000002
+      },
+      {
+        "function": "D:\\projects\\synth_life\\consciousness\\affordance.py:12:_entry",
+        "calls": 4187,
+        "self_seconds": 0.2113075,
+        "cumulative_seconds": 0.23945570000000002
+      },
+      {
+        "function": "~:0:<built-in method builtins.sorted>",
+        "calls": 183657,
+        "self_seconds": 0.1483452,
+        "cumulative_seconds": 0.1555805
+      },
+      {
+        "function": "~:0:<method 'get' of 'dict' objects>",
+        "calls": 1369397,
+        "self_seconds": 0.1317434,
+        "cumulative_seconds": 0.1388335
+      },
+      {
+        "function": "D:\\projects\\synth_life\\consciousness\\core.py:428:_imagine",
+        "calls": 40,
+        "self_seconds": 0.0088128,
+        "cumulative_seconds": 0.1271417
+      },
+      {
+        "function": "D:\\projects\\synth_life\\consciousness\\temporal_prediction.py:81:merge_projected_state",
+        "calls": 1450,
+        "self_seconds": 0.0035921000000000004,
+        "cumulative_seconds": 0.10862400000000001
+      },
+      {
+        "function": "D:\\projects\\synth_life\\consciousness\\memory.py:114:_weights",
+        "calls": 8000,
+        "self_seconds": 0.0037033,
+        "cumulative_seconds": 0.1073391
+      },
+      {
+        "function": "D:\\projects\\synth_life\\consciousness\\temporal_prediction.py:92:<setcomp>",
+        "calls": 1450,
+        "self_seconds": 0.014993600000000001,
+        "cumulative_seconds": 0.10503190000000001
+      },
+      {
+        "function": "D:\\projects\\synth_life\\consciousness\\memory.py:115:<dictcomp>",
+        "calls": 8000,
+        "self_seconds": 0.08629360000000001,
+        "cumulative_seconds": 0.1036358
+      },
+      {
+        "function": "D:\\projects\\synth_life\\consciousness\\temporal_prediction.py:84:untouched",
+        "calls": 50752,
+        "self_seconds": 0.0374134,
+        "cumulative_seconds": 0.0900383
+      }
+    ]
+  }
+}

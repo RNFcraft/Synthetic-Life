@@ -1,0 +1,58 @@
+[
+  {
+    "workload": "small",
+    "mode": "FORCE_CPU_SERIAL",
+    "off": 45.33788284383568,
+    "on": 37.32610700888181,
+    "observer_elapsed_overhead_percent": 21.46426851599459
+  },
+  {
+    "workload": "small",
+    "mode": "FORCE_CPU_PARALLEL",
+    "off": 39.00945627846158,
+    "on": 33.30476896603227,
+    "observer_elapsed_overhead_percent": 17.12874008598453
+  },
+  {
+    "workload": "small",
+    "mode": "FORCE_GPU",
+    "off": 22.877599350325777,
+    "on": 20.010101101407308,
+    "observer_elapsed_overhead_percent": 14.330253677313
+  },
+  {
+    "workload": "small",
+    "mode": "AUTO",
+    "off": 46.665994671226535,
+    "on": 41.64700580266284,
+    "observer_elapsed_overhead_percent": 12.051259800873337
+  },
+  {
+    "workload": "trained",
+    "mode": "FORCE_CPU_SERIAL",
+    "off": 5.642743254013929,
+    "on": 4.674605028906658,
+    "observer_elapsed_overhead_percent": 20.710588790294192
+  },
+  {
+    "workload": "trained",
+    "mode": "FORCE_CPU_PARALLEL",
+    "off": 4.56857256065455,
+    "on": 4.273327435796974,
+    "observer_elapsed_overhead_percent": 6.909021817152494
+  },
+  {
+    "workload": "trained",
+    "mode": "FORCE_GPU",
+    "off": 3.1481194944140576,
+    "on": 3.6354219516175155,
+    "observer_elapsed_overhead_percent": -13.40428879202431
+  },
+  {
+    "workload": "trained",
+    "mode": "AUTO",
+    "off": 5.030747931419518,
+    "on": 4.272216827141073,
+    "observer_elapsed_overhead_percent": 17.754976747892414
+  }
+]

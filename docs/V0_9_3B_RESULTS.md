@@ -5,10 +5,14 @@ This is performance infrastructure evidence, not survival or long-run proof.
 
 ## Provenance and machine
 
-Base HEAD and final committed HEAD: `d17328005e6b9ec5b5e76a0b91625261519043d2`.
-Implementation is an uncommitted working-tree diff on `main`; no commit or push
-was made. Initially the tree was clean. Local `origin/main` matched HEAD; remote
-freshness could not be verified because GitHub connection failed during fetch.
+Phase-1 audit/benchmark execution base: `d17328005e6b9ec5b5e76a0b91625261519043d2`.
+The implementation existed as an uncommitted working-tree diff during those
+measurements. Its subsequent repository integration commit is
+`774ada8d80050ee5a3e58ea300a037a524ec388e`; this does **not** relabel the
+earlier measurements as runs on that commit. The Phase-1 fetch failed then.
+Phase 2 began with a clean tree at `774ada8`; a successful fresh fetch on
+2026-10-03 confirmed that actual `origin/main` matches it. New measurements
+record their execution HEAD and working-tree state separately.
 
 AMD Ryzen 7 5700X, 8 physical cores / 16 logical threads; NVIDIA RTX 3060,
 12288 MiB VRAM, driver 616.92; CUDA Toolkit/runtime 13.2.51; MSVC 19.50.35727;
@@ -186,3 +190,13 @@ hashseed-sensitive production regression and missing presentation dirty stream.
 v0.9.2 remains EXPERIMENT COMPLETED / PROOF NOT ESTABLISHED. v0.9.3a remains
 AUDIT COMPLETE / REPRESENTATIONAL-TRANSFER LIMIT IDENTIFIED. Long-run v0.9.3 is
 PLANNED; no stability or representational-transfer repair claim is made.
+
+
+## Phase 2 ? 2026-10-03
+
+See [Phase 2 evidence and remaining freeze blockers](V0_9_3B_PHASE2_RESULTS.md).
+Native planner prediction/effect rows now use a single immutable state-action
+worker-pool job, with bounded shape-specific measured costs and per-layer exact
+numeric caches. Historical Phase-1 measurements above retain their execution
+provenance. Full score migration, resident compute graph and presentation delta
+stream/full GPU graph mirror remain incomplete: **PARTIAL / NOT FROZEN**.

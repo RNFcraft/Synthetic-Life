@@ -35,6 +35,7 @@ class HostProfiler:
     def __init__(self):
         self.samples = {}
         self._restores = []
+        self._planner_depth = 0
 
     def wrap(self, owner, method, label, units=lambda args: 1):
         original = getattr(owner, method)
@@ -42,10 +43,16 @@ class HostProfiler:
         @wraps(original)
         def measured(*args, **kwargs):
             start = perf_counter_ns()
+            planner = label == 'planner_beam_refinement'
+            if planner:self._planner_depth += 1
             try:
                 return original(*args, **kwargs)
             finally:
-                sample.add((perf_counter_ns()-start)/1000., units(args))
+                elapsed = (perf_counter_ns()-start)/1000.
+                if planner:self._planner_depth -= 1
+                sample.add(elapsed, units(args))
+                if self._planner_depth and label.startswith('native_call.'):
+                    self.samples.setdefault('planner_'+label,Sample()).add(elapsed,units(args))
         own = method in vars(owner)
         self._restores.append((owner,method,original,own))
         setattr(owner,method,measured)
@@ -71,6 +78,18 @@ class HostProfiler:
             (runtime,'advance_neural_to','micro_neural_boundary'),
         ):
             self.wrap(owner,method,label)
+        return self
+
+    def attach_native_calls(self, engine):
+        """Count callable pybind crossings, including direct timed-successor calls.
+
+        Properties are excluded; these diagnostic wrappers are never used for
+        uninstrumented throughput measurements.
+        """
+        descriptors=getattr(engine,'_inner',engine)
+        for name in sorted(vars(type(descriptors))):
+            if not name.startswith('_') and callable(getattr(engine,name,None)):
+                self.wrap(engine,name,'native_call.'+name)
         return self
 
     def close(self):

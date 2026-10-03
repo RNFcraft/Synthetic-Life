@@ -20,13 +20,41 @@ void NativeBrainEngine::set_compute_mode(const std::string &mode) {
     compute_.mode=ComputeMode::FORCE_GPU;
   } else throw std::invalid_argument("unknown host compute mode: "+mode);
 }
-std::vector<std::vector<std::pair<std::uint32_t,double>>> NativeBrainEngine::reduce_conditioned(
-    std::span<const std::uint8_t> actions, KernelClass kernel, bool common) {
+void NativeBrainEngine::calibrate_planner_compute(unsigned repeats) {
+  if(repeats<2 || repeats>8)throw std::invalid_argument("bounded planner calibration repeats must be 2..8");
+  // A separate synthetic numeric graph is the only calibration input. No live
+  // organism state, Goal, scenario, RNG or policy callback enters this boundary.
+  NativeBrainEngine synthetic;synthetic.add_cognits(4096,.73,.25,.63);
+  synthetic.compute_dispatcher().policy=compute_.policy;
+  for(std::uint32_t source=0;source<4096;++source)for(std::uint32_t k=1;k<=16;++k)
+    synthetic.add_relation(source,(source+k)%4096,k%2?RelationType::SelfAction:RelationType::Sequential,
+                           k%2?1+k%4:0,.31,.67,.53);
+  compute_.gpu_available=cuda_compute_available(compute_.gpu_free_bytes);
+  std::vector<std::uint8_t> actions;for(std::uint8_t action=1;action<=17;++action)actions.push_back(action);
+  for(std::uint32_t active:{8u,32u,128u,512u,1024u})for(std::uint32_t count:{1u,4u,8u}) {
+    std::vector<std::vector<std::uint32_t>> states(count);
+    for(std::uint32_t i=0;i<count;++i)for(std::uint32_t j=0;j<active;++j)states[i].push_back((i*active+j)%4096);
+    synthetic.set_compute_mode("FORCE_CPU_SERIAL");
+    const auto expected=synthetic.planner_transition_batch(states,actions,7,.997,.05);
+    const auto bytes=synthetic.compute_dispatcher().telemetry(KernelClass::PLANNER_TRANSITION_BATCH).last_shape.bytes;
+    for(auto backend:{ComputeBackend::CPU_SERIAL,ComputeBackend::CPU_PARALLEL,ComputeBackend::GPU}) {
+      if(backend==ComputeBackend::GPU && (!compute_.gpu_available || bytes>compute_.policy.memory_budget || bytes>compute_.gpu_free_bytes))continue;
+      synthetic.set_compute_mode(backend==ComputeBackend::CPU_SERIAL?"FORCE_CPU_SERIAL":backend==ComputeBackend::CPU_PARALLEL?"FORCE_CPU_PARALLEL":"FORCE_GPU");
+      for(unsigned repeat=0;repeat<repeats;++repeat) {
+        auto rows=synthetic.planner_transition_batch(states,actions,7,.997,.05);
+        for(std::size_t i=0;i<rows.size();++i)
+          if(rows[i].predictions!=expected[i].predictions || rows[i].effects!=expected[i].effects)
+            throw std::runtime_error("planner calibration failed exact numeric contract");
+        const auto &sample=synthetic.compute_dispatcher().telemetry(KernelClass::PLANNER_TRANSITION_BATCH);
+        if(repeat)compute_.sample(KernelClass::PLANNER_TRANSITION_BATCH,backend,sample.last_us,sample.last_units,&sample.last_shape);
+      }
+    }
+  }
+}
+std::vector<std::vector<std::uint32_t>> NativeBrainEngine::append_conditioned(
+    ReductionBatch &batch, std::span<const std::uint8_t> actions, bool common) {
   // Construct independent segments after lazy causal materialization on owner thread.
   // Common factors precede action factors, exactly as in the original numeric kernel.
-  ReductionBatch batch;
-  auto requested=brain_channel_->requested_compute_mode.exchange(-1);
-  if(requested>=0 && requested<=3 && (requested!=3 || compute_.gpu_available))compute_.mode=ComputeMode(requested);
   std::vector<std::vector<std::uint32_t>> row_ids;
   for(auto action:actions) {
     std::map<std::uint32_t,std::vector<double>> factors;
@@ -40,6 +68,14 @@ std::vector<std::vector<std::pair<std::uint32_t,double>>> NativeBrainEngine::red
       batch.offsets.push_back(batch.factors.size());
     }
   }
+  return row_ids;
+}
+std::vector<std::vector<std::pair<std::uint32_t,double>>> NativeBrainEngine::reduce_conditioned(
+    std::span<const std::uint8_t> actions, KernelClass kernel, bool common) {
+  ReductionBatch batch;
+  auto requested=brain_channel_->requested_compute_mode.exchange(-1);
+  if(requested>=0 && requested<=3 && (requested!=3 || compute_.gpu_available))compute_.mode=ComputeMode(requested);
+  auto row_ids=append_conditioned(batch,actions,common);
   WorkloadShape shape;
   shape.cognits=cognit_count();shape.relations=relation_count();shape.actions=actions.size();
   shape.pairs=std::max<std::size_t>(1,batch.factors.size()+batch.initial.size());
@@ -766,11 +802,18 @@ std::vector<std::vector<std::pair<std::uint32_t, double>>> NativeBrainEngine::pr
   return reduce_conditioned(actions, KernelClass::ACTION_PREDICTION_BATCH, true);
 }
 std::vector<std::vector<std::pair<std::uint32_t, double>>> NativeBrainEngine::predict_actions_batch_at(std::span<const std::uint32_t> active, std::span<const std::uint8_t> actions, std::uint64_t tick, double decay) {
+  prepare_prediction_factors_at(active, actions, tick, decay);
+  return reduce_conditioned(actions, KernelClass::ACTION_PREDICTION_BATCH, true);
+}
+std::size_t NativeBrainEngine::prepare_prediction_factors_at(std::span<const std::uint32_t> active, std::span<const std::uint8_t> actions, std::uint64_t tick, double decay) {
+  std::size_t traversed=0;
+  prepared_common_factor_count_=0;
   for (auto action : actions) conditioned_scratch_[action].clear();
   auto common_generation = next_generation();
   touched_.clear();
   for (auto source : active)
     graph_.for_each_outgoing(source, [&](Edge &e, RelationHandle h) {
+      ++traversed;
       double confidence;
       if (continuous_time_enabled_)
         confidence = effective_relation_confidence(e, h, decay);
@@ -800,6 +843,7 @@ std::vector<std::vector<std::pair<std::uint32_t, double>>> NativeBrainEngine::pr
         conditioned_scratch_[e.action].push_back({e.target, q});
         return;
       }
+      ++prepared_common_factor_count_;
       if (absence_gen_[e.target] != common_generation) {
         absence_gen_[e.target] = common_generation;
         absence_[e.target] = 1;
@@ -807,7 +851,7 @@ std::vector<std::vector<std::pair<std::uint32_t, double>>> NativeBrainEngine::pr
       }
       absence_[e.target] *= 1 - q;
     });
-  return reduce_conditioned(actions, KernelClass::ACTION_PREDICTION_BATCH, true);
+  return traversed;
 }
 std::vector<std::pair<std::uint32_t, double>> NativeBrainEngine::action_effects(std::span<const std::uint32_t> active, std::uint8_t action, double floor) {
   auto generation = next_generation();
@@ -833,21 +877,129 @@ std::vector<std::pair<std::uint32_t, double>> NativeBrainEngine::action_effects(
   return out;
 }
 std::vector<std::vector<std::pair<std::uint32_t, double>>> NativeBrainEngine::action_effects_batch(std::span<const std::uint32_t> active, std::span<const std::uint8_t> actions, double floor) {
+  prepare_effect_factors(active, actions, floor);
+  return reduce_conditioned(actions, KernelClass::ACTION_EFFECT_BATCH, false);
+}
+std::size_t NativeBrainEngine::prepare_effect_factors(std::span<const std::uint32_t> active, std::span<const std::uint8_t> actions, double floor) {
+  std::size_t traversed=0;
   for (auto action : actions) conditioned_scratch_[action].clear();
   for (auto source : active)
     graph_.for_each_outgoing(source, [&](Edge &e, RelationHandle h) {
+      ++traversed;
       if (e.type != RelationType::SelfAction)
         return;
       auto q = e.prediction * effective_relation_confidence(e, h, continuous_relation_decay_);
       if (q >= floor)
         conditioned_scratch_[e.action].push_back({e.target, q});
     });
-  return reduce_conditioned(actions, KernelClass::ACTION_EFFECT_BATCH, false);
+  return traversed;
 }
-std::vector<PlannerTransition> NativeBrainEngine::planner_transition_batch(const std::vector<std::vector<std::uint32_t>> &states, std::span<const std::uint8_t> actions, std::uint64_t tick, double decay, double floor) {
-  std::vector<PlannerTransition> out;
-  out.reserve(states.size());
-  for (const auto &state : states) out.push_back({predict_actions_batch_at(state, actions, tick, decay), action_effects_batch(state, actions, floor)});
+std::vector<PlannerTransition> NativeBrainEngine::planner_transition_batch(const std::vector<std::vector<std::uint32_t>> &states, std::span<const std::uint8_t> actions, std::uint64_t tick, double decay, double floor, std::span<const std::uint8_t> prediction_needed) {
+  if(!prediction_needed.empty() && (prediction_needed.size()!=states.size() ||
+     std::any_of(prediction_needed.begin(),prediction_needed.end(),[](auto flag){return flag>1;})))
+    throw std::invalid_argument("invalid planner prediction mask");
+  auto start=std::chrono::steady_clock::now();
+  // Materialize lazy causal fields on the owner thread in the original state order.
+  // Workers consume one immutable batch, never graph references or shared scratch.
+  using Factors=std::vector<std::pair<std::uint32_t,double>>;
+  struct NumericRow { std::shared_ptr<const Factors> common; Factors conditioned; };
+  std::vector<NumericRow> requests;
+  auto append_request=[&](std::shared_ptr<const Factors> common,const Factors &probabilities) {
+    Factors factors;factors.reserve(probabilities.size());
+    // Store rounded FP64 factors before multiplication, matching the original
+    // batch representation and preventing cross-operation FMA contraction.
+    for(auto [target,q]:probabilities)factors.emplace_back(target,1.-q);
+    requests.push_back({std::move(common),std::move(factors)});
+  };
+  requests.reserve(states.size()*actions.size()*2);
+  std::size_t work=0,traversed=0,traversal_sources=0,source_visits=0,factor_count=0,target_upper_bound=0;
+  for (std::size_t state_index=0;state_index<states.size();++state_index) {
+    const auto &state=states[state_index];
+    source_visits+=state.size();
+    auto common=std::make_shared<Factors>();
+    if(prediction_needed.empty() || prediction_needed[state_index]) {
+      traversed+=prepare_prediction_factors_at(state, actions, tick, decay);traversal_sources+=state.size();
+      factor_count+=prepared_common_factor_count_;
+      common->reserve(touched_.size());
+      for(auto id:touched_)common->emplace_back(id,absence_[id]);
+      for(auto action:actions) {
+        append_request(common,conditioned_scratch_[action]);
+        factor_count+=conditioned_scratch_[action].size();target_upper_bound+=common->size()+conditioned_scratch_[action].size();
+        work+=common->size()+conditioned_scratch_[action].size()+1;
+      }
+    } else for(auto action:actions){requests.push_back({nullptr,{}});++work;}
+    traversed+=prepare_effect_factors(state,actions,floor);traversal_sources+=state.size();
+    for(auto action:actions) {
+      append_request(nullptr,conditioned_scratch_[action]);
+      factor_count+=conditioned_scratch_[action].size();target_upper_bound+=conditioned_scratch_[action].size();
+      work+=conditioned_scratch_[action].size()+1;
+    }
+  }
+  auto requested=brain_channel_->requested_compute_mode.exchange(-1);
+  if(requested>=0 && requested<=3 && (requested!=3 || compute_.gpu_available))compute_.mode=ComputeMode(requested);
+  WorkloadShape shape;
+  shape.cognits=cognit_count();shape.relations=relation_count();shape.states=states.size();shape.actions=actions.size();
+  // Derived numeric work distinguishes equal state/action counts with different
+  // reachable graph degree. It includes common targets and conditioned factors.
+  shape.pairs=states.size()*actions.size();shape.numeric_units=std::max<std::size_t>(1,work+traversed);
+  shape.frontier=source_visits;shape.traversed_relations=traversed;shape.factors=factor_count;shape.targets=target_upper_bound;
+  shape.average_degree=traversal_sources?double(traversed)/double(traversal_sources):0.;
+  shape.bytes=std::max<std::size_t>(1,work)*32;
+  auto backend=compute_.select(KernelClass::PLANNER_TRANSITION_BATCH,shape);
+  std::vector<PlannerTransition> out(states.size());
+  for(auto &state:out){state.predictions.resize(actions.size());state.effects.resize(actions.size());}
+  auto output_row=[&](std::size_t index)->Factors& {
+    auto state=index/(2*actions.size()),slot=index%(2*actions.size());
+    return slot<actions.size()?out[state].predictions[slot]:out[state].effects[slot-actions.size()];
+  };
+  auto evaluate=[&](std::size_t index) {
+    const auto &request=requests[index];
+    std::map<std::uint32_t,double> absence;
+    if(request.common)for(auto [target,value]:*request.common)absence.emplace(target,value);
+    for(auto [target,factor]:request.conditioned) {
+      auto [it,inserted]=absence.try_emplace(target,1.);
+      it->second*=factor;
+    }
+    auto &row=output_row(index);row.reserve(absence.size());
+    for(auto [target,value]:absence)row.emplace_back(target,1.-value);
+  };
+  if(backend==ComputeBackend::GPU) {
+    // Experimental stateless CUDA remains an exact diagnostic backend. It is
+    // not a resident graph kernel and receives no production crossover claim.
+    ReductionBatch batch;
+    std::vector<std::vector<std::uint32_t>> ids;
+    for(const auto &request:requests) {
+      std::map<std::uint32_t,std::vector<double>> factors;
+      std::map<std::uint32_t,double> initial;
+      if(request.common)for(auto [target,value]:*request.common){factors[target];initial[target]=value;}
+      for(auto [target,factor]:request.conditioned)factors[target].push_back(factor);
+      auto &row=ids.emplace_back();
+      for(const auto &[target,values]:factors) {
+        row.push_back(target);batch.initial.push_back(initial.contains(target)?initial.at(target):1.);
+        batch.factors.insert(batch.factors.end(),values.begin(),values.end());
+        batch.offsets.push_back(batch.factors.size());
+      }
+    }
+    try {
+      auto values=reduce_absence(batch,backend);std::size_t value_index=0;
+      for(std::size_t i=0;i<ids.size();++i)for(auto id:ids[i])output_row(i).emplace_back(id,values[value_index++]);
+    } catch(const std::runtime_error&) {
+      if(compute_.mode==ComputeMode::FORCE_GPU)throw;
+      compute_.gpu_available=false;backend=ComputeBackend::CPU_SERIAL;
+      for(std::size_t i=0;i<requests.size();++i)evaluate(i);
+    }
+  } else if(backend==ComputeBackend::CPU_PARALLEL && requests.size()>1) {
+    // One fixed-index job covers the complete state x action table, including
+    // target grouping and all conditioned products, rather than tiny reductions.
+    numeric_workers().run(requests.size(),evaluate);
+  } else for(std::size_t i=0;i<requests.size();++i)evaluate(i);
+  ++planner_numeric_launches_;
+  shape.targets=0;
+  for(const auto &state:out)for(const auto *rows:{&state.predictions,&state.effects})
+    for(const auto &row:*rows)shape.targets+=row.size();
+  // Learn end-to-end native cost, including immutable request preparation.
+  compute_.sample(KernelClass::PLANNER_TRANSITION_BATCH,backend,
+    std::chrono::duration<double,std::micro>(std::chrono::steady_clock::now()-start).count(),double(shape.numeric_units),&shape);
   return out;
 }
 WaveResult NativeBrainEngine::propagate(std::span<const std::uint32_t> seeds, std::uint64_t tick, std::uint32_t cap, double retention, double attenuation, std::uint16_t refractory_steps) {

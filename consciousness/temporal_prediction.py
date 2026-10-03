@@ -10,14 +10,18 @@ from .relation import RelationType
 from .valuation import InternalEstimate, internal_estimate
 
 
-def successors(core, frontier, action=None):
+def successors(core, frontier, action=None, numeric_cache=None):
     settings = core.settings
     sources = sorted(frontier)
     action_id = action.value if action else 0
     if core.backend:
-        rows = [(int(s)+1, int(t)+1, q, delay) for s,t,q,delay in
-                core.backend.engine.timed_successors([i-1 for i in sources], action_id,
-                    settings.relation_provisional_support, settings.planning_temporal_probability_floor)]
+        key=(tuple(sources),action_id)
+        rows=numeric_cache.get(key) if numeric_cache is not None else None
+        if rows is None:
+            rows = [(int(s)+1, int(t)+1, q, delay) for s,t,q,delay in
+                    core.backend.engine.timed_successors([i-1 for i in sources], action_id,
+                        settings.relation_provisional_support, settings.planning_temporal_probability_floor)]
+            if numeric_cache is not None:numeric_cache[key]=rows
     else:
         rows = []
         kind = RelationType.SELF_ACTION if action else RelationType.SEQUENTIAL
@@ -100,9 +104,9 @@ def _merge_witnesses(graph, previous, following):
     return retained,replaced
 
 
-def delayed_estimate(core, state, action, levels, start_time=0., baseline_effects=None, baseline_state=()):
+def delayed_estimate(core, state, action, levels, start_time=0., baseline_effects=None, baseline_state=(), numeric_cache=None):
     baseline_effects=baseline_effects or {}
-    frontier=successors(core,{i:(1.,start_time) for i in sorted(state)},action)
+    frontier=successors(core,{i:(1.,start_time) for i in sorted(state)},action,numeric_cache)
     if not frontier:
         estimate=internal_estimate(core.graph,baseline_effects,levels,core.homeostatic_target_levels,
                                    core.settings.interoception_bins)
@@ -115,7 +119,7 @@ def delayed_estimate(core, state, action, levels, start_time=0., baseline_effect
     projected=merge_projected_state(core.graph,baseline_state,frontier,replaced)
     seen=set(state);depth=0
     for depth_index in range(core.settings.planning_passive_prediction_depth):
-        following=successors(core,frontier)
+        following=successors(core,frontier,numeric_cache=numeric_cache)
         following={i:value for i,value in following.items() if i not in seen}
         if not following:break
         seen.update(frontier);depth=depth_index+1

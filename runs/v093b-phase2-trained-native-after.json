@@ -1,0 +1,971 @@
+{
+  "provenance": {
+    "head": "774ada8d80050ee5a3e58ea300a037a524ec388e",
+    "branch": "main",
+    "working_tree_status": " M consciousness/memory.py\n M consciousness/memory_matching.py\n M consciousness/planning.py\n M cpp/include/se/native_brain_engine.hpp\n M cpp/src/bindings.cpp\n M cpp/src/native_brain_engine.cpp\n M docs/V0_9_3B_RESULTS.md\n M telemetry/performance.py\n M tests/test_v092_survival_learning.py\n M tools/benchmark_v093b.py\n M tools/differential_v093b.py\n?? runs/v093b-phase2-before.json\n?? runs/v093b-phase2-planner-after.json\n?? runs/v093b-phase2-planner-before.json\n?? runs/v093b-phase2-planner-trained.json\n?? runs/v093b-phase2-trained-calls-after.json\n?? runs/v093b-phase2-trained-calls-before.json\n?? runs/v093b-phase2-trained-native-before.json\n?? telemetry/planner_profile.py\n?? telemetry/provenance.py\n?? tests/fixtures/\n?? tests/test_v093b_hashseed.py\n?? tests/test_v093b_planner_batch.py\n?? tools/audit_hashseed_v093b.py\n?? tools/profile_planner_v093b.py\n",
+    "dirty": true,
+    "tracked_diff_sha256": "eb8bf837eb74b06e763503068a8160e9795b84c521ec1a974265d46e0982d225",
+    "untracked_sha256": {
+      "runs/v093b-phase2-before.json": "72f343c90d4d1f3e2c93541108cba924c20bd37fe80b148effb042f8ac762209",
+      "runs/v093b-phase2-planner-after.json": "9396ad25381e92e5956a1d8c112dffad5fc433b201a9ba51c20fa4f82ba995e1",
+      "runs/v093b-phase2-planner-before.json": "b581260ed4b7bc66025224a6903a2c51f547526d0afb923114b57286a3a6fe64",
+      "runs/v093b-phase2-planner-trained.json": "2b88f44d0275e5edcfb2d33a6094068ddb8147efef1a070a172279d2006f7166",
+      "runs/v093b-phase2-trained-calls-after.json": "e6cf2fff45394f42a63a79448376dc25dcb7b66deece8fa4be61259c8a7c54f6",
+      "runs/v093b-phase2-trained-calls-before.json": "f2dd87202b26669a530e4be112cc5dc743b86874f74ca34c7a50d5c95439cf8e",
+      "runs/v093b-phase2-trained-native-before.json": "8d134ce9e4f8a3d476885ba614651e0f248778383bc99142666dceb2dba2164d",
+      "telemetry/planner_profile.py": "4c87b73c1444ecb08e53a2093eaa04c3042781e8696e6bf08beb9a47c2f1a90f",
+      "telemetry/provenance.py": "e3ae05a4836342ee973f6e8a9376692fef2f1ab19251be64eaf596f344bd8183",
+      "tests/fixtures/planner_search_774ada8.py.txt": "3ea1432841bb4c5564d39908e67103143eb8f08ff585e4171149b8b08972d462",
+      "tests/test_v093b_hashseed.py": "9b476b51e51d5f82f5a49437df1a7f3a8e61378b1bc83e55a0861d1fd381d08b",
+      "tests/test_v093b_planner_batch.py": "c413f2b4cd650bb83f3cfc184c8cb361b14608a4e1d2fa369fa02012744f1e6d",
+      "tools/audit_hashseed_v093b.py": "39a9c91d83e5327901fede0ce17c3afd4612f372bcbe2a5cc3a52e66633935ed",
+      "tools/profile_planner_v093b.py": "763c960f40b8854cdbcad5a5ed18d6495dfd2fd8e5a3f48ad0c80ae86e31b2ec"
+    },
+    "native_module_sha256": "b2eea41c1dbdb0af1a87fdfcce19e724eeb3fe7ba99594839d8c6206a455c8cf",
+    "python": "3.11.9",
+    "platform": "Windows-10-10.0.26200-SP0",
+    "hashseed": "1"
+  },
+  "seconds": 6.0,
+  "scenario": "scenarios/v092/train_adjacent_north.sescenario",
+  "brain": "results/v093b/phase2-canonical1/brains/episode_022.sebrain",
+  "reference_search": false,
+  "actions": 39,
+  "events": 285,
+  "causal_digest": "ecba58913a6e35f1a33d637442b21179634d84c786b2f8c2f8629efe2ce229d8",
+  "ffi_calls": 1485,
+  "ffi_calls_per_completed_action": 38.07692307692308,
+  "native_method_calls": 22674,
+  "native_method_calls_per_completed_action": 581.3846153846154,
+  "planner": {
+    "instrumented": true,
+    "timing_unit": "line intervals; nested calls included",
+    "searches": 40,
+    "states_expanded": 1000,
+    "state_action_pairs": 17000,
+    "stages": {
+      "candidate_generation": {
+        "count": 160,
+        "total_us": 1311.3999999999987,
+        "ema_us": 9.337309585914955,
+        "max_us": 31.6,
+        "work_units": 160,
+        "p50_us": 1.6,
+        "p95_us": 18.9
+      },
+      "state_action_expansion": {
+        "count": 19160,
+        "total_us": 8459.299999998577,
+        "ema_us": 0.38396722323426025,
+        "max_us": 5.8,
+        "work_units": 19160,
+        "p50_us": 0.4,
+        "p95_us": 0.6
+      },
+      "prediction_request_preparation": {
+        "count": 2315,
+        "total_us": 1008.8999999999729,
+        "ema_us": 0.5531039344629642,
+        "max_us": 6.0,
+        "work_units": 2315,
+        "p50_us": 0.3,
+        "p95_us": 1.1
+      },
+      "native_batch_call": {
+        "count": 359,
+        "total_us": 64879.29999999996,
+        "ema_us": 186.93482123638162,
+        "max_us": 1094.6,
+        "work_units": 359,
+        "p50_us": 0.6,
+        "p95_us": 646.1
+      },
+      "future_state_construction": {
+        "count": 20468,
+        "total_us": 64115.10000000521,
+        "ema_us": 1.029786745672408,
+        "max_us": 41.2,
+        "work_units": 20468,
+        "p50_us": 1.0,
+        "p95_us": 16.5
+      },
+      "score_decomposition": {
+        "count": 68373,
+        "total_us": 59853.49999998799,
+        "ema_us": 0.9112988556794481,
+        "max_us": 35.8,
+        "work_units": 68373,
+        "p50_us": 0.6,
+        "p95_us": 2.1
+      },
+      "loop_epistemic": {
+        "count": 68040,
+        "total_us": 280991.6999999844,
+        "ema_us": 0.786637002816596,
+        "max_us": 166.5,
+        "work_units": 68040,
+        "p50_us": 0.7,
+        "p95_us": 1.0
+      },
+      "homeostatic_estimate": {
+        "count": 17000,
+        "total_us": 948685.099999999,
+        "ema_us": 39.33051298439317,
+        "max_us": 4106.1,
+        "work_units": 17000,
+        "p50_us": 32.8,
+        "p95_us": 289.5
+      },
+      "candidate_object_creation": {
+        "count": 17040,
+        "total_us": 27328.600000000373,
+        "ema_us": 2.9084598268210784,
+        "max_us": 17.7,
+        "work_units": 17040,
+        "p50_us": 1.6,
+        "p95_us": 1.9
+      },
+      "beam_sorting_and_ties": {
+        "count": 160,
+        "total_us": 9410.000000000002,
+        "ema_us": 60.19356774675067,
+        "max_us": 152.0,
+        "work_units": 160,
+        "p50_us": 68.8,
+        "p95_us": 78.1
+      },
+      "deduplication": {
+        "count": 1000,
+        "total_us": 600.4999999999999,
+        "ema_us": 0.6595498338338863,
+        "max_us": 7.4,
+        "work_units": 1000,
+        "p50_us": 0.6,
+        "p95_us": 1.0
+      },
+      "other": {
+        "count": 225088,
+        "total_us": 110162.40000005836,
+        "ema_us": 0.46845344725570287,
+        "max_us": 32.9,
+        "work_units": 225088,
+        "p50_us": 0.4,
+        "p95_us": 1.1
+      }
+    },
+    "tie_handling": "included in unchanged beam_sorting_and_ties",
+    "deduplication": "request state deduplication; no candidate deduplication exists"
+  },
+  "host": {
+    "homeostasis_numeric_boundary": {
+      "count": 40,
+      "total_us": 239.20000000000002,
+      "ema_us": 5.695385797411356,
+      "max_us": 10.4,
+      "work_units": 40,
+      "p50_us": 5.9,
+      "p95_us": 6.7
+    },
+    "memory_recall": {
+      "count": 80,
+      "total_us": 2691.8,
+      "ema_us": 30.597948635925395,
+      "max_us": 50.6,
+      "work_units": 80,
+      "p50_us": 30.9,
+      "p95_us": 44.6
+    },
+    "micro_neural_boundary": {
+      "count": 0,
+      "total_us": 0.0,
+      "ema_us": 0.0,
+      "max_us": 0.0,
+      "work_units": 0,
+      "p50_us": 0.0,
+      "p95_us": 0.0
+    },
+    "native_call.action_effects": {
+      "count": 0,
+      "total_us": 0.0,
+      "ema_us": 0.0,
+      "max_us": 0.0,
+      "work_units": 0,
+      "p50_us": 0.0,
+      "p95_us": 0.0
+    },
+    "native_call.action_effects_batch": {
+      "count": 0,
+      "total_us": 0.0,
+      "ema_us": 0.0,
+      "max_us": 0.0,
+      "work_units": 0,
+      "p50_us": 0.0,
+      "p95_us": 0.0
+    },
+    "native_call.action_trials": {
+      "count": 40,
+      "total_us": 403.7999999999999,
+      "ema_us": 12.565707674018991,
+      "max_us": 17.0,
+      "work_units": 40,
+      "p50_us": 11.1,
+      "p95_us": 14.5
+    },
+    "native_call.add_cognit": {
+      "count": 6,
+      "total_us": 46.099999999999994,
+      "ema_us": 8.527264000000002,
+      "max_us": 12.3,
+      "work_units": 6,
+      "p50_us": 6.8,
+      "p95_us": 8.7
+    },
+    "native_call.add_cognits": {
+      "count": 0,
+      "total_us": 0.0,
+      "ema_us": 0.0,
+      "max_us": 0.0,
+      "work_units": 0,
+      "p50_us": 0.0,
+      "p95_us": 0.0
+    },
+    "native_call.add_relation": {
+      "count": 17,
+      "total_us": 58.8,
+      "ema_us": 3.287965900638783,
+      "max_us": 7.5,
+      "work_units": 17,
+      "p50_us": 3.1,
+      "p95_us": 5.0
+    },
+    "native_call.assembly_bridge_state": {
+      "count": 0,
+      "total_us": 0.0,
+      "ema_us": 0.0,
+      "max_us": 0.0,
+      "work_units": 0,
+      "p50_us": 0.0,
+      "p95_us": 0.0
+    },
+    "native_call.assembly_cognit_mapping": {
+      "count": 0,
+      "total_us": 0.0,
+      "ema_us": 0.0,
+      "max_us": 0.0,
+      "work_units": 0,
+      "p50_us": 0.0,
+      "p95_us": 0.0
+    },
+    "native_call.begin_continuous_time": {
+      "count": 46,
+      "total_us": 177.6,
+      "ema_us": 3.6211832722209434,
+      "max_us": 9.5,
+      "work_units": 46,
+      "p50_us": 3.6,
+      "p95_us": 4.4
+    },
+    "native_call.calibrate_compute": {
+      "count": 0,
+      "total_us": 0.0,
+      "ema_us": 0.0,
+      "max_us": 0.0,
+      "work_units": 0,
+      "p50_us": 0.0,
+      "p95_us": 0.0
+    },
+    "native_call.clear_transition_evidence": {
+      "count": 0,
+      "total_us": 0.0,
+      "ema_us": 0.0,
+      "max_us": 0.0,
+      "work_units": 0,
+      "p50_us": 0.0,
+      "p95_us": 0.0
+    },
+    "native_call.cognit_alive": {
+      "count": 0,
+      "total_us": 0.0,
+      "ema_us": 0.0,
+      "max_us": 0.0,
+      "work_units": 0,
+      "p50_us": 0.0,
+      "p95_us": 0.0
+    },
+    "native_call.cognit_elapsed_times": {
+      "count": 96,
+      "total_us": 78.90000000000008,
+      "ema_us": 0.8446616242288564,
+      "max_us": 2.1,
+      "work_units": 96,
+      "p50_us": 0.7,
+      "p95_us": 1.5
+    },
+    "native_call.cognit_state": {
+      "count": 0,
+      "total_us": 0.0,
+      "ema_us": 0.0,
+      "max_us": 0.0,
+      "work_units": 0,
+      "p50_us": 0.0,
+      "p95_us": 0.0
+    },
+    "native_call.cognit_state_full": {
+      "count": 234,
+      "total_us": 263.7000000000006,
+      "ema_us": 1.0310339827347714,
+      "max_us": 5.6,
+      "work_units": 234,
+      "p50_us": 0.9,
+      "p95_us": 2.4
+    },
+    "native_call.cognit_state_masked": {
+      "count": 120,
+      "total_us": 887.9000000000003,
+      "ema_us": 6.236028328897732,
+      "max_us": 17.8,
+      "work_units": 120,
+      "p50_us": 6.9,
+      "p95_us": 13.7
+    },
+    "native_call.compute_telemetry": {
+      "count": 0,
+      "total_us": 0.0,
+      "ema_us": 0.0,
+      "max_us": 0.0,
+      "work_units": 0,
+      "p50_us": 0.0,
+      "p95_us": 0.0
+    },
+    "native_call.configure_compute_policy": {
+      "count": 0,
+      "total_us": 0.0,
+      "ema_us": 0.0,
+      "max_us": 0.0,
+      "work_units": 0,
+      "p50_us": 0.0,
+      "p95_us": 0.0
+    },
+    "native_call.continuous_relation_time_state": {
+      "count": 0,
+      "total_us": 0.0,
+      "ema_us": 0.0,
+      "max_us": 0.0,
+      "work_units": 0,
+      "p50_us": 0.0,
+      "p95_us": 0.0
+    },
+    "native_call.continuous_time_state": {
+      "count": 0,
+      "total_us": 0.0,
+      "ema_us": 0.0,
+      "max_us": 0.0,
+      "work_units": 0,
+      "p50_us": 0.0,
+      "p95_us": 0.0
+    },
+    "native_call.diagnostic_stored_nodes": {
+      "count": 0,
+      "total_us": 0.0,
+      "ema_us": 0.0,
+      "max_us": 0.0,
+      "work_units": 0,
+      "p50_us": 0.0,
+      "p95_us": 0.0
+    },
+    "native_call.dialogue_snapshot": {
+      "count": 0,
+      "total_us": 0.0,
+      "ema_us": 0.0,
+      "max_us": 0.0,
+      "work_units": 0,
+      "p50_us": 0.0,
+      "p95_us": 0.0
+    },
+    "native_call.dirty_relation_state": {
+      "count": 0,
+      "total_us": 0.0,
+      "ema_us": 0.0,
+      "max_us": 0.0,
+      "work_units": 0,
+      "p50_us": 0.0,
+      "p95_us": 0.0
+    },
+    "native_call.homeostasis_runtime_state": {
+      "count": 0,
+      "total_us": 0.0,
+      "ema_us": 0.0,
+      "max_us": 0.0,
+      "work_units": 0,
+      "p50_us": 0.0,
+      "p95_us": 0.0
+    },
+    "native_call.homeostatic_step": {
+      "count": 40,
+      "total_us": 373.40000000000003,
+      "ema_us": 9.076470692486641,
+      "max_us": 15.9,
+      "work_units": 40,
+      "p50_us": 9.1,
+      "p95_us": 10.4
+    },
+    "native_call.latest_brain_snapshot": {
+      "count": 0,
+      "total_us": 0.0,
+      "ema_us": 0.0,
+      "max_us": 0.0,
+      "work_units": 0,
+      "p50_us": 0.0,
+      "p95_us": 0.0
+    },
+    "native_call.lifecycle_step": {
+      "count": 0,
+      "total_us": 0.0,
+      "ema_us": 0.0,
+      "max_us": 0.0,
+      "work_units": 0,
+      "p50_us": 0.0,
+      "p95_us": 0.0
+    },
+    "native_call.load_graph": {
+      "count": 0,
+      "total_us": 0.0,
+      "ema_us": 0.0,
+      "max_us": 0.0,
+      "work_units": 0,
+      "p50_us": 0.0,
+      "p95_us": 0.0
+    },
+    "native_call.materialize_cognits_at": {
+      "count": 0,
+      "total_us": 0.0,
+      "ema_us": 0.0,
+      "max_us": 0.0,
+      "work_units": 0,
+      "p50_us": 0.0,
+      "p95_us": 0.0
+    },
+    "native_call.materialize_current": {
+      "count": 17,
+      "total_us": 1227.5,
+      "ema_us": 98.5714328395278,
+      "max_us": 198.1,
+      "work_units": 17,
+      "p50_us": 79.4,
+      "p95_us": 121.0
+    },
+    "native_call.materialize_relations": {
+      "count": 0,
+      "total_us": 0.0,
+      "ema_us": 0.0,
+      "max_us": 0.0,
+      "work_units": 0,
+      "p50_us": 0.0,
+      "p95_us": 0.0
+    },
+    "native_call.neurodynamic_substrate": {
+      "count": 0,
+      "total_us": 0.0,
+      "ema_us": 0.0,
+      "max_us": 0.0,
+      "work_units": 0,
+      "p50_us": 0.0,
+      "p95_us": 0.0
+    },
+    "native_call.observe_transition_delay": {
+      "count": 17,
+      "total_us": 4733.4,
+      "ema_us": 296.32692801221697,
+      "max_us": 434.7,
+      "work_units": 17,
+      "p50_us": 262.5,
+      "p95_us": 421.0
+    },
+    "native_call.outgoing": {
+      "count": 0,
+      "total_us": 0.0,
+      "ema_us": 0.0,
+      "max_us": 0.0,
+      "work_units": 0,
+      "p50_us": 0.0,
+      "p95_us": 0.0
+    },
+    "native_call.outgoing_targets": {
+      "count": 158,
+      "total_us": 374.4,
+      "ema_us": 1.7562271526111282,
+      "max_us": 10.1,
+      "work_units": 158,
+      "p50_us": 1.4,
+      "p95_us": 6.2
+    },
+    "native_call.planner_transition_batch": {
+      "count": 155,
+      "total_us": 29282.299999999992,
+      "ema_us": 246.7166843303237,
+      "max_us": 547.8,
+      "work_units": 155,
+      "p50_us": 159.5,
+      "p95_us": 353.6
+    },
+    "native_call.predict": {
+      "count": 0,
+      "total_us": 0.0,
+      "ema_us": 0.0,
+      "max_us": 0.0,
+      "work_units": 0,
+      "p50_us": 0.0,
+      "p95_us": 0.0
+    },
+    "native_call.predict_actions_batch": {
+      "count": 0,
+      "total_us": 0.0,
+      "ema_us": 0.0,
+      "max_us": 0.0,
+      "work_units": 0,
+      "p50_us": 0.0,
+      "p95_us": 0.0
+    },
+    "native_call.predict_actions_batch_at": {
+      "count": 160,
+      "total_us": 9360.499999999996,
+      "ema_us": 58.39286646614597,
+      "max_us": 164.2,
+      "work_units": 160,
+      "p50_us": 34.6,
+      "p95_us": 120.4
+    },
+    "native_call.predict_compact": {
+      "count": 0,
+      "total_us": 0.0,
+      "ema_us": 0.0,
+      "max_us": 0.0,
+      "work_units": 0,
+      "p50_us": 0.0,
+      "p95_us": 0.0
+    },
+    "native_call.process_assembly_bridge": {
+      "count": 0,
+      "total_us": 0.0,
+      "ema_us": 0.0,
+      "max_us": 0.0,
+      "work_units": 0,
+      "p50_us": 0.0,
+      "p95_us": 0.0
+    },
+    "native_call.propagate": {
+      "count": 109,
+      "total_us": 1167.0,
+      "ema_us": 12.848758049696833,
+      "max_us": 27.3,
+      "work_units": 109,
+      "p50_us": 9.7,
+      "p95_us": 20.8
+    },
+    "native_call.publish_brain_snapshot": {
+      "count": 246,
+      "total_us": 380.3000000000002,
+      "ema_us": 1.7380655422612068,
+      "max_us": 3.7,
+      "work_units": 246,
+      "p50_us": 1.5,
+      "p95_us": 2.3
+    },
+    "native_call.publish_dialogue_line": {
+      "count": 0,
+      "total_us": 0.0,
+      "ema_us": 0.0,
+      "max_us": 0.0,
+      "work_units": 0,
+      "p50_us": 0.0,
+      "p95_us": 0.0
+    },
+    "native_call.receive": {
+      "count": 0,
+      "total_us": 0.0,
+      "ema_us": 0.0,
+      "max_us": 0.0,
+      "work_units": 0,
+      "p50_us": 0.0,
+      "p95_us": 0.0
+    },
+    "native_call.receive_batch": {
+      "count": 150,
+      "total_us": 786.9,
+      "ema_us": 4.965350849832573,
+      "max_us": 13.5,
+      "work_units": 150,
+      "p50_us": 5.1,
+      "p95_us": 7.5
+    },
+    "native_call.relation_handle_valid": {
+      "count": 0,
+      "total_us": 0.0,
+      "ema_us": 0.0,
+      "max_us": 0.0,
+      "work_units": 0,
+      "p50_us": 0.0,
+      "p95_us": 0.0
+    },
+    "native_call.relation_state": {
+      "count": 17,
+      "total_us": 33.80000000000001,
+      "ema_us": 1.9869531761278982,
+      "max_us": 2.6,
+      "work_units": 17,
+      "p50_us": 2.0,
+      "p95_us": 2.4
+    },
+    "native_call.remove_cognit": {
+      "count": 0,
+      "total_us": 0.0,
+      "ema_us": 0.0,
+      "max_us": 0.0,
+      "work_units": 0,
+      "p50_us": 0.0,
+      "p95_us": 0.0
+    },
+    "native_call.remove_relation": {
+      "count": 0,
+      "total_us": 0.0,
+      "ema_us": 0.0,
+      "max_us": 0.0,
+      "work_units": 0,
+      "p50_us": 0.0,
+      "p95_us": 0.0
+    },
+    "native_call.restore_assembly_bridge_state": {
+      "count": 0,
+      "total_us": 0.0,
+      "ema_us": 0.0,
+      "max_us": 0.0,
+      "work_units": 0,
+      "p50_us": 0.0,
+      "p95_us": 0.0
+    },
+    "native_call.restore_continuous_relation_time_state": {
+      "count": 0,
+      "total_us": 0.0,
+      "ema_us": 0.0,
+      "max_us": 0.0,
+      "work_units": 0,
+      "p50_us": 0.0,
+      "p95_us": 0.0
+    },
+    "native_call.restore_continuous_time_state": {
+      "count": 0,
+      "total_us": 0.0,
+      "ema_us": 0.0,
+      "max_us": 0.0,
+      "work_units": 0,
+      "p50_us": 0.0,
+      "p95_us": 0.0
+    },
+    "native_call.restore_dirty_relation_state": {
+      "count": 0,
+      "total_us": 0.0,
+      "ema_us": 0.0,
+      "max_us": 0.0,
+      "work_units": 0,
+      "p50_us": 0.0,
+      "p95_us": 0.0
+    },
+    "native_call.restore_homeostasis_runtime_state": {
+      "count": 0,
+      "total_us": 0.0,
+      "ema_us": 0.0,
+      "max_us": 0.0,
+      "work_units": 0,
+      "p50_us": 0.0,
+      "p95_us": 0.0
+    },
+    "native_call.restore_temporal_state": {
+      "count": 0,
+      "total_us": 0.0,
+      "ema_us": 0.0,
+      "max_us": 0.0,
+      "work_units": 0,
+      "p50_us": 0.0,
+      "p95_us": 0.0
+    },
+    "native_call.restore_transition_history": {
+      "count": 0,
+      "total_us": 0.0,
+      "ema_us": 0.0,
+      "max_us": 0.0,
+      "work_units": 0,
+      "p50_us": 0.0,
+      "p95_us": 0.0
+    },
+    "native_call.save_graph": {
+      "count": 0,
+      "total_us": 0.0,
+      "ema_us": 0.0,
+      "max_us": 0.0,
+      "work_units": 0,
+      "p50_us": 0.0,
+      "p95_us": 0.0
+    },
+    "native_call.set_activity": {
+      "count": 0,
+      "total_us": 0.0,
+      "ema_us": 0.0,
+      "max_us": 0.0,
+      "work_units": 0,
+      "p50_us": 0.0,
+      "p95_us": 0.0
+    },
+    "native_call.set_cognit_fields": {
+      "count": 178,
+      "total_us": 646.5000000000006,
+      "ema_us": 2.9241216394680922,
+      "max_us": 9.8,
+      "work_units": 178,
+      "p50_us": 2.6,
+      "p95_us": 7.6
+    },
+    "native_call.set_cognit_states": {
+      "count": 6,
+      "total_us": 36.9,
+      "ema_us": 6.347776000000001,
+      "max_us": 7.5,
+      "work_units": 6,
+      "p50_us": 5.6,
+      "p95_us": 7.1
+    },
+    "native_call.set_compute_mode": {
+      "count": 0,
+      "total_us": 0.0,
+      "ema_us": 0.0,
+      "max_us": 0.0,
+      "work_units": 0,
+      "p50_us": 0.0,
+      "p95_us": 0.0
+    },
+    "native_call.set_evidence_window": {
+      "count": 0,
+      "total_us": 0.0,
+      "ema_us": 0.0,
+      "max_us": 0.0,
+      "work_units": 0,
+      "p50_us": 0.0,
+      "p95_us": 0.0
+    },
+    "native_call.set_refractory": {
+      "count": 0,
+      "total_us": 0.0,
+      "ema_us": 0.0,
+      "max_us": 0.0,
+      "work_units": 0,
+      "p50_us": 0.0,
+      "p95_us": 0.0
+    },
+    "native_call.set_relation_capacity": {
+      "count": 0,
+      "total_us": 0.0,
+      "ema_us": 0.0,
+      "max_us": 0.0,
+      "work_units": 0,
+      "p50_us": 0.0,
+      "p95_us": 0.0
+    },
+    "native_call.temporal_state": {
+      "count": 0,
+      "total_us": 0.0,
+      "ema_us": 0.0,
+      "max_us": 0.0,
+      "work_units": 0,
+      "p50_us": 0.0,
+      "p95_us": 0.0
+    },
+    "native_call.timed_successors": {
+      "count": 20699,
+      "total_us": 105209.00000000071,
+      "ema_us": 5.77666040380203,
+      "max_us": 76.8,
+      "work_units": 20699,
+      "p50_us": 5.8,
+      "p95_us": 14.8
+    },
+    "native_call.transition_history": {
+      "count": 0,
+      "total_us": 0.0,
+      "ema_us": 0.0,
+      "max_us": 0.0,
+      "work_units": 0,
+      "p50_us": 0.0,
+      "p95_us": 0.0
+    },
+    "native_call.transition_metrics": {
+      "count": 0,
+      "total_us": 0.0,
+      "ema_us": 0.0,
+      "max_us": 0.0,
+      "work_units": 0,
+      "p50_us": 0.0,
+      "p95_us": 0.0
+    },
+    "native_call.update_failed_action": {
+      "count": 22,
+      "total_us": 116.10000000000001,
+      "ema_us": 5.359654938861931,
+      "max_us": 7.1,
+      "work_units": 22,
+      "p50_us": 5.4,
+      "p95_us": 6.1
+    },
+    "native_call.update_outcomes": {
+      "count": 17,
+      "total_us": 754.7,
+      "ema_us": 47.711739199400846,
+      "max_us": 60.1,
+      "work_units": 17,
+      "p50_us": 43.6,
+      "p95_us": 60.0
+    },
+    "native_call.update_relation": {
+      "count": 85,
+      "total_us": 94.50000000000001,
+      "ema_us": 1.43749462351983,
+      "max_us": 5.9,
+      "work_units": 85,
+      "p50_us": 0.8,
+      "p95_us": 1.9
+    },
+    "native_call.update_transition_evidence": {
+      "count": 39,
+      "total_us": 652.2999999999997,
+      "ema_us": 15.41494662813045,
+      "max_us": 48.0,
+      "work_units": 39,
+      "p50_us": 15.0,
+      "p95_us": 27.5
+    },
+    "native_call.upsert_relation_states_batch": {
+      "count": 0,
+      "total_us": 0.0,
+      "ema_us": 0.0,
+      "max_us": 0.0,
+      "work_units": 0,
+      "p50_us": 0.0,
+      "p95_us": 0.0
+    },
+    "pattern_matching_birth": {
+      "count": 40,
+      "total_us": 15722.000000000002,
+      "ema_us": 369.56331477612434,
+      "max_us": 517.6,
+      "work_units": 40,
+      "p50_us": 379.3,
+      "p95_us": 492.4
+    },
+    "physiology_numeric_update": {
+      "count": 286,
+      "total_us": 2050.5999999999985,
+      "ema_us": 7.090484792368974,
+      "max_us": 21.8,
+      "work_units": 286,
+      "p50_us": 6.6,
+      "p95_us": 10.2
+    },
+    "planner_beam_refinement": {
+      "count": 40,
+      "total_us": 1909156.8999999994,
+      "ema_us": 48336.113909649066,
+      "max_us": 66306.1,
+      "work_units": 40,
+      "p50_us": 48854.9,
+      "p95_us": 54623.5
+    },
+    "planner_transition_batch_boundary": {
+      "count": 155,
+      "total_us": 64125.900000000016,
+      "ema_us": 481.42360449772127,
+      "max_us": 1090.2,
+      "work_units": 155,
+      "p50_us": 348.2,
+      "p95_us": 758.9
+    },
+    "prediction_batch": {
+      "count": 160,
+      "total_us": 21479.399999999998,
+      "ema_us": 123.66558904651251,
+      "max_us": 321.4,
+      "work_units": 160,
+      "p50_us": 64.3,
+      "p95_us": 266.5
+    },
+    "presentation_snapshot_preparation": {
+      "count": 246,
+      "total_us": 2337.5000000000005,
+      "ema_us": 10.587423143435421,
+      "max_us": 21.2,
+      "work_units": 246,
+      "p50_us": 8.9,
+      "p95_us": 13.0
+    },
+    "relation_evidence": {
+      "count": 39,
+      "total_us": 859.7999999999998,
+      "ema_us": 20.74649698547207,
+      "max_us": 53.1,
+      "work_units": 39,
+      "p50_us": 20.5,
+      "p95_us": 33.3
+    },
+    "relation_lifecycle_boundary": {
+      "count": 0,
+      "total_us": 0.0,
+      "ema_us": 0.0,
+      "max_us": 0.0,
+      "work_units": 0,
+      "p50_us": 0.0,
+      "p95_us": 0.0
+    },
+    "relation_materialization": {
+      "count": 17,
+      "total_us": 1344.6,
+      "ema_us": 105.20405959403506,
+      "max_us": 204.7,
+      "work_units": 17,
+      "p50_us": 86.0,
+      "p95_us": 127.0
+    },
+    "scheduler_dispatch": {
+      "count": 285,
+      "total_us": 3117311.1000000015,
+      "ema_us": 13246.341630258183,
+      "max_us": 67081.0,
+      "work_units": 285,
+      "p50_us": 114.2,
+      "p95_us": 51126.8
+    },
+    "sensory_decomposition": {
+      "count": 40,
+      "total_us": 17937.399999999998,
+      "ema_us": 410.04860890452755,
+      "max_us": 633.7,
+      "work_units": 40,
+      "p50_us": 418.0,
+      "p95_us": 583.4
+    },
+    "wave_propagation": {
+      "count": 109,
+      "total_us": 2696.7000000000003,
+      "ema_us": 28.114252687020823,
+      "max_us": 48.9,
+      "work_units": 109,
+      "p50_us": 23.7,
+      "p95_us": 40.5
+    },
+    "world_action_completion": {
+      "count": 39,
+      "total_us": 1917.7,
+      "ema_us": 44.4534881024462,
+      "max_us": 64.2,
+      "work_units": 39,
+      "p50_us": 49.8,
+      "p95_us": 58.9
+    }
+  }
+}

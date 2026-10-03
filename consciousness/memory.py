@@ -107,7 +107,7 @@ class SpatialMemory:
         return tuple(sorted((x,y,ch,val) for x,y,ch,val,_ in observation if ch!="self" and not ch.startswith("body_") and val))
 
     def _learn_stability(self,observation)->None:
-        for _,_,ch,val,change in observation:
+        for _,_,ch,val,change in sorted(observation):
             if ch=="self" or ch.startswith("body_"):continue
             key=(ch,val);self.feature_seen[key]+=1;self.feature_change[key]+=int(bool(change))
 

@@ -138,3 +138,13 @@ python tools/verify.py --full
 Set `CMAKE_CUDA_ARCHITECTURES` through standard CMake configuration for deployment.
 No GPU model is hardcoded. Graphics tests are explicit because headless CI may have
 no OpenGL context. Measurements and acceptance limits are in [results](V0_9_3B_RESULTS.md).
+
+
+## Phase 2 ? 2026-10-03
+
+See [Phase 2 evidence and remaining freeze blockers](V0_9_3B_PHASE2_RESULTS.md).
+Native planner prediction/effect rows now use a single immutable state-action
+worker-pool job, with bounded shape-specific measured costs and per-layer exact
+numeric caches. Historical Phase-1 measurements above retain their execution
+provenance. Full score migration, resident compute graph and presentation delta
+stream/full GPU graph mirror remain incomplete: **PARTIAL / NOT FROZEN**.

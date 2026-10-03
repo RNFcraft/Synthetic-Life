@@ -11,6 +11,8 @@ sys.path.insert(0,str(ROOT))
 parser=argparse.ArgumentParser(description=__doc__)
 parser.add_argument('--reference-module')
 parser.add_argument('--output',required=True)
+parser.add_argument('--trace-episodes', type=int, nargs='*', default=[])
+parser.add_argument('--detail-index', type=int)
 args=parser.parse_args()
 if args.reference_module:
     spec=importlib.util.spec_from_file_location('consciousness._native_brain',args.reference_module)
@@ -22,12 +24,18 @@ if args.reference_module:
         def __getattr__(self,name):return getattr(self.inner,name)
         def publish_brain_snapshot(self,time,tick,generation,active,force=True):
             return self.inner.publish_brain_snapshot(time,tick,generation,active)
+        def planner_transition_batch(self,states,actions,tick,decay,floor,prediction_needed=()):
+            if not prediction_needed:return self.inner.planner_transition_batch(states,actions,tick,decay,floor)
+            return [self.inner.planner_transition_batch([state],actions,tick,decay,floor)[0] if needed else
+                    ([[] for _ in actions],self.inner.action_effects_batch(state,actions,floor))
+                    for state,needed in zip(states,prediction_needed)]
     module.NativeBrainEngine=CompatibleEngine
     sys.modules['consciousness._native_brain']=module
 
 from experiments.v092.protocol import load_protocol
 from experiments.v092.runner import train_stage
 from experiments.v093a.credit_trace import digest
+from telemetry.provenance import execution_provenance
 
 output=Path(args.output).resolve()
 for frozen in (ROOT/'results/v092',ROOT/'results/v093a'):
@@ -35,11 +43,37 @@ for frozen in (ROOT/'results/v092',ROOT/'results/v093a'):
         raise ValueError('differential output must not overlap historical research artifacts')
 if output.exists() and any(output.iterdir()):raise ValueError('use a new differential output directory')
 output.mkdir(parents=True,exist_ok=True)
+provenance = execution_provenance()
+if args.trace_episodes:
+    from experiments.v092 import runner
+    from experiments.v093a.determinism import BoundaryTrace
+    from experiments.v093a.credit_trace import plain
+    original_instantiate = runner.instantiate
+    trace_streams = []
+    traces = []
+    episode_index = 0
+    def traced_instantiate(*values, **kwargs):
+        global episode_index
+        episode_index += 1
+        runtime, definition = original_instantiate(*values, **kwargs)
+        if episode_index in args.trace_episodes:
+            stream = (output/f'events-{episode_index:03d}.jsonl').open('w', encoding='utf-8')
+            trace = BoundaryTrace(stream, detail_index=args.detail_index)
+            runtime.diagnostic_observer = trace
+            trace_streams.append(stream)
+            traces.append((episode_index, trace))
+        return runtime, definition
+    runner.instantiate = traced_instantiate
 protocol=load_protocol(ROOT/'experiments/protocols/v092_survival.securriculum')
 stage=protocol.data['STAGES'][0];stage['training'][0]['episodes']=22
 brain,rows=train_stage(protocol,stage,output,None)
+if args.trace_episodes:
+    for stream in trace_streams:stream.close()
+    for episode, trace in traces:
+        if trace.detail is not None:
+            (output/f'detail-{episode:03d}.json').write_text(json.dumps(plain(trace.detail),indent=2),encoding='utf-8')
 records=[json.loads((output/row['trajectory_reference']).read_text(encoding='utf-8')) for row in rows]
-summary=dict(hashseed=os.environ.get('PYTHONHASHSEED','random'),records_digest=digest(records),
+summary=dict(provenance=provenance,hashseed=os.environ.get('PYTHONHASHSEED','random'),records_digest=digest(records),
              episode_consumptions=[row['consumptions'] for row in rows],
              final_episode_has_consumption=bool(records[-1]['consumptions']))
 (output/'summary.json').write_text(json.dumps(summary,indent=2),encoding='utf-8')

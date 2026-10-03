@@ -32,6 +32,16 @@ def test_unknown_mode_errors_without_mutation():
     with pytest.raises(ValueError,match='unknown host compute mode'):engine.set_compute_mode('invented')
     assert boundary_state(runtime)==before
 
+
+def test_real_planner_calibration_does_not_read_or_modify_live_cognition():
+    runtime=ContinuousRuntime(6607);runtime.run_until(.2)
+    engine=runtime.simulation.core.backend.engine
+    before=boundary_state(runtime)
+    engine.calibrate_planner_compute(2)
+    assert boundary_state(runtime)==before
+    telemetry=engine.compute_telemetry()[3]
+    assert telemetry['estimates'][0][0]>0 and telemetry['estimates'][1][0]>0
+
 def test_gpu_errors_clearly_or_matches_exactly():
     runtime=ContinuousRuntime(6607);engine=runtime.simulation.core.backend.engine
     try:engine.set_compute_mode('FORCE_GPU')
