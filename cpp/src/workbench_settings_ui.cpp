@@ -120,6 +120,8 @@ void draw_settings_dialog(WorkbenchUIState &ui, const WorkbenchStatusSnapshot *s
       ImGui::SliderFloat("UI scale", &ui.ui_scale, .75f, 1.5f, "%.2f");
       ImGui::Checkbox("Show world grid", &ui.show_grid);
       ImGui::Checkbox("Show tooltips", &ui.show_tooltips);
+      ImGui::Checkbox("Show performance", &ui.show_performance);
+      if(ImGui::Checkbox("Compatible CPU brain layout",&ui.legacy_brain_renderer))ui.cached_brain.reset();
       ImGui::SliderInt("Brain edge visual budget", &ui.brain_edge_budget, 0, WorkbenchUIState::max_brain_edges);
       ImGui::EndTabItem();
     }

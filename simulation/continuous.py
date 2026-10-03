@@ -265,7 +265,7 @@ class ContinuousRuntime(WorkbenchRuntimeMixin):
                 self.scheduler_events_processed += 1
                 self.peak_scheduler_queue = max(self.peak_scheduler_queue, self.scheduler.peak_size)
                 if event.type in (RuntimeEventType.SENSORY_CHANGE,RuntimeEventType.COGNITION_WAKE,RuntimeEventType.COGNITION_CONTINUE,RuntimeEventType.MAINTENANCE,RuntimeEventType.LANGUAGE_INPUT,RuntimeEventType.LANGUAGE_CONTINUE,RuntimeEventType.NEURAL_BRIDGE):
-                    self.publish_brain_snapshot(self.simulation.core.last_language_result.wave.active_ids if event.type in (RuntimeEventType.LANGUAGE_INPUT,RuntimeEventType.LANGUAGE_CONTINUE) and self.simulation.core.last_language_result else None)
+                    self.publish_brain_snapshot(self.simulation.core.last_language_result.wave.active_ids if event.type in (RuntimeEventType.LANGUAGE_INPUT,RuntimeEventType.LANGUAGE_CONTINUE) and self.simulation.core.last_language_result else None,event_boundary=True)
                 processed += 1
                 if processed > guard:raise self._runaway_error()
         self.simulation.world.advance_world_time(self.world_time)
@@ -282,7 +282,7 @@ class ContinuousRuntime(WorkbenchRuntimeMixin):
             for event in self.scheduler.pop_ready(first.time):
                 self._dispatch(event)
                 self.scheduler_events_processed+=1;self.peak_scheduler_queue=max(self.peak_scheduler_queue,self.scheduler.size)
-                if event.type in (RuntimeEventType.SENSORY_CHANGE,RuntimeEventType.COGNITION_WAKE,RuntimeEventType.COGNITION_CONTINUE,RuntimeEventType.MAINTENANCE,RuntimeEventType.LANGUAGE_INPUT,RuntimeEventType.LANGUAGE_CONTINUE,RuntimeEventType.NEURAL_BRIDGE):self.publish_brain_snapshot(self.simulation.core.last_language_result.wave.active_ids if event.type in (RuntimeEventType.LANGUAGE_INPUT,RuntimeEventType.LANGUAGE_CONTINUE) and self.simulation.core.last_language_result else None)
+                if event.type in (RuntimeEventType.SENSORY_CHANGE,RuntimeEventType.COGNITION_WAKE,RuntimeEventType.COGNITION_CONTINUE,RuntimeEventType.MAINTENANCE,RuntimeEventType.LANGUAGE_INPUT,RuntimeEventType.LANGUAGE_CONTINUE,RuntimeEventType.NEURAL_BRIDGE):self.publish_brain_snapshot(self.simulation.core.last_language_result.wave.active_ids if event.type in (RuntimeEventType.LANGUAGE_INPUT,RuntimeEventType.LANGUAGE_CONTINUE) and self.simulation.core.last_language_result else None,event_boundary=True)
                 processed+=1
                 if processed>guard:raise self._runaway_error()
         self.scheduler.pop_ready(float(until));self.simulation.world.advance_world_time(float(until));self.simulation.physiology.advance_to(float(until));self.simulation.core.homeostatic_projection=self.simulation.physiology.snapshot();self.simulation.world_time=WorldTime(float(until));return processed
@@ -294,14 +294,14 @@ class ContinuousRuntime(WorkbenchRuntimeMixin):
             for event in self.scheduler.pop_ready(now):
                 self._dispatch(event)
                 self.scheduler_events_processed+=1;self.peak_scheduler_queue=max(self.peak_scheduler_queue,self.scheduler.size)
-                if event.type in (RuntimeEventType.SENSORY_CHANGE,RuntimeEventType.COGNITION_WAKE,RuntimeEventType.COGNITION_CONTINUE,RuntimeEventType.MAINTENANCE,RuntimeEventType.LANGUAGE_INPUT,RuntimeEventType.LANGUAGE_CONTINUE,RuntimeEventType.NEURAL_BRIDGE):self.publish_brain_snapshot(self.simulation.core.last_language_result.wave.active_ids if event.type in (RuntimeEventType.LANGUAGE_INPUT,RuntimeEventType.LANGUAGE_CONTINUE) and self.simulation.core.last_language_result else None)
+                if event.type in (RuntimeEventType.SENSORY_CHANGE,RuntimeEventType.COGNITION_WAKE,RuntimeEventType.COGNITION_CONTINUE,RuntimeEventType.MAINTENANCE,RuntimeEventType.LANGUAGE_INPUT,RuntimeEventType.LANGUAGE_CONTINUE,RuntimeEventType.NEURAL_BRIDGE):self.publish_brain_snapshot(self.simulation.core.last_language_result.wave.active_ids if event.type in (RuntimeEventType.LANGUAGE_INPUT,RuntimeEventType.LANGUAGE_CONTINUE) and self.simulation.core.last_language_result else None,event_boundary=True)
                 processed+=1
             if processed>guard:raise self._runaway_error()
         return processed
-    def publish_brain_snapshot(self,active_ids=None):
+    def publish_brain_snapshot(self,active_ids=None,event_boundary=False):
         """One coarse observer-only publication at causal event boundaries."""
         core=self.simulation.core;active=sorted(i-1 for i in (core.last_wave.active_ids if active_ids is None else active_ids))
-        core.backend.engine.publish_brain_snapshot(float(self.world_time),core.cognitive_tick,self.cognition_generation,active)
+        core.backend.engine.publish_brain_snapshot(float(self.world_time),core.cognitive_tick,self.cognition_generation,active,not event_boundary)
     def _runaway_error(self):
         frontier=self.simulation.core.continuous_frontier;session=frontier.session if frontier else None;goal=self.simulation.core.state.goal
         pending=[] if session is None else [work.kind.value for work in session.pending_work];history=[] if session is None else session.work_history[-12:]

@@ -298,3 +298,18 @@ def test_v093a_diagnostics_have_no_cognitive_write_or_policy_path():
     source=(ROOT/"consciousness/planning.py").read_text(encoding="utf-8")
     assert "=observer." not in source and "= observer." not in source
     assert "diagnostic_observer" not in (ROOT/"consciousness/graph.py").read_text(encoding="utf-8")
+
+
+def test_performance_telemetry_cannot_enter_semantic_policy():
+    for folder in ('consciousness','world','physiology'):
+        for path in (ROOT/folder).glob('*.py'):
+            assert not any(module.startswith(('telemetry.performance','experiments.v093b','cupy','numba.cuda','pycuda')) for module in _imports(path)),path
+    for path in (ROOT/'telemetry').glob('performance*.py'):
+        assert not any(module.startswith(('experiments','config')) for module in _imports(path)),path
+    for name in ('planning.py','choice.py','valuation.py'):
+        tree=ast.parse((ROOT/'consciousness'/name).read_text(encoding='utf-8'))
+        attrs={n.attr for n in ast.walk(tree) if isinstance(n,ast.Attribute)}
+        assert not attrs & {'compute_telemetry','set_compute_mode','gpu_free_bytes','perf_counter','perf_counter_ns','process_time'}
+    for path in (ROOT/'cpp/src').glob('workbench*.cpp'):
+        text=path.read_text(encoding='utf-8')
+        assert 'graph().add' not in text and 'planner_transition_batch' not in text

@@ -1,0 +1,1144 @@
+{
+  "seconds": 10.0,
+  "mode": "AUTO",
+  "observer": true,
+  "trials": [
+    {
+      "worldtime_per_second": 45.99932380157826,
+      "elapsed_seconds": 0.21739450003951788,
+      "actions": 66,
+      "events": 478,
+      "digest": "10a27313f2f244befe148e7aea3f40ee941caa8a9c8cd889a74e12efdbc918a0",
+      "frames": 64,
+      "presentation_telemetry": [
+        53.2,
+        0.3,
+        2.048,
+        38280.0,
+        11040.0,
+        5.0,
+        21.0,
+        0.0
+      ],
+      "compute_telemetry": [
+        {
+          "kernel": 0,
+          "backend": 0,
+          "switches": 0,
+          "reason": "uncalibrated: CPU serial",
+          "estimates": [
+            [
+              0,
+              0.0,
+              0.0
+            ],
+            [
+              0,
+              0.0,
+              0.0
+            ],
+            [
+              0,
+              0.0,
+              0.0
+            ]
+          ]
+        },
+        {
+          "kernel": 1,
+          "backend": 0,
+          "switches": 0,
+          "reason": "retain measured backend / conservative fallback",
+          "estimates": [
+            [
+              394,
+              0.30471331318722106,
+              126.13021166377266
+            ],
+            [
+              0,
+              0.0,
+              0.0
+            ],
+            [
+              0,
+              0.0,
+              0.0
+            ]
+          ]
+        },
+        {
+          "kernel": 2,
+          "backend": 0,
+          "switches": 0,
+          "reason": "retain measured backend / conservative fallback",
+          "estimates": [
+            [
+              126,
+              0.1445229787614648,
+              33.77825099581095
+            ],
+            [
+              0,
+              0.0,
+              0.0
+            ],
+            [
+              0,
+              0.0,
+              0.0
+            ]
+          ]
+        },
+        {
+          "kernel": 3,
+          "backend": 0,
+          "switches": 0,
+          "reason": "uncalibrated: CPU serial",
+          "estimates": [
+            [
+              0,
+              0.0,
+              0.0
+            ],
+            [
+              0,
+              0.0,
+              0.0
+            ],
+            [
+              0,
+              0.0,
+              0.0
+            ]
+          ]
+        },
+        {
+          "kernel": 4,
+          "backend": 0,
+          "switches": 0,
+          "reason": "uncalibrated: CPU serial",
+          "estimates": [
+            [
+              0,
+              0.0,
+              0.0
+            ],
+            [
+              0,
+              0.0,
+              0.0
+            ],
+            [
+              0,
+              0.0,
+              0.0
+            ]
+          ]
+        },
+        {
+          "kernel": 5,
+          "backend": 0,
+          "switches": 0,
+          "reason": "uncalibrated: CPU serial",
+          "estimates": [
+            [
+              0,
+              0.0,
+              0.0
+            ],
+            [
+              0,
+              0.0,
+              0.0
+            ],
+            [
+              0,
+              0.0,
+              0.0
+            ]
+          ]
+        }
+      ],
+      "full_graph_sync_calls": 0
+    },
+    {
+      "worldtime_per_second": 45.68792768992895,
+      "elapsed_seconds": 0.2188762000296265,
+      "actions": 66,
+      "events": 478,
+      "digest": "10a27313f2f244befe148e7aea3f40ee941caa8a9c8cd889a74e12efdbc918a0",
+      "frames": 83,
+      "presentation_telemetry": [
+        57.5,
+        0.6,
+        1.024,
+        35520.0,
+        12576.0,
+        5.0,
+        21.0,
+        0.0
+      ],
+      "compute_telemetry": [
+        {
+          "kernel": 0,
+          "backend": 0,
+          "switches": 0,
+          "reason": "uncalibrated: CPU serial",
+          "estimates": [
+            [
+              0,
+              0.0,
+              0.0
+            ],
+            [
+              0,
+              0.0,
+              0.0
+            ],
+            [
+              0,
+              0.0,
+              0.0
+            ]
+          ]
+        },
+        {
+          "kernel": 1,
+          "backend": 0,
+          "switches": 0,
+          "reason": "retain measured backend / conservative fallback",
+          "estimates": [
+            [
+              394,
+              0.4236678332330449,
+              126.13021166377266
+            ],
+            [
+              0,
+              0.0,
+              0.0
+            ],
+            [
+              0,
+              0.0,
+              0.0
+            ]
+          ]
+        },
+        {
+          "kernel": 2,
+          "backend": 0,
+          "switches": 0,
+          "reason": "retain measured backend / conservative fallback",
+          "estimates": [
+            [
+              126,
+              0.1612963658346866,
+              33.77825099581095
+            ],
+            [
+              0,
+              0.0,
+              0.0
+            ],
+            [
+              0,
+              0.0,
+              0.0
+            ]
+          ]
+        },
+        {
+          "kernel": 3,
+          "backend": 0,
+          "switches": 0,
+          "reason": "uncalibrated: CPU serial",
+          "estimates": [
+            [
+              0,
+              0.0,
+              0.0
+            ],
+            [
+              0,
+              0.0,
+              0.0
+            ],
+            [
+              0,
+              0.0,
+              0.0
+            ]
+          ]
+        },
+        {
+          "kernel": 4,
+          "backend": 0,
+          "switches": 0,
+          "reason": "uncalibrated: CPU serial",
+          "estimates": [
+            [
+              0,
+              0.0,
+              0.0
+            ],
+            [
+              0,
+              0.0,
+              0.0
+            ],
+            [
+              0,
+              0.0,
+              0.0
+            ]
+          ]
+        },
+        {
+          "kernel": 5,
+          "backend": 0,
+          "switches": 0,
+          "reason": "uncalibrated: CPU serial",
+          "estimates": [
+            [
+              0,
+              0.0,
+              0.0
+            ],
+            [
+              0,
+              0.0,
+              0.0
+            ],
+            [
+              0,
+              0.0,
+              0.0
+            ]
+          ]
+        }
+      ],
+      "full_graph_sync_calls": 0
+    },
+    {
+      "worldtime_per_second": 46.39458407688872,
+      "elapsed_seconds": 0.21554240002296865,
+      "actions": 66,
+      "events": 478,
+      "digest": "10a27313f2f244befe148e7aea3f40ee941caa8a9c8cd889a74e12efdbc918a0",
+      "frames": 99,
+      "presentation_telemetry": [
+        67.6,
+        0.4,
+        1.024,
+        35856.0,
+        12576.0,
+        5.0,
+        43.0,
+        0.0
+      ],
+      "compute_telemetry": [
+        {
+          "kernel": 0,
+          "backend": 0,
+          "switches": 0,
+          "reason": "uncalibrated: CPU serial",
+          "estimates": [
+            [
+              0,
+              0.0,
+              0.0
+            ],
+            [
+              0,
+              0.0,
+              0.0
+            ],
+            [
+              0,
+              0.0,
+              0.0
+            ]
+          ]
+        },
+        {
+          "kernel": 1,
+          "backend": 0,
+          "switches": 0,
+          "reason": "retain measured backend / conservative fallback",
+          "estimates": [
+            [
+              394,
+              0.4791541568202517,
+              126.13021166377266
+            ],
+            [
+              0,
+              0.0,
+              0.0
+            ],
+            [
+              0,
+              0.0,
+              0.0
+            ]
+          ]
+        },
+        {
+          "kernel": 2,
+          "backend": 0,
+          "switches": 0,
+          "reason": "retain measured backend / conservative fallback",
+          "estimates": [
+            [
+              126,
+              0.168159652195297,
+              33.77825099581095
+            ],
+            [
+              0,
+              0.0,
+              0.0
+            ],
+            [
+              0,
+              0.0,
+              0.0
+            ]
+          ]
+        },
+        {
+          "kernel": 3,
+          "backend": 0,
+          "switches": 0,
+          "reason": "uncalibrated: CPU serial",
+          "estimates": [
+            [
+              0,
+              0.0,
+              0.0
+            ],
+            [
+              0,
+              0.0,
+              0.0
+            ],
+            [
+              0,
+              0.0,
+              0.0
+            ]
+          ]
+        },
+        {
+          "kernel": 4,
+          "backend": 0,
+          "switches": 0,
+          "reason": "uncalibrated: CPU serial",
+          "estimates": [
+            [
+              0,
+              0.0,
+              0.0
+            ],
+            [
+              0,
+              0.0,
+              0.0
+            ],
+            [
+              0,
+              0.0,
+              0.0
+            ]
+          ]
+        },
+        {
+          "kernel": 5,
+          "backend": 0,
+          "switches": 0,
+          "reason": "uncalibrated: CPU serial",
+          "estimates": [
+            [
+              0,
+              0.0,
+              0.0
+            ],
+            [
+              0,
+              0.0,
+              0.0
+            ],
+            [
+              0,
+              0.0,
+              0.0
+            ]
+          ]
+        }
+      ],
+      "full_graph_sync_calls": 0
+    },
+    {
+      "worldtime_per_second": 47.09769853090238,
+      "elapsed_seconds": 0.21232459996826947,
+      "actions": 66,
+      "events": 478,
+      "digest": "10a27313f2f244befe148e7aea3f40ee941caa8a9c8cd889a74e12efdbc918a0",
+      "frames": 97,
+      "presentation_telemetry": [
+        51.2,
+        0.5,
+        1.024,
+        36312.0,
+        12576.0,
+        5.0,
+        38.0,
+        0.0
+      ],
+      "compute_telemetry": [
+        {
+          "kernel": 0,
+          "backend": 0,
+          "switches": 0,
+          "reason": "uncalibrated: CPU serial",
+          "estimates": [
+            [
+              0,
+              0.0,
+              0.0
+            ],
+            [
+              0,
+              0.0,
+              0.0
+            ],
+            [
+              0,
+              0.0,
+              0.0
+            ]
+          ]
+        },
+        {
+          "kernel": 1,
+          "backend": 0,
+          "switches": 0,
+          "reason": "retain measured backend / conservative fallback",
+          "estimates": [
+            [
+              394,
+              0.38943538865325533,
+              126.13021166377266
+            ],
+            [
+              0,
+              0.0,
+              0.0
+            ],
+            [
+              0,
+              0.0,
+              0.0
+            ]
+          ]
+        },
+        {
+          "kernel": 2,
+          "backend": 0,
+          "switches": 0,
+          "reason": "retain measured backend / conservative fallback",
+          "estimates": [
+            [
+              126,
+              0.135033465582769,
+              33.77825099581095
+            ],
+            [
+              0,
+              0.0,
+              0.0
+            ],
+            [
+              0,
+              0.0,
+              0.0
+            ]
+          ]
+        },
+        {
+          "kernel": 3,
+          "backend": 0,
+          "switches": 0,
+          "reason": "uncalibrated: CPU serial",
+          "estimates": [
+            [
+              0,
+              0.0,
+              0.0
+            ],
+            [
+              0,
+              0.0,
+              0.0
+            ],
+            [
+              0,
+              0.0,
+              0.0
+            ]
+          ]
+        },
+        {
+          "kernel": 4,
+          "backend": 0,
+          "switches": 0,
+          "reason": "uncalibrated: CPU serial",
+          "estimates": [
+            [
+              0,
+              0.0,
+              0.0
+            ],
+            [
+              0,
+              0.0,
+              0.0
+            ],
+            [
+              0,
+              0.0,
+              0.0
+            ]
+          ]
+        },
+        {
+          "kernel": 5,
+          "backend": 0,
+          "switches": 0,
+          "reason": "uncalibrated: CPU serial",
+          "estimates": [
+            [
+              0,
+              0.0,
+              0.0
+            ],
+            [
+              0,
+              0.0,
+              0.0
+            ],
+            [
+              0,
+              0.0,
+              0.0
+            ]
+          ]
+        }
+      ],
+      "full_graph_sync_calls": 0
+    },
+    {
+      "worldtime_per_second": 45.547980896346274,
+      "elapsed_seconds": 0.21954870014451444,
+      "actions": 66,
+      "events": 478,
+      "digest": "10a27313f2f244befe148e7aea3f40ee941caa8a9c8cd889a74e12efdbc918a0",
+      "frames": 100,
+      "presentation_telemetry": [
+        63.2,
+        0.7,
+        2.048,
+        36312.0,
+        12576.0,
+        5.0,
+        38.0,
+        0.0
+      ],
+      "compute_telemetry": [
+        {
+          "kernel": 0,
+          "backend": 0,
+          "switches": 0,
+          "reason": "uncalibrated: CPU serial",
+          "estimates": [
+            [
+              0,
+              0.0,
+              0.0
+            ],
+            [
+              0,
+              0.0,
+              0.0
+            ],
+            [
+              0,
+              0.0,
+              0.0
+            ]
+          ]
+        },
+        {
+          "kernel": 1,
+          "backend": 0,
+          "switches": 0,
+          "reason": "retain measured backend / conservative fallback",
+          "estimates": [
+            [
+              394,
+              0.4731537662484828,
+              126.13021166377266
+            ],
+            [
+              0,
+              0.0,
+              0.0
+            ],
+            [
+              0,
+              0.0,
+              0.0
+            ]
+          ]
+        },
+        {
+          "kernel": 2,
+          "backend": 0,
+          "switches": 0,
+          "reason": "retain measured backend / conservative fallback",
+          "estimates": [
+            [
+              126,
+              0.18129127214222393,
+              33.77825099581095
+            ],
+            [
+              0,
+              0.0,
+              0.0
+            ],
+            [
+              0,
+              0.0,
+              0.0
+            ]
+          ]
+        },
+        {
+          "kernel": 3,
+          "backend": 0,
+          "switches": 0,
+          "reason": "uncalibrated: CPU serial",
+          "estimates": [
+            [
+              0,
+              0.0,
+              0.0
+            ],
+            [
+              0,
+              0.0,
+              0.0
+            ],
+            [
+              0,
+              0.0,
+              0.0
+            ]
+          ]
+        },
+        {
+          "kernel": 4,
+          "backend": 0,
+          "switches": 0,
+          "reason": "uncalibrated: CPU serial",
+          "estimates": [
+            [
+              0,
+              0.0,
+              0.0
+            ],
+            [
+              0,
+              0.0,
+              0.0
+            ],
+            [
+              0,
+              0.0,
+              0.0
+            ]
+          ]
+        },
+        {
+          "kernel": 5,
+          "backend": 0,
+          "switches": 0,
+          "reason": "uncalibrated: CPU serial",
+          "estimates": [
+            [
+              0,
+              0.0,
+              0.0
+            ],
+            [
+              0,
+              0.0,
+              0.0
+            ],
+            [
+              0,
+              0.0,
+              0.0
+            ]
+          ]
+        }
+      ],
+      "full_graph_sync_calls": 0
+    }
+  ],
+  "median_worldtime_per_second": 45.99932380157826,
+  "profile_trial": {
+    "worldtime_per_second": 15.242097087705822,
+    "elapsed_seconds": 0.6560776999685913,
+    "actions": 66,
+    "events": 478,
+    "digest": "10a27313f2f244befe148e7aea3f40ee941caa8a9c8cd889a74e12efdbc918a0",
+    "frames": 204,
+    "presentation_telemetry": [
+      86.8,
+      1.1,
+      3.072,
+      91296.0,
+      11136.0,
+      7.0,
+      102.0,
+      0.0
+    ],
+    "compute_telemetry": [
+      {
+        "kernel": 0,
+        "backend": 0,
+        "switches": 0,
+        "reason": "uncalibrated: CPU serial",
+        "estimates": [
+          [
+            0,
+            0.0,
+            0.0
+          ],
+          [
+            0,
+            0.0,
+            0.0
+          ],
+          [
+            0,
+            0.0,
+            0.0
+          ]
+        ]
+      },
+      {
+        "kernel": 1,
+        "backend": 0,
+        "switches": 0,
+        "reason": "retain measured backend / conservative fallback",
+        "estimates": [
+          [
+            394,
+            0.6451646627871849,
+            126.13021166377266
+          ],
+          [
+            0,
+            0.0,
+            0.0
+          ],
+          [
+            0,
+            0.0,
+            0.0
+          ]
+        ]
+      },
+      {
+        "kernel": 2,
+        "backend": 0,
+        "switches": 0,
+        "reason": "retain measured backend / conservative fallback",
+        "estimates": [
+          [
+            126,
+            0.20930750965845363,
+            33.77825099581095
+          ],
+          [
+            0,
+            0.0,
+            0.0
+          ],
+          [
+            0,
+            0.0,
+            0.0
+          ]
+        ]
+      },
+      {
+        "kernel": 3,
+        "backend": 0,
+        "switches": 0,
+        "reason": "uncalibrated: CPU serial",
+        "estimates": [
+          [
+            0,
+            0.0,
+            0.0
+          ],
+          [
+            0,
+            0.0,
+            0.0
+          ],
+          [
+            0,
+            0.0,
+            0.0
+          ]
+        ]
+      },
+      {
+        "kernel": 4,
+        "backend": 0,
+        "switches": 0,
+        "reason": "uncalibrated: CPU serial",
+        "estimates": [
+          [
+            0,
+            0.0,
+            0.0
+          ],
+          [
+            0,
+            0.0,
+            0.0
+          ],
+          [
+            0,
+            0.0,
+            0.0
+          ]
+        ]
+      },
+      {
+        "kernel": 5,
+        "backend": 0,
+        "switches": 0,
+        "reason": "uncalibrated: CPU serial",
+        "estimates": [
+          [
+            0,
+            0.0,
+            0.0
+          ],
+          [
+            0,
+            0.0,
+            0.0
+          ],
+          [
+            0,
+            0.0,
+            0.0
+          ]
+        ]
+      }
+    ],
+    "full_graph_sync_calls": 0,
+    "profile": [
+      {
+        "function": "D:\\projects\\synth_life\\simulation\\continuous.py:275:run_until",
+        "calls": 1,
+        "self_seconds": 0.0047183,
+        "cumulative_seconds": 0.6560218
+      },
+      {
+        "function": "D:\\projects\\synth_life\\simulation\\continuous.py:32:_dispatch",
+        "calls": 478,
+        "self_seconds": 0.0006105,
+        "cumulative_seconds": 0.6453971000000001
+      },
+      {
+        "function": "D:\\projects\\synth_life\\simulation\\continuous.py:93:_process",
+        "calls": 478,
+        "self_seconds": 0.0045357,
+        "cumulative_seconds": 0.6447866
+      },
+      {
+        "function": "D:\\projects\\synth_life\\consciousness\\core.py:271:continue_continuous_cognition",
+        "calls": 268,
+        "self_seconds": 0.0004425,
+        "cumulative_seconds": 0.3542964
+      },
+      {
+        "function": "D:\\projects\\synth_life\\consciousness\\planning.py:75:continue_continuous",
+        "calls": 268,
+        "self_seconds": 0.0040589,
+        "cumulative_seconds": 0.3538539
+      },
+      {
+        "function": "D:\\projects\\synth_life\\consciousness\\planning.py:204:_search",
+        "calls": 67,
+        "self_seconds": 0.1353085,
+        "cumulative_seconds": 0.2775414
+      },
+      {
+        "function": "D:\\projects\\synth_life\\consciousness\\core.py:239:begin_continuous_observation",
+        "calls": 67,
+        "self_seconds": 0.00026930000000000004,
+        "cumulative_seconds": 0.2250307
+      },
+      {
+        "function": "D:\\projects\\synth_life\\consciousness\\core.py:138:_observe",
+        "calls": 67,
+        "self_seconds": 0.0047033000000000005,
+        "cumulative_seconds": 0.22476140000000003
+      },
+      {
+        "function": "~:0:<built-in method builtins.max>",
+        "calls": 109443,
+        "self_seconds": 0.0170434,
+        "cumulative_seconds": 0.0721234
+      },
+      {
+        "function": "D:\\projects\\synth_life\\consciousness\\memory.py:128:observe",
+        "calls": 67,
+        "self_seconds": 0.000985,
+        "cumulative_seconds": 0.0652962
+      },
+      {
+        "function": "D:\\projects\\synth_life\\consciousness\\core.py:428:_imagine",
+        "calls": 67,
+        "self_seconds": 0.011179300000000001,
+        "cumulative_seconds": 0.0647355
+      },
+      {
+        "function": "~:0:<built-in method builtins.sum>",
+        "calls": 20915,
+        "self_seconds": 0.0205457,
+        "cumulative_seconds": 0.060662100000000004
+      },
+      {
+        "function": "D:\\projects\\synth_life\\consciousness\\core_learning.py:78:_prediction_error",
+        "calls": 67,
+        "self_seconds": 0.0017717000000000002,
+        "cumulative_seconds": 0.0604606
+      },
+      {
+        "function": "C:\\Users\\rnfcr\\AppData\\Local\\Programs\\Python\\Python311\\Lib\\enum.py:1232:__hash__",
+        "calls": 208391,
+        "self_seconds": 0.040099300000000004,
+        "cumulative_seconds": 0.055044100000000006
+      },
+      {
+        "function": "D:\\projects\\synth_life\\consciousness\\calibration.py:10:ece",
+        "calls": 66,
+        "self_seconds": 0.0015245,
+        "cumulative_seconds": 0.0436532
+      },
+      {
+        "function": "D:\\projects\\synth_life\\consciousness\\memory.py:117:_match_place",
+        "calls": 67,
+        "self_seconds": 0.0007589000000000001,
+        "cumulative_seconds": 0.039654600000000005
+      },
+      {
+        "function": "D:\\projects\\synth_life\\consciousness\\memory.py:120:<genexpr>",
+        "calls": 1061,
+        "self_seconds": 0.0015715000000000002,
+        "cumulative_seconds": 0.0381294
+      },
+      {
+        "function": "D:\\projects\\synth_life\\consciousness\\state.py:42:loop_score",
+        "calls": 1279,
+        "self_seconds": 0.005957400000000001,
+        "cumulative_seconds": 0.037477300000000005
+      },
+      {
+        "function": "D:\\projects\\synth_life\\consciousness\\sensory.py:51:observe",
+        "calls": 67,
+        "self_seconds": 0.0119445,
+        "cumulative_seconds": 0.0362643
+      },
+      {
+        "function": "D:\\projects\\synth_life\\consciousness\\calibration.py:16:<listcomp>",
+        "calls": 660,
+        "self_seconds": 0.032115000000000005,
+        "cumulative_seconds": 0.032115000000000005
+      },
+      {
+        "function": "D:\\projects\\synth_life\\consciousness\\state.py:35:similarity",
+        "calls": 3396,
+        "self_seconds": 0.0161986,
+        "cumulative_seconds": 0.029443
+      },
+      {
+        "function": "D:\\projects\\synth_life\\consciousness\\memory_matching.py:13:weighted_similarity",
+        "calls": 1732,
+        "self_seconds": 0.005358,
+        "cumulative_seconds": 0.029354
+      },
+      {
+        "function": "D:\\projects\\synth_life\\consciousness\\core.py:302:commit_continuous_action",
+        "calls": 67,
+        "self_seconds": 0.0014319,
+        "cumulative_seconds": 0.0205785
+      },
+      {
+        "function": "D:\\projects\\synth_life\\world\\native_world.py:103:apply_intent",
+        "calls": 66,
+        "self_seconds": 0.0003859,
+        "cumulative_seconds": 0.0186591
+      },
+      {
+        "function": "D:\\projects\\synth_life\\consciousness\\affordance.py:25:epistemic",
+        "calls": 4420,
+        "self_seconds": 0.006974,
+        "cumulative_seconds": 0.0185977
+      },
+      {
+        "function": "D:\\projects\\synth_life\\consciousness\\core.py:371:_update_intrinsic_state",
+        "calls": 67,
+        "self_seconds": 0.005835900000000001,
+        "cumulative_seconds": 0.017002800000000002
+      },
+      {
+        "function": "D:\\projects\\synth_life\\consciousness\\memory.py:114:_weights",
+        "calls": 896,
+        "self_seconds": 0.000418,
+        "cumulative_seconds": 0.0163153
+      },
+      {
+        "function": "D:\\projects\\synth_life\\consciousness\\memory.py:115:<dictcomp>",
+        "calls": 896,
+        "self_seconds": 0.0131704,
+        "cumulative_seconds": 0.0158973
+      },
+      {
+        "function": "C:\\Users\\rnfcr\\AppData\\Local\\Programs\\Python\\Python311\\Lib\\enum.py:193:__get__",
+        "calls": 39329,
+        "self_seconds": 0.011633000000000001,
+        "cumulative_seconds": 0.0156828
+      },
+      {
+        "function": "D:\\projects\\synth_life\\consciousness\\memory_matching.py:20:<genexpr>",
+        "calls": 54826,
+        "self_seconds": 0.0110921,
+        "cumulative_seconds": 0.015447200000000001
+      }
+    ]
+  }
+}

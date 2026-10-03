@@ -1,5 +1,10 @@
 # Synthetic-Life Architecture
 
+v0.9.3b performance work is **PARTIAL / NOT FROZEN**: host numeric dispatch,
+optional CUDA ordered reductions, persistent GPU ID layout and picking, and
+bounded output-only profiling. See [design](docs/V0_9_3B_ADAPTIVE_COMPUTE.md)
+and [measured results](docs/V0_9_3B_RESULTS.md). Scientific conclusions below are preserved.
+
 v0.9.3a adds optional output-only event, acquisition, selectivity and planner
 observers. Production code imports no research module. The observer is None by
 default and is absent from persistence and causal metadata. The native

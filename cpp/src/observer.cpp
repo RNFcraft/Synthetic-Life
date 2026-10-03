@@ -1,6 +1,7 @@
 #include "se/observer.hpp"
 #include "se/workbench_style.hpp"
 #include "se/workbench_ui.hpp"
+#include "se/workbench_brain_gpu.hpp"
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_opengl.h>
 #include <algorithm>
@@ -32,6 +33,7 @@ public:
     context = SDL_GL_CreateContext(window);
     if (!context)
       throw std::runtime_error(SDL_GetError());
+    std::fprintf(stderr, "Workbench OpenGL: %s / %s\n", glGetString(GL_VERSION), glGetString(GL_RENDERER));
     SDL_GL_SetSwapInterval(1);
     IMGUI_CHECKVERSION();
     imgui = ImGui::CreateContext();
@@ -124,6 +126,10 @@ void NativeObserver::capture_next_frame(std::string path, bool scenario_popup, b
   impl_->capture_min_frames = (scenario_popup || settings_popup) ? 6 : 3;
 }
 bool NativeObserver::is_open() const { return impl_ && impl_->open; }
+void NativeObserver::set_legacy_brain_renderer(bool enabled) {
+  if(running_ || thread_.joinable())throw std::runtime_error("set renderer preference before start");
+  impl_->ui.legacy_brain_renderer=enabled;impl_->ui.cached_brain.reset();
+}
 bool NativeObserver::pump_events() {
   ImGui::SetCurrentContext(impl_->imgui);
   SDL_Event event;
@@ -136,6 +142,7 @@ bool NativeObserver::pump_events() {
   return impl_->open;
 }
 void NativeObserver::render(const RenderSnapshot &snapshot) {
+  auto frame_start=std::chrono::steady_clock::now();
   ImGui::SetCurrentContext(impl_->imgui);
   auto scale = std::clamp(SDL_GetWindowDisplayScale(impl_->window), 1.f, 2.5f);
   if (scale != impl_->scale) {
@@ -151,6 +158,14 @@ void NativeObserver::render(const RenderSnapshot &snapshot) {
                  dialogue_ ? dialogue_->latest() : nullptr,
                  status_ ? status_->latest() : nullptr, commands_.get(),
                  impl_->scale);
+  if(brain_ && impl_->ui.compute_mode_changed){brain_->requested_compute_mode=impl_->ui.compute_mode;impl_->ui.compute_mode_changed=false;}
+  impl_->ui.frame_cpu_us=std::chrono::duration<double,std::micro>(std::chrono::steady_clock::now()-frame_start).count();
+  presentation_stats_[0]=impl_->ui.frame_cpu_us;
+  if(impl_->ui.brain_gpu){auto t=impl_->ui.brain_gpu->telemetry();
+    presentation_stats_[1]=t.upload_cpu_us;presentation_stats_[2]=t.gpu_draw_us;
+    presentation_stats_[3]=double(t.uploaded_bytes);presentation_stats_[4]=double(t.buffer_bytes);
+    presentation_stats_[5]=double(t.buffer_rebuilds);presentation_stats_[6]=double(t.delta_updates);presentation_stats_[7]=double(t.picks);
+  }
   brain_rebuilds_ = impl_->ui.brain_rebuilds;
   ImGui::Render();
   int width, height;
@@ -184,6 +199,7 @@ bool NativeObserver::start() {
     return false;
   if (thread_.joinable())
     thread_.join();
+  if(brain_)++brain_->subscribers;
   thread_ = std::thread([this] {
     try {
       impl_->initialize();
@@ -201,6 +217,7 @@ bool NativeObserver::start() {
       std::fprintf(stderr, "Workbench observer failed: unknown error\n");
       impl_->shutdown();
     }
+    if(brain_)--brain_->subscribers;
     running_ = false;
   });
   return true;
@@ -219,6 +236,9 @@ std::uint64_t NativeObserver::last_snapshot_event_sequence() const noexcept {
 }
 std::uint64_t NativeObserver::brain_snapshot_rebuilds() const noexcept {
   return brain_rebuilds_;
+}
+std::array<double,8> NativeObserver::presentation_telemetry() const noexcept {
+  std::array<double,8> out{};for(std::size_t i=0;i<out.size();++i)out[i]=presentation_stats_[i].load();return out;
 }
 RenderSnapshot NativeObserver::latest_snapshot() const {
   return source_ ? source_->latest() : RenderSnapshot{};

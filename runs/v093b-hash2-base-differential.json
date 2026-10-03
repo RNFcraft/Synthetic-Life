@@ -1,0 +1,74 @@
+{
+  "reference": {
+    "hashseed": "2",
+    "records_digest": "633a8916c74ae478b1992730eb38da1aa3c35f8f89b9a242be2d8708e79079af",
+    "episode_consumptions": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0
+    ],
+    "final_episode_has_consumption": false
+  },
+  "current": {
+    "hashseed": "2",
+    "records_digest": "64ec968e406b48625083e567c02ce74d3859af11134da6d637acaf4ec0fea69d",
+    "episode_consumptions": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0
+    ],
+    "final_episode_has_consumption": false
+  },
+  "exact_records": 0,
+  "first_divergence": {
+    "episode": 1,
+    "first_differences": [
+      {
+        "path": "$.brain_checksum",
+        "left": "4655933bd5c29d16e0342e519179c38fc2a6ce50e560c0fed6c67efe251db7c8",
+        "right": "ebbbff5e94cd792377a99e7aba4a72a59d560c11c8802cee50e9a5c8746f44ba"
+      }
+    ]
+  },
+  "base_head": "d17328005e6b9ec5b5e76a0b91625261519043d2",
+  "exact_records_except_explicitly_classified_brain_checksums": 22,
+  "artifact_difference": "NBRN raw PersistedRelation padding, plus resulting checksum header bytes; numeric semantic sections equal. Native serialization now writes zero padding without changing v3/v4 wire layout."
+}

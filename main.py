@@ -18,6 +18,9 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--speed", type=float, default=1.0, help="live simulated-time multiplier")
     parser.add_argument("--seed", type=int, default=None)
     parser.add_argument("--paused", action="store_true", help="start the interactive workbench paused for world editing")
+    parser.add_argument("--compute-mode", choices=("AUTO","FORCE_CPU_SERIAL","FORCE_CPU_PARALLEL","FORCE_GPU"), default="AUTO", help="host-only numeric execution preference")
+    parser.add_argument("--calibrate-compute", action="store_true", help="calibrate immutable synthetic numeric buffers before execution")
+    parser.add_argument("--performance-report", metavar="PATH", help="write host-only bounded profiling counters")
     parser.add_argument("--save", metavar="PATH", help="write a continuous .seworld snapshot after execution")
     parser.add_argument("--load", metavar="PATH", help="load a continuous .seworld snapshot before execution")
     parser.add_argument("--scenario", metavar="PATH", help="start a normalized t=0 .sescenario")
@@ -120,6 +123,13 @@ def create_native_observer(runtime:ContinuousRuntime):
 
 def main(argv:list[str]|None=None)->None:
     args=parse_args(argv);runtime=create_runtime(args.seed,args.load,args.scenario,args.brain);started=time.perf_counter()
+    engine=runtime.simulation.core.backend.engine
+    engine.set_compute_mode(args.compute_mode)
+    if args.calibrate_compute:engine.calibrate_compute()
+    profiler=None
+    if args.performance_report:
+        from telemetry.performance import HostProfiler
+        profiler=HostProfiler().attach(runtime)
     if args.headless:
         seconds=100.0 if args.seconds is None else args.seconds;run_headless(runtime,seconds)
     else:
@@ -129,6 +139,11 @@ def main(argv:list[str]|None=None)->None:
         try:runtime=drive_live(runtime,observer,args.speed,args.seconds)
         except KeyboardInterrupt as error:runtime=getattr(error,"runtime",runtime)
     elapsed=time.perf_counter()-started
+    if profiler:
+        import json
+        from pathlib import Path
+        profiler.close()
+        Path(args.performance_report).write_text(json.dumps(profiler.report(),indent=2),encoding="utf-8")
     if args.save:runtime.save_world(args.save)
     print(f"world time:           {runtime.world_time:.6f} s")
     print(f"host elapsed:         {elapsed:.3f} s")

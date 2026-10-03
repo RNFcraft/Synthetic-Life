@@ -28,6 +28,11 @@ struct WorkbenchUIState {
   bool open_scenario_popup{}, open_settings_popup{};
   WorkbenchNewWorldConfig settings_draft;
   bool show_grid{true}, show_tooltips{true};
+  bool show_performance{},compute_mode_changed{};
+  int compute_mode{};
+  double frame_cpu_us{};
+  bool legacy_brain_renderer{};
+  std::string brain_renderer_failure;
   float ui_scale{1.f};
   static constexpr int max_brain_edges = 2048;
   int brain_edge_budget{max_brain_edges}, uploaded_edge_budget{-1};

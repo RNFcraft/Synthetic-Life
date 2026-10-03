@@ -1,0 +1,63 @@
+﻿[1/5] cmake --build cpp/build-verify --config Release
+MSBuild version 18.5.0+994b5faf9 for .NET Framework
+
+  1>Checking Build System
+  SDL_uclibc.vcxproj -> D:\projects\synth_life\cpp\build-verify\_deps\sdl3-build\Release\SDL_uclibc.lib
+  SDL3-shared.vcxproj -> D:\projects\synth_life\cpp\build-verify\_deps\sdl3-build\Release\SDL3.dll
+  Building Custom Rule D:/projects/synth_life/cpp/CMakeLists.txt
+  se_engine.vcxproj -> D:\projects\synth_life\cpp\build-verify\Release\se_engine.lib
+  Building Custom Rule D:/projects/synth_life/cpp/CMakeLists.txt
+  se_imgui.vcxproj -> D:\projects\synth_life\cpp\build-verify\Release\se_imgui.lib
+  Building Custom Rule D:/projects/synth_life/cpp/CMakeLists.txt
+  se_observer.vcxproj -> D:\projects\synth_life\cpp\build-verify\Release\se_observer.lib
+  Building Custom Rule D:/projects/synth_life/cpp/CMakeLists.txt
+  _native_brain.vcxproj -> D:\projects\synth_life\consciousness\_native_brain.cp311-win_amd64.pyd
+  SDL3_test.vcxproj -> D:\projects\synth_life\cpp\build-verify\_deps\sdl3-build\Release\SDL3_test.lib
+  Building Custom Rule D:/projects/synth_life/cpp/CMakeLists.txt
+  se_benchmark.vcxproj -> D:\projects\synth_life\cpp\build-verify\Release\se_benchmark.exe
+  Building Custom Rule D:/projects/synth_life/cpp/CMakeLists.txt
+  se_compute_benchmark.vcxproj -> D:\projects\synth_life\cpp\build-verify\Release\se_compute_benchmark.exe
+  Building Custom Rule D:/projects/synth_life/cpp/CMakeLists.txt
+  se_compute_tests.vcxproj -> D:\projects\synth_life\cpp\build-verify\Release\se_compute_tests.exe
+  Building Custom Rule D:/projects/synth_life/cpp/CMakeLists.txt
+  se_equivalence.vcxproj -> D:\projects\synth_life\cpp\build-verify\Release\se_equivalence.exe
+  Building Custom Rule D:/projects/synth_life/cpp/CMakeLists.txt
+  se_observer_demo.vcxproj -> D:\projects\synth_life\cpp\build-verify\Release\se_observer_demo.exe
+  Building Custom Rule D:/projects/synth_life/cpp/CMakeLists.txt
+  se_observer_tests.vcxproj -> D:\projects\synth_life\cpp\build-verify\Release\se_observer_tests.exe
+  Building Custom Rule D:/projects/synth_life/cpp/CMakeLists.txt
+  se_presentation_gpu_tests.vcxproj -> D:\projects\synth_life\cpp\build-verify\Release\se_presentation_gpu_tests.exe
+  Building Custom Rule D:/projects/synth_life/cpp/CMakeLists.txt
+[2/5] C:\Users\rnfcr\AppData\Local\Programs\Python\Python311\python.exe -B -c "import main"
+[3/5] C:\Users\rnfcr\AppData\Local\Programs\Python\Python311\python.exe -B main.py --headless --seconds 0
+world time:           0.000000 s
+host elapsed:         0.002 s
+actions completed:    0
+final cognit count:   1
+final relation count: 0
+[4/5] C:\Users\rnfcr\AppData\Local\Programs\Python\Python311\python.exe -B -m pytest -q
+........................................................................ [  9%]
+........................................................................ [ 18%]
+........................................................................ [ 28%]
+........................................................................ [ 37%]
+........................................................................ [ 47%]
+........................................................................ [ 56%]
+........................................................................ [ 65%]
+........................................................................ [ 75%]
+........................................................................ [ 84%]
+........................................................................ [ 94%]
+...............................s..s..........                            [100%]
+763 passed, 2 skipped in 87.01s (0:01:27)
+[5/5] ctest --test-dir cpp/build-verify -C Release --output-on-failure
+Test project D:/projects/synth_life/cpp/build-verify
+    Start 1: se_compute_tests
+1/3 Test #1: se_compute_tests .................   Passed    0.04 sec
+    Start 2: se_equivalence
+2/3 Test #2: se_equivalence ...................   Passed    0.03 sec
+    Start 3: se_observer_tests
+3/3 Test #3: se_observer_tests ................   Passed    0.15 sec
+
+100% tests passed, 0 tests failed out of 3
+
+Total Test time (real) =   0.28 sec
+verification PASS (full)

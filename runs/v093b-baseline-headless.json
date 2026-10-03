@@ -1,0 +1,256 @@
+{
+  "seconds": 10.0,
+  "mode": null,
+  "observer": false,
+  "trials": [
+    {
+      "worldtime_per_second": 44.177884913375955,
+      "elapsed_seconds": 0.2263575999531895,
+      "actions": 66,
+      "events": 478,
+      "digest": "10a27313f2f244befe148e7aea3f40ee941caa8a9c8cd889a74e12efdbc918a0",
+      "frames": 0,
+      "presentation_telemetry": null,
+      "compute_telemetry": [],
+      "full_graph_sync_calls": 0
+    },
+    {
+      "worldtime_per_second": 45.93675609429348,
+      "elapsed_seconds": 0.21769060008227825,
+      "actions": 66,
+      "events": 478,
+      "digest": "10a27313f2f244befe148e7aea3f40ee941caa8a9c8cd889a74e12efdbc918a0",
+      "frames": 0,
+      "presentation_telemetry": null,
+      "compute_telemetry": [],
+      "full_graph_sync_calls": 0
+    },
+    {
+      "worldtime_per_second": 46.347364261384065,
+      "elapsed_seconds": 0.21576199983246624,
+      "actions": 66,
+      "events": 478,
+      "digest": "10a27313f2f244befe148e7aea3f40ee941caa8a9c8cd889a74e12efdbc918a0",
+      "frames": 0,
+      "presentation_telemetry": null,
+      "compute_telemetry": [],
+      "full_graph_sync_calls": 0
+    },
+    {
+      "worldtime_per_second": 46.8402942683028,
+      "elapsed_seconds": 0.21349140000529587,
+      "actions": 66,
+      "events": 478,
+      "digest": "10a27313f2f244befe148e7aea3f40ee941caa8a9c8cd889a74e12efdbc918a0",
+      "frames": 0,
+      "presentation_telemetry": null,
+      "compute_telemetry": [],
+      "full_graph_sync_calls": 0
+    },
+    {
+      "worldtime_per_second": 46.58317101315546,
+      "elapsed_seconds": 0.21466979989781976,
+      "actions": 66,
+      "events": 478,
+      "digest": "10a27313f2f244befe148e7aea3f40ee941caa8a9c8cd889a74e12efdbc918a0",
+      "frames": 0,
+      "presentation_telemetry": null,
+      "compute_telemetry": [],
+      "full_graph_sync_calls": 0
+    }
+  ],
+  "median_worldtime_per_second": 46.347364261384065,
+  "profile_trial": {
+    "worldtime_per_second": 17.72769271262529,
+    "elapsed_seconds": 0.5640891999937594,
+    "actions": 66,
+    "events": 478,
+    "digest": "10a27313f2f244befe148e7aea3f40ee941caa8a9c8cd889a74e12efdbc918a0",
+    "frames": 0,
+    "presentation_telemetry": null,
+    "compute_telemetry": [],
+    "full_graph_sync_calls": 0,
+    "profile": [
+      {
+        "function": "D:\\projects\\synth_life\\cpp\\build-v093b-baseline\\worktree\\simulation\\continuous.py:275:run_until",
+        "calls": 1,
+        "self_seconds": 0.004224100000000001,
+        "cumulative_seconds": 0.5640592
+      },
+      {
+        "function": "D:\\projects\\synth_life\\cpp\\build-v093b-baseline\\worktree\\simulation\\continuous.py:32:_dispatch",
+        "calls": 478,
+        "self_seconds": 0.0005367,
+        "cumulative_seconds": 0.5478193
+      },
+      {
+        "function": "D:\\projects\\synth_life\\cpp\\build-v093b-baseline\\worktree\\simulation\\continuous.py:93:_process",
+        "calls": 478,
+        "self_seconds": 0.0038286,
+        "cumulative_seconds": 0.5472826000000001
+      },
+      {
+        "function": "D:\\projects\\synth_life\\cpp\\build-v093b-baseline\\worktree\\consciousness\\core.py:271:continue_continuous_cognition",
+        "calls": 268,
+        "self_seconds": 0.00040530000000000004,
+        "cumulative_seconds": 0.2960003
+      },
+      {
+        "function": "D:\\projects\\synth_life\\cpp\\build-v093b-baseline\\worktree\\consciousness\\planning.py:75:continue_continuous",
+        "calls": 268,
+        "self_seconds": 0.0036261,
+        "cumulative_seconds": 0.295595
+      },
+      {
+        "function": "D:\\projects\\synth_life\\cpp\\build-v093b-baseline\\worktree\\consciousness\\planning.py:204:_search",
+        "calls": 67,
+        "self_seconds": 0.11376170000000001,
+        "cumulative_seconds": 0.2305492
+      },
+      {
+        "function": "D:\\projects\\synth_life\\cpp\\build-v093b-baseline\\worktree\\consciousness\\core.py:239:begin_continuous_observation",
+        "calls": 67,
+        "self_seconds": 0.0002495,
+        "cumulative_seconds": 0.19603800000000002
+      },
+      {
+        "function": "D:\\projects\\synth_life\\cpp\\build-v093b-baseline\\worktree\\consciousness\\core.py:138:_observe",
+        "calls": 67,
+        "self_seconds": 0.0040174,
+        "cumulative_seconds": 0.1957885
+      },
+      {
+        "function": "~:0:<built-in method builtins.max>",
+        "calls": 109443,
+        "self_seconds": 0.014665500000000001,
+        "cumulative_seconds": 0.0630811
+      },
+      {
+        "function": "D:\\projects\\synth_life\\cpp\\build-v093b-baseline\\worktree\\consciousness\\memory.py:128:observe",
+        "calls": 67,
+        "self_seconds": 0.000814,
+        "cumulative_seconds": 0.057333
+      },
+      {
+        "function": "D:\\projects\\synth_life\\cpp\\build-v093b-baseline\\worktree\\consciousness\\core.py:428:_imagine",
+        "calls": 67,
+        "self_seconds": 0.009879800000000001,
+        "cumulative_seconds": 0.054947100000000006
+      },
+      {
+        "function": "~:0:<built-in method builtins.sum>",
+        "calls": 20915,
+        "self_seconds": 0.0180743,
+        "cumulative_seconds": 0.0530122
+      },
+      {
+        "function": "D:\\projects\\synth_life\\cpp\\build-v093b-baseline\\worktree\\consciousness\\core_learning.py:78:_prediction_error",
+        "calls": 67,
+        "self_seconds": 0.0015241,
+        "cumulative_seconds": 0.0528765
+      },
+      {
+        "function": "C:\\Users\\rnfcr\\AppData\\Local\\Programs\\Python\\Python311\\Lib\\enum.py:1232:__hash__",
+        "calls": 208391,
+        "self_seconds": 0.0333052,
+        "cumulative_seconds": 0.0456179
+      },
+      {
+        "function": "D:\\projects\\synth_life\\cpp\\build-v093b-baseline\\worktree\\consciousness\\calibration.py:10:ece",
+        "calls": 66,
+        "self_seconds": 0.0012219000000000002,
+        "cumulative_seconds": 0.0384388
+      },
+      {
+        "function": "D:\\projects\\synth_life\\cpp\\build-v093b-baseline\\worktree\\consciousness\\memory.py:117:_match_place",
+        "calls": 67,
+        "self_seconds": 0.0006756,
+        "cumulative_seconds": 0.0349502
+      },
+      {
+        "function": "D:\\projects\\synth_life\\cpp\\build-v093b-baseline\\worktree\\consciousness\\memory.py:120:<genexpr>",
+        "calls": 1061,
+        "self_seconds": 0.0014084000000000002,
+        "cumulative_seconds": 0.033614700000000004
+      },
+      {
+        "function": "D:\\projects\\synth_life\\cpp\\build-v093b-baseline\\worktree\\consciousness\\state.py:42:loop_score",
+        "calls": 1279,
+        "self_seconds": 0.005162900000000001,
+        "cumulative_seconds": 0.0320908
+      },
+      {
+        "function": "D:\\projects\\synth_life\\cpp\\build-v093b-baseline\\worktree\\consciousness\\sensory.py:51:observe",
+        "calls": 67,
+        "self_seconds": 0.0106037,
+        "cumulative_seconds": 0.032048600000000003
+      },
+      {
+        "function": "D:\\projects\\synth_life\\cpp\\build-v093b-baseline\\worktree\\consciousness\\calibration.py:16:<listcomp>",
+        "calls": 660,
+        "self_seconds": 0.028444100000000003,
+        "cumulative_seconds": 0.028444100000000003
+      },
+      {
+        "function": "D:\\projects\\synth_life\\cpp\\build-v093b-baseline\\worktree\\consciousness\\memory_matching.py:13:weighted_similarity",
+        "calls": 1732,
+        "self_seconds": 0.0045689,
+        "cumulative_seconds": 0.025923900000000003
+      },
+      {
+        "function": "D:\\projects\\synth_life\\cpp\\build-v093b-baseline\\worktree\\consciousness\\state.py:35:similarity",
+        "calls": 3396,
+        "self_seconds": 0.0141273,
+        "cumulative_seconds": 0.025137100000000002
+      },
+      {
+        "function": "D:\\projects\\synth_life\\cpp\\build-v093b-baseline\\worktree\\consciousness\\core.py:302:commit_continuous_action",
+        "calls": 67,
+        "self_seconds": 0.0011901000000000001,
+        "cumulative_seconds": 0.0168635
+      },
+      {
+        "function": "D:\\projects\\synth_life\\cpp\\build-v093b-baseline\\worktree\\world\\native_world.py:103:apply_intent",
+        "calls": 66,
+        "self_seconds": 0.0003102,
+        "cumulative_seconds": 0.0159398
+      },
+      {
+        "function": "D:\\projects\\synth_life\\cpp\\build-v093b-baseline\\worktree\\consciousness\\affordance.py:25:epistemic",
+        "calls": 4420,
+        "self_seconds": 0.0059059,
+        "cumulative_seconds": 0.0158952
+      },
+      {
+        "function": "D:\\projects\\synth_life\\cpp\\build-v093b-baseline\\worktree\\consciousness\\memory.py:114:_weights",
+        "calls": 896,
+        "self_seconds": 0.00034270000000000004,
+        "cumulative_seconds": 0.014213100000000001
+      },
+      {
+        "function": "D:\\projects\\synth_life\\cpp\\build-v093b-baseline\\worktree\\consciousness\\memory.py:115:<dictcomp>",
+        "calls": 896,
+        "self_seconds": 0.0114745,
+        "cumulative_seconds": 0.013870400000000001
+      },
+      {
+        "function": "D:\\projects\\synth_life\\cpp\\build-v093b-baseline\\worktree\\consciousness\\memory_matching.py:20:<genexpr>",
+        "calls": 54826,
+        "self_seconds": 0.0098826,
+        "cumulative_seconds": 0.0137841
+      },
+      {
+        "function": "D:\\projects\\synth_life\\cpp\\build-v093b-baseline\\worktree\\consciousness\\core.py:371:_update_intrinsic_state",
+        "calls": 67,
+        "self_seconds": 0.0051606,
+        "cumulative_seconds": 0.013636400000000002
+      },
+      {
+        "function": "C:\\Users\\rnfcr\\AppData\\Local\\Programs\\Python\\Python311\\Lib\\enum.py:193:__get__",
+        "calls": 39329,
+        "self_seconds": 0.009881800000000001,
+        "cumulative_seconds": 0.013337300000000002
+      }
+    ]
+  }
+}

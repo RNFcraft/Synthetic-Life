@@ -1,5 +1,10 @@
 # Synthetic-Life
 
+v0.9.3b performance work is **PARTIAL / NOT FROZEN**: host numeric dispatch,
+optional CUDA ordered reductions, persistent GPU ID layout and picking, and
+bounded output-only profiling. See [design](docs/V0_9_3B_ADAPTIVE_COMPUTE.md)
+and [measured results](docs/V0_9_3B_RESULTS.md). Scientific conclusions below are preserved.
+
 Current milestone: **v0.9.3a — Homeostatic Credit Assignment & Exact Determinism Audit**
 (numeric build version 0.9.3; audit status, not the long-run stability release).
 See [the forensic design and evidence](docs/V0_9_3A_HOMEOSTATIC_CREDIT_AUDIT.md).

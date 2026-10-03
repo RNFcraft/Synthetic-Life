@@ -10,6 +10,7 @@
 #include <atomic>
 #include <thread>
 #include <vector>
+#include <array>
 
 namespace se {
 
@@ -78,11 +79,13 @@ public:
                    std::shared_ptr<DialogueSnapshotChannel> dialogue);
     void attach_workbench(std::shared_ptr<WorkbenchStatusChannel> status,std::shared_ptr<WorkbenchCommandChannel> commands);
     void capture_next_frame(std::string path, bool scenario_popup = false, bool settings_popup = false); // presentation fixture / visual audit
+    void set_legacy_brain_renderer(bool enabled);
     void stop();
     bool is_running() const noexcept;
     std::uint64_t frames_rendered() const noexcept;
     std::uint64_t last_snapshot_event_sequence() const noexcept;
     std::uint64_t brain_snapshot_rebuilds() const noexcept;
+    std::array<double,8> presentation_telemetry() const noexcept;
     RenderSnapshot latest_snapshot() const;
     BrainSnapshot latest_brain_snapshot() const;
     DialogueSnapshot latest_dialogue_snapshot() const;
@@ -100,6 +103,7 @@ private:
     std::atomic<std::uint64_t> frames_{0};
     std::atomic<std::uint64_t> last_sequence_{0};
     std::atomic<std::uint64_t> brain_rebuilds_{0};
+    std::array<std::atomic<double>,8> presentation_stats_{};
 };
 
 } // namespace se

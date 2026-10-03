@@ -8,9 +8,69 @@
 #include <set>
 #include <stdexcept>
 #include <tuple>
+#include <chrono>
 namespace se {
-void NativeBrainEngine::publish_brain_snapshot(double world_time, std::uint64_t cognitive_tick, std::uint64_t generation, std::span<const std::uint32_t> active) {
+void NativeBrainEngine::set_compute_mode(const std::string &mode) {
+  if(mode=="AUTO")compute_.mode=ComputeMode::AUTO;
+  else if(mode=="FORCE_CPU_SERIAL")compute_.mode=ComputeMode::FORCE_CPU_SERIAL;
+  else if(mode=="FORCE_CPU_PARALLEL")compute_.mode=ComputeMode::FORCE_CPU_PARALLEL;
+  else if(mode=="FORCE_GPU") {
+    compute_.gpu_available=cuda_compute_available(compute_.gpu_free_bytes);
+    if(!compute_.gpu_available)throw std::runtime_error("FORCE_GPU unavailable: CUDA device/backend not available");
+    compute_.mode=ComputeMode::FORCE_GPU;
+  } else throw std::invalid_argument("unknown host compute mode: "+mode);
+}
+std::vector<std::vector<std::pair<std::uint32_t,double>>> NativeBrainEngine::reduce_conditioned(
+    std::span<const std::uint8_t> actions, KernelClass kernel, bool common) {
+  // Construct independent segments after lazy causal materialization on owner thread.
+  // Common factors precede action factors, exactly as in the original numeric kernel.
+  ReductionBatch batch;
+  auto requested=brain_channel_->requested_compute_mode.exchange(-1);
+  if(requested>=0 && requested<=3 && (requested!=3 || compute_.gpu_available))compute_.mode=ComputeMode(requested);
+  std::vector<std::vector<std::uint32_t>> row_ids;
+  for(auto action:actions) {
+    std::map<std::uint32_t,std::vector<double>> factors;
+    if(common)for(auto id:touched_)factors[id];
+    for(auto [target,q]:conditioned_scratch_[action])factors[target].push_back(1.-q);
+    auto &ids=row_ids.emplace_back();
+    for(const auto &[target,values]:factors) {
+      ids.push_back(target);
+      batch.initial.push_back(common && absence_gen_[target]==generation_ ? absence_[target] : 1.);
+      batch.factors.insert(batch.factors.end(),values.begin(),values.end());
+      batch.offsets.push_back(batch.factors.size());
+    }
+  }
+  WorkloadShape shape;
+  shape.cognits=cognit_count();shape.relations=relation_count();shape.actions=actions.size();
+  shape.pairs=std::max<std::size_t>(1,batch.factors.size()+batch.initial.size());
+  shape.bytes=batch.initial.size()*16+batch.factors.size()*8+batch.offsets.size()*8;
+  auto backend=compute_.select(kernel,shape);
+  auto start=std::chrono::steady_clock::now();
+  std::vector<double> values;
+  try {values=reduce_absence(batch,backend);}
+  catch(const std::runtime_error&) {
+    if(backend!=ComputeBackend::GPU || compute_.mode==ComputeMode::FORCE_GPU)throw;
+    compute_.gpu_available=false;backend=ComputeBackend::CPU_SERIAL;
+    values=reduce_absence(batch,backend);
+  }
+  auto us=std::chrono::duration<double,std::micro>(std::chrono::steady_clock::now()-start).count();
+  compute_.sample(kernel,backend,us,double(shape.pairs));
+  std::vector<std::vector<std::pair<std::uint32_t,double>>> out;
+  std::size_t index=0;
+  for(const auto &ids:row_ids){auto &row=out.emplace_back();row.reserve(ids.size());for(auto id:ids)row.emplace_back(id,values[index++]);}
+  return out;
+}
+void NativeBrainEngine::publish_brain_snapshot(double world_time, std::uint64_t cognitive_tick, std::uint64_t generation, std::span<const std::uint32_t> active, bool force) {
+  if(!force && !brain_channel_->subscribers.load(std::memory_order_relaxed))return;
+  auto host_now=std::chrono::steady_clock::now();
+  if(!force && host_now-last_presentation_<std::chrono::milliseconds(33))return;
+  last_presentation_=host_now;
   BrainSnapshot out;
+  out.compute_mode=int(compute_.mode);out.gpu_compute_available=compute_.gpu_available;
+  for(std::size_t i=0;i<out.performance.size();++i){const auto&t=compute_.telemetry(KernelClass(i));
+    out.performance[i]={int(t.selected),t.estimates[0].ema_us,t.estimates[1].ema_us,t.estimates[2].ema_us,
+      t.estimates[0].count+t.estimates[1].count+t.estimates[2].count,t.switches,t.reason};
+  }
   out.world_time = world_time;
   out.cognitive_tick = cognitive_tick;
   out.cognition_generation = generation;
@@ -194,6 +254,20 @@ template <class T> void append_vector(std::vector<char> &b, const std::vector<T>
   append(b, n);
   auto p = (const char *)v.data();
   b.insert(b.end(), p, p + n * sizeof(T));
+}
+// Keep graph v3/v4 layout while excluding C++ padding (which can contain host
+// scratch data) from artifact bytes and checksums. Numeric fields are unchanged.
+void append_relation_vector(std::vector<char>&b,const std::vector<PersistedRelation>&rows){
+  append(b,std::uint64_t(rows.size()));
+  for(const auto&r:rows){
+    std::array<char,sizeof(PersistedRelation)> bytes{};
+#define FIELD(name) std::memcpy(bytes.data()+offsetof(PersistedRelation,name),&r.name,sizeof(r.name))
+    FIELD(source);FIELD(target);FIELD(support);FIELD(confirmations);
+    FIELD(strength);FIELD(confidence);FIELD(prediction);FIELD(lift);FIELD(contradiction);FIELD(usefulness);
+    FIELD(last_used_cognitive_tick);FIELD(last_evidence_world_tick);FIELD(type);FIELD(status);FIELD(action);
+#undef FIELD
+    b.insert(b.end(),bytes.begin(),bytes.end());
+  }
 }
 template <class T> T read(std::span<const char> b, std::size_t &o) {
   if (o + sizeof(T) > b.size())
@@ -689,30 +763,7 @@ std::vector<std::vector<std::pair<std::uint32_t, double>>> NativeBrainEngine::pr
       }
       absence_[e.target] *= 1 - q;
     });
-  std::vector<std::vector<std::pair<std::uint32_t, double>>> out;
-  out.reserve(actions.size());
-  for (auto action : actions) {
-    auto generation = next_generation();
-    std::vector<std::uint32_t> ids = touched_;
-    for (auto id : touched_) {
-      incoming_gen_[id] = generation;
-      incoming_[id] = absence_[id];
-    }
-    for (auto [target, q] : conditioned_scratch_[action]) {
-      if (incoming_gen_[target] != generation) {
-        incoming_gen_[target] = generation;
-        incoming_[target] = 1;
-        ids.push_back(target);
-      }
-      incoming_[target] *= 1 - q;
-    }
-    std::sort(ids.begin(), ids.end());
-    ids.erase(std::unique(ids.begin(), ids.end()), ids.end());
-    auto &result = out.emplace_back();
-    result.reserve(ids.size());
-    for (auto id : ids) result.push_back({id, 1 - incoming_[id]});
-  }
-  return out;
+  return reduce_conditioned(actions, KernelClass::ACTION_PREDICTION_BATCH, true);
 }
 std::vector<std::vector<std::pair<std::uint32_t, double>>> NativeBrainEngine::predict_actions_batch_at(std::span<const std::uint32_t> active, std::span<const std::uint8_t> actions, std::uint64_t tick, double decay) {
   for (auto action : actions) conditioned_scratch_[action].clear();
@@ -756,30 +807,7 @@ std::vector<std::vector<std::pair<std::uint32_t, double>>> NativeBrainEngine::pr
       }
       absence_[e.target] *= 1 - q;
     });
-  std::vector<std::vector<std::pair<std::uint32_t, double>>> out;
-  out.reserve(actions.size());
-  for (auto action : actions) {
-    auto generation = next_generation();
-    std::vector<std::uint32_t> ids = touched_;
-    for (auto id : touched_) {
-      incoming_gen_[id] = generation;
-      incoming_[id] = absence_[id];
-    }
-    for (auto [target, q] : conditioned_scratch_[action]) {
-      if (incoming_gen_[target] != generation) {
-        incoming_gen_[target] = generation;
-        incoming_[target] = 1;
-        ids.push_back(target);
-      }
-      incoming_[target] *= 1 - q;
-    }
-    std::sort(ids.begin(), ids.end());
-    ids.erase(std::unique(ids.begin(), ids.end()), ids.end());
-    auto &result = out.emplace_back();
-    result.reserve(ids.size());
-    for (auto id : ids) result.push_back({id, 1 - incoming_[id]});
-  }
-  return out;
+  return reduce_conditioned(actions, KernelClass::ACTION_PREDICTION_BATCH, true);
 }
 std::vector<std::pair<std::uint32_t, double>> NativeBrainEngine::action_effects(std::span<const std::uint32_t> active, std::uint8_t action, double floor) {
   auto generation = next_generation();
@@ -814,25 +842,7 @@ std::vector<std::vector<std::pair<std::uint32_t, double>>> NativeBrainEngine::ac
       if (q >= floor)
         conditioned_scratch_[e.action].push_back({e.target, q});
     });
-  std::vector<std::vector<std::pair<std::uint32_t, double>>> out;
-  out.reserve(actions.size());
-  for (auto action : actions) {
-    auto generation = next_generation();
-    touched_.clear();
-    for (auto [target, q] : conditioned_scratch_[action]) {
-      if (absence_gen_[target] != generation) {
-        absence_gen_[target] = generation;
-        absence_[target] = 1;
-        touched_.push_back(target);
-      }
-      absence_[target] *= 1 - q;
-    }
-    std::sort(touched_.begin(), touched_.end());
-    auto &row = out.emplace_back();
-    row.reserve(touched_.size());
-    for (auto id : touched_) row.push_back({id, 1 - absence_[id]});
-  }
-  return out;
+  return reduce_conditioned(actions, KernelClass::ACTION_EFFECT_BATCH, false);
 }
 std::vector<PlannerTransition> NativeBrainEngine::planner_transition_batch(const std::vector<std::vector<std::uint32_t>> &states, std::span<const std::uint8_t> actions, std::uint64_t tick, double decay, double floor) {
   std::vector<PlannerTransition> out;
@@ -1382,14 +1392,19 @@ void NativeBrainEngine::save_graph(const std::string &path) const {
   append_vector(b, graph_.age);
   append_vector(b, graph_.low_retention_ticks);
   auto relations = graph_.relations.snapshot();
-  append_vector(b, relations);
+  append_relation_vector(b, relations);
   auto timing = temporal_state();
   if (!timing.empty()) append_vector(b,timing);
   FileHeader h{{'S', 'E', 'B', 'R', 'A', 'I', 'N', '\0'}, timing.empty() ? 3u : 4u, b.size(), checksum(b)};
   std::ofstream f(path, std::ios::binary | std::ios::trunc);
   if (!f)
     throw std::runtime_error("cannot open graph for writing");
-  f.write((char *)&h, sizeof(h));
+  std::array<char,sizeof(FileHeader)> header{};
+  std::memcpy(header.data()+offsetof(FileHeader,magic),h.magic,sizeof(h.magic));
+  std::memcpy(header.data()+offsetof(FileHeader,version),&h.version,sizeof(h.version));
+  std::memcpy(header.data()+offsetof(FileHeader,payload_size),&h.payload_size,sizeof(h.payload_size));
+  std::memcpy(header.data()+offsetof(FileHeader,checksum),&h.checksum,sizeof(h.checksum));
+  f.write(header.data(),header.size());
   f.write(b.data(), b.size());
   if (!f)
     throw std::runtime_error("failed writing graph");

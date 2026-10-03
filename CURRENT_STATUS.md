@@ -1,5 +1,10 @@
 # Synthetic-Life — Current Status
 
+v0.9.3b performance work is **PARTIAL / NOT FROZEN**: host numeric dispatch,
+optional CUDA ordered reductions, persistent GPU ID layout and picking, and
+bounded output-only profiling. See [design](docs/V0_9_3B_ADAPTIVE_COMPUTE.md)
+and [measured results](docs/V0_9_3B_RESULTS.md). Scientific conclusions below are preserved.
+
 
 v0.9.2 final validation (2026-10-02): **746 pytest PASS; full verify PASS; Release CTest 2/2 PASS; observer-OFF CTest 1/1 PASS and 157 Python cases; six targeted suites 242 PASS**. Scientific proof **FAIL**; reverse-order full-record determinism also failed (46/64), with measured metrics identical and hashseed 1/777 exact check passed.
 ## Current milestone: v0.9.3a audit (numeric version 0.9.3)

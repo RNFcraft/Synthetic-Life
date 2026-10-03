@@ -401,6 +401,8 @@ PYBIND11_MODULE(_native_brain, m) {
       .def_property_readonly("is_running", &NativeObserver::is_running)
       .def_property_readonly("frames_rendered", &NativeObserver::frames_rendered)
       .def_property_readonly("brain_snapshot_rebuilds", &NativeObserver::brain_snapshot_rebuilds)
+      .def_property_readonly("presentation_telemetry", &NativeObserver::presentation_telemetry)
+      .def("set_legacy_brain_renderer", &NativeObserver::set_legacy_brain_renderer)
       .def_property_readonly("last_snapshot_event_sequence", &NativeObserver::last_snapshot_event_sequence)
       .def("latest_snapshot",
            [](const NativeObserver &o) {
@@ -452,6 +454,28 @@ PYBIND11_MODULE(_native_brain, m) {
   py::class_<EvidenceConfig>(m, "EvidenceConfig").def(py::init<>()).def_readwrite("minimum_support", &EvidenceConfig::minimum_support).def_readwrite("minimum_lift", &EvidenceConfig::minimum_lift).def_readwrite("confidence_k", &EvidenceConfig::confidence_k).def_readwrite("consolidated_support", &EvidenceConfig::consolidated_support).def_readwrite("consolidated_confidence", &EvidenceConfig::consolidated_confidence);
   py::class_<NativeBrainEngine>(m, "NativeBrainEngine")
       .def(py::init<std::size_t>(), py::arg("evidence_window") = 512)
+      .def("set_compute_mode", &NativeBrainEngine::set_compute_mode)
+      .def("configure_compute_policy", [](NativeBrainEngine&e,double margin,unsigned observations,std::size_t memory_bytes){
+        if(!std::isfinite(margin)||margin<0||margin>.9||observations<1||observations>100||memory_bytes<(1ull<<20)||memory_bytes>(4ull<<30))throw std::invalid_argument("invalid bounded host performance policy");
+        e.compute_dispatcher().policy={margin,observations,memory_bytes};
+      },py::arg("margin")=.20,py::arg("observations")=4,py::arg("memory_bytes")=512ull<<20)
+      .def("calibrate_compute", [](NativeBrainEngine &e, std::size_t outputs, std::size_t degree) {
+        if(outputs>1000000 || degree>256 || outputs*(degree+3)>(64ull<<20))throw std::invalid_argument("bounded calibration exceeds output/degree/512 MiB host limits");
+        ReductionBatch b;
+        for(std::size_t i=0;i<outputs;++i){b.initial.push_back(.8);for(std::size_t j=0;j<degree;++j)b.factors.push_back(.9+double((i+j)%13)*.001);b.offsets.push_back(b.factors.size());}
+        py::gil_scoped_release release;
+        e.compute_dispatcher().calibrate(KernelClass::ACTION_PREDICTION_BATCH,b);
+        e.compute_dispatcher().calibrate(KernelClass::ACTION_EFFECT_BATCH,b);
+      },py::arg("outputs")=4096,py::arg("degree")=16)
+      .def("compute_telemetry", [](NativeBrainEngine &e) {
+        py::list rows;
+        for(std::size_t i=0;i<std::size_t(KernelClass::COUNT);++i){
+          const auto&t=e.compute_dispatcher().telemetry(KernelClass(i));py::dict row;
+          row["kernel"]=i;row["backend"]=int(t.selected);row["switches"]=t.switches;row["reason"]=t.reason;
+          py::list estimates;for(const auto&v:t.estimates)estimates.append(py::make_tuple(v.count,v.ema_us,v.units));
+          row["estimates"]=estimates;rows.append(row);
+        }return rows;
+      })
       .def("add_cognit", &NativeBrainEngine::add_cognit,
            py::arg("activity") = 0, py::arg("threshold") = .25,
            py::arg("confidence") = .5)
@@ -666,10 +690,10 @@ PYBIND11_MODULE(_native_brain, m) {
       .def("publish_brain_snapshot",
            [](NativeBrainEngine &e, double time, std::uint64_t tick,
               std::uint64_t generation,
-              const std::vector<std::uint32_t> &active) {
+              const std::vector<std::uint32_t> &active, bool force) {
              py::gil_scoped_release release;
-             e.publish_brain_snapshot(time, tick, generation, active);
-           })
+             e.publish_brain_snapshot(time, tick, generation, active, force);
+           }, py::arg("time"),py::arg("tick"),py::arg("generation"),py::arg("active"),py::arg("force")=true)
       .def("publish_dialogue_line",
            [](NativeBrainEngine &e, double time, int role,
               const std::string &value) {

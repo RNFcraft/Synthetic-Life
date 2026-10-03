@@ -1,0 +1,96 @@
+﻿[1/5] cmake --build cpp/build-verify --config Release
+MSBuild version 18.5.0+994b5faf9 for .NET Framework
+
+  1>Checking Build System
+  SDL_uclibc.vcxproj -> D:\projects\synth_life\cpp\build-verify\_deps\sdl3-build\Release\SDL_uclibc.lib
+  SDL3-shared.vcxproj -> D:\projects\synth_life\cpp\build-verify\_deps\sdl3-build\Release\SDL3.dll
+  Building Custom Rule D:/projects/synth_life/cpp/CMakeLists.txt
+  se_engine.vcxproj -> D:\projects\synth_life\cpp\build-verify\Release\se_engine.lib
+  Building Custom Rule D:/projects/synth_life/cpp/CMakeLists.txt
+  se_imgui.vcxproj -> D:\projects\synth_life\cpp\build-verify\Release\se_imgui.lib
+  Building Custom Rule D:/projects/synth_life/cpp/CMakeLists.txt
+  se_observer.vcxproj -> D:\projects\synth_life\cpp\build-verify\Release\se_observer.lib
+  Building Custom Rule D:/projects/synth_life/cpp/CMakeLists.txt
+  _native_brain.vcxproj -> D:\projects\synth_life\consciousness\_native_brain.cp311-win_amd64.pyd
+  SDL3_test.vcxproj -> D:\projects\synth_life\cpp\build-verify\_deps\sdl3-build\Release\SDL3_test.lib
+  Building Custom Rule D:/projects/synth_life/cpp/CMakeLists.txt
+  se_benchmark.vcxproj -> D:\projects\synth_life\cpp\build-verify\Release\se_benchmark.exe
+  Building Custom Rule D:/projects/synth_life/cpp/CMakeLists.txt
+  se_compute_benchmark.vcxproj -> D:\projects\synth_life\cpp\build-verify\Release\se_compute_benchmark.exe
+  Building Custom Rule D:/projects/synth_life/cpp/CMakeLists.txt
+  se_compute_tests.vcxproj -> D:\projects\synth_life\cpp\build-verify\Release\se_compute_tests.exe
+  Building Custom Rule D:/projects/synth_life/cpp/CMakeLists.txt
+  se_equivalence.vcxproj -> D:\projects\synth_life\cpp\build-verify\Release\se_equivalence.exe
+  Building Custom Rule D:/projects/synth_life/cpp/CMakeLists.txt
+  se_observer_demo.vcxproj -> D:\projects\synth_life\cpp\build-verify\Release\se_observer_demo.exe
+  Building Custom Rule D:/projects/synth_life/cpp/CMakeLists.txt
+  se_observer_tests.vcxproj -> D:\projects\synth_life\cpp\build-verify\Release\se_observer_tests.exe
+  Building Custom Rule D:/projects/synth_life/cpp/CMakeLists.txt
+  se_presentation_gpu_tests.vcxproj -> D:\projects\synth_life\cpp\build-verify\Release\se_presentation_gpu_tests.exe
+  Building Custom Rule D:/projects/synth_life/cpp/CMakeLists.txt
+[2/5] C:\Users\rnfcr\AppData\Local\Programs\Python\Python311\python.exe -B -c "import main"
+[3/5] C:\Users\rnfcr\AppData\Local\Programs\Python\Python311\python.exe -B main.py --headless --seconds 0
+world time:           0.000000 s
+host elapsed:         0.002 s
+actions completed:    0
+final cognit count:   1
+final relation count: 0
+[4/5] C:\Users\rnfcr\AppData\Local\Programs\Python\Python311\python.exe -B -m pytest -q
+........................................................................ [  9%]
+........................................................................ [ 18%]
+........................................................................ [ 28%]
+........................................................................ [ 37%]
+........................................................................ [ 47%]
+........................................................................ [ 56%]
+........................................................................ [ 65%]
+........................................................................ [ 75%]
+........................................................................ [ 84%]
+........................................................................ [ 94%]
+.......F.......................s..s.........                             [100%]
+================================== FAILURES ===================================
+___ test_reduced_autonomous_training_observes_physical_consumption_and_bins ___
+
+tmp_path = WindowsPath('C:/Users/rnfcr/AppData/Local/Temp/pytest-of-rnfcr/pytest-745/test_reduced_autonomous_traini0')
+
+    def test_reduced_autonomous_training_observes_physical_consumption_and_bins(tmp_path):
+        # Fixed production curriculum prefix. No action injection or custom policy.
+        protocol=load_protocol(PROTOCOL);stage=protocol.data["STAGES"][0]
+        stage["training"][0]["episodes"]=22
+        brain,rows=train_stage(protocol,stage,tmp_path,None)
+        assert brain.is_file() and sum(r["consumptions"] for r in rows)>0
+        assert sum(r["nutrient_gain"] for r in rows)>0
+        assert sum(r["internal_bin_changes"] for r in rows)>0
+        assert rows[-1]["evidence"]["timing_observations"]>0
+        # Timing collection alone does not imply a supported beneficial relation.
+        detail=json.loads((tmp_path/rows[-1]["trajectory_reference"]).read_text())
+>       first=detail["consumptions"][0]
+              ^^^^^^^^^^^^^^^^^^^^^^^^^
+E       IndexError: list index out of range
+
+tests\test_v092_survival_learning.py:164: IndexError
+---------------------------- Captured stdout call -----------------------------
+stage_1 training 1: consumptions=0
+stage_1 training 2: consumptions=0
+stage_1 training 3: consumptions=0
+stage_1 training 4: consumptions=0
+stage_1 training 5: consumptions=0
+stage_1 training 6: consumptions=0
+stage_1 training 7: consumptions=0
+stage_1 training 8: consumptions=0
+stage_1 training 9: consumptions=0
+stage_1 training 10: consumptions=0
+stage_1 training 11: consumptions=0
+stage_1 training 12: consumptions=0
+stage_1 training 13: consumptions=0
+stage_1 training 14: consumptions=0
+stage_1 training 15: consumptions=1
+stage_1 training 16: consumptions=1
+stage_1 training 17: consumptions=0
+stage_1 training 18: consumptions=0
+stage_1 training 19: consumptions=0
+stage_1 training 20: consumptions=1
+stage_1 training 21: consumptions=0
+stage_1 training 22: consumptions=0
+=========================== short test summary info ===========================
+FAILED tests/test_v092_survival_learning.py::test_reduced_autonomous_training_observes_physical_consumption_and_bins
+1 failed, 761 passed, 2 skipped in 88.85s (0:01:28)

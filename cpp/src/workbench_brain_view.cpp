@@ -73,16 +73,19 @@ void draw_brain_view(WorkbenchUIState &ui,
   if (snapshot &&
       (snapshot != ui.cached_brain || ui.graph_width != int(size.x) ||
        ui.graph_height != int(size.y) || ui.uploaded_edge_budget != ui.brain_edge_budget)) {
-    ui.graph = prepare_brain_draw_data(*snapshot, int(size.x), int(size.y));
-    if (ui.graph.edges.size() > std::size_t(ui.brain_edge_budget))
-      ui.graph.edges.resize(ui.brain_edge_budget);
+    ui.graph = {};
     ui.uploaded_edge_budget = ui.brain_edge_budget;
     ui.cached_brain = snapshot;
     ui.graph_width = int(size.x);
     ui.graph_height = int(size.y);
-    if (!ui.brain_gpu)
-      ui.brain_gpu = std::make_shared<WorkbenchBrainGPU>();
-    ui.brain_gpu->upload(ui.graph);
+    if (!ui.brain_gpu && !ui.legacy_brain_renderer) {
+      try {ui.brain_gpu = std::make_shared<WorkbenchBrainGPU>();}
+      catch(const std::exception&e){ui.brain_renderer_failure=e.what();ui.legacy_brain_renderer=true;}
+    }
+    auto budget=std::clamp<std::size_t>(std::size_t(size.x)*std::size_t(size.y)/1800,128,512);
+    if(ui.legacy_brain_renderer){ui.graph=prepare_brain_draw_data(*snapshot,int(size.x),int(size.y));
+      if(ui.graph.edges.size()>std::size_t(ui.brain_edge_budget))ui.graph.edges.resize(ui.brain_edge_budget);
+    }else ui.brain_gpu->upload(*snapshot, budget, std::min<std::size_t>(ui.brain_edge_budget,budget*4));
     ++ui.brain_rebuilds;
   }
   if (!snapshot || snapshot->nodes.empty()) {
@@ -102,50 +105,27 @@ void draw_brain_view(WorkbenchUIState &ui,
     ui.brain_pan_x += io.MouseDelta.x;
     ui.brain_pan_y += io.MouseDelta.y;
   }
-  auto point = [&](float x, float y) {
-    return ImVec2{origin.x + size.x * .5f + (x - size.x * .5f) * ui.brain_zoom +
-                      ui.brain_pan_x,
-                  origin.y + size.y * .5f + (y - size.y * .5f) * ui.brain_zoom +
-                      ui.brain_pan_y};
-  };
-  ui.brain_gpu->enqueue(d, origin, size, ui.brain_zoom, ui.brain_pan_x,
-                        ui.brain_pan_y, ui.relation_filter);
-  const BrainNodeVisual *hovered = nullptr;
-  float closest = 100;
-  for (auto const &n : ui.graph.nodes) {
-    auto p = point(n.x, n.y);
-    float radius = n.radius;
-    if (n.appearing)
-      d->AddCircle(p, radius + 2, IM_COL32(125, 211, 252, 90), 20);
-    if (n.id == ui.selected_node)
-      d->AddCircle(p, radius + 3, IM_COL32(231, 237, 242, 240), 20);
-    float distance = std::hypot(io.MousePos.x - p.x, io.MousePos.y - p.y);
-    if (hover && distance < radius + 5 && distance < closest) {
-      closest = distance;
-      hovered = &n;
+  if(ui.legacy_brain_renderer){
+    auto point=[&](float x,float y){return ImVec2{origin.x+size.x*.5f+(x-size.x*.5f)*ui.brain_zoom+ui.brain_pan_x,
+      origin.y+size.y*.5f+(y-size.y*.5f)*ui.brain_zoom+ui.brain_pan_y};};
+    for(const auto&e:ui.graph.edges){
+      if((ui.relation_filter==1&&e.intensity<.4f)||(ui.relation_filter==2&&e.type!=5)||(ui.relation_filter==3&&e.type!=2))continue;
+      d->AddLine(point(e.x1,e.y1),point(e.x2,e.y2),IM_COL32(87,143,171,80),e.thickness);
     }
-  }
-  if (hovered) {
-    if (ImGui::IsMouseClicked(ImGuiMouseButton_Left))
-      ui.selected_node = hovered->id;
-    auto it = std::find_if(snapshot->nodes.begin(), snapshot->nodes.end(),
-                           [&](auto &n) { return n.id == hovered->id; });
-    if (it != snapshot->nodes.end() && ui.show_tooltips) {
-      ImGui::BeginTooltip();
-      ImGui::Text("Cognit #%u%s", it->id + 1,
-                  it->composite ? " / composite" : "");
-      ImGui::Text("Activity %.3f / confidence %.3f", it->activity,
-                  it->confidence);
-      ImGui::Text("Last active tick %llu", static_cast<unsigned long long>(
-                                               it->last_active_cognitive_tick));
-      ImGui::EndTooltip();
+    for(const auto&n:ui.graph.nodes){auto p=point(n.x,n.y);d->AddCircleFilled(p,n.radius,IM_COL32(87,170,221,220));
+      if(hover&&ImGui::IsMouseClicked(ImGuiMouseButton_Left)&&std::hypot(io.MousePos.x-p.x,io.MousePos.y-p.y)<n.radius+5)ui.selected_node=n.id;
     }
+  }else{
+    ui.brain_gpu->enqueue(d, origin, size, ui.brain_zoom, ui.brain_pan_x,
+                          ui.brain_pan_y, ui.relation_filter);
+    if(hover && ImGui::IsMouseClicked(ImGuiMouseButton_Left))
+      ui.selected_node=ui.brain_gpu->pick(io.MousePos.x,io.MousePos.y);
   }
   d->PopClipRect();
   ImGui::TextDisabled(
-      "%zu / %llu nodes   %zu / %llu edges", ui.graph.nodes.size(),
+      "%zu / %llu nodes   %zu / %llu edges", snapshot->nodes.size(),
       static_cast<unsigned long long>(snapshot->total_cognits),
-      ui.graph.edges.size(),
+      snapshot->edges.size(),
       static_cast<unsigned long long>(snapshot->total_relations));
   auto selected =
       std::find_if(snapshot->nodes.begin(), snapshot->nodes.end(),

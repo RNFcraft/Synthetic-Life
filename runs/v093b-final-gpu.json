@@ -1,0 +1,790 @@
+{
+  "seconds": 10.0,
+  "mode": "FORCE_GPU",
+  "observer": false,
+  "trials": [
+    {
+      "worldtime_per_second": 22.560321225869977,
+      "elapsed_seconds": 0.44325609994120896,
+      "actions": 66,
+      "events": 478,
+      "digest": "10a27313f2f244befe148e7aea3f40ee941caa8a9c8cd889a74e12efdbc918a0",
+      "frames": 0,
+      "presentation_telemetry": null,
+      "compute_telemetry": [
+        {
+          "kernel": 0,
+          "backend": 0,
+          "switches": 0,
+          "reason": "uncalibrated: CPU serial",
+          "estimates": [
+            [
+              0,
+              0.0,
+              0.0
+            ],
+            [
+              0,
+              0.0,
+              0.0
+            ],
+            [
+              0,
+              0.0,
+              0.0
+            ]
+          ]
+        },
+        {
+          "kernel": 1,
+          "backend": 2,
+          "switches": 1,
+          "reason": "forced host mode",
+          "estimates": [
+            [
+              0,
+              0.0,
+              0.0
+            ],
+            [
+              0,
+              0.0,
+              0.0
+            ],
+            [
+              394,
+              441.29315937731405,
+              126.13021166377266
+            ]
+          ]
+        },
+        {
+          "kernel": 2,
+          "backend": 2,
+          "switches": 1,
+          "reason": "forced host mode",
+          "estimates": [
+            [
+              0,
+              0.0,
+              0.0
+            ],
+            [
+              0,
+              0.0,
+              0.0
+            ],
+            [
+              126,
+              450.9276359080678,
+              33.77825099581095
+            ]
+          ]
+        },
+        {
+          "kernel": 3,
+          "backend": 0,
+          "switches": 0,
+          "reason": "uncalibrated: CPU serial",
+          "estimates": [
+            [
+              0,
+              0.0,
+              0.0
+            ],
+            [
+              0,
+              0.0,
+              0.0
+            ],
+            [
+              0,
+              0.0,
+              0.0
+            ]
+          ]
+        },
+        {
+          "kernel": 4,
+          "backend": 0,
+          "switches": 0,
+          "reason": "uncalibrated: CPU serial",
+          "estimates": [
+            [
+              0,
+              0.0,
+              0.0
+            ],
+            [
+              0,
+              0.0,
+              0.0
+            ],
+            [
+              0,
+              0.0,
+              0.0
+            ]
+          ]
+        },
+        {
+          "kernel": 5,
+          "backend": 0,
+          "switches": 0,
+          "reason": "uncalibrated: CPU serial",
+          "estimates": [
+            [
+              0,
+              0.0,
+              0.0
+            ],
+            [
+              0,
+              0.0,
+              0.0
+            ],
+            [
+              0,
+              0.0,
+              0.0
+            ]
+          ]
+        }
+      ],
+      "full_graph_sync_calls": 0
+    },
+    {
+      "worldtime_per_second": 22.815876103377796,
+      "elapsed_seconds": 0.4382913000881672,
+      "actions": 66,
+      "events": 478,
+      "digest": "10a27313f2f244befe148e7aea3f40ee941caa8a9c8cd889a74e12efdbc918a0",
+      "frames": 0,
+      "presentation_telemetry": null,
+      "compute_telemetry": [
+        {
+          "kernel": 0,
+          "backend": 0,
+          "switches": 0,
+          "reason": "uncalibrated: CPU serial",
+          "estimates": [
+            [
+              0,
+              0.0,
+              0.0
+            ],
+            [
+              0,
+              0.0,
+              0.0
+            ],
+            [
+              0,
+              0.0,
+              0.0
+            ]
+          ]
+        },
+        {
+          "kernel": 1,
+          "backend": 2,
+          "switches": 1,
+          "reason": "forced host mode",
+          "estimates": [
+            [
+              0,
+              0.0,
+              0.0
+            ],
+            [
+              0,
+              0.0,
+              0.0
+            ],
+            [
+              394,
+              444.7539953604772,
+              126.13021166377266
+            ]
+          ]
+        },
+        {
+          "kernel": 2,
+          "backend": 2,
+          "switches": 1,
+          "reason": "forced host mode",
+          "estimates": [
+            [
+              0,
+              0.0,
+              0.0
+            ],
+            [
+              0,
+              0.0,
+              0.0
+            ],
+            [
+              126,
+              431.53225502481143,
+              33.77825099581095
+            ]
+          ]
+        },
+        {
+          "kernel": 3,
+          "backend": 0,
+          "switches": 0,
+          "reason": "uncalibrated: CPU serial",
+          "estimates": [
+            [
+              0,
+              0.0,
+              0.0
+            ],
+            [
+              0,
+              0.0,
+              0.0
+            ],
+            [
+              0,
+              0.0,
+              0.0
+            ]
+          ]
+        },
+        {
+          "kernel": 4,
+          "backend": 0,
+          "switches": 0,
+          "reason": "uncalibrated: CPU serial",
+          "estimates": [
+            [
+              0,
+              0.0,
+              0.0
+            ],
+            [
+              0,
+              0.0,
+              0.0
+            ],
+            [
+              0,
+              0.0,
+              0.0
+            ]
+          ]
+        },
+        {
+          "kernel": 5,
+          "backend": 0,
+          "switches": 0,
+          "reason": "uncalibrated: CPU serial",
+          "estimates": [
+            [
+              0,
+              0.0,
+              0.0
+            ],
+            [
+              0,
+              0.0,
+              0.0
+            ],
+            [
+              0,
+              0.0,
+              0.0
+            ]
+          ]
+        }
+      ],
+      "full_graph_sync_calls": 0
+    },
+    {
+      "worldtime_per_second": 22.92769728383837,
+      "elapsed_seconds": 0.4361536998767406,
+      "actions": 66,
+      "events": 478,
+      "digest": "10a27313f2f244befe148e7aea3f40ee941caa8a9c8cd889a74e12efdbc918a0",
+      "frames": 0,
+      "presentation_telemetry": null,
+      "compute_telemetry": [
+        {
+          "kernel": 0,
+          "backend": 0,
+          "switches": 0,
+          "reason": "uncalibrated: CPU serial",
+          "estimates": [
+            [
+              0,
+              0.0,
+              0.0
+            ],
+            [
+              0,
+              0.0,
+              0.0
+            ],
+            [
+              0,
+              0.0,
+              0.0
+            ]
+          ]
+        },
+        {
+          "kernel": 1,
+          "backend": 2,
+          "switches": 1,
+          "reason": "forced host mode",
+          "estimates": [
+            [
+              0,
+              0.0,
+              0.0
+            ],
+            [
+              0,
+              0.0,
+              0.0
+            ],
+            [
+              394,
+              453.8190864100853,
+              126.13021166377266
+            ]
+          ]
+        },
+        {
+          "kernel": 2,
+          "backend": 2,
+          "switches": 1,
+          "reason": "forced host mode",
+          "estimates": [
+            [
+              0,
+              0.0,
+              0.0
+            ],
+            [
+              0,
+              0.0,
+              0.0
+            ],
+            [
+              126,
+              444.5889376307904,
+              33.77825099581095
+            ]
+          ]
+        },
+        {
+          "kernel": 3,
+          "backend": 0,
+          "switches": 0,
+          "reason": "uncalibrated: CPU serial",
+          "estimates": [
+            [
+              0,
+              0.0,
+              0.0
+            ],
+            [
+              0,
+              0.0,
+              0.0
+            ],
+            [
+              0,
+              0.0,
+              0.0
+            ]
+          ]
+        },
+        {
+          "kernel": 4,
+          "backend": 0,
+          "switches": 0,
+          "reason": "uncalibrated: CPU serial",
+          "estimates": [
+            [
+              0,
+              0.0,
+              0.0
+            ],
+            [
+              0,
+              0.0,
+              0.0
+            ],
+            [
+              0,
+              0.0,
+              0.0
+            ]
+          ]
+        },
+        {
+          "kernel": 5,
+          "backend": 0,
+          "switches": 0,
+          "reason": "uncalibrated: CPU serial",
+          "estimates": [
+            [
+              0,
+              0.0,
+              0.0
+            ],
+            [
+              0,
+              0.0,
+              0.0
+            ],
+            [
+              0,
+              0.0,
+              0.0
+            ]
+          ]
+        }
+      ],
+      "full_graph_sync_calls": 0
+    }
+  ],
+  "median_worldtime_per_second": 22.815876103377796,
+  "profile_trial": {
+    "worldtime_per_second": 12.222483920069491,
+    "elapsed_seconds": 0.8181642999406904,
+    "actions": 66,
+    "events": 478,
+    "digest": "10a27313f2f244befe148e7aea3f40ee941caa8a9c8cd889a74e12efdbc918a0",
+    "frames": 0,
+    "presentation_telemetry": null,
+    "compute_telemetry": [
+      {
+        "kernel": 0,
+        "backend": 0,
+        "switches": 0,
+        "reason": "uncalibrated: CPU serial",
+        "estimates": [
+          [
+            0,
+            0.0,
+            0.0
+          ],
+          [
+            0,
+            0.0,
+            0.0
+          ],
+          [
+            0,
+            0.0,
+            0.0
+          ]
+        ]
+      },
+      {
+        "kernel": 1,
+        "backend": 2,
+        "switches": 1,
+        "reason": "forced host mode",
+        "estimates": [
+          [
+            0,
+            0.0,
+            0.0
+          ],
+          [
+            0,
+            0.0,
+            0.0
+          ],
+          [
+            394,
+            502.0638650620099,
+            126.13021166377266
+          ]
+        ]
+      },
+      {
+        "kernel": 2,
+        "backend": 2,
+        "switches": 1,
+        "reason": "forced host mode",
+        "estimates": [
+          [
+            0,
+            0.0,
+            0.0
+          ],
+          [
+            0,
+            0.0,
+            0.0
+          ],
+          [
+            126,
+            448.7581548765278,
+            33.77825099581095
+          ]
+        ]
+      },
+      {
+        "kernel": 3,
+        "backend": 0,
+        "switches": 0,
+        "reason": "uncalibrated: CPU serial",
+        "estimates": [
+          [
+            0,
+            0.0,
+            0.0
+          ],
+          [
+            0,
+            0.0,
+            0.0
+          ],
+          [
+            0,
+            0.0,
+            0.0
+          ]
+        ]
+      },
+      {
+        "kernel": 4,
+        "backend": 0,
+        "switches": 0,
+        "reason": "uncalibrated: CPU serial",
+        "estimates": [
+          [
+            0,
+            0.0,
+            0.0
+          ],
+          [
+            0,
+            0.0,
+            0.0
+          ],
+          [
+            0,
+            0.0,
+            0.0
+          ]
+        ]
+      },
+      {
+        "kernel": 5,
+        "backend": 0,
+        "switches": 0,
+        "reason": "uncalibrated: CPU serial",
+        "estimates": [
+          [
+            0,
+            0.0,
+            0.0
+          ],
+          [
+            0,
+            0.0,
+            0.0
+          ],
+          [
+            0,
+            0.0,
+            0.0
+          ]
+        ]
+      }
+    ],
+    "full_graph_sync_calls": 0,
+    "profile": [
+      {
+        "function": "D:\\projects\\synth_life\\simulation\\continuous.py:275:run_until",
+        "calls": 1,
+        "self_seconds": 0.0044259,
+        "cumulative_seconds": 0.8181327
+      },
+      {
+        "function": "D:\\projects\\synth_life\\simulation\\continuous.py:32:_dispatch",
+        "calls": 478,
+        "self_seconds": 0.0005908,
+        "cumulative_seconds": 0.8085896
+      },
+      {
+        "function": "D:\\projects\\synth_life\\simulation\\continuous.py:93:_process",
+        "calls": 478,
+        "self_seconds": 0.0043587,
+        "cumulative_seconds": 0.8079988
+      },
+      {
+        "function": "D:\\projects\\synth_life\\consciousness\\core.py:271:continue_continuous_cognition",
+        "calls": 268,
+        "self_seconds": 0.0004423,
+        "cumulative_seconds": 0.44799350000000004
+      },
+      {
+        "function": "D:\\projects\\synth_life\\consciousness\\planning.py:75:continue_continuous",
+        "calls": 268,
+        "self_seconds": 0.0038806,
+        "cumulative_seconds": 0.44755120000000004
+      },
+      {
+        "function": "D:\\projects\\synth_life\\consciousness\\planning.py:204:_search",
+        "calls": 67,
+        "self_seconds": 0.1189796,
+        "cumulative_seconds": 0.3452676
+      },
+      {
+        "function": "D:\\projects\\synth_life\\consciousness\\core.py:239:begin_continuous_observation",
+        "calls": 67,
+        "self_seconds": 0.0002841,
+        "cumulative_seconds": 0.23769150000000003
+      },
+      {
+        "function": "D:\\projects\\synth_life\\consciousness\\core.py:138:_observe",
+        "calls": 67,
+        "self_seconds": 0.0047612,
+        "cumulative_seconds": 0.23740740000000002
+      },
+      {
+        "function": "D:\\projects\\synth_life\\consciousness\\core.py:454:_graph_predictions_for_actions",
+        "calls": 268,
+        "self_seconds": 0.0007811000000000001,
+        "cumulative_seconds": 0.1334876
+      },
+      {
+        "function": "D:\\projects\\synth_life\\consciousness\\backends.py:123:predict_graph_batch",
+        "calls": 268,
+        "self_seconds": 0.0015692000000000002,
+        "cumulative_seconds": 0.1322208
+      },
+      {
+        "function": "~:0:<built-in method consciousness._native_brain.predict_actions_batch_at>",
+        "calls": 268,
+        "self_seconds": 0.12352360000000001,
+        "cumulative_seconds": 0.12352360000000001
+      },
+      {
+        "function": "D:\\projects\\synth_life\\consciousness\\backends.py:130:planner_transition_batch",
+        "calls": 95,
+        "self_seconds": 0.0008519,
+        "cumulative_seconds": 0.1109567
+      },
+      {
+        "function": "~:0:<built-in method consciousness._native_brain.planner_transition_batch>",
+        "calls": 95,
+        "self_seconds": 0.1033053,
+        "cumulative_seconds": 0.1033053
+      },
+      {
+        "function": "D:\\projects\\synth_life\\consciousness\\core.py:428:_imagine",
+        "calls": 67,
+        "self_seconds": 0.010858600000000001,
+        "cumulative_seconds": 0.09137830000000001
+      },
+      {
+        "function": "D:\\projects\\synth_life\\consciousness\\core.py:302:commit_continuous_action",
+        "calls": 67,
+        "self_seconds": 0.0017042000000000001,
+        "cumulative_seconds": 0.07982890000000001
+      },
+      {
+        "function": "~:0:<built-in method builtins.max>",
+        "calls": 109443,
+        "self_seconds": 0.015461800000000001,
+        "cumulative_seconds": 0.0649242
+      },
+      {
+        "function": "D:\\projects\\synth_life\\consciousness\\core.py:451:_graph_predict",
+        "calls": 134,
+        "self_seconds": 0.0002007,
+        "cumulative_seconds": 0.06289700000000001
+      },
+      {
+        "function": "D:\\projects\\synth_life\\consciousness\\memory.py:128:observe",
+        "calls": 67,
+        "self_seconds": 0.0009915,
+        "cumulative_seconds": 0.0590803
+      },
+      {
+        "function": "~:0:<built-in method builtins.sum>",
+        "calls": 20915,
+        "self_seconds": 0.018941600000000003,
+        "cumulative_seconds": 0.055461100000000006
+      },
+      {
+        "function": "D:\\projects\\synth_life\\consciousness\\core_learning.py:78:_prediction_error",
+        "calls": 67,
+        "self_seconds": 0.0017274,
+        "cumulative_seconds": 0.052920400000000006
+      },
+      {
+        "function": "C:\\Users\\rnfcr\\AppData\\Local\\Programs\\Python\\Python311\\Lib\\enum.py:1232:__hash__",
+        "calls": 208391,
+        "self_seconds": 0.036066400000000005,
+        "cumulative_seconds": 0.049219000000000006
+      },
+      {
+        "function": "D:\\projects\\synth_life\\consciousness\\core.py:371:_update_intrinsic_state",
+        "calls": 67,
+        "self_seconds": 0.005449000000000001,
+        "cumulative_seconds": 0.0466753
+      },
+      {
+        "function": "D:\\projects\\synth_life\\consciousness\\calibration.py:10:ece",
+        "calls": 66,
+        "self_seconds": 0.0013122000000000001,
+        "cumulative_seconds": 0.037447400000000006
+      },
+      {
+        "function": "D:\\projects\\synth_life\\consciousness\\memory.py:117:_match_place",
+        "calls": 67,
+        "self_seconds": 0.0007741,
+        "cumulative_seconds": 0.0362293
+      },
+      {
+        "function": "D:\\projects\\synth_life\\consciousness\\state.py:42:loop_score",
+        "calls": 1279,
+        "self_seconds": 0.0058133,
+        "cumulative_seconds": 0.035159300000000004
+      },
+      {
+        "function": "D:\\projects\\synth_life\\consciousness\\memory.py:120:<genexpr>",
+        "calls": 1061,
+        "self_seconds": 0.0015193000000000001,
+        "cumulative_seconds": 0.0347333
+      },
+      {
+        "function": "D:\\projects\\synth_life\\consciousness\\sensory.py:51:observe",
+        "calls": 67,
+        "self_seconds": 0.0113349,
+        "cumulative_seconds": 0.0344304
+      },
+      {
+        "function": "D:\\projects\\synth_life\\consciousness\\state.py:35:similarity",
+        "calls": 3396,
+        "self_seconds": 0.014899200000000001,
+        "cumulative_seconds": 0.027343500000000003
+      },
+      {
+        "function": "D:\\projects\\synth_life\\consciousness\\calibration.py:16:<listcomp>",
+        "calls": 660,
+        "self_seconds": 0.027238500000000002,
+        "cumulative_seconds": 0.027238500000000002
+      },
+      {
+        "function": "D:\\projects\\synth_life\\consciousness\\memory_matching.py:13:weighted_similarity",
+        "calls": 1732,
+        "self_seconds": 0.0047194,
+        "cumulative_seconds": 0.026593500000000003
+      }
+    ]
+  }
+}

@@ -1595,6 +1595,20 @@ It preserves the v0.9.2 FAIL and does not introduce reward, semantic resource po
 new representation or threshold tuning. Numeric CMake version is 0.9.3; the research
 label is v0.9.3a. Long-run stability remains a separate planned scope.
 
+## v0.9.3b - Adaptive Heterogeneous Compute & GPU-First Workbench
+
+Status: **PARTIAL IMPLEMENTATION / NOT FROZEN**.
+
+Host-only per-kernel dispatch, a persistent CPU worker pool, optional exact CUDA
+absence reductions, bounded profiling, GPU node/endpoint layout and ID picking,
+and persistent presentation buffer updates are implemented. Measured CUDA total
+cost does not beat CPU in the tested range; AUTO retains CPU execution.
+Native graph dirty deltas, presentation revision recovery, full GPU visibility/LOD
+and broader profiler/cost-model coverage remain open. Numeric version is 0.9.3.
+See [design](docs/V0_9_3B_ADAPTIVE_COMPUTE.md) and
+[results](docs/V0_9_3B_RESULTS.md). v0.9.2 and v0.9.3a scientific statuses remain
+unchanged. Long-run stability / boundedness / soak remains a separate planned scope.
+
 ## v0.9.3 — Long-Run Survival Stability & Freeze
 
 **Status: PLANNED**

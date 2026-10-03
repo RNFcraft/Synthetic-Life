@@ -1,5 +1,10 @@
 # Testing and Repository Verification
 
+v0.9.3b performance work is **PARTIAL / NOT FROZEN**: host numeric dispatch,
+optional CUDA ordered reductions, persistent GPU ID layout and picking, and
+bounded output-only profiling. See [design](V0_9_3B_ADAPTIVE_COMPUTE.md)
+and [measured results](V0_9_3B_RESULTS.md). Scientific conclusions below are preserved.
+
 v0.9.3a instrumentation/regressions: `tests/test_v093a_forensics.py` checks disabled
 defaults, raw-read inertness, streaming retention, exact event/leaf differences,
 same-time scheduler order, transferred-brain trace equivalence and the actual

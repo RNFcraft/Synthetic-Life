@@ -4,7 +4,9 @@
 #include "cognitive_graph.hpp"
 #include "dialogue_snapshot.hpp"
 #include "neurodynamic_substrate.hpp"
+#include "compute_runtime.hpp"
 #include <array>
+#include <chrono>
 #include <deque>
 #include <map>
 #include <limits>
@@ -40,8 +42,10 @@ struct AssemblyCognitBridgeResult {
 };
 class NativeBrainEngine {
 public:
+  void set_compute_mode(const std::string&);
+  ComputeDispatcher& compute_dispatcher() { return compute_; }
   explicit NativeBrainEngine(std::size_t evidence_window = 512) : evidence_window_(evidence_window), brain_channel_(std::make_shared<BrainSnapshotChannel>()), dialogue_channel_(std::make_shared<DialogueSnapshotChannel>()) {}
-  void publish_brain_snapshot(double world_time, std::uint64_t cognitive_tick, std::uint64_t generation, std::span<const std::uint32_t> active);
+  void publish_brain_snapshot(double world_time, std::uint64_t cognitive_tick, std::uint64_t generation, std::span<const std::uint32_t> active, bool force=true);
   std::shared_ptr<BrainSnapshotChannel> brain_snapshot_channel() const { return brain_channel_; }
   std::shared_ptr<DialogueSnapshotChannel> dialogue_snapshot_channel() const { return dialogue_channel_; }
   NeurodynamicSubstrate &neurodynamic_substrate() { return neurodynamic_; }
@@ -145,6 +149,10 @@ public:
   CognitiveGraph &graph() { return graph_; }
 
 private:
+  std::chrono::steady_clock::time_point last_presentation_{};
+  ComputeDispatcher compute_;
+  std::vector<std::vector<std::pair<std::uint32_t,double>>> reduce_conditioned(
+      std::span<const std::uint8_t> actions, KernelClass kernel, bool common);
   std::shared_ptr<BrainSnapshotChannel> brain_channel_;
   std::shared_ptr<DialogueSnapshotChannel> dialogue_channel_;
   NeurodynamicSubstrate neurodynamic_{};

@@ -1,4 +1,5 @@
 #include "se/workbench_ui.hpp"
+#include "se/workbench_brain_gpu.hpp"
 #include <algorithm>
 #include <cmath>
 #include <cstdio>
@@ -221,10 +222,40 @@ void draw_workbench(WorkbenchUIState &ui, const RenderSnapshot &world,
   draw_world_view(ui, world, commands);
   ImGui::End();
   pane("Brain", layout.brain);
-  draw_brain_view(ui, std::move(brain));
+  draw_brain_view(ui, brain);
   ImGui::End();
   pane("Status", layout.status);
   draw_status_view(status.get(), ui, world);
   ImGui::End();
+  if(ui.show_performance){
+    ImGui::Begin("PERFORMANCE",&ui.show_performance);
+    ImGui::Text("Presentation %.1f FPS / UI CPU %.3f ms",io.Framerate,ui.frame_cpu_us/1000.);
+    ImGui::TextDisabled(ui.legacy_brain_renderer?"Compatible CPU layout":"GPU ID layout / GPU filters / GPU click picking");
+    if(!ui.brain_renderer_failure.empty())ImGui::TextWrapped("Renderer fallback: %s",ui.brain_renderer_failure.c_str());
+    if(brain){
+      const char*modes[]={"AUTO","CPU Serial","CPU Parallel","GPU"};
+      int mode=ui.compute_mode_changed?ui.compute_mode:brain->compute_mode;
+      if(ImGui::BeginCombo("Compute mode",modes[mode])){
+        for(int i=0;i<4;++i){ImGui::BeginDisabled(i==3&&!brain->gpu_compute_available);
+          if(ImGui::Selectable(modes[i],mode==i)){ui.compute_mode=i;ui.compute_mode_changed=true;}
+          ImGui::EndDisabled();}
+        ImGui::EndCombo();
+      }
+      ImGui::TextDisabled(brain->gpu_compute_available?"CUDA available":"CUDA unavailable / CPU fallback");
+      const char*names[]={"Wave","Prediction","Effects","Planner transitions","Relation analytics","Micro neural"};
+      const char*backends[]={"CPU serial","CPU parallel","GPU"};
+      for(std::size_t i=0;i<brain->performance.size();++i){const auto&p=brain->performance[i];
+        ImGui::Text("%s: %s / %llu switches",names[i],backends[p.backend],static_cast<unsigned long long>(p.switches));
+        ImGui::TextDisabled("EMA us: %.2f / %.2f / %.2f",p.serial_us,p.parallel_us,p.gpu_us);
+        ImGui::TextWrapped("%s",p.reason.c_str());
+      }
+    }
+    if(ui.brain_gpu){auto t=ui.brain_gpu->telemetry();
+      ImGui::Text("Upload CPU %.3f ms / bytes %llu",t.upload_cpu_us/1000.,static_cast<unsigned long long>(t.uploaded_bytes));
+      ImGui::Text("Brain GPU %.3f ms / buffers %llu bytes",t.gpu_draw_us/1000.,static_cast<unsigned long long>(t.buffer_bytes));
+      ImGui::Text("Buffer rebuilds %llu / delta ranges %llu / picks %llu",static_cast<unsigned long long>(t.buffer_rebuilds),static_cast<unsigned long long>(t.delta_updates),static_cast<unsigned long long>(t.picks));
+    }
+    ImGui::End();
+  }
 }
 } // namespace se
